@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IChC Outreach Program — Ghana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<style>
+  :root{
+    --navy:#0F2438;
+    --navy-deep:#0A1826;
+    --chalk:#F6F4EE;
+    --paper:#FFFFFF;
+    --amber:#E39A3B;
+    --amber-deep:#C97F22;
+    --teal:#1F8A70;
+    --teal-deep:#146956;
+    --ink:#1B2430;
+    --line:#DDD8C9;
+    --muted:#6B7280;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--navy-deep);
+  }
+  .mono{font-family:'IBM Plex Mono', monospace; letter-spacing:0.02em;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  ::selection{background:var(--amber); color:var(--navy-deep);}
+
+  
+  .hidden{display:none !important;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 28px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:12px 22px; border-radius:999px; border:1.5px solid var(--navy-deep);
+    background:var(--navy-deep); color:var(--chalk); font-weight:600; font-size:15px;
+    cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(15,36,56,.25);}
+  .btn.secondary{background:transparent; color:var(--navy-deep);}
+  .btn.amber{background:var(--amber); border-color:var(--amber-deep); color:var(--navy-deep);}
+  .btn.teal{background:var(--teal); border-color:var(--teal-deep); color:#fff;}
+  .btn.ghost{background:transparent; border-color:var(--line); color:var(--muted);}
+  .btn.small{padding:8px 14px; font-size:13px;}
+  .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none;}
+  input, textarea, select{
+    width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--amber); outline-offset:1px; border-color:var(--amber);}
+  label{font-size:12.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px;}
+  .field{margin-bottom:14px;}
+  .card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px; box-shadow:0 1px 2px rgba(15,36,56,.03);
+  }
+  .badge{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.08em; padding:5px 11px; border-radius:999px;
+  }
+  .badge.amb{background:rgba(15,36,56,.08); color:var(--navy-deep);}
+  .badge.coord{background:rgba(31,138,112,.12); color:var(--teal-deep);}
+  .badge.stud{background:rgba(227,154,59,.16); color:var(--amber-deep);}
+  .empty{
+    border:1.5px dashed var(--line); border-radius:var(--radius); padding:30px; text-align:center; color:var(--muted);
+  }
+  .empty b{color:var(--navy-deep);}
+
+  
+  .hexlogo svg{display:block;}
+  .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
+
+  
+  #onboarding, #requestRole, #pendingScreen, #declinedScreen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
+  .onb-box{max-width:620px; width:100%;}
+  .onb-logo{display:flex; justify-content:center; margin-bottom:18px;}
+  .onb-title{text-align:center; font-size:34px; margin:0 0 6px;}
+  .onb-sub{text-align:center; color:var(--muted); margin:0 0 34px; font-size:15.5px; line-height:1.6;}
+  .role-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px;}
+  .role-card{
+    border:2px solid var(--line); border-radius:var(--radius); padding:18px 12px; text-align:center;
+    cursor:pointer; background:var(--paper); transition:.15s ease;
+  }
+  .role-card:hover{border-color:var(--amber); transform:translateY(-2px);}
+  .role-card.active{border-color:var(--navy-deep); background:var(--navy-deep); color:var(--chalk);}
+  .role-card .ring{width:42px; height:42px; margin:0 auto 10px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:18px;}
+  .role-card .rname{font-weight:600; font-size:14.5px;}
+  #coordPickWrap{margin-top:4px;}
+
+  
+  .topbar{
+    position:sticky; top:0; z-index:20; background:rgba(246,244,238,.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 28px; max-width:1080px; margin:0 auto;}
+  .brandmini{display:flex; align-items:center; gap:10px;}
+  .brandmini .name{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.1;}
+  .brandmini .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
+  .whoami{display:flex; align-items:center; gap:10px;}
+  .whoami .uname{font-size:13.5px; font-weight:600;}
+  .switchbtn{font-size:12px; color:var(--muted); text-decoration:underline; background:none; border:none; cursor:pointer; padding:0;}
+
+  .tabs{display:flex; gap:6px; overflow-x:auto; padding:10px 28px 0; max-width:1080px; margin:0 auto;}
+  .tab{
+    padding:10px 16px; border-radius:10px 10px 0 0; border:1px solid transparent; border-bottom:none;
+    font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap;
+  }
+  .tab.active{background:var(--paper); border-color:var(--line); color:var(--navy-deep);}
+
+  main{padding:34px 0 90px;}
+
+  
+  .hero{border-radius:22px; padding:44px 40px; margin-bottom:30px; position:relative; overflow:hidden;}
+  .hero.amb{background:linear-gradient(135deg,var(--navy) 0%, var(--navy-deep) 100%); color:var(--chalk);}
+  .hero.coord{background:linear-gradient(135deg,#1c6f5c 0%, var(--teal-deep) 100%); color:#f2fbf8;}
+  .hero.stud{background:linear-gradient(135deg,#f2b563 0%, var(--amber-deep) 100%); color:#2a1c07;}
+  .hero .eyebrow{font-size:12.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700; opacity:.85; margin-bottom:10px;}
+  .hero h1{margin:0 0 14px; font-size:32px; line-height:1.15; color:inherit;}
+  .hero p{max-width:620px; line-height:1.65; font-size:15.5px; opacity:.92; margin:0 0 6px;}
+  .hero .chain{position:absolute; right:-30px; bottom:-30px; opacity:.16;}
+
+  .grid2{display:grid; grid-template-columns:2fr 1fr; gap:22px;}
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px;}
+  .stat{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
+  .stat .n{font-family:'Fraunces',serif; font-size:30px; font-weight:700; color:var(--navy-deep);}
+  .stat .l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px;}
+
+  .section-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .section-title h2{font-size:19px; margin:0;}
+  .section-title p{color:var(--muted); font-size:13.5px; margin:4px 0 0;}
+
+  .list{display:flex; flex-direction:column; gap:12px;}
+  .item{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:16px 18px;}
+  .item-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;}
+  .item-title{font-weight:600; font-size:15px;}
+  .item-meta{font-size:12px; color:var(--muted);}
+  .item-body{font-size:14px; color:#39424D; line-height:1.55;}
+  .item-actions{display:flex; gap:8px; margin-top:10px;}
+  .hexchip{width:24px; height:24px; flex:none;}
+
+  .divider-chain{display:flex; align-items:center; gap:0; margin:34px 0; opacity:.55;}
+  .divider-chain .seg{flex:1; height:1px; background:var(--line);}
+
+  footer{text-align:center; padding:34px 20px 50px; color:var(--muted); font-size:12.5px;}
+
+  @media(max-width:760px){
+    .role-grid{grid-template-columns:1fr;}
+    .grid2{grid-template-columns:1fr;}
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .hero{padding:30px 22px;}
+    .hero h1{font-size:26px;}
+    .topbar-inner{padding:12px 16px;}
+    .tabs{padding:10px 16px 0;}
+    main .wrap{padding:0 16px;}
+  }
+</style>
+</head>
+<body>
+
+<template id="hexlogo-tpl">
+<svg viewBox="0 0 360 190" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round">
+    <polygon points="76,34 128,64 128,124 76,154 24,124 24,64"/>
+    <polygon points="180,34 232,64 232,124 180,154 128,124 128,64"/>
+    <polygon points="284,34 336,64 336,124 284,154 232,124 232,64"/>
+    <line x1="34" y1="120" x2="70" y2="144" stroke-width="4"/>
+    <line x1="138" y1="120" x2="174" y2="144" stroke-width="4"/>
+    <line x1="242" y1="120" x2="278" y2="144" stroke-width="4"/>
+  </g>
+  <text x="76" y="102" font-size="46" text-anchor="middle" dominant-baseline="middle">I</text>
+  <text x="180" y="102" font-size="36" text-anchor="middle" dominant-baseline="middle">Ch</text>
+  <text x="284" y="102" font-size="46" text-anchor="middle" dominant-baseline="middle">C</text>
+</svg>
+</template>
+
+<div id="onboarding">
+  <div class="onb-box">
+    <div class="onb-logo hexlogo" style="width:160px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title">IChC Outreach Program — Ghana</h1>
+    <p class="onb-sub">Ghana's pathway into the International Chemistry Competition — practice questions, prep sessions, mentorship and every announcement, in one place instead of scattered across WhatsApp and Zoom.</p>
+
+    <button class="btn" id="googleSignInBtn" style="width:100%; justify-content:center; background:#fff; color:#1B2430; border:1.5px solid var(--line); margin-bottom:10px;">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9C16.64 14.2 17.64 11.9 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.17.29-1.7V4.97H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+      &nbsp; Continue with Google
+    </button>
+    <p id="googleMsg" style="text-align:center; font-size:13px; margin:-4px 0 6px; min-height:16px; color:#C0392B;"></p>
+    <p style="text-align:center; font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;">
+      Coordinators and students: sign in with the same Google account your Ambassador registered you with.<br>
+      Not added yet, or applying for the first time? Sign in with Google anyway — you'll be able to request access right after.
+    </p>
+  </div>
+</div>
+
+<div id="requestRole" class="hidden">
+  <div class="onb-box">
+    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title" style="font-size:26px;">Almost there, <span id="reqName"></span>.</h1>
+    <p class="onb-sub">You're signed in with Google. This email isn't on the programme roster yet — tell us which role you're requesting, and a little about yourself, so the Ambassador can review it.</p>
+    <div class="role-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="role-card" data-reqrole="coordinator">
+        <div class="ring" style="background:rgba(31,138,112,.14); color:var(--teal-deep);">C</div>
+        <div class="rname">Coordinator</div>
+      </div>
+      <div class="role-card" data-reqrole="student">
+        <div class="ring" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">S</div>
+        <div class="rname">Student</div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:16px;">
+      <label>A short bio — name, school, and anything that helps the Ambassador decide</label>
+      <textarea id="reqBio" rows="4" placeholder="e.g. I'm a final-year student at Achimota School, I've been self-studying organic chemistry for a year and want structured competition prep..."></textarea>
+    </div>
+    <div class="field">
+      <label>Phone number <span style="text-transform:none; font-weight:400;">(optional — for SMS alerts on call sheets and announcements)</span></label>
+      <input id="reqPhone" type="tel" placeholder="e.g. +233 24 000 0000">
+    </div>
+    <div class="field" style="display:flex; align-items:center; gap:7px;">
+      <label style="display:flex; align-items:center; gap:7px; text-transform:none; font-weight:500; color:var(--ink); margin:0;"><input type="checkbox" id="reqNotifySms" style="width:auto;"> Text me new messages</label>
+    </div>
+    <button class="btn amber" id="submitRequestBtn" style="width:100%; justify-content:center; margin-top:16px;">Send request to the Ambassador</button>
+    <button class="btn ghost" id="cancelRequestBtn" style="width:100%; justify-content:center; margin-top:10px;">Sign out</button>
+  </div>
+</div>
+
+<div id="pendingScreen" class="hidden">
+  <div class="onb-box" style="text-align:center;">
+    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title" style="font-size:26px;">Request sent</h1>
+    <p class="onb-sub">Your access request is waiting for the Ambassador to approve it. You'll be able to sign in as soon as it's approved — just come back and sign in with Google again.</p>
+    <button class="btn ghost" id="pendingSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
+  </div>
+</div>
+
+<div id="declinedScreen" class="hidden">
+  <div class="onb-box" style="text-align:center;">
+    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title" style="font-size:26px;">Your request wasn't approved</h1>
+    <p class="onb-sub" id="declineReasonText">The Ambassador didn't approve this request.</p>
+    <button class="btn amber" id="tryAgainBtn" style="width:100%; justify-content:center;">Submit a new request</button>
+    <button class="btn ghost" id="declinedSignOutBtn" style="width:100%; justify-content:center; margin-top:10px;">Sign out</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brandmini">
+        <a href="index.html" style="display:flex; align-items:center; gap:10px;">
+          <div class="hexlogo" style="width:38px; color:var(--navy-deep);"></div>
+          <div class="name">IChC Outreach<small>Ghana Chapter</small></div>
+        </a>
+      </div>
+      <div class="whoami">
+        <span class="badge" id="roleBadge"></span>
+        <span class="uname" id="unameLabel"></span>
+        <button class="switchbtn" id="switchUser">Switch user</button>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+  </div>
+  <main><div class="wrap" id="screen"></div></main>
+  <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench.</footer>
+</div>
+
+<script>
+
+const SUPABASE_CONFIG = {
+  url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
+  anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
+};
+let sb = null;
+let sbReady = false;
+try{
+  if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
+    sb = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    sbReady = true;
+  }
+}catch(e){ console.error('Supabase init failed', e); }
+
+async function sGet(key, shared){
+  if(!shared){
+    try{ const v = localStorage.getItem('ichc:'+key); return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  }
+  if(!sbReady) return null;
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('value').eq('key', key).maybeSingle();
+    if(error) throw error;
+    return data ? data.value : null;
+  }catch(e){ console.error('Supabase get failed', e); return null; }
+}
+async function sSet(key, val, shared){
+  if(!shared){
+    try{ localStorage.setItem('ichc:'+key, JSON.stringify(val)); }catch(e){}
+    return true;
+  }
+  if(!sbReady){ console.error('Supabase isn\'t configured yet — see SUPABASE_CONFIG at the top of this file.'); return false; }
+  try{
+    const { error } = await sb.from('ichc_kv').upsert({ key, value: val });
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error('Supabase set failed', e); return false; }
+}
+async function sDelete(key, shared){
+  if(!shared){ try{ localStorage.removeItem('ichc:'+key); }catch(e){} return true; }
+  if(!sbReady) return false;
+  try{
+    const { error } = await sb.from('ichc_kv').delete().eq('key', key);
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error('Supabase delete failed', e); return false; }
+}
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
+
+let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], accessRequests:[], decisions:[], applicationDecisions:[], exams:[], examAttempts:[], presence:{} };
+let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
+const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+const PRESENCE_PREFIX = 'presence:';
+const presenceKeyFor = (email) => PRESENCE_PREFIX + (email||'').toLowerCase();
+async function loadAllPresence(){
+  // Ask directly for the exact people we know about instead of a wildcard "starts with"
+  // search — the wildcard search proved unreliable on this database and silently
+  // dropped rows. An explicit list of known keys can't do that.
+  if(!sbReady) return {};
+  const emails = new Set();
+  (DB.coordinators||[]).forEach(c=>{ if(c.email) emails.add(c.email.toLowerCase()); });
+  (DB.students||[]).forEach(s=>{ if(s.email) emails.add(s.email.toLowerCase()); });
+  Object.keys(AMBASSADORS).forEach(e=>emails.add(e.toLowerCase()));
+  if(emails.size===0) return {};
+  const keys = [...emails].map(presenceKeyFor);
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('key,value').in('key', keys);
+    if(error) throw error;
+    const map = {};
+    (data||[]).forEach(row=>{
+      const email = row.key.slice(PRESENCE_PREFIX.length);
+      if(email && row.value) map[email] = row.value;
+    });
+    return map;
+  }catch(e){ console.error('Supabase presence load failed', e); return {}; }
+}
+async function loadDB(){
+  DB.coordinators = (await sGet('roster:coordinators', true)) || [];
+  DB.students     = (await sGet('roster:students', true)) || [];
+  DB.announcements= (await sGet('posts:announcements', true)) || [];
+  DB.materials    = (await sGet('posts:materials', true)) || [];
+  DB.callsheets   = (await sGet('posts:callsheets', true)) || [];
+  DB.practice     = (await sGet('posts:practice', true)) || [];
+  DB.comments     = (await sGet('posts:comments', true)) || [];
+  DB.notifications= (await sGet('posts:notifications', true)) || [];
+  DB.library      = (await sGet('posts:library', true)) || [];
+  DB.applications = (await sGet('applications:list', true)) || [];
+  DB.accessRequests = (await sGet('access_requests:list', true)) || [];
+  DB.decisions    = (await sGet('access_decisions:list', true)) || [];
+  DB.applicationDecisions = (await sGet('application_decisions:list', true)) || [];
+  DB.exams        = (await sGet('posts:exams', true)) || [];
+  DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
+  DB.presence     = await loadAllPresence();
+  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'' };
+}
+const KEY_MAP = {
+  coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
+  materials:'posts:materials', callsheets:'posts:callsheets', practice:'posts:practice', comments:'posts:comments',
+  notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
+  accessRequests:'access_requests:list', decisions:'access_decisions:list', applicationDecisions:'application_decisions:list',
+  exams:'posts:exams', examAttempts:'posts:examAttempts'
+};
+const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
+async function saveKey(name){
+  return await sSet(KEY_MAP[name], DB[name], true);
+}
+
+// ---- Live sync: keep every open dashboard current the moment anyone posts an update ----
+let realtimeChannel = null;
+const LIVE_RERENDER_TABS = new Set(['overview','requests','applications','people','feed','announce','library','notifications',
+  'space','students','calls','materials','practice','messages',
+  'welcome','hub','ask']);
+// 'exams' is deliberately excluded: a student's in-progress exam textarea would get
+// wiped mid-typing by any unrelated background update elsewhere in the app. Exam data
+// is still fresh every time someone opens or switches into the tab.
+async function reloadDbKey(key){
+  const prop = KEY_MAP_REVERSE[key];
+  if(!prop) return null;
+  const fallback = (prop==='settings') ? {} : (prop==='presence' ? {} : []);
+  DB[prop] = (await sGet(key, true)) || fallback;
+  return prop;
+}
+function startRealtimeSync(){
+  if(!sbReady || realtimeChannel) return;
+  try{
+    realtimeChannel = sb.channel('ichc-live-sync')
+      .on('postgres_changes', { event:'*', schema:'public', table:'ichc_kv' }, async (payload)=>{
+        const row = payload.new || payload.old;
+        if(!row || !row.key) return;
+
+        // Presence rows are per-person (presence:<email>) so a change to one person's
+        // status only ever patches that one entry — it can never clobber anyone else's.
+        // (Skip the legacy "presence:map" row if it's still lying around from before —
+        // it's not a real person and shouldn't become a fake entry called "map".)
+        if(row.key.startsWith(PRESENCE_PREFIX) && row.key !== PRESENCE_PREFIX+'map'){
+          const email = row.key.slice(PRESENCE_PREFIX.length);
+          if(payload.eventType === 'DELETE' || !row.value){
+            delete DB.presence[email];
+          } else {
+            DB.presence[email] = row.value;
+          }
+          if(currentTab) render(currentTab);
+          return;
+        }
+        if(row.key === PRESENCE_PREFIX+'map') return;
+
+        const prop = await reloadDbKey(row.key);
+        if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
+          render(currentTab);
+        }
+      })
+      .subscribe();
+  }catch(e){ console.error('Realtime sync failed to start', e); }
+}
+function stopRealtimeSync(){
+  if(realtimeChannel && sbReady){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+}
+
+// EmailJS (and most webhook/SMS relays) throttle or reject bursts of near-simultaneous
+// requests with a 429. These queues send one request at a time with a short gap between
+// each, so a broadcast to many recipients doesn't get rate-limited.
+let _emailQueue = Promise.resolve();
+function queueEmailSend(payload){
+  _emailQueue = _emailQueue.then(()=> new Promise(resolve=>{
+    fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    })
+    .then(res=>{ if(!res.ok) console.error('EmailJS send failed', res.status, payload.template_params && payload.template_params.to_email); })
+    .catch(e=>console.error('EmailJS send error', e))
+    .finally(()=> setTimeout(resolve, 1200));
+  }));
+}
+let _smsQueue = Promise.resolve();
+function queueSmsSend(url, payload){
+  _smsQueue = _smsQueue.then(()=> new Promise(resolve=>{
+    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+      .then(res=>{ if(!res.ok) console.error('SMS webhook failed', res.status, payload.to); })
+      .catch(e=>console.error('SMS webhook error', e))
+      .finally(()=> setTimeout(resolve, 800));
+  }));
+}
+
+function audienceFor(coordinatorId){
+  const students = coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students;
+  const coords = coordinatorId ? DB.coordinators.filter(c=>c.id===coordinatorId) : DB.coordinators;
+  return [...students, ...coords];
+}
+async function notifyBroadcast({title, body, coordinatorId, author, role}){
+  const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now() };
+  DB.notifications.push(entry);
+  await saveKey('notifications');
+
+  const recipients = audienceFor(coordinatorId);
+  const s = DB.settings || {};
+
+  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
+    recipients.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
+      queueEmailSend({
+        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
+        template_params: { to_email:r.email, to_name:r.name, from_name:author, subject:title, message:body }
+      });
+    });
+  }
+  if(s.webhookUrl){
+    recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body });
+    });
+  }
+}
+
+// Emails/texts a single applicant directly about an accept/decline decision on their
+// application. Separate from notifyBroadcast because the applicant isn't on the
+// roster yet (or, if declined, never will be) — so they aren't part of any audience.
+async function notifyApplicantDecision({app, decision, reason}){
+  const s = DB.settings || {};
+  const wantsSms = (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone;
+  const title = decision==='accepted'
+    ? `You're in! Your IChC Outreach Program application was accepted`
+    : `Update on your IChC Outreach Program application`;
+  const bodyLines = decision==='accepted'
+    ? [`Hi ${app.name}, great news — your application to the IChC Outreach Program has been accepted.`, `We'll be in touch soon with next steps.`]
+    : [`Hi ${app.name}, thank you for applying to the IChC Outreach Program.`, `We're unable to move forward with your application at this time.`];
+  if(reason) bodyLines.push(reason);
+  const body = bodyLines.join(' ');
+
+  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId && app.email){
+    queueEmailSend({
+      service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
+      template_params: { to_email:app.email, to_name:app.name, from_name:ME.name, subject:title, message:body }
+    });
+  }
+  if(s.webhookUrl && app.phone && wantsSms){
+    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:body });
+  }
+}
+
+function paintLogos(){
+  document.querySelectorAll('.hexlogo').forEach(el=>{
+    if(el.dataset.painted) return;
+    el.dataset.painted = '1';
+    const tpl = document.getElementById('hexlogo-tpl').content.cloneNode(true);
+    el.appendChild(tpl);
+  });
+}
+
+const AMBASSADORS = {
+  'edmondeddah999@gmail.com': 'Eddah Edmond Seyram',
+  'kwamedjabaadjarbeng@gmail.com': 'Djarbeng Kwame Djabaa'
+};
+function isAmbassadorEmail(email){
+  return !!AMBASSADORS[(email||'').toLowerCase()];
+}
+function ambassadorName(email){
+  return AMBASSADORS[(email||'').toLowerCase()] || 'Ambassador';
+}
+
+function initOnboarding(){
+  paintLogos();
+  document.getElementById('googleSignInBtn').addEventListener('click', handleGoogleSignIn);
+}
+
+async function handleGoogleSignIn(){
+  const msg = document.getElementById('googleMsg');
+  if(!sbReady){ msg.textContent = 'Sign-in isn\'t connected yet — check back shortly.'; return; }
+  try{
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href.split('#')[0] }
+    });
+    if(error) throw error;
+  }catch(e){
+    msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador, or use the form below.';
+  }
+}
+
+let googleUser = null, chosenRequestRole = null;
+
+async function resolveGoogleSession(){
+  if(!sbReady) return false;
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session || !session.user || !session.user.email) return false;
+  googleUser = session.user;
+  const email = session.user.email.toLowerCase();
+  const name = (session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || email;
+
+  if(isAmbassadorEmail(email)){
+    ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null };
+    await sSet('me', ME, false);
+    showApp();
+    await maybeShowApprovedToast(email);
+    return true;
+  }
+  const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
+  if(coordMatch){
+    ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null };
+    await sSet('me', ME, false);
+    showApp();
+    await maybeShowApprovedToast(email);
+    return true;
+  }
+  const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
+  if(studentMatch){
+    ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId };
+    await sSet('me', ME, false);
+    showApp();
+    await maybeShowApprovedToast(email);
+    return true;
+  }
+
+  const declineNotice = DB.decisions.find(d=>d.email && d.email.toLowerCase()===email && d.decision==='declined');
+  if(declineNotice){
+    showDeclinedScreen(declineNotice);
+    return true;
+  }
+
+  const pending = DB.accessRequests.find(r=>r.email && r.email.toLowerCase()===email);
+  if(pending){
+    showPendingScreen();
+    return true;
+  }
+
+  showRequestRoleScreen(name);
+  return true;
+}
+
+async function maybeShowApprovedToast(email){
+  const notice = DB.decisions.find(d=>d.email && d.email.toLowerCase()===email && d.decision==='approved');
+  if(!notice) return;
+  DB.decisions = DB.decisions.filter(d=>d.id!==notice.id);
+  await saveKey('decisions');
+  const toast = document.createElement('div');
+  toast.textContent = `✓ You've been approved as a ${notice.role}!` + (notice.reason ? ` — "${notice.reason}"` : '');
+  toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.2); max-width:360px;';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 6000);
+}
+
+function showRequestRoleScreen(name){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('pendingScreen').classList.add('hidden');
+  document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('requestRole').classList.remove('hidden');
+  document.getElementById('reqName').textContent = name;
+  document.getElementById('reqBio').value = '';
+  document.getElementById('reqPhone').value = '';
+  document.getElementById('reqNotifySms').checked = false;
+  chosenRequestRole = null;
+  document.querySelectorAll('[data-reqrole]').forEach(c=>c.classList.remove('active'));
+  paintLogos();
+  // This screen can be shown more than once per session (declined -> "Submit a new
+  // request" -> declined again). Clone-and-replace the interactive elements so we
+  // never stack a second set of listeners on top of the first — without this, a
+  // single click could fire submitAccessRequest() multiple times.
+  document.querySelectorAll('[data-reqrole]').forEach(card=>{
+    const fresh = card.cloneNode(true);
+    card.parentNode.replaceChild(fresh, card);
+    fresh.addEventListener('click', ()=>{
+      document.querySelectorAll('[data-reqrole]').forEach(c=>c.classList.remove('active'));
+      fresh.classList.add('active');
+      chosenRequestRole = fresh.dataset.reqrole;
+    });
+  });
+  const submitBtn = document.getElementById('submitRequestBtn');
+  const freshSubmitBtn = submitBtn.cloneNode(true);
+  submitBtn.parentNode.replaceChild(freshSubmitBtn, submitBtn);
+  freshSubmitBtn.addEventListener('click', submitAccessRequest);
+  const cancelBtn = document.getElementById('cancelRequestBtn');
+  const freshCancelBtn = cancelBtn.cloneNode(true);
+  cancelBtn.parentNode.replaceChild(freshCancelBtn, cancelBtn);
+  freshCancelBtn.addEventListener('click', signOutEverywhere);
+}
+
+async function submitAccessRequest(){
+  const bio = document.getElementById('reqBio').value.trim();
+  const phone = document.getElementById('reqPhone').value.trim();
+  const notifySms = document.getElementById('reqNotifySms').checked;
+  if(!chosenRequestRole){ alert('Please choose whether you\'re requesting Coordinator or Student access.'); return; }
+  if(!bio){ alert('Please add a short bio — your name, school, and anything that helps the Ambassador decide.'); return; }
+  if(notifySms && !phone){ alert('Add a phone number to receive text alerts, or untick that option.'); return; }
+  const email = googleUser.email.toLowerCase();
+  const name = (googleUser.user_metadata && (googleUser.user_metadata.full_name || googleUser.user_metadata.name)) || email;
+  DB.decisions = DB.decisions.filter(d=>!(d.email && d.email.toLowerCase()===email));
+  await saveKey('decisions');
+  DB.accessRequests.push({ id: uid(), name, email, role: chosenRequestRole, bio, phone, notifySms, date: today() });
+  await saveKey('accessRequests');
+  showPendingScreen();
+}
+
+function showPendingScreen(){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('requestRole').classList.add('hidden');
+  document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('pendingScreen').classList.remove('hidden');
+  paintLogos();
+  document.getElementById('pendingSignOutBtn').addEventListener('click', signOutEverywhere);
+}
+
+function showDeclinedScreen(notice){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('requestRole').classList.add('hidden');
+  document.getElementById('pendingScreen').classList.add('hidden');
+  document.getElementById('declinedScreen').classList.remove('hidden');
+  document.getElementById('declineReasonText').textContent = notice.reason
+    ? `The Ambassador didn't approve this request: "${notice.reason}"`
+    : 'The Ambassador didn\'t approve this request this time.';
+  paintLogos();
+  document.getElementById('tryAgainBtn').addEventListener('click', async ()=>{
+    DB.decisions = DB.decisions.filter(d=>d.id!==notice.id);
+    await saveKey('decisions');
+    const name = (googleUser.user_metadata && (googleUser.user_metadata.full_name || googleUser.user_metadata.name)) || googleUser.email;
+    showRequestRoleScreen(name);
+  });
+  document.getElementById('declinedSignOutBtn').addEventListener('click', signOutEverywhere);
+}
+
+async function signOutEverywhere(){
+  if(sbReady) await sb.auth.signOut();
+  googleUser = null;
+  document.getElementById('requestRole').classList.add('hidden');
+  document.getElementById('pendingScreen').classList.add('hidden');
+  document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('onboarding').classList.remove('hidden');
+}
+
+
+let currentTab = null;
+function showApp(){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  paintLogos();
+  document.getElementById('unameLabel').textContent = ME.name + (ME.email ? ' · ' + ME.email : '');
+  const rb = document.getElementById('roleBadge');
+  rb.textContent = ME.role === 'ambassador' ? 'Ambassador' : ME.role === 'coordinator' ? 'Coordinator' : 'Student';
+  rb.className = 'badge ' + (ME.role==='ambassador'?'amb':ME.role==='coordinator'?'coord':'stud');
+  document.getElementById('switchUser').addEventListener('click', switchUser);
+  buildTabs();
+  startPresenceLoop();
+  startRealtimeSync();
+}
+async function switchUser(){
+  if(presenceTimer) clearInterval(presenceTimer);
+  stopRealtimeSync();
+  if(ME && ME.email && sbReady){
+    delete DB.presence[ME.email.toLowerCase()];
+    await sDelete(presenceKeyFor(ME.email), true);
+  }
+  if(sbReady) await sb.auth.signOut();
+  ME = null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('onboarding').classList.remove('hidden');
+}
+function buildTabs(){
+  const tabsFor = {
+    ambassador:[['overview','Overview'],['requests','Access requests'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
+  };
+  const tabs = tabsFor[ME.role];
+  const el = document.getElementById('tabs');
+  el.innerHTML = tabs.map(([k,l],i)=>`<div class="tab${i===0?' active':''}" data-tab="${k}">${l}</div>`).join('');
+  el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>{
+    el.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    render(t.dataset.tab);
+  }));
+  render(tabs[0][0]);
+}
+function render(tab){
+  stopExamRuntime();
+  currentTab = tab;
+  const s = document.getElementById('screen');
+  if(tab==='notifications'){ s.innerHTML = notificationsView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='settings'){ s.innerHTML = settingsView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='library'){ s.innerHTML = libraryView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='exams'){ s.innerHTML = examsView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='applications'){ s.innerHTML = applicationsView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='requests'){ s.innerHTML = requestsView(); paintLogos(); wireHandlers(tab); return; }
+  if(ME.role==='ambassador') s.innerHTML = ambassadorView(tab);
+  if(ME.role==='coordinator') s.innerHTML = coordinatorView(tab);
+  if(ME.role==='student') s.innerHTML = studentView(tab);
+  paintLogos();
+  wireHandlers(tab);
+}
+
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function linkify(str){
+  const escaped = escapeHtml(str);
+  const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+  return escaped.replace(urlPattern, (match)=>{
+    const href = match.startsWith('http') ? match : 'https://' + match;
+    return `<a href="${href}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline; word-break:break-all;">${match}</a>`;
+  });
+}
+function linkifyUrl(str){
+  if(!str) return '';
+  const href = /^https?:\/\//i.test(str) ? str : 'https://' + str;
+  return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline; word-break:break-all;">${escapeHtml(str)}</a>`;
+}
+function chainDivider(){
+  return `<div class="divider-chain"><div class="seg"></div><div class="hexlogo" style="width:60px; color:var(--line);"></div><div class="seg"></div></div>`;
+}
+function coordName(id){ const c = DB.coordinators.find(c=>c.id===id); return c ? c.name : 'Unassigned'; }
+
+function accraDate(dateTimeLocalValue){
+  if(!dateTimeLocalValue) return null;
+  const d = new Date(dateTimeLocalValue + ':00Z');
+  return isNaN(d.getTime()) ? null : d;
+}
+function sessionStatus(cs){
+  if(cs.cancelled) return 'Cancelled';
+  const start = accraDate(cs.startAt);
+  const end = accraDate(cs.endAt);
+  if(!start) return 'Upcoming';
+  const now = new Date();
+  if(now < start) return 'Upcoming';
+  if(end && now > end) return 'Completed';
+  if(!end && now > new Date(start.getTime() + 2*60*60*1000)) return 'Completed';
+  return 'Active';
+}
+function sessionStatusBadge(cs){
+  const status = sessionStatus(cs);
+  const styles = {
+    Upcoming:  'background:rgba(15,36,56,.08); color:var(--navy-deep);',
+    Active:    'background:rgba(31,138,112,.15); color:var(--teal-deep);',
+    Completed: 'background:rgba(0,0,0,.06); color:var(--muted);',
+    Cancelled: 'background:rgba(192,57,43,.1); color:#C0392B;'
+  };
+  const dot = status === 'Active' ? '<span style="width:7px; height:7px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:5px;"></span>' : '';
+  return `<span class="badge" style="${styles[status]}">${dot}${status}</span>`;
+}
+function fmtSessionTime(cs){
+  const start = accraDate(cs.startAt);
+  if(!start) return '';
+  const end = accraDate(cs.endAt);
+  const opts = { day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit', timeZone:'Africa/Accra' };
+  const startStr = start.toLocaleString('en-GB', opts);
+  if(!end) return startStr + ' (Accra time)';
+  const endOpts = { hour:'numeric', minute:'2-digit', timeZone:'Africa/Accra' };
+  return `${startStr} – ${end.toLocaleString('en-GB', endOpts)} (Accra time)`;
+}
+
+function applicationStages(student){
+  const inRoster = !!student;
+  const hasCoord = inRoster && !!student.coordinatorId;
+  const started = inRoster && !!student.started;
+  return [
+    { label:'Application Submitted', done:true },
+    { label:'Under Review', done:true },
+    { label:'Accepted', done:inRoster },
+    { label:'Coordinator Assigned', done:hasCoord },
+    { label:'Programme Started', done:started }
+  ];
+}
+function applicationStageStepper(student){
+  const stages = applicationStages(student);
+  return `<div style="display:flex; flex-direction:column; gap:10px;">
+    ${stages.map((st,i)=>`
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:24px; height:24px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; ${st.done ? 'background:var(--teal); color:#fff;' : 'background:rgba(0,0,0,.06); color:var(--muted);'}">${st.done ? '✓' : (i+1)}</div>
+        <span style="font-size:14px; ${st.done ? 'color:var(--ink); font-weight:600;' : 'color:var(--muted);'}">${st.label}</span>
+      </div>`).join('')}
+  </div>`;
+}
+function currentStageLabel(student){
+  const stages = applicationStages(student);
+  const done = stages.filter(s=>s.done);
+  return done.length ? done[done.length-1].label : stages[0].label;
+}
+
+const ACTIVE_WINDOW_MS = 2 * 60 * 1000;
+function formatLastSeen(iso){
+  if(!iso) return 'Never signed in';
+  const then = new Date(iso).getTime();
+  const diffMs = Date.now() - then;
+  if(diffMs < ACTIVE_WINDOW_MS) return null;
+  const mins = Math.floor(diffMs / 60000);
+  if(mins < 60) return `Last seen ${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return `Last seen ${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if(days < 7) return `Last seen ${days}d ago`;
+  return `Last seen ${fmtDate(new Date(then).toISOString().slice(0,10))}`;
+}
+function presenceBadge(email){
+  if(!email) return '<span class="badge ghost" style="background:rgba(0,0,0,.05); color:var(--muted);">No account yet</span>';
+  const rec = DB.presence[email.toLowerCase()];
+  const lastSeenText = rec ? formatLastSeen(rec.lastSeen) : null;
+  if(rec && !lastSeenText){
+    return '<span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--teal-deep); font-weight:600;"><span style="width:8px; height:8px; border-radius:50%; background:var(--teal); display:inline-block;"></span>Active now</span>';
+  }
+  const label = rec ? formatLastSeen(rec.lastSeen) : 'Never signed in';
+  return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--muted);"><span style="width:8px; height:8px; border-radius:50%; background:var(--line); display:inline-block;"></span>${escapeHtml(label)}</span>`;
+}
+async function touchPresence(){
+  if(!ME || !ME.email || !sbReady) return;
+  const rec = { name: ME.name, role: ME.role, lastSeen: new Date().toISOString() };
+  DB.presence[ME.email.toLowerCase()] = rec;
+  // Each person writes only their own row now — never the whole presence map —
+  // so nobody's heartbeat can overwrite anyone else's status.
+  await sSet(presenceKeyFor(ME.email), rec, true);
+}
+async function refreshPresence(){
+  if(!sbReady) return;
+  DB.presence = await loadAllPresence();
+}
+let presenceTimer = null;
+function startPresenceLoop(){
+  touchPresence();
+  if(presenceTimer) clearInterval(presenceTimer);
+  presenceTimer = setInterval(async ()=>{
+    await touchPresence();
+    await refreshPresence();
+    const presenceTabs = ['people','students','welcome','calls','hub','space'];
+    if(presenceTabs.includes(currentTab)) {
+      render(currentTab);
+    }
+  }, 45000);
+}
+function myStudentStatus(){ const s = DB.students.find(s=>s.id===ME.id); return s ? s.status : 'Accepted'; }
+async function syncPublicDirectory(){
+  const regions = new Set(DB.coordinators.map(c=>c.region).filter(Boolean));
+  const directory = {
+    studentCount: DB.students.length,
+    coordinatorCount: DB.coordinators.length,
+    regionCount: regions.size || DB.coordinators.length,
+    materialsCount: DB.materials.length,
+    sessionsCount: DB.callsheets.length,
+    coordinators: DB.coordinators.map(c => ({ name: c.name, subject: c.subject||'', region: c.region||'', bio: c.bio||'' }))
+  };
+  await sSet('public:directory', directory, true);
+}
+
+function ambassadorView(tab){
+  if(tab==='overview'){
+    const totalPosts = DB.materials.length + DB.callsheets.length + DB.practice.length + DB.exams.length;
+    const activeSessions = DB.callsheets.filter(c=>sessionStatus(c)==='Active');
+    const upcomingSessions = DB.callsheets.filter(c=>sessionStatus(c)==='Upcoming');
+    const studentsStarted = DB.students.filter(s=>s.started).length;
+    const studentsAssigned = DB.students.filter(s=>s.coordinatorId).length;
+    return `
+    <div class="hero amb">
+      <div class="eyebrow">Ambassador desk</div>
+      <h1>Welcome back, ${escapeHtml(ME.name)}.</h1>
+      <p>The International Chemistry Competition brings together some of the sharpest young chemists on the planet — and the IChC Outreach Program Ghana exists so that a student in Accra, Kumasi or Tamale has just as fair a shot at that stage as anyone else. This is programme command central: the one place where every coordinator's call sheet, every student's question, and every announcement lands. Your job is to keep that pipeline moving.</p>
+    </div>
+    ${activeSessions.length ? `<div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
+      <span style="width:9px; height:9px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:6px;"></span>
+      <b style="color:var(--teal-deep);">${activeSessions.length} session${activeSessions.length===1?'':'s'} active right now</b> — ${activeSessions.map(c=>escapeHtml(c.title)).join(', ')}
+    </div>` : ''}
+    ${DB.applications.length ? `<div class="card" style="margin-bottom:14px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${DB.applications.length} new application${DB.applications.length===1?'':'s'}</b> waiting — check the <b>Applications</b> tab.</div>` : ''}
+    ${DB.accessRequests.length ? `<div class="card" style="margin-bottom:14px; border-color:var(--teal-deep); background:rgba(31,138,112,.08);"><b>${DB.accessRequests.length} access request${DB.accessRequests.length===1?'':'s'}</b> pending — check the <b>Access requests</b> tab.</div>` : ''}
+    <div class="stat-row">
+      <div class="stat"><div class="n">${DB.coordinators.length}</div><div class="l">Coordinators</div></div>
+      <div class="stat"><div class="n">${DB.students.length}</div><div class="l">Students</div></div>
+      <div class="stat"><div class="n">${studentsAssigned}</div><div class="l">Assigned</div></div>
+      <div class="stat"><div class="n">${studentsStarted}</div><div class="l">Programme started</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="n">${activeSessions.length}</div><div class="l" style="color:var(--teal-deep);">Active now</div></div>
+      <div class="stat"><div class="n">${upcomingSessions.length}</div><div class="l">Upcoming</div></div>
+      <div class="stat"><div class="n">${totalPosts}</div><div class="l">Resources posted</div></div>
+      <div class="stat"><div class="n">${DB.comments.length}</div><div class="l">Conversations</div></div>
+    </div>
+    <div class="section-title" style="margin-top:10px;"><div><h2>The four pillars</h2></div></div>
+    <div class="grid2" style="margin-bottom:6px;">
+      <div class="card"><b>Practice questions.</b> A steady drip of real, exam‑style chemistry problems, so competition thinking becomes second nature.</div>
+      <div class="card"><b>Competition prep.</b> Structured sessions and call sheets that map onto how the IChC is actually marked and timed.</div>
+      <div class="card"><b>Mentorship.</b> Coordinators giving students someone to ask "is this normal to find hard?"</div>
+      <div class="card"><b>Community.</b> A cohort of Ghanaian students who know each other's names, not just each other's scores.</div>
+    </div>`;
+  }
+  if(tab==='people'){
+    return `
+    <div class="section-title"><div><h2>Coordinators</h2><p>The mentors running each student group. Add them here first — this is what lets them sign in.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px; align-items:end;">
+        <div class="field" style="margin:0;"><label>Name</label><input id="cName" placeholder="Full name"></div>
+        <div class="field" style="margin:0;"><label>Email (for sign-in &amp; notifications)</label><input id="cEmail" type="email" placeholder="name@email.com"></div>
+        <div class="field" style="margin:0;"><label>Focus area</label><input id="cSubject" placeholder="e.g. Organic Chemistry"></div>
+        <div class="field" style="margin:0;"><label>Region</label><input id="cRegion" placeholder="e.g. Accra"></div>
+        <div class="field" style="margin:0;"><label>Phone <span style="text-transform:none; font-weight:400;">(for SMS)</span></label><input id="cPhone" type="tel" placeholder="e.g. +233 24 000 0000"></div>
+      </div>
+      <button class="btn amber small" id="addCoordBtn" style="margin-top:10px;">Add coordinator</button>
+    </div>
+    <div class="list" style="margin-bottom:30px;">
+      ${DB.coordinators.length ? DB.coordinators.map(c=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(c.name)}</span><span class="item-meta">joined ${fmtDate(c.joined)}</span></div>
+          <div class="item-body">${escapeHtml(c.email||'no email on file')} · ${DB.students.filter(s=>s.coordinatorId===c.id).length} student(s) · ${presenceBadge(c.email)}</div>
+          <div class="item-body" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+            <input data-cfield="subject" data-coord-id="${c.id}" value="${escapeHtml(c.subject||'')}" placeholder="Focus area" style="max-width:160px;">
+            <input data-cfield="region" data-coord-id="${c.id}" value="${escapeHtml(c.region||'')}" placeholder="Region" style="max-width:130px;">
+            <input data-cfield="phone" data-coord-id="${c.id}" value="${escapeHtml(c.phone||'')}" placeholder="Phone (for SMS)" style="max-width:150px;">
+            <input data-cfield="bio" data-coord-id="${c.id}" value="${escapeHtml(c.bio||'')}" placeholder="Short public bio (shown on website)" style="flex:1; min-width:180px;">
+            <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
+              <input type="checkbox" data-sms-for="${c.id}" data-sms-scope="coord" ${c.notifySms?'checked':''} style="width:auto;"> Text updates
+            </label>
+            <button class="btn teal small" data-save-coord="${c.id}">Save</button>
+          </div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-coord="${c.id}">Remove</button></div>
+        </div>`).join('') : `<div class="empty">No coordinators yet. <b>Add the first one above</b> to start building your team.</div>`}
+    </div>
+    ${chainDivider()}
+    <div class="section-title" style="margin-top:24px;"><div><h2>Students</h2><p>Everyone accepted into the outreach programme. Add them here first — this is what lets them sign in.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px; align-items:end;">
+        <div class="field" style="margin:0;"><label>Name</label><input id="sName" placeholder="Full name"></div>
+        <div class="field" style="margin:0;"><label>Email (for sign-in &amp; notifications)</label><input id="sEmail" type="email" placeholder="name@email.com"></div>
+        <div class="field" style="margin:0;"><label>Assign coordinator</label>
+          <select id="sCoord"><option value="">Unassigned</option>${DB.coordinators.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}</select>
+        </div>
+        <div class="field" style="margin:0;"><label>Application status</label>
+          <select id="sStatus"><option>Accepted</option><option>Applied</option><option>Waitlisted</option></select>
+        </div>
+        <div class="field" style="margin:0;"><label>Phone <span style="text-transform:none; font-weight:400;">(for SMS)</span></label><input id="sPhone" type="tel" placeholder="e.g. +233 24 000 0000"></div>
+      </div>
+      <button class="btn amber small" id="addStudentBtn" style="margin-top:10px;">Add student</button>
+    </div>
+    <div class="list">
+      ${DB.students.length ? DB.students.map(s=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">${s.group?('Group '+escapeHtml(s.group)+' · '):''}joined ${fmtDate(s.joined)}</span></div>
+          <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+            <span>${escapeHtml(s.email||'no email on file')} · ${presenceBadge(s.email)}</span>
+            <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
+              ${['Accepted','Applied','Waitlisted'].map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('')}
+            </select>
+            <select data-coord-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
+              <option value="">Unassigned</option>
+              ${DB.coordinators.map(c=>`<option value="${c.id}" ${s.coordinatorId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+            </select>
+            <input data-group-for-amb="${s.id}" value="${escapeHtml(s.group||'')}" placeholder="Group" style="max-width:80px; padding:6px 10px; font-size:12.5px;">
+            <input data-phone-for-amb="${s.id}" type="tel" value="${escapeHtml(s.phone||'')}" placeholder="Phone (for SMS)" style="max-width:150px; padding:6px 10px; font-size:12.5px;">
+            <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
+              <input type="checkbox" data-started-for="${s.id}" ${s.started?'checked':''} style="width:auto;"> Programme started
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
+              <input type="checkbox" data-sms-for="${s.id}" data-sms-scope="student" ${s.notifySms?'checked':''} style="width:auto;"> Text updates
+            </label>
+            <button class="btn teal small" data-save-student-amb="${s.id}">Save</button>
+          </div>
+          <div class="item-body" style="margin-top:6px; font-size:12px; color:var(--muted);">Stage: <b>${currentStageLabel(s)}</b></div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-student="${s.id}">Remove</button></div>
+        </div>`).join('') : `<div class="empty">No students yet. Once applications close, <b>add each confirmed student</b> above.</div>`}
+    </div>`;
+  }
+  if(tab==='feed'){
+    const items = combinedFeed();
+    return `
+    <div class="section-title"><div><h2>Activity feed</h2><p>Every call sheet, resource, practice question and message — across all coordinators — in one line of sight.</p></div></div>
+    <div class="list">${items.length ? items.map(feedItem).join('') : `<div class="empty">Nothing's been posted yet. As coordinators publish call sheets and materials, they'll appear here automatically.</div>`}</div>`;
+  }
+  if(tab==='announce'){
+    return announceView(true);
+  }
+}
+
+function myStudents(){ return DB.students.filter(s=>s.coordinatorId===ME.id); }
+function coordinatorView(tab){
+  if(tab==='space'){
+    const upcoming = DB.callsheets.filter(c=>c.coordinatorId===ME.id && !c.cancelled && (sessionStatus(c)==='Upcoming' || sessionStatus(c)==='Active')).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
+    return `
+    <div class="hero coord">
+      <div class="eyebrow">Coordinator space</div>
+      <h1>Good to see you, ${escapeHtml(ME.name)}.</h1>
+      <p>Every student you're guiding is training for the same stage: the International Chemistry Competition. You're the person they message the night before a mock exam, and that matters more than any of us usually say. This space is for keeping your group moving — post the call sheet, drop the reading, set the week's practice question, and answer the questions that come back. Everything you publish here reaches your students immediately and stays visible to the Ambassador desk, so nothing you do goes unseen.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="n">${myStudents().length}</div><div class="l">My students</div></div>
+      <div class="stat"><div class="n">${DB.materials.filter(m=>m.coordinatorId===ME.id).length}</div><div class="l">Materials posted</div></div>
+      <div class="stat"><div class="n">${DB.callsheets.filter(c=>c.coordinatorId===ME.id).length}</div><div class="l">Call sheets</div></div>
+      <div class="stat"><div class="n">${DB.practice.filter(p=>p.coordinatorId===ME.id).length}</div><div class="l">Practice questions</div></div>
+    </div>
+    ${upcoming ? `<div class="card"><b>Next up:</b> ${escapeHtml(upcoming.title)} — ${fmtSessionTime(upcoming)} ${sessionStatusBadge(upcoming)}</div>` : `<div class="empty">No upcoming call sheet — head to <b>Call sheets</b> to set your next session.</div>`}`;
+  }
+  if(tab==='students'){
+    const mine = myStudents();
+    const groups = [...new Set(mine.map(s=>s.group).filter(Boolean))];
+    return `
+    <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster.</p></div></div>
+    <div class="list">
+      ${mine.length ? mine.map(s=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">joined ${fmtDate(s.joined)}</span></div>
+          <div class="item-body">${presenceBadge(s.email)}</div>
+          <div class="item-body" style="display:flex; align-items:center; gap:10px;">
+            <label style="margin:0; text-transform:none; font-weight:500; color:var(--ink);">Group:</label>
+            <input style="max-width:140px;" data-group-for="${s.id}" value="${escapeHtml(s.group||'')}" placeholder="e.g. A">
+            <button class="btn ghost small" data-save-group="${s.id}">Save</button>
+          </div>
+        </div>`).join('') : `<div class="empty">No students assigned to you yet. Once the Ambassador places students on your roster, they'll show up here.</div>`}
+    </div>
+    ${groups.length ? `<p style="margin-top:16px; font-size:13px; color:var(--muted);">Active groups: ${groups.map(g=>`<span class="badge coord" style="margin-right:6px;">Group ${escapeHtml(g)}</span>`).join('')}</p>` : ''}`;
+  }
+  if(tab==='calls'){
+    const mine = DB.callsheets.filter(c=>c.coordinatorId===ME.id).sort((a,b)=>(b.startAt||'').localeCompare(a.startAt||''));
+    return `
+    <div class="section-title"><div><h2>Call sheets</h2><p>Publish your session schedule — status updates automatically as the session starts and ends, in Accra time.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="field" style="margin:0;"><label>Session title</label><input id="callTitle" placeholder="e.g. Stoichiometry drill"></div>
+        <div class="field" style="margin:0;"><label>Meeting link</label><input id="callLink" placeholder="Zoom / Meet link"></div>
+        <div class="field" style="margin:0;"><label>Starts (Accra time)</label><input id="callStart" type="datetime-local"></div>
+        <div class="field" style="margin:0;"><label>Ends (Accra time)</label><input id="callEnd" type="datetime-local"></div>
+      </div>
+      <div class="field"><label>Notes for students</label><textarea id="callNotes" rows="2" placeholder="What to bring or review beforehand"></textarea></div>
+      <button class="btn teal small" id="addCallBtn">Post call sheet</button>
+    </div>
+    <div class="list">
+      ${mine.length ? mine.map(c=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
+          <div class="item-meta" style="margin-bottom:6px;">${fmtSessionTime(c)}</div>
+          <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Link: ${linkifyUrl(c.link)}`:''}</div>
+          <div class="item-actions">
+            ${!c.cancelled ? `<button class="btn ghost small" data-cancel-call="${c.id}">Cancel session</button>` : `<button class="btn ghost small" data-uncancel-call="${c.id}">Un-cancel</button>`}
+            <button class="btn ghost small" data-remove-call="${c.id}">Remove</button>
+          </div>
+        </div>`).join('') : `<div class="empty">No call sheets posted yet. Your first one appears here — and instantly for your students.</div>`}
+    </div>`;
+  }
+  if(tab==='materials'){
+    const mine = DB.materials.filter(m=>m.coordinatorId===ME.id).sort((a,b)=>b.date.localeCompare(a.date));
+    return `
+    <div class="section-title"><div><h2>Materials</h2><p>Notes, slide decks, past papers, worked examples — anything your students can revisit later.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="matTitle" placeholder="e.g. Acid–base equilibria cheat sheet"></div>
+      <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="matDesc" rows="2" placeholder="What it covers and how to use it"></textarea></div>
+      <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="matLink" placeholder="Drive / PDF link"></div>
+      <button class="btn teal small" id="addMatBtn">Post material</button>
+    </div>
+    <div class="list">
+      ${mine.length ? mine.map(m=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(m.title)}</span><span class="item-meta">${fmtDate(m.date)}</span></div>
+          <div class="item-body">${linkify(m.body)} ${m.link?`<br>${linkifyUrl(m.link)}`:''}</div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-mat="${m.id}">Remove</button></div>
+        </div>`).join('') : `<div class="empty">Nothing posted yet — your first resource will land in every one of your students' hubs.</div>`}
+    </div>`;
+  }
+  if(tab==='practice'){
+    const mine = DB.practice.filter(p=>p.coordinatorId===ME.id).sort((a,b)=>b.date.localeCompare(a.date));
+    return `
+    <div class="section-title"><div><h2>Practice question</h2><p>One sharp problem a week keeps competition instincts warm.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="pracQ" rows="3" placeholder="Write the practice question here"></textarea></div>
+      <div class="field" style="margin:0 0 10px;"><label>Hint / answer (optional, shown separately)</label><input id="pracA" placeholder="Optional hint or worked answer"></div>
+      <button class="btn teal small" id="addPracBtn">Post practice question</button>
+    </div>
+    <div class="list">
+      ${mine.length ? mine.map(p=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">Posted ${fmtDate(p.date)}</span></div>
+          <div class="item-body">${linkify(p.question)}${p.answer?`<br><span style="color:var(--muted);">Hint: ${linkify(p.answer)}</span>`:''}</div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-prac="${p.id}">Remove</button></div>
+        </div>`).join('') : `<div class="empty">No practice question posted this week yet.</div>`}
+    </div>`;
+  }
+  if(tab==='messages'){
+    const relevant = DB.comments.filter(c=>c.coordinatorId===ME.id);
+    return `
+    <div class="section-title"><div><h2>Messages</h2><p>Questions from your students, and replies from you and the Ambassador desk.</p></div></div>
+    ${commentThread(relevant, ME.id)}`;
+  }
+}
+
+function studentView(tab){
+  if(tab==='welcome'){
+    const myRecord = DB.students.find(s=>s.id===ME.id);
+    const upcomingSession = DB.callsheets
+      .filter(c=>c.coordinatorId===ME.coordinatorId && sessionStatus(c)==='Upcoming')
+      .sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
+    const activeSession = DB.callsheets
+      .filter(c=>c.coordinatorId===ME.coordinatorId && sessionStatus(c)==='Active')[0];
+    return `
+    <div class="hero stud">
+      <div class="eyebrow">Your space</div>
+      <h1>Welcome, ${escapeHtml(ME.name)}.</h1>
+      <p>You made it into the IChC Outreach Program Ghana — Ghana's pathway toward the International Chemistry Competition. Someone looked at what you've got and decided it was worth investing in. From here, expect a steady rhythm: practice questions, structured competition prep, and a mentor genuinely in your corner.</p>
+    </div>
+
+    ${activeSession ? `
+    <div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="width:10px; height:10px; border-radius:50%; background:var(--teal); display:inline-block;"></span>
+        <b style="color:var(--teal-deep);">Session active now</b>
+      </div>
+      <div style="font-size:15px; font-weight:600;">${escapeHtml(activeSession.title)}</div>
+      <div style="font-size:13px; color:var(--muted); margin:4px 0 8px;">${fmtSessionTime(activeSession)}</div>
+      ${activeSession.link ? `<a href="${escapeHtml(activeSession.link.startsWith('http')?activeSession.link:'https://'+activeSession.link)}" target="_blank" rel="noopener" class="btn teal small">Join session →</a>` : ''}
+    </div>` : upcomingSession ? `
+    <div class="card" style="margin-bottom:16px; border-color:var(--line);">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:6px;">Next session</div>
+      <div style="font-size:15px; font-weight:600;">${escapeHtml(upcomingSession.title)}</div>
+      <div style="font-size:13px; color:var(--muted); margin-top:4px;">${fmtSessionTime(upcomingSession)}</div>
+    </div>` : ''}
+
+    <div class="grid2" style="margin-bottom:14px; align-items:start;">
+      <div class="card">
+        <div style="font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:12px;">Application status</div>
+        ${applicationStageStepper(myRecord)}
+      </div>
+      <div class="card">
+        <div style="font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:10px;">Your programme</div>
+        <div style="margin-bottom:8px;"><b>Coordinator:</b> ${escapeHtml(coordName(ME.coordinatorId))}${ME.coordinatorId ? ` · ${presenceBadge((DB.coordinators.find(c=>c.id===ME.coordinatorId)||{}).email)}` : '<span style="color:var(--muted);"> — not assigned yet</span>'}</div>
+        ${myRecord && myRecord.group ? `<div style="margin-bottom:8px;"><b>Group:</b> ${escapeHtml(myRecord.group)}</div>` : ''}
+        <div><b>Status:</b> <span class="badge stud">${escapeHtml(myStudentStatus())}</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><b>Practice questions.</b> A new one dropped regularly — attempt it before you see the hint.</div>
+      <div class="card"><b>Competition prep.</b> Sessions built around how the actual IChC paper is timed and marked.</div>
+      <div class="card"><b>Mentorship.</b> Your coordinator is one message away — use "Ask a question."</div>
+      <div class="card"><b>Community.</b> You're one of a cohort chasing the same goal — you're not alone.</div>
+    </div>`;
+  }
+  if(tab==='hub'){
+    const calls = DB.callsheets.filter(c=>c.coordinatorId===ME.coordinatorId).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
+    const mats = DB.materials.filter(m=>m.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+    return `
+    <div class="section-title"><div><h2>Call sheets</h2><p>Your coordinator's session schedule — status updates automatically.</p></div></div>
+    <div class="list" style="margin-bottom:26px;">
+      ${calls.length ? calls.map(c=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
+          <div class="item-meta" style="margin-bottom:6px;">${fmtSessionTime(c)}</div>
+          <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Join: ${linkifyUrl(c.link)}`:''}</div>
+        </div>`).join('') : `<div class="empty">No sessions scheduled yet — your coordinator will post one soon.</div>`}
+    </div>
+    ${chainDivider()}
+    <div class="section-title" style="margin-top:24px;"><div><h2>Materials</h2><p>Everything your coordinator has shared for you to study.</p></div></div>
+    <div class="list">
+      ${mats.length ? mats.map(m=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(m.title)}</span><span class="item-meta">${fmtDate(m.date)}</span></div>
+          <div class="item-body">${linkify(m.body)} ${m.link?`<br>${linkifyUrl(m.link)}`:''}</div>
+        </div>`).join('') : `<div class="empty">Nothing posted yet — check back soon.</div>`}
+    </div>`;
+  }
+  if(tab==='announce'){
+    return announceView(false);
+  }
+  if(tab==='practice'){
+    const mine = DB.practice.filter(p=>p.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+    const latest = mine[0];
+    return `
+    <div class="section-title"><div><h2>Practice question</h2><p>Try it before you scroll to the hint.</p></div></div>
+    ${latest ? `
+      <div class="card" style="margin-bottom:20px;">
+        <div class="badge stud" style="margin-bottom:10px;">This week</div>
+        <div style="font-size:16px; line-height:1.6;">${escapeHtml(latest.question)}</div>
+        ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(latest.answer)}</p></details>` : ''}
+      </div>` : `<div class="empty">No practice question yet — your coordinator will post one soon.</div>`}
+    ${mine.length>1 ? `<h3 style="font-size:15px; margin:20px 0 10px;">Past questions</h3><div class="list">${mine.slice(1).map(p=>`
+      <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(p.question)}</div></div>`).join('')}</div>` : ''}`;
+  }
+  if(tab==='ask'){
+    const relevant = DB.comments.filter(c=>c.coordinatorId===ME.coordinatorId);
+    return `
+    <div class="section-title"><div><h2>Ask a question</h2><p>Talk to your coordinator and the Ambassador desk — and see what your groupmates are asking too.</p></div></div>
+    ${commentThread(relevant, ME.coordinatorId)}`;
+  }
+}
+
+function requestsView(){
+  if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review access requests.</div>`;
+  const sorted = [...DB.accessRequests].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Access requests</h2><p>People who signed in with Google and asked to join — approve to add them straight to the roster with sign-in already working. Add a reason if you like; it's shown to the applicant.</p></div></div>
+  <div class="list">
+    ${sorted.length ? sorted.map(r=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(r.name)}</span><span class="item-meta">${fmtDate(r.date)}</span></div>
+        <div class="item-body">${escapeHtml(r.email)}${r.phone?(' · '+escapeHtml(r.phone)):''} · requesting <b>${escapeHtml(r.role)}</b> access</div>
+        ${r.bio ? `<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b>Bio:</b> ${linkify(r.bio)}</div>` : ''}
+        <div class="field" style="margin:10px 0 0;"><input data-reason-for="${r.id}" placeholder="Reason (optional) — shown to the applicant"></div>
+        <div class="item-actions">
+          <button class="btn teal small" data-approve-req="${r.id}">Approve as ${escapeHtml(r.role)}</button>
+          <button class="btn ghost small" data-decline-req="${r.id}">Decline</button>
+        </div>
+      </div>`).join('') : `<div class="empty">No pending requests — anyone who signs in with Google and isn't already on the roster shows up here.</div>`}
+  </div>`;
+}
+function applicationsView(){
+  if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
+  const sorted = [...DB.applications].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public website's application form — approve to add someone straight to the student roster. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
+  <div class="list">
+    ${sorted.length ? sorted.map(a=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
+        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${a.ageRange?(' · Age '+escapeHtml(a.ageRange)):''}${a.school?(' · '+escapeHtml(a.school)):''}${a.region?(' · '+escapeHtml(a.region)):''}</div>
+        ${a.howHeard ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(a.howHeard)}</div>` : ''}
+        ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;">${linkify(a.message)}</div>`):''}
+        <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — included in the email/text to the applicant"></div>
+        <div class="item-actions">
+          <button class="btn teal small" data-approve-app="${a.id}">Add as student</button>
+          <button class="btn ghost small" data-decline-app="${a.id}">Decline</button>
+        </div>
+      </div>`).join('') : `<div class="empty">No applications yet — submissions from the public website's "Start your application" form will appear here.</div>`}
+  </div>`;
+}
+function libraryView(){
+  const canManage = ME.role === 'ambassador';
+  const sorted = [...DB.library].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Resource library</h2><p>General resources for the whole programme — syllabus notes, past papers, timing guides — curated by the Ambassador desk.</p></div></div>
+  ${canManage ? `
+  <div class="card" style="margin-bottom:18px;">
+    <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="libTitle" placeholder="e.g. IChC Official Syllabus 2026"></div>
+    <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="libDesc" rows="2" placeholder="What it is and why it's useful"></textarea></div>
+    <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="libLink" placeholder="Drive / PDF link"></div>
+    <button class="btn amber small" id="addLibBtn">Add to library</button>
+  </div>` : ''}
+  <div class="list">
+    ${sorted.length ? sorted.map(l=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(l.title)}</span><span class="item-meta">${fmtDate(l.date)}</span></div>
+        <div class="item-body">${linkify(l.body)} ${l.link?`<br>${linkifyUrl(l.link)}`:''}</div>
+        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-remove-lib="${l.id}">Remove</button></div>` : ''}
+      </div>`).join('') : `<div class="empty">The library is empty for now — the Ambassador will curate shared resources here as the programme grows.</div>`}
+  </div>`;
+}
+function channelStatus(){
+  const s = DB.settings || {};
+  const emailOn = !!(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId);
+  const smsOn = !!s.webhookUrl;
+  return {emailOn, smsOn};
+}
+function notificationsView(){
+  const {emailOn, smsOn} = channelStatus();
+  const mine = ME.role==='ambassador' ? DB.notifications
+    : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===ME.coordinatorId || n.coordinatorId===ME.id);
+  const sorted = [...mine].sort((a,b)=>b.ts-a.ts);
+  return `
+  <div class="section-title"><div><h2>Notifications</h2><p>Every announcement and group message the Ambassador or your coordinator has sent, in one feed.</p></div></div>
+  <div class="card" style="margin-bottom:20px; display:flex; gap:22px; flex-wrap:wrap;">
+    <div><span class="badge ${emailOn?'coord':'ghost'}" style="${emailOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">Email ${emailOn?'connected':'not connected'}</span></div>
+    <div><span class="badge ${smsOn?'coord':'ghost'}" style="${smsOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">SMS ${smsOn?'connected':'not connected'}</span></div>
+    <div style="font-size:12.5px; color:var(--muted); flex:1; min-width:220px;">Every message always lands here in the app${ME.role==='ambassador'?'; email and SMS delivery depend on the connections set up in Settings.':' — the Ambassador manages whether it also goes out by email or SMS.'}</div>
+  </div>
+  <div class="list">
+    ${sorted.length ? sorted.map(n=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(n.title)}</span><span class="item-meta">${fmtDate(n.date)}</span></div>
+        <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>
+      </div>`).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
+  </div>`;
+}
+function settingsView(){
+  if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can manage notification connections.</div>`;
+  const s = DB.settings || {};
+  return `
+  <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
+  <div class="card" style="margin-bottom:18px;">
+    <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
+    <h3 style="font-size:15px; margin:18px 0 8px;">Email — via EmailJS (free tier available)</h3>
+    <div class="field" style="margin:0 0 10px;"><label>Public key</label><input id="setEmailKey" value="${escapeHtml(s.emailjsPublicKey||'')}" placeholder="EmailJS public key"></div>
+    <div class="field" style="margin:0 0 10px;"><label>Service ID</label><input id="setEmailService" value="${escapeHtml(s.emailjsServiceId||'')}" placeholder="EmailJS service ID"></div>
+    <div class="field" style="margin:0 0 10px;"><label>Template ID</label><input id="setEmailTemplate" value="${escapeHtml(s.emailjsTemplateId||'')}" placeholder="EmailJS template ID (expects to_email, to_name, from_name, subject, message)"></div>
+    <h3 style="font-size:15px; margin:20px 0 8px;">SMS — via a webhook (e.g. Zapier/Make → Twilio)</h3>
+    <div class="field" style="margin:0 0 10px;"><label>Webhook URL</label><input id="setWebhook" value="${escapeHtml(s.webhookUrl||'')}" placeholder="https://hooks.zapier.com/... (receives to, name, from, subject, message)"></div>
+    <h3 style="font-size:15px; margin:20px 0 8px;">Exam generation — via a proxy webhook (calls Claude on your behalf)</h3>
+    <div class="field" style="margin:0 0 10px;"><label>Webhook URL</label><input id="setAiWebhook" value="${escapeHtml(s.aiWebhookUrl||'')}" placeholder="https://your-proxy.example.com/generate-exam (receives {subject, difficulty, timeLimitMin}, returns {content})"></div>
+    <button class="btn amber small" id="saveSettingsBtn">Save connections</button>
+  </div>
+  <div class="empty" style="text-align:left;">
+    <b>Why not send SMS (or call Claude) directly?</b> Sending real texts, or generating exam drafts with Claude, both need a private account key (Twilio, Anthropic, etc.) that can never sit safely inside a page anyone can view or download — it would be stealable in seconds. Routing through your own webhook/proxy keeps that key on your side, out of this page entirely. If this page is opened straight from a file instead of a real hosted link, browsers may also block these outgoing requests altogether — hosting it (Netlify, Vercel, etc.) makes delivery reliable.
+  </div>`;
+}
+function announceView(canPost){
+  const list = [...DB.announcements].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Announcements</h2><p>From the Ambassador desk, for the whole programme.</p></div></div>
+  ${canPost ? `
+  <div class="card" style="margin-bottom:18px;">
+    <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="annTitle" placeholder="e.g. Application deadline reminder"></div>
+    <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="annBody" rows="3" placeholder="Write your announcement"></textarea></div>
+    <button class="btn amber small" id="addAnnBtn">Post announcement</button>
+  </div>` : ''}
+  <div class="list">
+    ${list.length ? list.map(a=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
+        <div class="item-body">${linkify(a.body)}</div>
+      </div>`).join('') : `<div class="empty">No announcements yet.</div>`}
+  </div>`;
+}
+function commentThread(items, coordinatorId){
+  const sorted = [...items].sort((a,b)=>a.date.localeCompare(b.date));
+  return `
+  <div class="list" style="margin-bottom:16px;">
+    ${sorted.length ? sorted.map(c=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(c.author)} <span class="badge ${c.role==='ambassador'?'amb':c.role==='coordinator'?'coord':'stud'}" style="margin-left:6px;">${c.role}</span></span><span class="item-meta">${fmtDate(c.date)}</span></div>
+        <div class="item-body">${linkify(c.text)}</div>
+      </div>`).join('') : `<div class="empty">No messages yet — say hello.</div>`}
+  </div>
+  <div class="card">
+    <div class="field" style="margin:0 0 10px;"><label>Write a message</label><textarea id="commentText" rows="2" placeholder="Ask your question or leave a note…"></textarea></div>
+    <button class="btn teal small" id="sendCommentBtn" data-coord="${coordinatorId||''}">Send</button>
+  </div>`;
+}
+function combinedFeed(){
+  const items = [];
+  DB.materials.forEach(m=>items.push({type:'Material', title:m.title, by:coordName(m.coordinatorId), date:m.date, body:m.body}));
+  DB.callsheets.forEach(c=>items.push({type:'Call sheet · '+sessionStatus(c), title:c.title, by:coordName(c.coordinatorId), date:c.date, body:fmtSessionTime(c)}));
+  DB.practice.forEach(p=>items.push({type:'Practice question', title:p.question.slice(0,60)+(p.question.length>60?'…':''), by:coordName(p.coordinatorId), date:p.date, body:p.question}));
+  DB.exams.forEach(e=>items.push({type:'Exam posted', title:e.title, by: e.coordinatorId ? coordName(e.coordinatorId) : 'Ambassador', date:e.date, body:`${e.timeLimitMin} min · ${e.subject||'no subject noted'}`}));
+  DB.comments.forEach(c=>items.push({type:'Message', title:`${c.author} (${c.role})`, by:coordName(c.coordinatorId), date:c.date, body:c.text}));
+  return items.sort((a,b)=>b.date.localeCompare(a.date));
+}
+function feedItem(it){
+  return `<div class="item">
+    <div class="item-head"><span class="item-title">${escapeHtml(it.type)} · ${escapeHtml(it.title)}</span><span class="item-meta">${fmtDate(it.date)}</span></div>
+    <div class="item-body">${linkify(it.body)} <span style="color:var(--muted);">— ${escapeHtml(it.by)}</span></div>
+  </div>`;
+}
+
+// ---- Exams: timed, protocol-bound exam problems ----
+// Coordinators (and the Ambassador, programme-wide) post real exam content with a
+// time limit and a protocol. Students get exactly one attempt: the timer starts the
+// moment they confirm they've read the protocol, autosaves their draft periodically,
+// flags when they leave the tab, and auto-submits at zero. This can't enforce a true
+// locked-down exam environment (no plain webpage can), but it does make cheating by
+// simply reloading or wandering off pointless and visible to the coordinator.
+
+let examUiState = null;      // {examId, phase:'confirm'} while a student is on the pre-exam confirmation screen
+let EXAM_CTX = null;         // set by examsView() each render so wireHandlers() knows what's on screen
+let examTimerHandle = null, examDraftHandle = null, examVisHandler = null;
+
+function stopExamRuntime(){
+  if(examTimerHandle){ clearInterval(examTimerHandle); examTimerHandle = null; }
+  if(examDraftHandle){ clearInterval(examDraftHandle); examDraftHandle = null; }
+  if(examVisHandler){ document.removeEventListener('visibilitychange', examVisHandler); examVisHandler = null; }
+}
+function secsToClock(s){
+  s = Math.max(0, Math.floor(s));
+  return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+}
+function examRemainingSec(exam, attempt){
+  const limitSec = (exam.timeLimitMin||0) * 60;
+  const elapsed = (Date.now() - new Date(attempt.startedAt).getTime()) / 1000;
+  return limitSec - elapsed;
+}
+function examAttemptsFor(examId){
+  return DB.examAttempts.filter(a=>a.examId===examId);
+}
+async function finalizeExamAttempt(attempt, exam, {autoSubmitted}){
+  const box = document.getElementById('examAnswerBox');
+  attempt.answer = box ? box.value.trim() : (attempt.draft || '');
+  attempt.submittedAt = new Date().toISOString();
+  attempt.autoSubmitted = !!autoSubmitted;
+  delete attempt.draft;
+  stopExamRuntime();
+  await saveKey('examAttempts');
+  render('exams');
+}
+function startExamRuntime(exam, attempt){
+  stopExamRuntime();
+  examTimerHandle = setInterval(()=>{
+    const remaining = examRemainingSec(exam, attempt);
+    const disp = document.getElementById('examTimerDisplay');
+    if(disp){ disp.textContent = secsToClock(remaining); disp.style.color = remaining<60 ? '#C0392B' : 'var(--teal-deep)'; }
+    if(remaining<=0) finalizeExamAttempt(attempt, exam, {autoSubmitted:true});
+  }, 1000);
+  examDraftHandle = setInterval(async ()=>{
+    const box = document.getElementById('examAnswerBox');
+    if(box){ attempt.draft = box.value; await saveKey('examAttempts'); }
+  }, 20000);
+  examVisHandler = ()=>{
+    if(document.hidden && currentTab==='exams'){
+      attempt.tabSwitches = (attempt.tabSwitches||0) + 1;
+      saveKey('examAttempts');
+      const note = document.getElementById('examIntegrityNote');
+      if(note) note.textContent = `⚠ You've left this tab ${attempt.tabSwitches} time(s) — this is recorded.`;
+    }
+  };
+  document.addEventListener('visibilitychange', examVisHandler);
+}
+
+function examConfirmScreen(exam){
+  return `
+  <div class="section-title"><div><h2>Exams</h2></div></div>
+  <div class="card" style="border-color:var(--amber-deep); background:rgba(227,154,59,.06);">
+    <div class="badge" style="background:rgba(227,154,59,.18); color:var(--amber-deep); margin-bottom:12px;">Before you begin</div>
+    <h2 style="font-size:19px; margin-bottom:6px;">${escapeHtml(exam.title)}</h2>
+    <div style="font-size:13.5px; color:var(--muted); margin-bottom:14px;">${exam.timeLimitMin} minutes · one attempt only</div>
+    <div style="font-size:14.5px; line-height:1.65; margin-bottom:16px;">${linkify(exam.protocol||'No specific protocol notes — follow standard exam conduct.')}</div>
+    <label style="display:flex; align-items:flex-start; gap:8px; text-transform:none; font-weight:500; color:var(--ink); margin-bottom:16px;">
+      <input type="checkbox" id="examAckCheck" style="width:auto; margin-top:3px;"> I've read the protocol above and understand the timer starts the moment I begin, this is my one attempt, and leaving the tab is recorded.
+    </label>
+    <div style="display:flex; gap:10px;">
+      <button class="btn amber" id="examBeginBtn" data-exam-id="${exam.id}">Begin now — starts the timer</button>
+      <button class="btn ghost" id="examCancelBtn">Cancel</button>
+    </div>
+  </div>`;
+}
+function examRunningScreen(exam, attempt){
+  const remaining = examRemainingSec(exam, attempt);
+  return `
+  <div class="section-title"><div><h2>Exams</h2></div></div>
+  <div class="card" style="border-color:var(--teal-deep);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <h2 style="font-size:18px; margin:0;">${escapeHtml(exam.title)}</h2>
+      <div id="examTimerDisplay" class="mono" style="font-size:22px; font-weight:700; color:${remaining<60?'#C0392B':'var(--teal-deep)'};">${secsToClock(remaining)}</div>
+    </div>
+    <details style="margin-bottom:14px;"><summary style="cursor:pointer; font-size:12.5px; color:var(--muted);">Protocol reminder</summary><p style="font-size:13px; color:var(--muted); margin-top:6px;">${linkify(exam.protocol||'')}</p></details>
+    <div class="item" style="margin-bottom:14px; background:rgba(15,36,56,.02);"><div class="item-body" style="white-space:pre-wrap;">${linkify(exam.content)}</div></div>
+    <div class="field" style="margin:0 0 12px;"><label>Your answer</label><textarea id="examAnswerBox" rows="12" placeholder="Write your full working and final answer here">${escapeHtml(attempt.draft||'')}</textarea></div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:12px;" id="examIntegrityNote">${attempt.tabSwitches?`⚠ You've left this tab ${attempt.tabSwitches} time(s) — this is recorded.`:'Stay on this tab — leaving it is recorded.'}</div>
+    <button class="btn teal" id="examSubmitBtn">Submit final answer</button>
+  </div>`;
+}
+function studentExamsBlock(){
+  const visible = DB.exams.filter(e=> e.coordinatorId===null || e.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Exams</h2><p>Timed, real exam-style problems. One attempt each — the timer runs the moment you begin.</p></div></div>
+  <div class="list">
+  ${visible.length ? visible.map(e=>{
+    const attempt = DB.examAttempts.find(a=>a.examId===e.id && a.studentId===ME.id);
+    if(attempt && attempt.submittedAt){
+      return `<div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span><span class="badge stud">Submitted</span></div>
+        <div class="item-body">${escapeHtml(e.subject||'')} · ${e.timeLimitMin} min${attempt.autoSubmitted?' · auto-submitted at time limit':''}${attempt.score?` · Score: ${escapeHtml(String(attempt.score))}`:''}</div>
+        ${attempt.feedback ? `<div class="item-body" style="margin-top:4px; color:var(--muted);">Feedback: ${linkify(attempt.feedback)}</div>` : ''}
+      </div>`;
+    }
+    return `<div class="item">
+      <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span><span class="item-meta">${e.timeLimitMin} min${e.coordinatorId===null?' · Programme-wide':''}</span></div>
+      <div class="item-body">${escapeHtml(e.subject||'')}</div>
+      <div class="item-actions"><button class="btn teal small" data-start-exam="${e.id}">Start exam →</button></div>
+    </div>`;
+  }).join('') : `<div class="empty">No exams posted yet — your coordinator will post one when it's time.</div>`}
+  </div>`;
+}
+function examsManageView(){
+  const scoped = ME.role==='ambassador' ? DB.exams : DB.exams.filter(e=>e.coordinatorId===ME.id);
+  const sorted = [...scoped].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="section-title"><div><h2>Exams</h2><p>${ME.role==='ambassador' ? 'Every timed exam across the programme — as Ambassador you can view, oversee, or remove any of them, regardless of who posted it.' : 'Post real, timed exam problems for your students.'}</p></div></div>
+  <div class="card" style="margin-bottom:18px;">
+    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field" style="margin:0;"><label>Title</label><input id="examTitle" placeholder="e.g. Week 6 timed mock — Kinetics"></div>
+      <div class="field" style="margin:0;"><label>Subject / topic</label><input id="examSubject" placeholder="e.g. Reaction kinetics"></div>
+      <div class="field" style="margin:0;"><label>Time limit (minutes)</label><input id="examTime" type="number" min="1" value="60"></div>
+      <div class="field" style="margin:0;"><label>Difficulty (for AI draft)</label>
+        <select id="examDifficulty"><option>Foundation</option><option selected>Intermediate</option><option>Olympiad</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin:10px 0;"><label>Protocol / rules</label><textarea id="examProtocol" rows="2">Single attempt only. No calculator, notes, or outside help. The timer starts the moment you begin and auto-submits your answer at zero.</textarea></div>
+    <div class="field" style="margin:0 0 10px;">
+      <label>Exam content / questions</label>
+      <textarea id="examContent" rows="6" placeholder="Write or paste the real exam problem(s) here"></textarea>
+      <button class="btn ghost small" id="genExamBtn" style="margin-top:8px;">✦ Generate a draft with Claude</button>
+      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;"></span>
+    </div>
+    <button class="btn teal small" id="addExamBtn">Post exam${ME.role==='ambassador'?' (programme-wide)':''}</button>
+  </div>
+  <div class="list">
+    ${sorted.length ? sorted.map(e=>{
+      const atts = examAttemptsFor(e.id);
+      const submitted = atts.filter(a=>a.submittedAt).length;
+      return `<div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span><span class="item-meta">${e.timeLimitMin} min · ${fmtDate(e.date)}${e.coordinatorId===null?' · Programme-wide':''}</span></div>
+        <div class="item-body">${escapeHtml(e.subject||'')} — ${submitted}/${atts.length} submitted${ME.role==='ambassador' && e.coordinatorId ? ' · posted by '+escapeHtml(coordName(e.coordinatorId)) : ''}</div>
+        <details style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; color:var(--teal-deep); font-weight:600;">View attempts (${atts.length})</summary>
+          <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            ${atts.length ? atts.map(a=>`
+              <div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px;">
+                <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+                  <b style="font-size:13.5px;">${escapeHtml(a.studentName)}</b>
+                  <span style="font-size:12px; color:var(--muted);">${a.submittedAt ? 'Submitted '+fmtDate(a.submittedAt.slice(0,10)) : 'In progress'}${a.autoSubmitted?' · auto-submitted':''}${a.tabSwitches?' · ⚠ left tab '+a.tabSwitches+'x':''}</span>
+                </div>
+                ${a.answer ? `<div style="font-size:13.5px; color:#39424D; margin-top:6px; white-space:pre-wrap;">${escapeHtml(a.answer)}</div>` : ''}
+                <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                  <input data-score-for="${a.id}" value="${escapeHtml(a.score||'')}" placeholder="Score" style="max-width:90px;">
+                  <input data-feedback-for="${a.id}" value="${escapeHtml(a.feedback||'')}" placeholder="Feedback" style="flex:1; min-width:160px;">
+                  <button class="btn teal small" data-save-attempt="${a.id}">Save</button>
+                </div>
+              </div>`).join('') : `<div style="font-size:13px; color:var(--muted);">No attempts yet.</div>`}
+          </div>
+        </details>
+        <div class="item-actions"><button class="btn ghost small" data-remove-exam="${e.id}">Remove exam</button></div>
+      </div>`;
+    }).join('') : `<div class="empty">No exams posted yet.</div>`}
+  </div>`;
+}
+function examsView(){
+  if(ME.role==='student'){
+    const running = DB.examAttempts.find(a=>a.studentId===ME.id && !a.submittedAt);
+    if(running){
+      const exam = DB.exams.find(e=>e.id===running.examId);
+      if(exam){ EXAM_CTX = {mode:'running', exam, attempt:running}; return examRunningScreen(exam, running); }
+    }
+    if(examUiState && examUiState.phase==='confirm'){
+      const exam = DB.exams.find(e=>e.id===examUiState.examId);
+      if(exam){ EXAM_CTX = {mode:'confirm', exam}; return examConfirmScreen(exam); }
+    }
+    EXAM_CTX = {mode:'list'};
+    return studentExamsBlock();
+  }
+  EXAM_CTX = {mode:'manage'};
+  return examsManageView();
+}
+
+function wireHandlers(tab){
+  const q = (id)=>document.getElementById(id);
+
+  if(q('addCoordBtn')) q('addCoordBtn').addEventListener('click', async ()=>{
+    const name=q('cName').value.trim(); const email=q('cEmail').value.trim().toLowerCase();
+    if(!name) return alert('Name required.');
+    if(!email || !validEmail(email)) return alert('A valid email is required — it\'s what lets this coordinator sign in.');
+    if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===email)) return alert('A coordinator with that email already exists.');
+    if(isAmbassadorEmail(email)) return alert('That email is reserved for an Ambassador account.');
+    DB.coordinators.push({id:uid(), name, email, subject:q('cSubject').value.trim(), region:q('cRegion').value.trim(), bio:'', phone:q('cPhone').value.trim(), notifyEmail:true, notifySms:!!q('cPhone').value.trim(), joined:today()});
+    await saveKey('coordinators'); await syncPublicDirectory(); render('people');
+  });
+  document.querySelectorAll('[data-remove-coord]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.coordinators = DB.coordinators.filter(c=>c.id!==b.dataset.removeCoord);
+    await saveKey('coordinators'); await syncPublicDirectory(); render('people');
+  }));
+  document.querySelectorAll('[data-save-coord]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = b.dataset.saveCoord;
+    const c = DB.coordinators.find(c=>c.id===id);
+    if(!c) return;
+    document.querySelectorAll(`[data-coord-id="${id}"]`).forEach(inp=>{
+      c[inp.dataset.cfield] = inp.value.trim();
+    });
+    const smsChk = document.querySelector(`[data-sms-for="${id}"][data-sms-scope="coord"]`);
+    if(smsChk){
+      if(smsChk.checked && !c.phone) { alert('Add a phone number before enabling text updates for this coordinator.'); smsChk.checked = false; }
+      c.notifySms = smsChk.checked;
+    }
+    await saveKey('coordinators'); await syncPublicDirectory(); render('people');
+  }));
+  if(q('addStudentBtn')) q('addStudentBtn').addEventListener('click', async ()=>{
+    const name=q('sName').value.trim(); const email=q('sEmail').value.trim().toLowerCase();
+    if(!name) return alert('Name required.');
+    if(!email || !validEmail(email)) return alert('A valid email is required — it\'s what lets this student sign in.');
+    if(DB.students.some(s=>s.email && s.email.toLowerCase()===email)) return alert('A student with that email already exists.');
+    if(isAmbassadorEmail(email)) return alert('That email is reserved for an Ambassador account.');
+    DB.students.push({id:uid(), name, email, coordinatorId:q('sCoord').value||null, group:'', status:q('sStatus').value, phone:q('sPhone').value.trim(), notifyEmail:true, notifySms:!!q('sPhone').value.trim(), joined:today()});
+    await saveKey('students'); await syncPublicDirectory(); render('people');
+  });
+  document.querySelectorAll('[data-status-for]').forEach(sel=>sel.addEventListener('change', async ()=>{
+    const st = DB.students.find(s=>s.id===sel.dataset.statusFor);
+    if(st){ st.status = sel.value; await saveKey('students'); await syncPublicDirectory(); }
+  }));
+  document.querySelectorAll('[data-save-student-amb]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = b.dataset.saveStudentAmb;
+    const s = DB.students.find(s=>s.id===id);
+    if(!s) return;
+    const coordSel = document.querySelector(`[data-coord-for="${id}"]`);
+    const groupInp = document.querySelector(`[data-group-for-amb="${id}"]`);
+    const startedChk = document.querySelector(`[data-started-for="${id}"]`);
+    const phoneInp = document.querySelector(`[data-phone-for-amb="${id}"]`);
+    const smsChk = document.querySelector(`[data-sms-for="${id}"][data-sms-scope="student"]`);
+    if(coordSel) s.coordinatorId = coordSel.value || null;
+    if(groupInp) s.group = groupInp.value.trim();
+    if(startedChk) s.started = startedChk.checked;
+    if(phoneInp) s.phone = phoneInp.value.trim();
+    if(smsChk){
+      if(smsChk.checked && !s.phone) { alert('Add a phone number before enabling text updates for this student.'); smsChk.checked = false; }
+      s.notifySms = smsChk.checked;
+    }
+    await saveKey('students'); await syncPublicDirectory(); render('people');
+  }));
+  document.querySelectorAll('[data-remove-student]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.students = DB.students.filter(s=>s.id!==b.dataset.removeStudent);
+    await saveKey('students'); await syncPublicDirectory(); render('people');
+  }));
+
+  if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
+    const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
+    if(!title||!body) return alert('Please fill in both fields.');
+    DB.announcements.push({id:uid(), title, body, date:today()});
+    await saveKey('announcements');
+    await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
+    render('announce');
+  });
+
+  document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
+    const sid=b.dataset.saveGroup;
+    const val=document.querySelector(`[data-group-for="${sid}"]`).value.trim();
+    const s=DB.students.find(s=>s.id===sid); if(s){ s.group=val; await saveKey('students'); await syncPublicDirectory(); render('students'); }
+  }));
+
+  if(q('addCallBtn')) q('addCallBtn').addEventListener('click', async ()=>{
+    const title=q('callTitle').value.trim(), startAt=q('callStart').value, endAt=q('callEnd').value;
+    if(!title||!startAt) return alert('Title and start time are required.');
+    if(endAt && endAt < startAt) return alert('End time must be after the start time.');
+    DB.callsheets.push({id:uid(), coordinatorId:ME.id, title, startAt, endAt, link:q('callLink').value.trim(), notes:q('callNotes').value.trim(), cancelled:false, date:startAt.slice(0,10)});
+    await saveKey('callsheets'); await syncPublicDirectory(); render('calls');
+    const cs = DB.callsheets[DB.callsheets.length-1];
+    await notifyBroadcast({title:`New call sheet: ${title}`, body:`${fmtSessionTime(cs)}${cs.notes?' — '+cs.notes:''}`, coordinatorId:ME.id, author:ME.name, role:ME.role});
+  });
+  document.querySelectorAll('[data-remove-call]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.callsheets = DB.callsheets.filter(c=>c.id!==b.dataset.removeCall);
+    await saveKey('callsheets'); await syncPublicDirectory(); render('calls');
+  }));
+  document.querySelectorAll('[data-cancel-call]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.cancelCall);
+    if(cs){
+      cs.cancelled = true; await saveKey('callsheets'); render('calls');
+      await notifyBroadcast({title:`Session cancelled: ${cs.title}`, body:`This session (${fmtSessionTime(cs)}) has been cancelled.`, coordinatorId:ME.id, author:ME.name, role:ME.role});
+    }
+  }));
+  document.querySelectorAll('[data-uncancel-call]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.uncancelCall);
+    if(cs){
+      cs.cancelled = false; await saveKey('callsheets'); render('calls');
+      await notifyBroadcast({title:`Session restored: ${cs.title}`, body:`This session is back on: ${fmtSessionTime(cs)}.`, coordinatorId:ME.id, author:ME.name, role:ME.role});
+    }
+  }));
+
+  if(q('addMatBtn')) q('addMatBtn').addEventListener('click', async ()=>{
+    const title=q('matTitle').value.trim(); if(!title) return alert('Title required.');
+    const body=q('matDesc').value.trim();
+    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), date:today()});
+    await saveKey('materials'); await syncPublicDirectory(); render('materials');
+    await notifyBroadcast({title:`New material: ${title}`, body:body||'A new resource was just posted.', coordinatorId:ME.id, author:ME.name, role:ME.role});
+  });
+  document.querySelectorAll('[data-remove-mat]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.materials = DB.materials.filter(m=>m.id!==b.dataset.removeMat);
+    await saveKey('materials'); await syncPublicDirectory(); render('materials');
+  }));
+
+  if(q('addPracBtn')) q('addPracBtn').addEventListener('click', async ()=>{
+    const question=q('pracQ').value.trim(); if(!question) return alert('Question required.');
+    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), date:today()});
+    await saveKey('practice'); render('practice');
+    await notifyBroadcast({title:'New practice question posted', body:question, coordinatorId:ME.id, author:ME.name, role:ME.role});
+  });
+  document.querySelectorAll('[data-remove-prac]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.practice = DB.practice.filter(p=>p.id!==b.dataset.removePrac);
+    await saveKey('practice'); render('practice');
+  }));
+
+  if(q('sendCommentBtn')) q('sendCommentBtn').addEventListener('click', async ()=>{
+    const text=q('commentText').value.trim(); if(!text) return;
+    const coordinatorId = q('sendCommentBtn').dataset.coord || null;
+    DB.comments.push({id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today()});
+    await saveKey('comments');
+    if(ME.role==='coordinator' || ME.role==='ambassador'){
+      await notifyBroadcast({title:`New message from ${ME.name}`, body:text, coordinatorId, author:ME.name, role:ME.role});
+    }
+    render(currentTab);
+  });
+
+  if(q('saveSettingsBtn')) q('saveSettingsBtn').addEventListener('click', async ()=>{
+    const btn = q('saveSettingsBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    DB.settings = {
+      emailjsPublicKey: q('setEmailKey').value.trim(),
+      emailjsServiceId: q('setEmailService').value.trim(),
+      emailjsTemplateId: q('setEmailTemplate').value.trim(),
+      webhookUrl: q('setWebhook').value.trim(),
+      aiWebhookUrl: q('setAiWebhook').value.trim()
+    };
+    try{
+      const ok = await saveKey('settings');
+      if(!ok) throw new Error('save returned false');
+      render('settings');
+      const toast = document.createElement('div');
+      toast.textContent = '✓ Connections saved';
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.2);';
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(), 3000);
+    }catch(e){
+      btn.textContent = originalText;
+      btn.disabled = false;
+      alert('Save failed — check your internet connection and try again. If this keeps happening, open the browser console (F12) and send a screenshot of any red error.');
+    }
+  });
+
+  if(q('addLibBtn')) q('addLibBtn').addEventListener('click', async ()=>{
+    const title=q('libTitle').value.trim(); if(!title) return alert('Title required.');
+    const body=q('libDesc').value.trim();
+    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), date:today()});
+    await saveKey('library'); render('library');
+    await notifyBroadcast({title:`New resource in the library: ${title}`, body:body||'A new resource was just added to the library.', coordinatorId:null, author:ME.name, role:ME.role});
+  });
+  document.querySelectorAll('[data-remove-lib]').forEach(b=>b.addEventListener('click', async ()=>{
+    DB.library = DB.library.filter(l=>l.id!==b.dataset.removeLib);
+    await saveKey('library'); render('library');
+  }));
+
+  document.querySelectorAll('[data-approve-app]').forEach(b=>b.addEventListener('click', async ()=>{
+    const app = DB.applications.find(a=>a.id===b.dataset.approveApp);
+    if(!app) return;
+    const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
+    const reason = reasonInp ? reasonInp.value.trim() : '';
+    if(DB.students.some(s=>s.email && s.email.toLowerCase()===app.email.toLowerCase())){
+      alert('A student with this email already exists.');
+    } else {
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      await saveKey('students'); await syncPublicDirectory();
+    }
+    await notifyApplicantDecision({app, decision:'accepted', reason});
+    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), decision:'accepted', reason, date: today() });
+    await saveKey('applicationDecisions');
+    DB.applications = DB.applications.filter(a=>a.id!==app.id);
+    await saveKey('applications');
+    render('applications');
+  }));
+  document.querySelectorAll('[data-decline-app]').forEach(b=>b.addEventListener('click', async ()=>{
+    const app = DB.applications.find(a=>a.id===b.dataset.declineApp);
+    if(!app) return;
+    const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
+    const reason = reasonInp ? reasonInp.value.trim() : '';
+    await notifyApplicantDecision({app, decision:'declined', reason});
+    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), decision:'declined', reason, date: today() });
+    await saveKey('applicationDecisions');
+    DB.applications = DB.applications.filter(a=>a.id!==app.id);
+    await saveKey('applications'); render('applications');
+  }));
+
+  document.querySelectorAll('[data-approve-req]').forEach(b=>b.addEventListener('click', async ()=>{
+    const req = DB.accessRequests.find(r=>r.id===b.dataset.approveReq);
+    if(!req) return;
+    const reasonInp = document.querySelector(`[data-reason-for="${req.id}"]`);
+    const reason = reasonInp ? reasonInp.value.trim() : '';
+    if(req.role === 'coordinator'){
+      if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===req.email.toLowerCase())){
+        alert('A coordinator with this email already exists.');
+      } else {
+        DB.coordinators.push({id:uid(), name:req.name, email:req.email.toLowerCase(), subject:'General Chemistry', region:'', bio:req.bio||'', phone:req.phone||'', notifyEmail:true, notifySms:!!req.notifySms, joined:today()});
+        await saveKey('coordinators'); await syncPublicDirectory();
+      }
+    } else {
+      if(DB.students.some(s=>s.email && s.email.toLowerCase()===req.email.toLowerCase())){
+        alert('A student with this email already exists.');
+      } else {
+        DB.students.push({id:uid(), name:req.name, email:req.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:req.phone||'', notifyEmail:true, notifySms:!!req.notifySms, joined:today()});
+        await saveKey('students'); await syncPublicDirectory();
+      }
+    }
+    DB.decisions.push({ id: uid(), name: req.name, email: req.email, role: req.role, decision:'approved', reason, date: today() });
+    await saveKey('decisions');
+    DB.accessRequests = DB.accessRequests.filter(r=>r.id!==req.id);
+    await saveKey('accessRequests');
+    render('requests');
+  }));
+  document.querySelectorAll('[data-decline-req]').forEach(b=>b.addEventListener('click', async ()=>{
+    const req = DB.accessRequests.find(r=>r.id===b.dataset.declineReq);
+    if(!req) return;
+    const reasonInp = document.querySelector(`[data-reason-for="${req.id}"]`);
+    const reason = reasonInp ? reasonInp.value.trim() : '';
+    DB.decisions.push({ id: uid(), name: req.name, email: req.email, role: req.role, decision:'declined', reason, date: today() });
+    await saveKey('decisions');
+    DB.accessRequests = DB.accessRequests.filter(r=>r.id!==req.id);
+    await saveKey('accessRequests'); render('requests');
+  }));
+
+  if(tab==='exams'){
+    if(q('examBeginBtn')) q('examBeginBtn').addEventListener('click', async ()=>{
+      if(!q('examAckCheck').checked) return alert('Please tick the box confirming you\'ve read the protocol.');
+      const examId = q('examBeginBtn').dataset.examId;
+      const exam = DB.exams.find(e=>e.id===examId);
+      if(!exam) return;
+      DB.examAttempts.push({ id:uid(), examId, studentId:ME.id, studentName:ME.name, startedAt:new Date().toISOString(), submittedAt:null, tabSwitches:0, draft:'' });
+      await saveKey('examAttempts');
+      examUiState = null;
+      render('exams');
+    });
+    if(q('examCancelBtn')) q('examCancelBtn').addEventListener('click', ()=>{ examUiState = null; render('exams'); });
+    document.querySelectorAll('[data-start-exam]').forEach(b=>b.addEventListener('click', ()=>{
+      examUiState = { examId:b.dataset.startExam, phase:'confirm' };
+      render('exams');
+    }));
+    if(q('examSubmitBtn')) q('examSubmitBtn').addEventListener('click', ()=>{
+      if(!EXAM_CTX || EXAM_CTX.mode!=='running') return;
+      if(!confirm('Submit your final answer? You will not be able to change it afterward.')) return;
+      finalizeExamAttempt(EXAM_CTX.attempt, EXAM_CTX.exam, {autoSubmitted:false});
+    });
+    if(EXAM_CTX && EXAM_CTX.mode==='running') startExamRuntime(EXAM_CTX.exam, EXAM_CTX.attempt);
+
+    if(q('addExamBtn')) q('addExamBtn').addEventListener('click', async ()=>{
+      const title = q('examTitle').value.trim(); if(!title) return alert('Title required.');
+      const content = q('examContent').value.trim(); if(!content) return alert('Add the exam content/questions.');
+      const subject = q('examSubject').value.trim();
+      const timeLimitMin = Math.max(1, parseInt(q('examTime').value,10)||60);
+      const protocol = q('examProtocol').value.trim();
+      const coordinatorId = ME.role==='ambassador' ? null : ME.id;
+      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, protocol, content, createdBy:ME.name, date:today() });
+      await saveKey('exams'); render('exams');
+      await notifyBroadcast({title:`New exam posted: ${title}`, body:`${timeLimitMin} minutes · one attempt · opens now.`, coordinatorId, author:ME.name, role:ME.role});
+    });
+    document.querySelectorAll('[data-remove-exam]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm('Remove this exam? Existing attempts stay on record, but students will no longer see it.')) return;
+      DB.exams = DB.exams.filter(e=>e.id!==b.dataset.removeExam);
+      await saveKey('exams'); render('exams');
+    }));
+    document.querySelectorAll('[data-save-attempt]').forEach(b=>b.addEventListener('click', async ()=>{
+      const a = DB.examAttempts.find(a=>a.id===b.dataset.saveAttempt); if(!a) return;
+      const scoreInp = document.querySelector(`[data-score-for="${a.id}"]`);
+      const fbInp = document.querySelector(`[data-feedback-for="${a.id}"]`);
+      a.score = scoreInp ? scoreInp.value.trim() : a.score;
+      a.feedback = fbInp ? fbInp.value.trim() : a.feedback;
+      await saveKey('examAttempts');
+      const toast = document.createElement('div');
+      toast.textContent = '✓ Saved';
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:10px 18px; border-radius:10px; font-size:13px; font-weight:600;';
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(), 2000);
+    }));
+    if(q('genExamBtn')) q('genExamBtn').addEventListener('click', async ()=>{
+      const s = DB.settings || {};
+      if(!s.aiWebhookUrl){ alert('Connect a Claude exam-generation webhook first, in Settings.'); return; }
+      const btn = q('genExamBtn'), status = q('genExamStatus');
+      const subject = q('examSubject').value.trim() || 'general chemistry';
+      const difficulty = q('examDifficulty').value;
+      const timeLimitMin = parseInt(q('examTime').value,10) || 60;
+      btn.disabled = true; status.textContent = 'Generating…';
+      try{
+        const res = await fetch(s.aiWebhookUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ subject, difficulty, timeLimitMin }) });
+        if(!res.ok) throw new Error('bad status');
+        const data = await res.json();
+        if(!data || !data.content) throw new Error('no content');
+        q('examContent').value = data.content;
+        status.textContent = '✓ Draft generated — review and edit before posting.';
+      }catch(e){
+        console.error('AI exam generation failed', e);
+        status.textContent = 'Generation failed — check the webhook in Settings.';
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  }
+}
+
+(async function boot(){
+  await loadDB();
+  const savedMe = await sGet('me', false);
+  initOnboarding();
+  if(!sbReady){
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C0392B; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
+    banner.textContent = '⚠ Storage isn\'t connected yet — nobody\'s data will save. Open this file, find SUPABASE_CONFIG near the top of the <script>, and paste in your Supabase project URL and key.';
+    document.body.prepend(banner);
+    return;
+  }
+  if(savedMe){
+    let stillValid = false;
+    if(savedMe.role==='ambassador' && savedMe.email && isAmbassadorEmail(savedMe.email)) stillValid = true;
+    if(savedMe.role==='coordinator' && DB.coordinators.some(c=>c.id===savedMe.id)) stillValid = true;
+    if(savedMe.role==='student' && DB.students.some(s=>s.id===savedMe.id)) stillValid = true;
+    if(stillValid){ ME = savedMe; showApp(); return; }
+  }
+  await resolveGoogleSession();
+})();
+</script>
+</body>
+</html>
