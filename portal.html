@@ -706,6 +706,7 @@ async function signOutEverywhere(){
 
 
 let currentTab = null;
+let editingAnnId = null;  // id of the announcement currently open for inline editing, or null
 function showApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -734,7 +735,7 @@ async function switchUser(){
 function buildTabs(){
   const tabsFor = {
     ambassador:[['overview','Overview'],['requests','Access requests'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['announce','Announcements'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
@@ -749,12 +750,14 @@ function buildTabs(){
 }
 function render(tab){
   stopExamRuntime();
+  if(tab!=='announce') editingAnnId = null;
   currentTab = tab;
   const s = document.getElementById('screen');
   if(tab==='notifications'){ s.innerHTML = notificationsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='settings'){ s.innerHTML = settingsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='library'){ s.innerHTML = libraryView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='exams'){ s.innerHTML = examsView(); paintLogos(); wireHandlers(tab); return; }
+  if(tab==='announce'){ s.innerHTML = announceView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='applications'){ s.innerHTML = applicationsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='requests'){ s.innerHTML = requestsView(); paintLogos(); wireHandlers(tab); return; }
   if(ME.role==='ambassador') s.innerHTML = ambassadorView(tab);
@@ -1034,9 +1037,6 @@ function ambassadorView(tab){
     <div class="section-title"><div><h2>Activity feed</h2><p>Every call sheet, resource, practice question and message — across all coordinators — in one line of sight.</p></div></div>
     <div class="list">${items.length ? items.map(feedItem).join('') : `<div class="empty">Nothing's been posted yet. As coordinators publish call sheets and materials, they'll appear here automatically.</div>`}</div>`;
   }
-  if(tab==='announce'){
-    return announceView(true);
-  }
 }
 
 function myStudents(){ return DB.students.filter(s=>s.coordinatorId===ME.id); }
@@ -1222,9 +1222,6 @@ function studentView(tab){
         </div>`).join('') : `<div class="empty">Nothing posted yet — check back soon.</div>`}
     </div>`;
   }
-  if(tab==='announce'){
-    return announceView(false);
-  }
   if(tab==='practice'){
     const mine = DB.practice.filter(p=>p.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
     const latest = mine[0];
@@ -1354,22 +1351,38 @@ function settingsView(){
     <b>Why not send SMS (or call Claude) directly?</b> Sending real texts, or generating exam drafts with Claude, both need a private account key (Twilio, Anthropic, etc.) that can never sit safely inside a page anyone can view or download — it would be stealable in seconds. Routing through your own webhook/proxy keeps that key on your side, out of this page entirely. If this page is opened straight from a file instead of a real hosted link, browsers may also block these outgoing requests altogether — hosting it (Netlify, Vercel, etc.) makes delivery reliable.
   </div>`;
 }
-function announceView(canPost){
+function announceView(){
+  const canPost = ME.role==='ambassador' || ME.role==='coordinator';
   const list = [...DB.announcements].sort((a,b)=>b.date.localeCompare(a.date));
   return `
-  <div class="section-title"><div><h2>Announcements</h2><p>From the Ambassador desk, for the whole programme.</p></div></div>
+  <div class="section-title"><div><h2>Announcements</h2><p>${ME.role==='ambassador' ? 'From the Ambassador desk, for the whole programme.' : ME.role==='coordinator' ? 'Programme-wide updates, plus anything you post for your own students.' : 'From the Ambassador desk and your coordinator.'}</p></div></div>
   ${canPost ? `
   <div class="card" style="margin-bottom:18px;">
     <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="annTitle" placeholder="e.g. Application deadline reminder"></div>
     <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="annBody" rows="3" placeholder="Write your announcement"></textarea></div>
-    <button class="btn amber small" id="addAnnBtn">Post announcement</button>
+    <button class="btn amber small" id="addAnnBtn">Post announcement${ME.role==='coordinator'?' (to your students)':''}</button>
   </div>` : ''}
   <div class="list">
-    ${list.length ? list.map(a=>`
+    ${list.length ? list.map(a=>{
+      const canManage = ME.role==='ambassador' || (ME.role==='coordinator' && a.coordinatorId===ME.id);
+      if(canManage && editingAnnId===a.id){
+        return `
+        <div class="item">
+          <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="editAnnTitle-${a.id}" value="${escapeHtml(a.title)}"></div>
+          <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="editAnnBody-${a.id}" rows="3">${escapeHtml(a.body)}</textarea></div>
+          <div class="item-actions">
+            <button class="btn teal small" data-save-ann="${a.id}">Save</button>
+            <button class="btn ghost small" data-cancel-edit-ann="${a.id}">Cancel</button>
+          </div>
+        </div>`;
+      }
+      return `
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}${a.authorName?' · '+escapeHtml(a.authorName):''}</span></div>
         <div class="item-body">${linkify(a.body)}</div>
-      </div>`).join('') : `<div class="empty">No announcements yet.</div>`}
+        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-edit-ann="${a.id}">Edit</button><button class="btn ghost small" data-remove-ann="${a.id}">Remove</button></div>` : ''}
+      </div>`;
+    }).join('') : `<div class="empty">No announcements yet.</div>`}
   </div>`;
 }
 function commentThread(items, coordinatorId){
@@ -1539,7 +1552,7 @@ function examsManageView(){
       <label>Exam content / questions</label>
       <textarea id="examContent" rows="6" placeholder="Write or paste the real exam problem(s) here"></textarea>
       <button class="btn ghost small" id="genExamBtn" style="margin-top:8px;">✦ Generate a draft with Claude</button>
-      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;"></span>
+      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;">${!(DB.settings||{}).aiWebhookUrl ? (ME.role==='ambassador' ? 'Connect a webhook in Settings to enable this.' : 'Not connected yet — ask your Ambassador to add a Claude webhook in Settings.') : ''}</span>
     </div>
     <button class="btn teal small" id="addExamBtn">Post exam${ME.role==='ambassador'?' (programme-wide)':''}</button>
   </div>
@@ -1660,11 +1673,34 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    DB.announcements.push({id:uid(), title, body, date:today()});
+    const coordinatorId = ME.role==='coordinator' ? ME.id : null;
+    DB.announcements.push({id:uid(), title, body, date:today(), coordinatorId, authorName:ME.name});
     await saveKey('announcements');
-    await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
+    await notifyBroadcast({title, body, coordinatorId, author:ME.name, role:ME.role});
     render('announce');
   });
+  document.querySelectorAll('[data-edit-ann]').forEach(b=>b.addEventListener('click', ()=>{
+    editingAnnId = b.dataset.editAnn; render('announce');
+  }));
+  document.querySelectorAll('[data-cancel-edit-ann]').forEach(b=>b.addEventListener('click', ()=>{
+    editingAnnId = null; render('announce');
+  }));
+  document.querySelectorAll('[data-save-ann]').forEach(b=>b.addEventListener('click', async ()=>{
+    const a = DB.announcements.find(a=>a.id===b.dataset.saveAnn); if(!a) return;
+    const titleInp = document.querySelector(`#editAnnTitle-${a.id}`);
+    const bodyInp = document.querySelector(`#editAnnBody-${a.id}`);
+    const title = titleInp ? titleInp.value.trim() : a.title;
+    const body = bodyInp ? bodyInp.value.trim() : a.body;
+    if(!title||!body) return alert('Please fill in both fields.');
+    a.title = title; a.body = body;
+    await saveKey('announcements');
+    editingAnnId = null; render('announce');
+  }));
+  document.querySelectorAll('[data-remove-ann]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this announcement?')) return;
+    DB.announcements = DB.announcements.filter(a=>a.id!==b.dataset.removeAnn);
+    await saveKey('announcements'); render('announce');
+  }));
 
   document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
     const sid=b.dataset.saveGroup;
@@ -1895,7 +1931,12 @@ function wireHandlers(tab){
     }));
     if(q('genExamBtn')) q('genExamBtn').addEventListener('click', async ()=>{
       const s = DB.settings || {};
-      if(!s.aiWebhookUrl){ alert('Connect a Claude exam-generation webhook first, in Settings.'); return; }
+      if(!s.aiWebhookUrl){
+        alert(ME.role==='ambassador'
+          ? 'Connect a Claude exam-generation webhook first, in Settings.'
+          : 'A Claude exam-generation webhook hasn\'t been connected yet — ask your Ambassador to add one in Settings.');
+        return;
+      }
       const btn = q('genExamBtn'), status = q('genExamStatus');
       const subject = q('examSubject').value.trim() || 'general chemistry';
       const difficulty = q('examDifficulty').value;
