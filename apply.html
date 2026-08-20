@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply — IChC Outreach Program, Ghana</title>
+<meta name="description" content="Apply to the IChC Outreach Program Ghana — Ghana's pathway to the International Chemistry Competition.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<style>
+  :root{
+    --navy:#0F2438;
+    --navy-deep:#0A1826;
+    --chalk:#F6F4EE;
+    --paper:#FFFFFF;
+    --amber:#E39A3B;
+    --amber-deep:#C97F22;
+    --teal:#1F8A70;
+    --teal-deep:#146956;
+    --ink:#1B2430;
+    --line:#DDD8C9;
+    --muted:#6B7280;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+    color:var(--navy-deep);
+  }
+  a{color:var(--teal-deep);}
+  button{font-family:inherit;}
+  ::selection{background:var(--amber); color:var(--navy-deep);}
+  .hidden{display:none !important;}
+
+  .wrap{max-width:640px; margin:0 auto; padding:52px 22px 80px;}
+  .hexlogo svg{display:block;}
+  .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
+  .top{display:flex; justify-content:center; margin-bottom:8px;}
+  h1.title{text-align:center; font-size:30px; margin:14px 0 6px;}
+  p.sub{text-align:center; color:var(--muted); font-size:15px; line-height:1.6; margin:0 0 34px;}
+
+  .card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:28px; box-shadow:0 1px 2px rgba(15,36,56,.03);}
+  .field{margin-bottom:16px;}
+  label{font-size:12.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px;}
+  label .opt{text-transform:none; font-weight:400;}
+  input, textarea, select{
+    width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid var(--line);
+    background:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; color:var(--ink);
+  }
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--amber); outline-offset:1px; border-color:var(--amber);}
+  textarea{resize:vertical; min-height:90px;}
+
+  .chip-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .chip{
+    border:2px solid var(--line); border-radius:10px; padding:12px 8px; text-align:center;
+    cursor:pointer; background:var(--paper); font-weight:600; font-size:14px; transition:.15s ease;
+  }
+  .chip:hover{border-color:var(--amber);}
+  .chip.active{border-color:var(--navy-deep); background:var(--navy-deep); color:var(--chalk);}
+
+  .checkline{display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink); font-weight:500;}
+  .checkline input{width:auto;}
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    padding:13px 22px; border-radius:999px; border:1.5px solid var(--amber-deep);
+    background:var(--amber); color:var(--navy-deep); font-weight:700; font-size:15px;
+    cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(15,36,56,.2);}
+  .btn:disabled{opacity:.5; cursor:not-allowed; transform:none; box-shadow:none;}
+
+  .err{color:#C0392B; font-size:13px; margin-top:-8px; margin-bottom:14px; min-height:16px;}
+  .foot-link{text-align:center; font-size:13px; color:var(--muted); margin-top:22px;}
+
+  .done{text-align:center; padding:20px 0;}
+  .done .tick{width:54px; height:54px; border-radius:50%; background:rgba(31,138,112,.14); color:var(--teal-deep); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:26px;}
+
+  @media(max-width:480px){ .chip-row{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+
+<template id="hexlogo-tpl">
+<svg viewBox="0 0 360 190" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round">
+    <polygon points="76,34 128,64 128,124 76,154 24,124 24,64"/>
+    <polygon points="180,34 232,64 232,124 180,154 128,124 128,64"/>
+    <polygon points="284,34 336,64 336,124 284,154 232,124 232,64"/>
+    <line x1="34" y1="120" x2="70" y2="144" stroke-width="4"/>
+    <line x1="138" y1="120" x2="174" y2="144" stroke-width="4"/>
+    <line x1="242" y1="120" x2="278" y2="144" stroke-width="4"/>
+  </g>
+  <text x="76" y="102" font-size="46" text-anchor="middle" dominant-baseline="middle">I</text>
+  <text x="180" y="102" font-size="36" text-anchor="middle" dominant-baseline="middle">Ch</text>
+  <text x="284" y="102" font-size="46" text-anchor="middle" dominant-baseline="middle">C</text>
+</svg>
+</template>
+
+<div class="wrap">
+  <div class="top"><div class="hexlogo" style="width:120px; color:var(--navy-deep);"></div></div>
+  <h1 class="title">Apply to the programme</h1>
+  <p class="sub">No account needed to apply — just fill this in. If you're accepted, the Ambassador will follow up by email with how to sign in to the student portal.</p>
+
+  <div class="card" id="formCard">
+    <div class="field">
+      <label>Full name</label>
+      <input id="fName" placeholder="e.g. Ama Owusu">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="fEmail" type="email" placeholder="e.g. ama.owusu@email.com">
+    </div>
+    <div class="field">
+      <label>Phone number <span class="opt">(so a coordinator can reach you — required)</span></label>
+      <input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000">
+    </div>
+    <div class="field checkline" style="margin-top:-8px; margin-bottom:18px;">
+      <input type="checkbox" id="fNotifySms" checked> <label style="text-transform:none; font-weight:500; margin:0; color:var(--ink);" for="fNotifySms">Text me call sheet updates and announcements</label>
+    </div>
+
+    <div class="field">
+      <label>School</label>
+      <input id="fSchool" placeholder="e.g. Achimota School">
+    </div>
+    <div class="field">
+      <label>Region</label>
+      <select id="fRegion">
+        <option value="">Select your region</option>
+        <option>Ahafo</option><option>Ashanti</option><option>Bono</option><option>Bono East</option>
+        <option>Central</option><option>Eastern</option><option>Greater Accra</option><option>North East</option>
+        <option>Northern</option><option>Oti</option><option>Savannah</option><option>Upper East</option>
+        <option>Upper West</option><option>Volta</option><option>Western</option><option>Western North</option>
+        <option>Outside Ghana</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Age range</label>
+      <div class="chip-row" id="ageChips">
+        <div class="chip" data-age="14-17">14 – 17</div>
+        <div class="chip" data-age="18-21">18 – 21</div>
+        <div class="chip" data-age="22-25">22 – 25</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>How did you hear about us?</label>
+      <select id="fHeard">
+        <option value="">Select one</option>
+        <option>WhatsApp</option>
+        <option>School / teacher</option>
+        <option>Friend or classmate</option>
+        <option>Social media</option>
+        <option>Coordinator or Ambassador</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Why do you want to join? <span class="opt">(a few sentences is plenty)</span></label>
+      <textarea id="fMessage" placeholder="Tell us a bit about your interest in chemistry and what you're hoping to get from the programme."></textarea>
+    </div>
+
+    <p class="err" id="formErr"></p>
+    <button class="btn" id="submitBtn">Submit application</button>
+  </div>
+
+  <p class="foot-link">Already accepted? <a href="portal.html">Sign in to the portal →</a></p>
+</div>
+
+<div class="wrap hidden" id="doneScreen">
+  <div class="card done">
+    <div class="tick">✓</div>
+    <h2 style="font-size:24px; margin:0 0 10px;">Application received</h2>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">Thanks for applying — the Ambassador reviews applications on a rolling basis. If you're accepted, you'll hear from us by email with next steps.</p>
+  </div>
+  <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
+</div>
+
+<script>
+// Same Supabase project the portal uses — this form writes straight into the
+// shared "applications:list" row that the Ambassador reviews in the portal's
+// Applications tab. No sign-in required on purpose: the whole point of a
+// public application form is that it shouldn't require an account first.
+const SUPABASE_CONFIG = {
+  url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
+  anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
+};
+let sb = null, sbReady = false;
+try{
+  if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
+    sb = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    sbReady = true;
+  }
+}catch(e){ console.error('Supabase init failed', e); }
+
+function paintLogos(){
+  document.querySelectorAll('.hexlogo').forEach(el=>{
+    const tpl = document.getElementById('hexlogo-tpl').content.cloneNode(true);
+    el.appendChild(tpl);
+  });
+}
+paintLogos();
+
+const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
+const today = () => new Date().toISOString().slice(0,10);
+function escapeHtml(str){
+  return String(str==null?'':str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+let chosenAge = null;
+document.querySelectorAll('#ageChips .chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    document.querySelectorAll('#ageChips .chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    chosenAge = chip.dataset.age;
+  });
+});
+
+async function sendConfirmationEmail(name, email){
+  // Best-effort only — if Settings > Connections isn't configured yet in the
+  // portal, this silently does nothing and the application is still saved.
+  try{
+    if(!sbReady) return;
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+    const s = (data && data.value) || {};
+    if(!(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)) return;
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
+        template_params: {
+          to_email: email, to_name: name, from_name: 'IChC Outreach Program Ghana',
+          subject: 'We got your application', message: 'Thanks for applying to IChC Outreach Program Ghana — we\'ll be in touch by email once your application has been reviewed.'
+        }
+      })
+    });
+  }catch(e){ /* non-blocking */ }
+}
+
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('formErr');
+  errEl.textContent = '';
+  const name = document.getElementById('fName').value.trim();
+  const email = document.getElementById('fEmail').value.trim().toLowerCase();
+  const phone = document.getElementById('fPhone').value.trim();
+  const notifySms = document.getElementById('fNotifySms').checked;
+  const school = document.getElementById('fSchool').value.trim();
+  const region = document.getElementById('fRegion').value;
+  const howHeard = document.getElementById('fHeard').value;
+  const message = document.getElementById('fMessage').value.trim();
+
+  if(!name) return errEl.textContent = 'Please enter your full name.';
+  if(!email || !validEmail(email)) return errEl.textContent = 'Please enter a valid email address.';
+  if(!phone) return errEl.textContent = 'Please add a phone number — it\'s how your coordinator reaches you.';
+  if(!chosenAge) return errEl.textContent = 'Please select your age range.';
+  if(!message) return errEl.textContent = 'Please add a line or two on why you want to join.';
+  if(!sbReady) return errEl.textContent = 'Applications aren\'t connected yet — please try again shortly or contact the Ambassador directly.';
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  try{
+    // Read-modify-write on a single shared row: fine at this programme's scale,
+    // but if applications ever arrive in the same instant from two people,
+    // the later write could overwrite the earlier one. Worth moving to one
+    // row per application (via an RPC/insert) if volume grows.
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
+    const list = (data && data.value) || [];
+    list.push({ id: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today() });
+    const { error } = await sb.from('ichc_kv').upsert({ key:'applications:list', value:list });
+    if(error) throw error;
+
+    sendConfirmationEmail(name, email);
+
+    // Remember who applied on this device/browser, so the status banner (below)
+    // can look up and show them where their application stands on any page of
+    // this site, without requiring a login.
+    try{ localStorage.setItem('ichc_applicant', JSON.stringify({ email, name })); }catch(e){}
+    renderApplicationStatusBanner();
+
+    document.getElementById('formCard').parentElement.querySelectorAll('.card, .foot-link').forEach(el=>el.remove());
+    document.querySelector('.wrap').classList.add('hidden');
+    document.getElementById('doneScreen').classList.remove('hidden');
+  }catch(e){
+    console.error(e);
+    errEl.textContent = 'Something went wrong submitting your application — please check your connection and try again.';
+    btn.disabled = false; btn.textContent = 'Submit application';
+  }
+});
+
+// ---- Application status banner ----
+// No login exists for applicants, so we remember their email locally (set above,
+// right after a successful submit) and look it up against the live application
+// data on every page load. Shows "in review", "accepted", or "declined" at the
+// top of the page. Each decision gets its own dismiss key so a NEW decision (e.g.
+// pending -> accepted) always reappears even if an earlier banner was dismissed.
+async function renderApplicationStatusBanner(){
+  document.querySelectorAll('.ichc-app-banner').forEach(b=>b.remove());
+  if(!sbReady) return;
+  let applicant;
+  try{ applicant = JSON.parse(localStorage.getItem('ichc_applicant')||'null'); }catch(e){ applicant = null; }
+  if(!applicant || !applicant.email) return;
+  const email = applicant.email.toLowerCase();
+
+  let state = null; // {type:'pending'|'accepted'|'declined', reason, key}
+  try{
+    const { data: appData } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
+    const pending = ((appData && appData.value) || []).find(a=>a.email && a.email.toLowerCase()===email);
+    if(pending){
+      state = { type:'pending', key:'pending:'+pending.id };
+    } else {
+      const { data: decData } = await sb.from('ichc_kv').select('value').eq('key','application_decisions:list').maybeSingle();
+      const decisions = ((decData && decData.value) || []).filter(d=>d.email && d.email.toLowerCase()===email);
+      const latest = decisions.sort((a,b)=>b.date.localeCompare(a.date))[0];
+      if(latest) state = { type: latest.decision, reason: latest.reason, key: latest.id };
+    }
+  }catch(e){ console.error('Application status check failed', e); return; }
+  if(!state) return;
+
+  let dismissed = [];
+  try{ dismissed = JSON.parse(localStorage.getItem('ichc_banner_dismissed')||'[]'); }catch(e){}
+  if(dismissed.includes(state.key)) return;
+
+  const styles = {
+    pending:  { bg:'#FDF3E1', border:'#E7C179', fg:'#7A5416', text:`Your application is <b>in review</b> — the Ambassador will be in touch by email${applicant.name?`, ${escapeHtml(applicant.name)}`:''}.` },
+    accepted: { bg:'#E4F3EE', border:'#7FC4AE', fg:'#0F5A45', text:`🎉 Your application was <b>accepted</b>! Check your email for next steps.${state.reason?' — '+escapeHtml(state.reason):''}` },
+    declined: { bg:'#F6E9E7', border:'#D9A79C', fg:'#7A2E1F', text:`Your application <b>wasn't accepted</b> this round.${state.reason?' — '+escapeHtml(state.reason):''}` }
+  };
+  const st = styles[state.type];
+  if(!st) return;
+
+  const bar = document.createElement('div');
+  bar.className = 'ichc-app-banner';
+  bar.style.cssText = `background:${st.bg}; border-bottom:1px solid ${st.border}; color:${st.fg}; padding:12px 46px 12px 20px; font-size:13.5px; font-weight:500; text-align:center; position:relative; line-height:1.5;`;
+  bar.innerHTML = `<span>${st.text}</span><button aria-label="Dismiss" style="position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:18px; line-height:1; cursor:pointer; color:${st.fg}; opacity:.55;">&times;</button>`;
+  document.body.prepend(bar);
+  bar.querySelector('button').addEventListener('click', ()=>{
+    bar.remove();
+    try{
+      const list = JSON.parse(localStorage.getItem('ichc_banner_dismissed')||'[]');
+      list.push(state.key);
+      localStorage.setItem('ichc_banner_dismissed', JSON.stringify(list));
+    }catch(e){}
+  });
+}
+renderApplicationStatusBanner();
+</script>
+</body>
+</html>
