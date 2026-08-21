@@ -707,6 +707,7 @@ async function signOutEverywhere(){
 
 let currentTab = null;
 let editingAnnId = null;  // id of the announcement currently open for inline editing, or null
+let editingNotifId = null;  // id of the notification currently open for inline editing, or null
 function showApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -751,6 +752,7 @@ function buildTabs(){
 function render(tab){
   stopExamRuntime();
   if(tab!=='announce') editingAnnId = null;
+  if(tab!=='notifications') editingNotifId = null;
   currentTab = tab;
   const s = document.getElementById('screen');
   if(tab==='notifications'){ s.innerHTML = notificationsView(); paintLogos(); wireHandlers(tab); return; }
@@ -1323,11 +1325,26 @@ function notificationsView(){
     <div style="font-size:12.5px; color:var(--muted); flex:1; min-width:220px;">Every message always lands here in the app${ME.role==='ambassador'?'; email and SMS delivery depend on the connections set up in Settings.':' — the Ambassador manages whether it also goes out by email or SMS.'}</div>
   </div>
   <div class="list">
-    ${sorted.length ? sorted.map(n=>`
+    ${sorted.length ? sorted.map(n=>{
+      const canManage = ME.role==='ambassador' || (ME.role==='coordinator' && n.coordinatorId===ME.id);
+      if(canManage && editingNotifId===n.id){
+        return `
+        <div class="item">
+          <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="editNotifTitle-${n.id}" value="${escapeHtml(n.title)}"></div>
+          <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="editNotifBody-${n.id}" rows="3">${escapeHtml(n.body)}</textarea></div>
+          <div class="item-actions">
+            <button class="btn teal small" data-save-notif="${n.id}">Save</button>
+            <button class="btn ghost small" data-cancel-edit-notif="${n.id}">Cancel</button>
+          </div>
+        </div>`;
+      }
+      return `
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(n.title)}</span><span class="item-meta">${fmtDate(n.date)}</span></div>
         <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>
-      </div>`).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
+        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-edit-notif="${n.id}">Edit</button><button class="btn ghost small" data-remove-notif="${n.id}">Remove</button></div>` : ''}
+      </div>`;
+    }).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
   </div>`;
 }
 function settingsView(){
@@ -1700,6 +1717,29 @@ function wireHandlers(tab){
     if(!confirm('Remove this announcement?')) return;
     DB.announcements = DB.announcements.filter(a=>a.id!==b.dataset.removeAnn);
     await saveKey('announcements'); render('announce');
+  }));
+
+  document.querySelectorAll('[data-edit-notif]').forEach(b=>b.addEventListener('click', ()=>{
+    editingNotifId = b.dataset.editNotif; render('notifications');
+  }));
+  document.querySelectorAll('[data-cancel-edit-notif]').forEach(b=>b.addEventListener('click', ()=>{
+    editingNotifId = null; render('notifications');
+  }));
+  document.querySelectorAll('[data-save-notif]').forEach(b=>b.addEventListener('click', async ()=>{
+    const n = DB.notifications.find(n=>n.id===b.dataset.saveNotif); if(!n) return;
+    const titleInp = document.querySelector(`#editNotifTitle-${n.id}`);
+    const bodyInp = document.querySelector(`#editNotifBody-${n.id}`);
+    const title = titleInp ? titleInp.value.trim() : n.title;
+    const body = bodyInp ? bodyInp.value.trim() : n.body;
+    if(!title||!body) return alert('Please fill in both fields.');
+    n.title = title; n.body = body;
+    await saveKey('notifications');
+    editingNotifId = null; render('notifications');
+  }));
+  document.querySelectorAll('[data-remove-notif]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this notification? It will disappear from everyone\'s feed — this only removes the in-app log entry, any email or text already sent can\'t be recalled.')) return;
+    DB.notifications = DB.notifications.filter(n=>n.id!==b.dataset.removeNotif);
+    await saveKey('notifications'); render('notifications');
   }));
 
   document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
