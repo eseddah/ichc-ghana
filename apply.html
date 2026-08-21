@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
   :root{
     --navy:#0F2438;
@@ -172,8 +173,12 @@
       <textarea id="fMessage" placeholder="Tell us a bit about your interest in chemistry and what you're hoping to get from the programme."></textarea>
     </div>
 
+    <div class="field">
+      <div class="g-recaptcha" id="recaptchaBox" data-sitekey="PASTE_RECAPTCHA_SITE_KEY_HERE" data-callback="onRecaptchaVerified" data-expired-callback="onRecaptchaExpired"></div>
+    </div>
+
     <p class="err" id="formErr"></p>
-    <button class="btn" id="submitBtn">Submit application</button>
+    <button class="btn" id="submitBtn" disabled>Submit application</button>
   </div>
 
   <p class="foot-link">Already accepted? <a href="portal.html">Sign in to the portal →</a></p>
@@ -197,6 +202,18 @@ const SUPABASE_CONFIG = {
   url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
   anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
 };
+// reCAPTCHA v2 checkbox — get a site key + secret key at
+// https://www.google.com/recaptcha/admin (choose "reCAPTCHA v2 / Checkbox"),
+// then replace data-sitekey="PASTE_RECAPTCHA_SITE_KEY_HERE" on the
+// #recaptchaBox div above with your site key.
+//
+// The secret key does NOT go here. It goes only in your Supabase Edge
+// Function's environment variables (see submit-application/index.ts and
+// the deployment instructions). This page sends the applicant's answers +
+// their captcha token to that function; the function checks the token with
+// Google and writes to the database. That's what makes the check
+// unskippable — it happens on Supabase's server, not in this page.
+const SUBMIT_APPLICATION_URL = "PASTE_YOUR_EDGE_FUNCTION_URL_HERE"; // e.g. https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/submit-application
 let sb = null, sbReady = false;
 try{
   if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
@@ -218,6 +235,13 @@ const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : M
 const today = () => new Date().toISOString().slice(0,10);
 function escapeHtml(str){
   return String(str==null?'':str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function onRecaptchaVerified(){
+  document.getElementById('submitBtn').disabled = false;
+}
+function onRecaptchaExpired(){
+  document.getElementById('submitBtn').disabled = true;
 }
 
 let chosenAge = null;
@@ -267,21 +291,27 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   if(!phone) return errEl.textContent = 'Please add a phone number — it\'s how your coordinator reaches you.';
   if(!chosenAge) return errEl.textContent = 'Please select your age range.';
   if(!message) return errEl.textContent = 'Please add a line or two on why you want to join.';
-  if(!sbReady) return errEl.textContent = 'Applications aren\'t connected yet — please try again shortly or contact the Ambassador directly.';
+  if(typeof grecaptcha === 'undefined' || !grecaptcha.getResponse()) return errEl.textContent = 'Please check the box to confirm you\'re not a robot.';
+  if(!SUBMIT_APPLICATION_URL || SUBMIT_APPLICATION_URL.startsWith('PASTE_')) return errEl.textContent = 'Applications aren\'t connected yet — please try again shortly or contact the Ambassador directly.';
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = 'Submitting…';
 
   try{
-    // Read-modify-write on a single shared row: fine at this programme's scale,
-    // but if applications ever arrive in the same instant from two people,
-    // the later write could overwrite the earlier one. Worth moving to one
-    // row per application (via an RPC/insert) if volume grows.
-    const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-    const list = (data && data.value) || [];
-    list.push({ id: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today() });
-    const { error } = await sb.from('ichc_kv').upsert({ key:'applications:list', value:list });
-    if(error) throw error;
+    // The write now happens server-side (see submit-application/index.ts).
+    // This page only sends the data + the reCAPTCHA token; the server
+    // re-checks the token with Google before saving anything.
+    const recaptchaToken = grecaptcha.getResponse();
+    const res = await fetch(SUBMIT_APPLICATION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recaptchaToken,
+        application: { name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message }
+      })
+    });
+    const result = await res.json().catch(()=>({}));
+    if(!res.ok || !result.ok) throw new Error(result.error || 'submit failed');
 
     sendConfirmationEmail(name, email);
 
@@ -298,6 +328,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     console.error(e);
     errEl.textContent = 'Something went wrong submitting your application — please check your connection and try again.';
     btn.disabled = false; btn.textContent = 'Submit application';
+    if(typeof grecaptcha !== 'undefined') grecaptcha.reset();
   }
 });
 
