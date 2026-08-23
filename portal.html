@@ -212,15 +212,17 @@
     <h1 class="onb-title" style="font-size:26px;">Almost there, <span id="reqName"></span>.</h1>
     <p class="onb-sub">You're signed in with Google. This email isn't on the programme roster yet — tell us which role you're requesting, and a little about yourself, so the Ambassador can review it.</p>
     <div class="role-grid" style="grid-template-columns:1fr 1fr;">
-      <div class="role-card" data-reqrole="coordinator">
+      <div class="role-card" data-reqrole-disabled="coordinator" style="cursor:not-allowed; opacity:.55;">
         <div class="ring" style="background:rgba(31,138,112,.14); color:var(--teal-deep);">C</div>
         <div class="rname">Coordinator</div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:6px;">Applications closed</div>
       </div>
       <div class="role-card" data-reqrole="student">
         <div class="ring" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">S</div>
         <div class="rname">Student</div>
       </div>
     </div>
+    <p style="text-align:center; font-size:12.5px; color:var(--muted); margin:-4px 0 0;">We've filled our Coordinator roster and are no longer accepting Coordinator applications. Student applications are still open.</p>
     <div class="field" style="margin-top:16px;">
       <label>A short bio — name, school, and anything that helps the Ambassador decide</label>
       <textarea id="reqBio" rows="4" placeholder="e.g. I'm a final-year student at Achimota School, I've been self-studying organic chemistry for a year and want structured competition prep..."></textarea>
@@ -656,7 +658,8 @@ async function submitAccessRequest(){
   const bio = document.getElementById('reqBio').value.trim();
   const phone = document.getElementById('reqPhone').value.trim();
   const notifySms = document.getElementById('reqNotifySms').checked;
-  if(!chosenRequestRole){ alert('Please choose whether you\'re requesting Coordinator or Student access.'); return; }
+  if(!chosenRequestRole){ alert('Please choose Student access — Coordinator applications are closed.'); return; }
+  if(chosenRequestRole === 'coordinator'){ alert('Coordinator applications are closed — we\'re no longer accepting new coordinators.'); return; }
   if(!bio){ alert('Please add a short bio — your name, school, and anything that helps the Ambassador decide.'); return; }
   if(notifySms && !phone){ alert('Add a phone number to receive text alerts, or untick that option.'); return; }
   const email = googleUser.email.toLowerCase();
