@@ -110,7 +110,7 @@
 <div class="wrap">
   <div class="top"><div class="hexlogo" style="width:120px; color:var(--navy-deep);"></div></div>
   <h1 class="title">Apply to the programme</h1>
-  <p class="sub">No account needed to apply — just fill this in. If you're accepted, the Ambassador will follow up by email with how to sign in to the student portal.</p>
+  <p class="sub">No account needed to apply — just fill this in. Right after you submit, you'll be sent to our WhatsApp group so you're plugged in from day one. Portal sign-in is a separate step — if you're accepted, the Ambassador will follow up by email with how to sign in.</p>
 
   <div class="card" id="formCard">
     <div class="field">
@@ -183,8 +183,12 @@
   <div class="card done">
     <div class="tick">✓</div>
     <h2 style="font-size:24px; margin:0 0 10px;">Application received</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">Thanks for applying — the Ambassador reviews applications on a rolling basis. If you're accepted, you'll hear from us by email with next steps.</p>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">Thanks for applying. Taking you to the programme WhatsApp group now — that's where announcements and updates happen day to day.</p>
+    <p style="color:var(--muted); font-size:13.5px; margin:14px 0 0;" id="redirectCountdown">Redirecting in <span id="redirectSecs">4</span>s…</p>
+    <a class="btn" id="joinWhatsappBtn" href="#" target="_blank" rel="noopener" style="margin-top:16px; text-decoration:none;">Join the WhatsApp group now →</a>
+    <button type="button" id="cancelRedirectBtn" style="margin-top:10px; background:none; border:none; color:var(--muted); font-size:12.5px; text-decoration:underline; cursor:pointer;">Stay on this page instead</button>
   </div>
+  <p style="color:var(--muted); font-size:13px; text-align:center; max-width:420px; margin:18px auto 0; line-height:1.6;">The Ambassador still reviews applications for the student portal separately — if you're accepted, you'll hear from us by email with sign-in instructions.</p>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
 
@@ -197,6 +201,9 @@ const SUPABASE_CONFIG = {
   url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
   anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
 };
+// Fallback WhatsApp group link, used unless the Ambassador has set/overridden one
+// in the portal's Settings tab (same "settings:notify" row the portal reads).
+const DEFAULT_WHATSAPP_URL = "https://chat.whatsapp.com/EctgAsWf78z3GVVCsQzOPc";
 let sb = null, sbReady = false;
 try{
   if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
@@ -228,6 +235,33 @@ document.querySelectorAll('#ageChips .chip').forEach(chip=>{
     chosenAge = chip.dataset.age;
   });
 });
+
+async function getWhatsappUrl(){
+  try{
+    if(!sbReady) return DEFAULT_WHATSAPP_URL;
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+    const s = (data && data.value) || {};
+    return (s.whatsappGroupUrl && s.whatsappGroupUrl.trim()) || DEFAULT_WHATSAPP_URL;
+  }catch(e){ return DEFAULT_WHATSAPP_URL; }
+}
+
+let redirectTimer = null, redirectInterval = null;
+function startWhatsappRedirect(url){
+  const btn = document.getElementById('joinWhatsappBtn');
+  btn.href = url;
+  let secs = 4;
+  const secsEl = document.getElementById('redirectSecs');
+  redirectInterval = setInterval(()=>{
+    secs -= 1;
+    if(secsEl) secsEl.textContent = String(Math.max(secs,0));
+  }, 1000);
+  redirectTimer = setTimeout(()=>{ window.location.href = url; }, 4000);
+  document.getElementById('cancelRedirectBtn').addEventListener('click', ()=>{
+    clearTimeout(redirectTimer); clearInterval(redirectInterval);
+    const cd = document.getElementById('redirectCountdown');
+    if(cd) cd.textContent = "No problem — tap the button above whenever you're ready.";
+  });
+}
 
 async function sendConfirmationEmail(name, email){
   // Best-effort only — if Settings > Connections isn't configured yet in the
@@ -294,6 +328,8 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     document.getElementById('formCard').parentElement.querySelectorAll('.card, .foot-link').forEach(el=>el.remove());
     document.querySelector('.wrap').classList.add('hidden');
     document.getElementById('doneScreen').classList.remove('hidden');
+    const whatsappUrl = await getWhatsappUrl();
+    startWhatsappRedirect(whatsappUrl);
   }catch(e){
     console.error(e);
     errEl.textContent = 'Something went wrong submitting your application — please check your connection and try again.';

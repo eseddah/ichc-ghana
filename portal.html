@@ -285,6 +285,8 @@ const SUPABASE_CONFIG = {
   url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
   anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
 };
+// Fallback WhatsApp group link used until the Ambassador sets/overrides one in Settings.
+const DEFAULT_WHATSAPP_URL = "https://chat.whatsapp.com/EctgAsWf78z3GVVCsQzOPc";
 let sb = null;
 let sbReady = false;
 try{
@@ -375,7 +377,7 @@ async function loadDB(){
   DB.exams        = (await sGet('posts:exams', true)) || [];
   DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
   DB.presence     = await loadAllPresence();
-  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'' };
+  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', whatsappGroupUrl:'' };
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -980,6 +982,7 @@ function ambassadorView(tab){
           <div class="item-head"><span class="item-title">${escapeHtml(c.name)}</span><span class="item-meta">joined ${fmtDate(c.joined)}</span></div>
           <div class="item-body">${escapeHtml(c.email||'no email on file')} · ${DB.students.filter(s=>s.coordinatorId===c.id).length} student(s) · ${presenceBadge(c.email)}</div>
           <div class="item-body" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+            <input data-cfield="name" data-coord-id="${c.id}" value="${escapeHtml(c.name||'')}" placeholder="Full name" style="max-width:160px; font-weight:600;">
             <input data-cfield="subject" data-coord-id="${c.id}" value="${escapeHtml(c.subject||'')}" placeholder="Focus area" style="max-width:160px;">
             <input data-cfield="region" data-coord-id="${c.id}" value="${escapeHtml(c.region||'')}" placeholder="Region" style="max-width:130px;">
             <input data-cfield="phone" data-coord-id="${c.id}" value="${escapeHtml(c.phone||'')}" placeholder="Phone (for SMS)" style="max-width:150px;">
@@ -1357,6 +1360,9 @@ function settingsView(){
   <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
   <div class="card" style="margin-bottom:18px;">
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
+    <h3 style="font-size:15px; margin:18px 0 8px;">Applicant WhatsApp group</h3>
+    <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 10px;">Everyone who submits the application form is sent straight to this group afterward, so they're plugged in right away — before you've had a chance to review their application. Portal sign-in is still separate and still requires your review below.</p>
+    <div class="field" style="margin:0 0 10px;"><label>WhatsApp group invite link</label><input id="setWhatsapp" value="${escapeHtml(s.whatsappGroupUrl||'')}" placeholder="${DEFAULT_WHATSAPP_URL}"></div>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email — via EmailJS (free tier available)</h3>
     <div class="field" style="margin:0 0 10px;"><label>Public key</label><input id="setEmailKey" value="${escapeHtml(s.emailjsPublicKey||'')}" placeholder="EmailJS public key"></div>
     <div class="field" style="margin:0 0 10px;"><label>Service ID</label><input id="setEmailService" value="${escapeHtml(s.emailjsServiceId||'')}" placeholder="EmailJS service ID"></div>
@@ -1643,6 +1649,8 @@ function wireHandlers(tab){
     const id = b.dataset.saveCoord;
     const c = DB.coordinators.find(c=>c.id===id);
     if(!c) return;
+    const nameInp = document.querySelector(`[data-coord-id="${id}"][data-cfield="name"]`);
+    if(nameInp && !nameInp.value.trim()) return alert('Name can\'t be empty.');
     document.querySelectorAll(`[data-coord-id="${id}"]`).forEach(inp=>{
       c[inp.dataset.cfield] = inp.value.trim();
     });
@@ -1823,7 +1831,8 @@ function wireHandlers(tab){
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
       webhookUrl: q('setWebhook').value.trim(),
-      aiWebhookUrl: q('setAiWebhook').value.trim()
+      aiWebhookUrl: q('setAiWebhook').value.trim(),
+      whatsappGroupUrl: q('setWhatsapp').value.trim()
     };
     try{
       const ok = await saveKey('settings');
