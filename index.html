@@ -161,6 +161,26 @@
   #privacy .panel p{color:#39424D; font-size:14.5px; line-height:1.7; margin-bottom:14px;}
   #privacy .close{float:right; cursor:pointer; font-weight:700; color:var(--muted);}
 
+  
+  #molecule{background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .molviewer{display:grid; grid-template-columns:1.1fr .9fr; gap:32px; align-items:stretch;}
+  .molviewer-canvas-wrap{position:relative; background:var(--navy-deep); border-radius:var(--radius); overflow:hidden; min-height:380px; display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab;}
+  .molviewer-canvas-wrap:active{cursor:grabbing;}
+  .molviewer-canvas-wrap canvas{display:block; width:100%; height:100%;}
+  .molviewer-hint{position:absolute; bottom:14px; left:50%; transform:translateX(-50%); font-size:12px; letter-spacing:.04em; color:rgba(246,244,238,.6); background:rgba(246,244,238,.08); border:1px solid rgba(246,244,238,.14); padding:6px 14px; border-radius:999px; pointer-events:none; transition:opacity .3s;}
+  .molviewer-panel{display:flex; flex-direction:column; gap:18px;}
+  .mol-tabs{display:flex; gap:8px; flex-wrap:wrap;}
+  .mol-tab{padding:9px 18px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); font-weight:600; font-size:13.5px; cursor:pointer; transition:.15s ease; font-family:inherit;}
+  .mol-tab:hover{border-color:var(--amber-deep);}
+  .mol-tab.active{background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk);}
+  .mol-info{background:var(--chalk); border:1px solid var(--line); border-radius:var(--radius); padding:24px; flex:1;}
+  .mol-info h3{font-size:22px; margin-bottom:8px;}
+  .mol-formula{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:rgba(31,138,112,.12); color:var(--teal-deep); padding:4px 12px; border-radius:999px; margin-bottom:14px;}
+  .mol-info p{color:var(--muted); font-size:14.5px; line-height:1.7; margin:0;}
+  .mol-legend{display:flex; gap:16px; margin-top:16px; flex-wrap:wrap;}
+  .mol-legend span{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);}
+  .mol-legend i{width:11px; height:11px; border-radius:50%; display:inline-block; border:1px solid var(--line);}
+
   @media(max-width:860px){
     .grid.cols-2, .grid.cols-3, .grid.cols-4{grid-template-columns:1fr;}
     .navlinks, .navcta .btn.outline.dark{display:none;}
@@ -168,6 +188,8 @@
     .hero .hexbg{display:none;}
     section{padding:56px 0;}
     footer .wrap{flex-direction:column;}
+    .molviewer{grid-template-columns:1fr;}
+    .molviewer-canvas-wrap{min-height:300px;}
   }
 </style>
 </head>
@@ -197,6 +219,7 @@
     </a>
     <nav class="navlinks">
       <a href="#about">About</a>
+      <a href="#molecule">Explore</a>
       <a href="#why">Why</a>
       <a href="#how">Programme</a>
       <a href="#impact">Impact</a>
@@ -289,6 +312,35 @@
           <div class="ico" style="background:rgba(15,36,56,.08); color:var(--navy-deep);">3</div>
           <h3>Prepare with purpose</h3>
           <p>Weekly practice questions, timed mock rounds, and call sessions built around how the actual competition is timed and marked.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="molecule">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:34px;">
+        <div class="eyebrow">See chemistry in motion</div>
+        <h2>This isn't a textbook diagram.</h2>
+        <p>Drag it, spin it, switch molecules — a live 3D model of the shapes and bonding ideas you'll be tested on.</p>
+      </div>
+      <div class="molviewer">
+        <div class="molviewer-canvas-wrap" id="molCanvasWrap">
+          <canvas id="molCanvas" aria-label="Interactive 3D molecule viewer — drag to rotate"></canvas>
+          <div class="molviewer-hint" id="molHint">Drag to rotate</div>
+        </div>
+        <div class="molviewer-panel">
+          <div class="mol-tabs" id="molTabs">
+            <button class="mol-tab active" type="button" data-mol="methane">Methane</button>
+            <button class="mol-tab" type="button" data-mol="water">Water</button>
+            <button class="mol-tab" type="button" data-mol="benzene">Benzene</button>
+          </div>
+          <div class="mol-info">
+            <h3 id="molName">Methane</h3>
+            <span class="mol-formula" id="molFormula">CH&#8324;</span>
+            <p id="molConcept">Four bonds spread as far apart as possible — 109.5&deg; apart, in every direction — giving carbon its tetrahedral shape and its incredible versatility in building molecules.</p>
+            <div class="mol-legend" id="molLegend"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -792,6 +844,212 @@ function tickCountdown(){
 }
 tickCountdown();
 setInterval(tickCountdown, 1000);
+</script>
+
+<script>
+/* ---------- Interactive molecule viewer (no external deps) ---------- */
+(function(){
+  const wrap = document.getElementById('molCanvasWrap');
+  const canvas = document.getElementById('molCanvas');
+  if(!wrap || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  const hint = document.getElementById('molHint');
+  const nameEl = document.getElementById('molName');
+  const formulaEl = document.getElementById('molFormula');
+  const conceptEl = document.getElementById('molConcept');
+  const legendEl = document.getElementById('molLegend');
+  const tabsEl = document.getElementById('molTabs');
+
+  const ATOM_COLOR = { C:'#0A1826', H:'#F6F4EE', O:'#C0392B' };
+  const ATOM_R = { C:0.42, H:0.26, O:0.4 };
+  const ATOM_LABEL = { C:'Carbon', H:'Hydrogen', O:'Oxygen' };
+
+  function buildBenzene(){
+    const atoms = [], bonds = [];
+    const ringR = 1.4, hR = 2.35;
+    for(let i=0;i<6;i++){
+      const a = (Math.PI/3)*i;
+      atoms.push({ el:'C', x:ringR*Math.cos(a), y:ringR*Math.sin(a), z:0 });
+    }
+    for(let i=0;i<6;i++){
+      const a = (Math.PI/3)*i;
+      atoms.push({ el:'H', x:hR*Math.cos(a), y:hR*Math.sin(a), z:0 });
+      bonds.push([i, 6+i]);
+    }
+    for(let i=0;i<6;i++){ bonds.push([i, (i+1)%6]); }
+    return { atoms, bonds, ring:[0,1,2,3,4,5] };
+  }
+
+  const deg = d => d*Math.PI/180;
+  const MOLECULES = {
+    methane:{
+      name:'Methane', formula:'CH&#8324;',
+      concept:'Four bonds spread as far apart as possible &mdash; 109.5&deg; apart, in every direction &mdash; giving carbon its tetrahedral shape and its incredible versatility in building molecules.',
+      atoms:[
+        {el:'C', x:0, y:0, z:0},
+        {el:'H', x:1, y:1, z:1}, {el:'H', x:1, y:-1, z:-1},
+        {el:'H', x:-1, y:1, z:-1}, {el:'H', x:-1, y:-1, z:1}
+      ],
+      bonds:[[0,1],[0,2],[0,3],[0,4]]
+    },
+    water:{
+      name:'Water', formula:'H&#8322;O',
+      concept:'Bent, not straight. Two invisible lone pairs on oxygen push the hydrogens together, bending the molecule to about 104.5&deg; instead of the 109.5&deg; you\'d otherwise expect &mdash; and that bend is why water is a polar solvent.',
+      atoms:[
+        {el:'O', x:0, y:0, z:0},
+        {el:'H', x: Math.sin(deg(52.25))*1.5, y:Math.cos(deg(52.25))*1.5, z:0},
+        {el:'H', x:-Math.sin(deg(52.25))*1.5, y:Math.cos(deg(52.25))*1.5, z:0}
+      ],
+      bonds:[[0,1],[0,2]]
+    },
+    benzene:(function(){ const b=buildBenzene(); return {
+      name:'Benzene', formula:'C&#8326;H&#8326;',
+      concept:'A ring that looks like alternating single and double bonds &mdash; but isn\'t. The electrons are delocalized around the whole ring (the faint circle), which is why benzene is far more stable than a normal chain of double bonds.',
+      atoms:b.atoms, bonds:b.bonds, ring:b.ring
+    };})()
+  };
+
+  let current = 'methane';
+  let rotX = deg(-18), rotY = deg(28);
+  let dragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0, idleTimer = 0, userInteracted = false;
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize(){
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function project(p, cx, cy, scale){
+    const cosY=Math.cos(rotY), sinY=Math.sin(rotY);
+    const x1 = p.x*cosY - p.z*sinY, z1 = p.x*sinY + p.z*cosY, y1 = p.y;
+    const cosX=Math.cos(rotX), sinX=Math.sin(rotX);
+    const y2 = y1*cosX - z1*sinX, z2 = y1*sinX + z1*cosX, x2 = x1;
+    const persp = 6.5;
+    const f = persp/(persp+z2);
+    return { x: cx + x2*scale*f, y: cy - y2*scale*f, z:z2, f };
+  }
+
+  function draw(){
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+    const mol = MOLECULES[current];
+    const cx = w/2, cy = h/2, scale = Math.min(w,h) * 0.155;
+
+    const pAtoms = mol.atoms.map(a => Object.assign({}, a, project(a, cx, cy, scale)));
+
+    // aromatic ring glow for benzene
+    if(mol.ring){
+      const pts = mol.ring.map(i => pAtoms[i]);
+      const rcx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+      const rcy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      const rr = pts.reduce((s,p)=>s+Math.hypot(p.x-rcx,p.y-rcy),0)/pts.length;
+      ctx.save();
+      ctx.setLineDash([w*0.012, w*0.012]);
+      ctx.strokeStyle = 'rgba(227,154,59,.55)';
+      ctx.lineWidth = Math.max(1.5, w*0.004);
+      ctx.beginPath(); ctx.ellipse(rcx, rcy, rr*0.62, rr*0.62, 0, 0, Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    // bonds, sorted by average depth
+    const bondsSorted = mol.bonds.map(([i,j]) => ({ i, j, z:(pAtoms[i].z+pAtoms[j].z)/2 }))
+      .sort((a,b) => a.z - b.z);
+    bondsSorted.forEach(({i,j}) => {
+      const p1 = pAtoms[i], p2 = pAtoms[j];
+      const grad = ctx.createLinearGradient(p1.x,p1.y,p2.x,p2.y);
+      grad.addColorStop(0, ATOM_COLOR[mol.atoms[i].el]);
+      grad.addColorStop(1, ATOM_COLOR[mol.atoms[j].el]);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = Math.max(2, scale*0.11*((p1.f+p2.f)/2));
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+    });
+
+    // atoms, back to front
+    pAtoms.slice().sort((a,b)=>a.z-b.z).forEach(p => {
+      const r = ATOM_R[p.el]*scale*p.f;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+      ctx.fillStyle = ATOM_COLOR[p.el];
+      ctx.fill();
+      if(p.el === 'H'){ ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(221,216,201,.8)'; ctx.stroke(); }
+      const hl = ctx.createRadialGradient(p.x-r*0.35,p.y-r*0.35,r*0.1, p.x,p.y,r);
+      hl.addColorStop(0,'rgba(255,255,255,.35)'); hl.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle = hl; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  function loop(){
+    if(!dragging){
+      if(!userInteracted){ rotY += 0.006; }
+      else if(Math.abs(velX) > 0.0002 || Math.abs(velY) > 0.0002){
+        rotY += velX; rotX += velY;
+        velX *= 0.94; velY *= 0.94;
+      }
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function pos(e){
+    if(e.touches && e.touches[0]) return { x:e.touches[0].clientX, y:e.touches[0].clientY };
+    return { x:e.clientX, y:e.clientY };
+  }
+  function onDown(e){
+    dragging = true; userInteracted = true;
+    const p = pos(e); lastX = p.x; lastY = p.y; velX = 0; velY = 0;
+    if(hint) hint.style.opacity = '0';
+    wrap.setPointerCapture && e.pointerId != null && wrap.setPointerCapture(e.pointerId);
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const p = pos(e);
+    const dx = p.x - lastX, dy = p.y - lastY;
+    velX = dx*0.008; velY = -dy*0.008;
+    rotY += velX; rotX += velY;
+    lastX = p.x; lastY = p.y;
+    e.preventDefault && e.preventDefault();
+  }
+  function onUp(){ dragging = false; }
+
+  wrap.addEventListener('pointerdown', onDown);
+  wrap.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp);
+  wrap.addEventListener('touchstart', onDown, {passive:true});
+  wrap.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+
+  function renderLegend(mol){
+    const elements = [...new Set(mol.atoms.map(a=>a.el))];
+    legendEl.innerHTML = elements.map(el =>
+      `<span><i style="background:${ATOM_COLOR[el]}"></i>${ATOM_LABEL[el]}</span>`
+    ).join('');
+  }
+
+  function setMolecule(key){
+    current = key;
+    const mol = MOLECULES[key];
+    nameEl.textContent = mol.name;
+    formulaEl.innerHTML = mol.formula;
+    conceptEl.innerHTML = mol.concept;
+    renderLegend(mol);
+    tabsEl.querySelectorAll('.mol-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mol === key);
+    });
+  }
+
+  tabsEl.addEventListener('click', e => {
+    const btn = e.target.closest('.mol-tab');
+    if(!btn) return;
+    userInteracted = true;
+    setMolecule(btn.dataset.mol);
+  });
+
+  setMolecule('methane');
+  loop();
+})();
 </script>
 </body>
 </html>
