@@ -175,11 +175,81 @@
   .mol-tab.active{background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk);}
   .mol-info{background:var(--chalk); border:1px solid var(--line); border-radius:var(--radius); padding:24px; flex:1;}
   .mol-info h3{font-size:22px; margin-bottom:8px;}
-  .mol-formula{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:rgba(31,138,112,.12); color:var(--teal-deep); padding:4px 12px; border-radius:999px; margin-bottom:14px;}
+  .mol-formula{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:rgba(31,138,112,.12); color:var(--teal-deep); padding:4px 12px; border-radius:999px; margin-bottom:14px; margin-right:8px;}
+  .mol-shape{display:inline-block; font-size:12.5px; font-weight:600; color:var(--amber-deep); background:rgba(227,154,59,.14); padding:4px 12px; border-radius:999px; margin-bottom:14px;}
   .mol-info p{color:var(--muted); font-size:14.5px; line-height:1.7; margin:0;}
   .mol-legend{display:flex; gap:16px; margin-top:16px; flex-wrap:wrap;}
   .mol-legend span{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);}
   .mol-legend i{width:11px; height:11px; border-radius:50%; display:inline-block; border:1px solid var(--line);}
+  .molviewer-reset{position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; border:1px solid rgba(246,244,238,.25); background:rgba(246,244,238,.1); color:var(--chalk); font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.15s ease;}
+  .molviewer-reset:hover{background:rgba(246,244,238,.2);}
+
+  /* ---------- Periodic table ---------- */
+  #periodic{background:#fff;}
+  .pt-toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .pt-legend{display:flex; flex-wrap:wrap; gap:7px;}
+  .pt-legend button{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 12px 6px 8px; font-size:12px; font-weight:600; color:var(--navy-deep); cursor:pointer; font-family:inherit; transition:.15s ease;}
+  .pt-legend button i{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .pt-legend button.dim{opacity:.35;}
+  .pt-legend button.active{border-color:var(--navy-deep);}
+  .pt-search{position:relative;}
+  .pt-search input{border:1.5px solid var(--line); border-radius:999px; padding:9px 16px 9px 34px; font-size:13.5px; font-family:inherit; width:190px; background:var(--paper) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%237a7568" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') no-repeat 12px center;}
+  .pt-search input:focus{outline:none; border-color:var(--amber-deep);}
+  .pt-layout{display:grid; grid-template-columns:1fr 300px; gap:26px; align-items:start;}
+  .ptable-wrap{overflow-x:auto; padding-bottom:8px;}
+  .ptable-grid{display:grid; grid-template-columns:repeat(18, minmax(44px,1fr)); gap:3px; min-width:920px;}
+  .pt-cell{position:relative; aspect-ratio:1; border-radius:6px; padding:4px 5px; cursor:pointer; transition:transform .12s ease, opacity .2s ease; display:flex; flex-direction:column; justify-content:space-between; color:#fff; font-family:'IBM Plex Sans',sans-serif;}
+  .pt-cell:hover{transform:translateY(-2px) scale(1.06); z-index:5; box-shadow:0 8px 18px rgba(0,0,0,.18);}
+  .pt-cell.dim{opacity:.18;}
+  .pt-cell.selected{outline:2.5px solid var(--navy-deep); outline-offset:1px; z-index:6;}
+  .pt-cell .pt-num{font-size:8.5px; opacity:.85; line-height:1;}
+  .pt-cell .pt-sym{font-size:15px; font-weight:700; line-height:1;}
+  .pt-cell .pt-mass{font-size:7px; opacity:.85; line-height:1;}
+  .pt-placeholder{border:1.5px dashed rgba(0,0,0,.15); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:9.5px; color:var(--muted); font-weight:600; aspect-ratio:1;}
+  .pt-detail{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:24px; position:sticky; top:90px; min-height:280px;}
+  .pt-detail .pt-detail-num{font-size:13px; color:var(--muted); font-weight:600;}
+  .pt-detail .pt-detail-sym{font-family:'Fraunces',serif; font-size:56px; font-weight:700; line-height:1; margin:6px 0;}
+  .pt-detail .pt-detail-name{font-size:20px; font-weight:700; margin-bottom:14px;}
+  .pt-detail-rows{display:flex; flex-direction:column; gap:9px; font-size:13.5px; color:#39424D; border-top:1px solid var(--line); padding-top:14px;}
+  .pt-detail-rows div{display:flex; justify-content:space-between; gap:10px;}
+  .pt-detail-rows b{color:var(--navy-deep); font-weight:600;}
+  .pt-detail-empty{color:var(--muted); font-size:14px; line-height:1.7;}
+  @media(max-width:860px){
+    .pt-layout{grid-template-columns:1fr;}
+    .pt-detail{position:static;}
+  }
+
+  /* ---------- Chemist of the day ---------- */
+  #chemist{background:var(--navy-deep); color:var(--chalk);}
+  #chemist .section-head .eyebrow{color:var(--amber);}
+  #chemist .section-head h2{color:#fff;}
+  #chemist .section-head p{color:rgba(246,244,238,.65);}
+  .chemist-card{display:grid; grid-template-columns:220px 1fr; gap:36px; align-items:center; background:rgba(246,244,238,.04); border:1px solid rgba(246,244,238,.12); border-radius:var(--radius); padding:36px;}
+  .chemist-photo{width:200px; height:200px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,#e0954f,#c9761f); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:3px solid rgba(246,244,238,.15);}
+  .chemist-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .chemist-photo .init{font-family:'Fraunces',serif; font-weight:700; font-size:64px; color:#fff;}
+  .chemist-quote{font-family:'Fraunces',serif; font-size:26px; line-height:1.45; font-weight:600; margin-bottom:16px;}
+  .chemist-quote::before{content:'\201C'; color:var(--amber);}
+  .chemist-quote::after{content:'\201D'; color:var(--amber);}
+  .chemist-name{font-size:16px; font-weight:700; color:var(--amber);}
+  .chemist-role{font-size:13.5px; color:rgba(246,244,238,.55); margin-top:2px;}
+  .chemist-timer{margin-top:20px; font-size:12px; letter-spacing:.05em; color:rgba(246,244,238,.4); text-transform:uppercase;}
+
+  /* ---------- Activity gallery ---------- */
+  #activities{background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .activity-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; position:relative;}
+  .activity-card .activity-img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:linear-gradient(135deg,#e7e2d3,#d8d2bd);}
+  .activity-card .activity-caption{padding:14px 16px; font-size:14px; color:#39424D; line-height:1.5;}
+  .activity-card .activity-remove{position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(15,22,30,.65); color:#fff; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;}
+  .activity-empty{grid-column:1/-1; border:1.5px dashed var(--line); border-radius:var(--radius); padding:40px 20px; text-align:center; color:var(--muted); font-size:14.5px;}
+  @media(max-width:640px){
+    .activity-card .activity-img{aspect-ratio:16/10;}
+  }
+  @media(max-width:640px){
+    .chemist-card{grid-template-columns:1fr; text-align:center; padding:28px;}
+    .chemist-photo{margin:0 auto;}
+    .chemist-quote::before, .chemist-quote::after{content:none;}
+  }
 
   @media(max-width:860px){
     .grid.cols-2, .grid.cols-3, .grid.cols-4{grid-template-columns:1fr;}
@@ -190,6 +260,7 @@
     footer .wrap{flex-direction:column;}
     .molviewer{grid-template-columns:1fr;}
     .molviewer-canvas-wrap{min-height:300px;}
+    .chemist-card{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -220,6 +291,7 @@
     <nav class="navlinks">
       <a href="#about">About</a>
       <a href="#molecule">Explore</a>
+      <a href="#periodic">Elements</a>
       <a href="#why">Why</a>
       <a href="#how">Programme</a>
       <a href="#impact">Impact</a>
@@ -321,26 +393,75 @@
     <div class="wrap">
       <div class="section-head" style="margin-bottom:34px;">
         <div class="eyebrow">See chemistry in motion</div>
-        <h2>This isn't a textbook diagram.</h2>
-        <p>Drag it, spin it, switch molecules — a live 3D model of the shapes and bonding ideas you'll be tested on.</p>
+        <h2>Eight real molecules, not one textbook diagram.</h2>
+        <p>Drag to rotate, switch molecules — live 3D models covering the full range of shapes you'll meet in VSEPR theory, from a simple linear molecule to expanded-octet geometries.</p>
       </div>
       <div class="molviewer">
         <div class="molviewer-canvas-wrap" id="molCanvasWrap">
           <canvas id="molCanvas" aria-label="Interactive 3D molecule viewer — drag to rotate"></canvas>
+          <button type="button" class="molviewer-reset" id="molReset" title="Reset view" aria-label="Reset view">&#8635;</button>
           <div class="molviewer-hint" id="molHint">Drag to rotate</div>
         </div>
         <div class="molviewer-panel">
           <div class="mol-tabs" id="molTabs">
             <button class="mol-tab active" type="button" data-mol="methane">Methane</button>
+            <button class="mol-tab" type="button" data-mol="ammonia">Ammonia</button>
             <button class="mol-tab" type="button" data-mol="water">Water</button>
+            <button class="mol-tab" type="button" data-mol="co2">CO&#8322;</button>
+            <button class="mol-tab" type="button" data-mol="ethene">Ethene</button>
             <button class="mol-tab" type="button" data-mol="benzene">Benzene</button>
+            <button class="mol-tab" type="button" data-mol="pcl5">PCl&#8325;</button>
+            <button class="mol-tab" type="button" data-mol="sf6">SF&#8326;</button>
           </div>
           <div class="mol-info">
             <h3 id="molName">Methane</h3>
             <span class="mol-formula" id="molFormula">CH&#8324;</span>
+            <span class="mol-shape" id="molShape">Tetrahedral &middot; 4 electron domains</span>
             <p id="molConcept">Four bonds spread as far apart as possible — 109.5&deg; apart, in every direction — giving carbon its tetrahedral shape and its incredible versatility in building molecules.</p>
             <div class="mol-legend" id="molLegend"></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="periodic">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:34px;">
+        <div class="eyebrow">The full picture</div>
+        <h2>An actual periodic table.</h2>
+        <p>All 118 elements, colour-coded and clickable — search by name, filter by category, and see real data for each one.</p>
+      </div>
+      <div class="pt-toolbar">
+        <div class="pt-legend" id="ptLegend"></div>
+        <div class="pt-search">
+          <input type="text" id="ptSearch" placeholder="Search element or symbol&hellip;" autocomplete="off">
+        </div>
+      </div>
+      <div class="pt-layout">
+        <div class="ptable-wrap">
+          <div class="ptable-grid" id="ptGrid"></div>
+        </div>
+        <div class="pt-detail" id="ptDetail">
+          <p class="pt-detail-empty">Click any element to see its details — atomic number, mass, category, and state at room temperature.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="chemist">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:34px;">
+        <div class="eyebrow">Chemist of the day</div>
+        <h2>The people behind the periodic table.</h2>
+      </div>
+      <div class="chemist-card">
+        <div class="chemist-photo" id="chemistPhoto"><span class="init" id="chemistInit">?</span></div>
+        <div>
+          <p class="chemist-quote" id="chemistQuote">Loading&hellip;</p>
+          <div class="chemist-name" id="chemistName"></div>
+          <div class="chemist-role" id="chemistRole"></div>
+          <div class="chemist-timer" id="chemistTimer"></div>
         </div>
       </div>
     </div>
@@ -445,6 +566,35 @@
         <div class="card"><b id="impactSessions">—</b><span>Call sessions scheduled</span></div>
       </div>
       <p class="note">Figures reflect activity recorded in the student portal.</p>
+    </div>
+  </section>
+
+  <section id="activities">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:26px;">
+        <div class="eyebrow">Behind the scenes</div>
+        <h2>Moments from the programme.</h2>
+        <p>Sessions, mock rounds, and coordinator meetups — posted by the ambassador as they happen.</p>
+      </div>
+      <div id="activityAmbassadorBar" style="display:none; margin-bottom:20px;">
+        <button type="button" id="addActivityBtn" style="background:var(--navy-deep); color:var(--chalk); border:none; border-radius:999px; padding:11px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">+ Add activity photo</button>
+      </div>
+      <div id="activityForm" style="display:none; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:24px;">
+        <div style="display:flex; flex-direction:column; gap:12px; max-width:480px;">
+          <label style="font-size:12px; font-weight:700; letter-spacing:.04em; color:var(--muted); text-transform:uppercase;">Photo
+            <input type="file" id="activityFile" accept="image/*" style="display:block; margin-top:6px; font-size:13.5px;">
+          </label>
+          <label style="font-size:12px; font-weight:700; letter-spacing:.04em; color:var(--muted); text-transform:uppercase;">Caption
+            <input type="text" id="activityCaption" placeholder="e.g. Saturday mock round with the Accra cohort" style="display:block; margin-top:6px; width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 14px; font-size:14px; font-family:inherit;">
+          </label>
+          <div style="display:flex; gap:10px; margin-top:4px;">
+            <button type="button" id="activityPostBtn" style="background:var(--teal); color:#fff; border:none; border-radius:999px; padding:10px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">Post</button>
+            <button type="button" id="activityCancelBtn" style="background:rgba(0,0,0,.08); color:var(--navy-deep); border:none; border-radius:999px; padding:10px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">Cancel</button>
+          </div>
+          <p id="activityFormStatus" style="font-size:12.5px; color:var(--muted); margin:0;"></p>
+        </div>
+      </div>
+      <div class="grid cols-3" id="activityGrid"></div>
     </div>
   </section>
 
@@ -641,7 +791,132 @@ async function loadStatsAndTeam(){
 }
 loadStatsAndTeam();
 
-const AMBASSADOR_EMAIL_PUBLIC = 'eseyram@amb.intchc.org';
+const ACTIVITY_BUCKET = 'activity-photos';
+
+async function loadActivities(){
+  const grid = document.getElementById('activityGrid');
+  if(!grid || !sbReady) return;
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('value').eq('key','site:activities').maybeSingle();
+    if(error) throw error;
+    const list = (data && data.value) ? data.value : [];
+    renderActivities(list);
+  }catch(e){
+    console.error('Failed to load activity photos', e);
+  }
+}
+
+function renderActivities(list){
+  const grid = document.getElementById('activityGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  if(!list.length){
+    grid.innerHTML = '<div class="activity-empty">No activity photos yet — check back soon.</div>';
+    return;
+  }
+  list.slice().reverse().forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'activity-card';
+    card.innerHTML = `
+      <img class="activity-img" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.caption||'Programme activity photo')}" loading="lazy">
+      <div class="activity-caption">${escapeHtml(item.caption||'')}</div>
+      ${window.__isAmbassador ? `<button class="activity-remove" data-remove-id="${escapeHtml(item.id)}" title="Remove photo" aria-label="Remove photo">&#10005;</button>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+  if(window.__isAmbassador){
+    grid.querySelectorAll('[data-remove-id]').forEach(btn=>{
+      btn.addEventListener('click', ()=>removeActivity(btn.getAttribute('data-remove-id')));
+    });
+  }
+}
+
+async function removeActivity(id){
+  if(!confirm('Remove this photo from the page?')) return;
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('value').eq('key','site:activities').maybeSingle();
+    if(error) throw error;
+    const list = (data && data.value) ? data.value : [];
+    const target = list.find(i=>i.id===id);
+    const newList = list.filter(i=>i.id!==id);
+    const { error: saveErr } = await sb.from('ichc_kv').upsert({ key:'site:activities', value:newList });
+    if(saveErr) throw saveErr;
+    if(target && target.path){
+      try{ await sb.storage.from(ACTIVITY_BUCKET).remove([target.path]); }catch(e){ console.warn('Storage cleanup failed', e); }
+    }
+    renderActivities(newList);
+  }catch(e){
+    console.error('Remove failed', e);
+    alert('Sorry, removing that photo failed — please try again.');
+  }
+}
+
+loadActivities();
+
+function initActivityEditor(){
+  const bar = document.getElementById('activityAmbassadorBar');
+  const form = document.getElementById('activityForm');
+  const addBtn = document.getElementById('addActivityBtn');
+  const postBtn = document.getElementById('activityPostBtn');
+  const cancelBtn = document.getElementById('activityCancelBtn');
+  const fileInput = document.getElementById('activityFile');
+  const captionInput = document.getElementById('activityCaption');
+  const statusEl = document.getElementById('activityFormStatus');
+  if(!bar || !form) return;
+
+  bar.style.display = 'block';
+  loadActivities(); // re-render existing photos with remove controls now that we know it's the ambassador
+
+  addBtn.addEventListener('click', ()=>{
+    form.style.display = 'block';
+    addBtn.style.display = 'none';
+  });
+  cancelBtn.addEventListener('click', ()=>{
+    form.style.display = 'none';
+    addBtn.style.display = 'inline-block';
+    fileInput.value = '';
+    captionInput.value = '';
+    statusEl.textContent = '';
+  });
+
+  postBtn.addEventListener('click', async ()=>{
+    const file = fileInput.files && fileInput.files[0];
+    const caption = captionInput.value.trim();
+    if(!file){ statusEl.textContent = 'Choose a photo first.'; statusEl.style.color = '#C0392B'; return; }
+    if(!caption){ statusEl.textContent = 'Add a short caption.'; statusEl.style.color = '#C0392B'; return; }
+    postBtn.disabled = true;
+    statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--muted)';
+    try{
+      const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const { error: upErr } = await sb.storage.from(ACTIVITY_BUCKET).upload(path, file, { upsert:false });
+      if(upErr) throw upErr;
+      const { data: pub } = sb.storage.from(ACTIVITY_BUCKET).getPublicUrl(path);
+      const url = pub.publicUrl;
+
+      const { data, error } = await sb.from('ichc_kv').select('value').eq('key','site:activities').maybeSingle();
+      if(error) throw error;
+      const list = (data && data.value) ? data.value : [];
+      list.push({ id: Math.random().toString(36).slice(2,9), url, path, caption, date: new Date().toISOString().slice(0,10) });
+      const { error: saveErr } = await sb.from('ichc_kv').upsert({ key:'site:activities', value:list });
+      if(saveErr) throw saveErr;
+
+      renderActivities(list);
+      form.style.display = 'none';
+      addBtn.style.display = 'inline-block';
+      fileInput.value = '';
+      captionInput.value = '';
+      statusEl.textContent = '';
+    }catch(e){
+      console.error('Activity post failed', e);
+      statusEl.textContent = 'Upload failed — please try again.'; statusEl.style.color = '#C0392B';
+    }finally{
+      postBtn.disabled = false;
+    }
+  });
+}
+
+const AMBASSADOR_EMAIL_PUBLIC = 'edmondeddah999@gmail.com';
 let editMode = false;
 let originalContent = {};
 
@@ -664,7 +939,9 @@ async function initAmbassadorEditing(){
   if(!sbReady) return;
   const { data: { session } } = await sb.auth.getSession();
   const isAmbassador = session && session.user && session.user.email && session.user.email.toLowerCase() === AMBASSADOR_EMAIL_PUBLIC.toLowerCase();
+  window.__isAmbassador = !!isAmbassador;
   if(!isAmbassador) return;
+  initActivityEditor();
 
   const bar = document.createElement('div');
   bar.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:500; display:flex; gap:10px; align-items:center;';
@@ -856,62 +1133,126 @@ setInterval(tickCountdown, 1000);
   const hint = document.getElementById('molHint');
   const nameEl = document.getElementById('molName');
   const formulaEl = document.getElementById('molFormula');
+  const shapeEl = document.getElementById('molShape');
   const conceptEl = document.getElementById('molConcept');
   const legendEl = document.getElementById('molLegend');
   const tabsEl = document.getElementById('molTabs');
+  const resetBtn = document.getElementById('molReset');
 
-  const ATOM_COLOR = { C:'#0A1826', H:'#F6F4EE', O:'#C0392B' };
-  const ATOM_R = { C:0.42, H:0.26, O:0.4 };
-  const ATOM_LABEL = { C:'Carbon', H:'Hydrogen', O:'Oxygen' };
-
-  function buildBenzene(){
-    const atoms = [], bonds = [];
-    const ringR = 1.4, hR = 2.35;
-    for(let i=0;i<6;i++){
-      const a = (Math.PI/3)*i;
-      atoms.push({ el:'C', x:ringR*Math.cos(a), y:ringR*Math.sin(a), z:0 });
-    }
-    for(let i=0;i<6;i++){
-      const a = (Math.PI/3)*i;
-      atoms.push({ el:'H', x:hR*Math.cos(a), y:hR*Math.sin(a), z:0 });
-      bonds.push([i, 6+i]);
-    }
-    for(let i=0;i<6;i++){ bonds.push([i, (i+1)%6]); }
-    return { atoms, bonds, ring:[0,1,2,3,4,5] };
-  }
+  const ATOM_COLOR = {
+    C:'#0A1826', H:'#F6F4EE', O:'#C0392B',
+    N:'#2C5F8A', F:'#4FA88A', Cl:'#178A52',
+    P:'#C97F22', S:'#E3A03B'
+  };
+  const ATOM_R = { C:0.42, H:0.26, O:0.4, N:0.4, F:0.36, Cl:0.5, P:0.5, S:0.48 };
+  const ATOM_LABEL = { C:'Carbon', H:'Hydrogen', O:'Oxygen', N:'Nitrogen', F:'Fluorine', Cl:'Chlorine', P:'Phosphorus', S:'Sulfur' };
 
   const deg = d => d*Math.PI/180;
+
+  function buildRing(n, ringR, hR, centerEl, outerEl){
+    const atoms = [], bonds = [];
+    for(let i=0;i<n;i++){
+      const a = (2*Math.PI/n)*i;
+      atoms.push({ el:centerEl, x:ringR*Math.cos(a), y:ringR*Math.sin(a), z:0 });
+    }
+    for(let i=0;i<n;i++){
+      const a = (2*Math.PI/n)*i;
+      atoms.push({ el:outerEl, x:hR*Math.cos(a), y:hR*Math.sin(a), z:0 });
+      bonds.push([i, n+i, 1]);
+    }
+    for(let i=0;i<n;i++){ bonds.push([i, (i+1)%n, 1]); }
+    return { atoms, bonds, ring:[...Array(n).keys()] };
+  }
+
   const MOLECULES = {
     methane:{
-      name:'Methane', formula:'CH&#8324;',
-      concept:'Four bonds spread as far apart as possible &mdash; 109.5&deg; apart, in every direction &mdash; giving carbon its tetrahedral shape and its incredible versatility in building molecules.',
+      name:'Methane', formula:'CH&#8324;', shape:'Tetrahedral &middot; 4 electron domains',
+      concept:'Four bonds spread as far apart as possible &mdash; 109.5&deg; apart, in every direction. This is the textbook tetrahedral shape, and it\'s why carbon is the backbone of organic chemistry.',
+      scale:1.15,
       atoms:[
         {el:'C', x:0, y:0, z:0},
         {el:'H', x:1, y:1, z:1}, {el:'H', x:1, y:-1, z:-1},
         {el:'H', x:-1, y:1, z:-1}, {el:'H', x:-1, y:-1, z:1}
       ],
-      bonds:[[0,1],[0,2],[0,3],[0,4]]
+      bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]
+    },
+    ammonia:{
+      name:'Ammonia', formula:'NH&#8323;', shape:'Trigonal pyramidal &middot; 4 domains, 1 lone pair',
+      concept:'Nitrogen has four electron domains too, but one is a lone pair instead of a bond &mdash; so only three N&ndash;H bonds are visible, pushed into a pyramid shape at about 107&deg;.',
+      scale:1.15,
+      atoms:[
+        {el:'N', x:0, y:0, z:0},
+        {el:'H', x:1, y:1, z:1}, {el:'H', x:1, y:-1, z:-1}, {el:'H', x:-1, y:1, z:-1}
+      ],
+      bonds:[[0,1,1],[0,2,1],[0,3,1]]
     },
     water:{
-      name:'Water', formula:'H&#8322;O',
-      concept:'Bent, not straight. Two invisible lone pairs on oxygen push the hydrogens together, bending the molecule to about 104.5&deg; instead of the 109.5&deg; you\'d otherwise expect &mdash; and that bend is why water is a polar solvent.',
+      name:'Water', formula:'H&#8322;O', shape:'Bent &middot; 4 domains, 2 lone pairs',
+      concept:'Two invisible lone pairs on oxygen push the hydrogens even closer together, bending the molecule to about 104.5&deg; instead of 109.5&deg; &mdash; and that bend is why water is a polar solvent.',
+      scale:1.5,
       atoms:[
         {el:'O', x:0, y:0, z:0},
         {el:'H', x: Math.sin(deg(52.25))*1.5, y:Math.cos(deg(52.25))*1.5, z:0},
         {el:'H', x:-Math.sin(deg(52.25))*1.5, y:Math.cos(deg(52.25))*1.5, z:0}
       ],
-      bonds:[[0,1],[0,2]]
+      bonds:[[0,1,1],[0,2,1]]
     },
-    benzene:(function(){ const b=buildBenzene(); return {
-      name:'Benzene', formula:'C&#8326;H&#8326;',
-      concept:'A ring that looks like alternating single and double bonds &mdash; but isn\'t. The electrons are delocalized around the whole ring (the faint circle), which is why benzene is far more stable than a normal chain of double bonds.',
+    co2:{
+      name:'Carbon Dioxide', formula:'CO&#8322;', shape:'Linear &middot; 2 electron domains, 180&deg;',
+      concept:'With only two domains and no lone pairs on carbon, the molecule straightens out completely &mdash; 180&deg;. Both C=O bonds are double bonds, and the symmetry is exactly why CO&#8322; has no net polarity despite polar bonds.',
+      scale:1.0,
+      atoms:[
+        {el:'O', x:-1.8, y:0, z:0}, {el:'C', x:0, y:0, z:0}, {el:'O', x:1.8, y:0, z:0}
+      ],
+      bonds:[[1,0,2],[1,2,2]]
+    },
+    ethene:{
+      name:'Ethene', formula:'C&#8322;H&#8324;', shape:'Trigonal planar &middot; sp&sup2; carbon',
+      concept:'Each carbon is sp&sup2; hybridized: three flat, 120&deg; bonds plus one leftover p-orbital on each carbon overlapping sideways to form the C=C double bond &mdash; a &pi; bond that locks the whole molecule flat.',
+      scale:1.0,
+      atoms:[
+        {el:'C', x:-0.7, y:0, z:0}, {el:'C', x:0.7, y:0, z:0},
+        {el:'H', x:-1.4, y:0.95, z:0}, {el:'H', x:-1.4, y:-0.95, z:0},
+        {el:'H', x:1.4, y:0.95, z:0}, {el:'H', x:1.4, y:-0.95, z:0}
+      ],
+      bonds:[[0,1,2],[0,2,1],[0,3,1],[1,4,1],[1,5,1]]
+    },
+    benzene:(function(){ const b=buildRing(6,1.4,2.35,'C','H'); return {
+      name:'Benzene', formula:'C&#8326;H&#8326;', shape:'Aromatic ring &middot; delocalized &pi; system',
+      concept:'It looks like alternating single and double bonds &mdash; but isn\'t. The electrons are delocalized around the whole ring (the dashed circle), which is why benzene is far more stable than a normal chain of double bonds.',
+      scale:0.85,
       atoms:b.atoms, bonds:b.bonds, ring:b.ring
-    };})()
+    };})(),
+    pcl5:{
+      name:'Phosphorus Pentachloride', formula:'PCl&#8325;', shape:'Trigonal bipyramidal &middot; 5 domains',
+      concept:'Phosphorus breaks the octet rule to fit five bonds: three chlorines sit in a flat equatorial ring at 120&deg;, while two more sit straight above and below at 90&deg;. Those axial bonds are even slightly longer than the equatorial ones.',
+      scale:1.0,
+      atoms:[
+        {el:'P', x:0, y:0, z:0},
+        {el:'Cl', x:1.7, y:0, z:0}, {el:'Cl', x:1.7*Math.cos(deg(120)), y:1.7*Math.sin(deg(120)), z:0}, {el:'Cl', x:1.7*Math.cos(deg(240)), y:1.7*Math.sin(deg(240)), z:0},
+        {el:'Cl', x:0, y:0, z:2.0}, {el:'Cl', x:0, y:0, z:-2.0}
+      ],
+      bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[0,5,1]]
+    },
+    sf6:{
+      name:'Sulfur Hexafluoride', formula:'SF&#8326;', shape:'Octahedral &middot; 6 domains, 90&deg;',
+      concept:'Six fluorines point along all three axes &mdash; up, down, and the four horizontal directions &mdash; every bond angle exactly 90&deg;. This perfectly symmetric cage is part of why SF&#8326; is so chemically inert it\'s used as electrical insulation.',
+      scale:1.0,
+      atoms:[
+        {el:'S', x:0, y:0, z:0},
+        {el:'F', x:1.7, y:0, z:0}, {el:'F', x:-1.7, y:0, z:0},
+        {el:'F', x:0, y:1.7, z:0}, {el:'F', x:0, y:-1.7, z:0},
+        {el:'F', x:0, y:0, z:1.7}, {el:'F', x:0, y:0, z:-1.7}
+      ],
+      bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[0,5,1],[0,6,1]]
+    }
   };
+  const ORDER = ['methane','ammonia','water','co2','ethene','benzene','pcl5','sf6'];
 
   let current = 'methane';
-  let rotX = deg(-18), rotY = deg(28);
-  let dragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0, idleTimer = 0, userInteracted = false;
+  const DEFAULT_ROT = { x: deg(-18), y: deg(28) };
+  let rotX = DEFAULT_ROT.x, rotY = DEFAULT_ROT.y;
+  let dragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0, userInteracted = false;
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   function resize(){
@@ -932,15 +1273,31 @@ setInterval(tickCountdown, 1000);
     return { x: cx + x2*scale*f, y: cy - y2*scale*f, z:z2, f };
   }
 
+  function drawBondSegment(p1, p2, order, colA, colB, baseWidth){
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.hypot(dx,dy) || 1;
+    const nx = -dy/len, ny = dx/len;
+    const gap = baseWidth*1.8;
+    const offsets = order===1 ? [0] : order===2 ? [-gap/2, gap/2] : [-gap, 0, gap];
+    offsets.forEach(off => {
+      const ax = p1.x+nx*off, ay = p1.y+ny*off, bx = p2.x+nx*off, by = p2.y+ny*off;
+      const grad = ctx.createLinearGradient(ax,ay,bx,by);
+      grad.addColorStop(0, colA); grad.addColorStop(1, colB);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = Math.max(1.6, baseWidth*0.85);
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+    });
+  }
+
   function draw(){
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0,0,w,h);
     const mol = MOLECULES[current];
-    const cx = w/2, cy = h/2, scale = Math.min(w,h) * 0.155;
+    const cx = w/2, cy = h/2, scale = Math.min(w,h) * 0.155 * (mol.scale||1);
 
     const pAtoms = mol.atoms.map(a => Object.assign({}, a, project(a, cx, cy, scale)));
 
-    // aromatic ring glow for benzene
     if(mol.ring){
       const pts = mol.ring.map(i => pAtoms[i]);
       const rcx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
@@ -954,21 +1311,14 @@ setInterval(tickCountdown, 1000);
       ctx.restore();
     }
 
-    // bonds, sorted by average depth
-    const bondsSorted = mol.bonds.map(([i,j]) => ({ i, j, z:(pAtoms[i].z+pAtoms[j].z)/2 }))
+    const bondsSorted = mol.bonds.map(([i,j,order]) => ({ i, j, order:order||1, z:(pAtoms[i].z+pAtoms[j].z)/2 }))
       .sort((a,b) => a.z - b.z);
-    bondsSorted.forEach(({i,j}) => {
+    bondsSorted.forEach(({i,j,order}) => {
       const p1 = pAtoms[i], p2 = pAtoms[j];
-      const grad = ctx.createLinearGradient(p1.x,p1.y,p2.x,p2.y);
-      grad.addColorStop(0, ATOM_COLOR[mol.atoms[i].el]);
-      grad.addColorStop(1, ATOM_COLOR[mol.atoms[j].el]);
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = Math.max(2, scale*0.11*((p1.f+p2.f)/2));
-      ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+      const bw = Math.max(2, scale*0.1*((p1.f+p2.f)/2));
+      drawBondSegment(p1, p2, order, ATOM_COLOR[mol.atoms[i].el], ATOM_COLOR[mol.atoms[j].el], bw);
     });
 
-    // atoms, back to front
     pAtoms.slice().sort((a,b)=>a.z-b.z).forEach(p => {
       const r = ATOM_R[p.el]*scale*p.f;
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2);
@@ -1021,6 +1371,12 @@ setInterval(tickCountdown, 1000);
   wrap.addEventListener('touchmove', onMove, {passive:false});
   window.addEventListener('touchend', onUp);
 
+  if(resetBtn){
+    resetBtn.addEventListener('click', () => {
+      rotX = DEFAULT_ROT.x; rotY = DEFAULT_ROT.y; velX = 0; velY = 0;
+    });
+  }
+
   function renderLegend(mol){
     const elements = [...new Set(mol.atoms.map(a=>a.el))];
     legendEl.innerHTML = elements.map(el =>
@@ -1033,6 +1389,7 @@ setInterval(tickCountdown, 1000);
     const mol = MOLECULES[key];
     nameEl.textContent = mol.name;
     formulaEl.innerHTML = mol.formula;
+    if(shapeEl) shapeEl.innerHTML = mol.shape;
     conceptEl.innerHTML = mol.concept;
     renderLegend(mol);
     tabsEl.querySelectorAll('.mol-tab').forEach(btn => {
@@ -1049,6 +1406,265 @@ setInterval(tickCountdown, 1000);
 
   setMolecule('methane');
   loop();
+})();
+</script>
+
+<script>
+/* ---------- Periodic table + Chemist of the Day (no external deps) ---------- */
+(function(){
+  // [atomicNumber, symbol, name, mass, category, phase, period, group]
+  const ELEMENTS = [
+    [1,"H","Hydrogen",1.01,"nonmetal","gas",1,1],
+    [2,"He","Helium",4.0,"noble","gas",1,18],
+    [3,"Li","Lithium",6.94,"alkali","solid",2,1],
+    [4,"Be","Beryllium",9.01,"alkaline","solid",2,2],
+    [5,"B","Boron",10.81,"metalloid","solid",2,13],
+    [6,"C","Carbon",12.01,"nonmetal","solid",2,14],
+    [7,"N","Nitrogen",14.01,"nonmetal","gas",2,15],
+    [8,"O","Oxygen",16.0,"nonmetal","gas",2,16],
+    [9,"F","Fluorine",19.0,"halogen","gas",2,17],
+    [10,"Ne","Neon",20.18,"noble","gas",2,18],
+    [11,"Na","Sodium",22.99,"alkali","solid",3,1],
+    [12,"Mg","Magnesium",24.31,"alkaline","solid",3,2],
+    [13,"Al","Aluminium",26.98,"post","solid",3,13],
+    [14,"Si","Silicon",28.09,"metalloid","solid",3,14],
+    [15,"P","Phosphorus",30.97,"nonmetal","solid",3,15],
+    [16,"S","Sulfur",32.07,"nonmetal","solid",3,16],
+    [17,"Cl","Chlorine",35.45,"halogen","gas",3,17],
+    [18,"Ar","Argon",39.95,"noble","gas",3,18],
+    [19,"K","Potassium",39.1,"alkali","solid",4,1],
+    [20,"Ca","Calcium",40.08,"alkaline","solid",4,2],
+    [21,"Sc","Scandium",44.96,"transition","solid",4,3],
+    [22,"Ti","Titanium",47.87,"transition","solid",4,4],
+    [23,"V","Vanadium",50.94,"transition","solid",4,5],
+    [24,"Cr","Chromium",52.0,"transition","solid",4,6],
+    [25,"Mn","Manganese",54.94,"transition","solid",4,7],
+    [26,"Fe","Iron",55.85,"transition","solid",4,8],
+    [27,"Co","Cobalt",58.93,"transition","solid",4,9],
+    [28,"Ni","Nickel",58.69,"transition","solid",4,10],
+    [29,"Cu","Copper",63.55,"transition","solid",4,11],
+    [30,"Zn","Zinc",65.38,"transition","solid",4,12],
+    [31,"Ga","Gallium",69.72,"post","solid",4,13],
+    [32,"Ge","Germanium",72.63,"metalloid","solid",4,14],
+    [33,"As","Arsenic",74.92,"metalloid","solid",4,15],
+    [34,"Se","Selenium",78.97,"nonmetal","solid",4,16],
+    [35,"Br","Bromine",79.9,"halogen","liquid",4,17],
+    [36,"Kr","Krypton",83.8,"noble","gas",4,18],
+    [37,"Rb","Rubidium",85.47,"alkali","solid",5,1],
+    [38,"Sr","Strontium",87.62,"alkaline","solid",5,2],
+    [39,"Y","Yttrium",88.91,"transition","solid",5,3],
+    [40,"Zr","Zirconium",91.22,"transition","solid",5,4],
+    [41,"Nb","Niobium",92.91,"transition","solid",5,5],
+    [42,"Mo","Molybdenum",95.95,"transition","solid",5,6],
+    [43,"Tc","Technetium",98.0,"transition","solid",5,7],
+    [44,"Ru","Ruthenium",101.07,"transition","solid",5,8],
+    [45,"Rh","Rhodium",102.91,"transition","solid",5,9],
+    [46,"Pd","Palladium",106.42,"transition","solid",5,10],
+    [47,"Ag","Silver",107.87,"transition","solid",5,11],
+    [48,"Cd","Cadmium",112.41,"transition","solid",5,12],
+    [49,"In","Indium",114.82,"post","solid",5,13],
+    [50,"Sn","Tin",118.71,"post","solid",5,14],
+    [51,"Sb","Antimony",121.76,"metalloid","solid",5,15],
+    [52,"Te","Tellurium",127.6,"metalloid","solid",5,16],
+    [53,"I","Iodine",126.9,"halogen","solid",5,17],
+    [54,"Xe","Xenon",131.29,"noble","gas",5,18],
+    [55,"Cs","Caesium",132.91,"alkali","solid",6,1],
+    [56,"Ba","Barium",137.33,"alkaline","solid",6,2],
+    [57,"La","Lanthanum",138.91,"lanth","solid",6,3],
+    [58,"Ce","Cerium",140.12,"lanth","solid",6,4],
+    [59,"Pr","Praseodymium",140.91,"lanth","solid",6,5],
+    [60,"Nd","Neodymium",144.24,"lanth","solid",6,6],
+    [61,"Pm","Promethium",145.0,"lanth","solid",6,7],
+    [62,"Sm","Samarium",150.36,"lanth","solid",6,8],
+    [63,"Eu","Europium",151.96,"lanth","solid",6,9],
+    [64,"Gd","Gadolinium",157.25,"lanth","solid",6,10],
+    [65,"Tb","Terbium",158.93,"lanth","solid",6,11],
+    [66,"Dy","Dysprosium",162.5,"lanth","solid",6,12],
+    [67,"Ho","Holmium",164.93,"lanth","solid",6,13],
+    [68,"Er","Erbium",167.26,"lanth","solid",6,14],
+    [69,"Tm","Thulium",168.93,"lanth","solid",6,15],
+    [70,"Yb","Ytterbium",173.05,"lanth","solid",6,16],
+    [71,"Lu","Lutetium",174.97,"lanth","solid",6,17],
+    [72,"Hf","Hafnium",178.49,"transition","solid",6,4],
+    [73,"Ta","Tantalum",180.95,"transition","solid",6,5],
+    [74,"W","Tungsten",183.84,"transition","solid",6,6],
+    [75,"Re","Rhenium",186.21,"transition","solid",6,7],
+    [76,"Os","Osmium",190.23,"transition","solid",6,8],
+    [77,"Ir","Iridium",192.22,"transition","solid",6,9],
+    [78,"Pt","Platinum",195.08,"transition","solid",6,10],
+    [79,"Au","Gold",196.97,"transition","solid",6,11],
+    [80,"Hg","Mercury",200.59,"transition","liquid",6,12],
+    [81,"Tl","Thallium",204.38,"post","solid",6,13],
+    [82,"Pb","Lead",207.2,"post","solid",6,14],
+    [83,"Bi","Bismuth",208.98,"post","solid",6,15],
+    [84,"Po","Polonium",209.0,"post","solid",6,16],
+    [85,"At","Astatine",210.0,"metalloid","solid",6,17],
+    [86,"Rn","Radon",222.0,"noble","gas",6,18],
+    [87,"Fr","Francium",223.0,"alkali","solid",7,1],
+    [88,"Ra","Radium",226.0,"alkaline","solid",7,2],
+    [89,"Ac","Actinium",227.0,"actin","solid",7,3],
+    [90,"Th","Thorium",232.04,"actin","solid",7,4],
+    [91,"Pa","Protactinium",231.04,"actin","solid",7,5],
+    [92,"U","Uranium",238.03,"actin","solid",7,6],
+    [93,"Np","Neptunium",237.0,"actin","solid",7,7],
+    [94,"Pu","Plutonium",244.0,"actin","solid",7,8],
+    [95,"Am","Americium",243.0,"actin","solid",7,9],
+    [96,"Cm","Curium",247.0,"actin","solid",7,10],
+    [97,"Bk","Berkelium",247.0,"actin","solid",7,11],
+    [98,"Cf","Californium",251.0,"actin","solid",7,12],
+    [99,"Es","Einsteinium",252.0,"actin","solid",7,13],
+    [100,"Fm","Fermium",257.0,"actin","solid",7,14],
+    [101,"Md","Mendelevium",258.0,"actin","solid",7,15],
+    [102,"No","Nobelium",259.0,"actin","solid",7,16],
+    [103,"Lr","Lawrencium",266.0,"actin","solid",7,17],
+    [104,"Rf","Rutherfordium",267.0,"transition","synthetic",7,4],
+    [105,"Db","Dubnium",268.0,"transition","synthetic",7,5],
+    [106,"Sg","Seaborgium",269.0,"transition","synthetic",7,6],
+    [107,"Bh","Bohrium",270.0,"transition","synthetic",7,7],
+    [108,"Hs","Hassium",269.0,"transition","synthetic",7,8],
+    [109,"Mt","Meitnerium",278.0,"transition","synthetic",7,9],
+    [110,"Ds","Darmstadtium",281.0,"transition","synthetic",7,10],
+    [111,"Rg","Roentgenium",282.0,"transition","synthetic",7,11],
+    [112,"Cn","Copernicium",285.0,"transition","synthetic",7,12],
+    [113,"Nh","Nihonium",286.0,"post","synthetic",7,13],
+    [114,"Fl","Flerovium",289.0,"post","synthetic",7,14],
+    [115,"Mc","Moscovium",290.0,"post","synthetic",7,15],
+    [116,"Lv","Livermorium",293.0,"post","synthetic",7,16],
+    [117,"Ts","Tennessine",294.0,"halogen","synthetic",7,17],
+    [118,"Og","Oganesson",294.0,"noble","synthetic",7,18]
+  ];
+  const CAT_COLOR = {
+    alkali:'#D4573B', alkaline:'#E3A03B', transition:'#4F6B8F', post:'#6B8F6B',
+    metalloid:'#8F6B4F', nonmetal:'#1F8A70', halogen:'#178A52', noble:'#7A5A9C',
+    lanth:'#B0578D', actin:'#6E4A8E'
+  };
+  const CAT_LABEL = {
+    alkali:'Alkali metal', alkaline:'Alkaline earth', transition:'Transition metal', post:'Post-transition metal',
+    metalloid:'Metalloid', nonmetal:'Nonmetal', halogen:'Halogen', noble:'Noble gas',
+    lanth:'Lanthanide', actin:'Actinide'
+  };
+  const PHASE_LABEL = { solid:'Solid', liquid:'Liquid', gas:'Gas', synthetic:'Synthetic (lab-made, phase unknown)' };
+
+  const ptGrid = document.getElementById('ptGrid');
+  const ptDetail = document.getElementById('ptDetail');
+  const ptLegend = document.getElementById('ptLegend');
+  const ptSearch = document.getElementById('ptSearch');
+  if(ptGrid){
+    let activeCat = null;
+    let selected = null;
+
+    function cellStyle(el){
+      const isF = el[4]==='lanth' || el[4]==='actin';
+      const row = el[4]==='lanth' ? 9 : el[4]==='actin' ? 10 : el[6];
+      const col = el[7];
+      return { row, col };
+    }
+
+    ELEMENTS.forEach(el => {
+      const [n, sym, name, mass, cat, phase, period, group] = el;
+      const isF = cat==='lanth' || cat==='actin';
+      const row = isF ? (cat==='lanth' ? 9 : 10) : period;
+      const cell = document.createElement('div');
+      cell.className = 'pt-cell';
+      cell.style.gridRow = row;
+      cell.style.gridColumn = group;
+      cell.style.background = CAT_COLOR[cat];
+      cell.dataset.cat = cat;
+      cell.dataset.search = (sym+' '+name).toLowerCase();
+      cell.innerHTML = `<span class="pt-num">${n}</span><span class="pt-sym">${sym}</span><span class="pt-mass">${mass}</span>`;
+      cell.addEventListener('click', () => selectElement(el, cell));
+      ptGrid.appendChild(cell);
+    });
+
+    // placeholder cells linking main table to f-block rows
+    const ph1 = document.createElement('div'); ph1.className='pt-placeholder'; ph1.style.gridRow=6; ph1.style.gridColumn=3; ph1.textContent='57–71'; ptGrid.appendChild(ph1);
+    const ph2 = document.createElement('div'); ph2.className='pt-placeholder'; ph2.style.gridRow=7; ph2.style.gridColumn=3; ph2.textContent='89–103'; ptGrid.appendChild(ph2);
+    // spacer row between main table and f-block
+    const spacer = document.createElement('div'); spacer.style.gridRow=8; spacer.style.gridColumn='1/19'; spacer.style.height='10px'; ptGrid.appendChild(spacer);
+
+    function selectElement(el, cellNode){
+      const [n, sym, name, mass, cat, phase] = el;
+      document.querySelectorAll('.pt-cell.selected').forEach(c => c.classList.remove('selected'));
+      if(cellNode) cellNode.classList.add('selected');
+      selected = el;
+      ptDetail.innerHTML = `
+        <div class="pt-detail-num">Element ${n}</div>
+        <div class="pt-detail-sym" style="color:${CAT_COLOR[cat]}">${sym}</div>
+        <div class="pt-detail-name">${name}</div>
+        <div class="pt-detail-rows">
+          <div><span>Category</span><b>${CAT_LABEL[cat]}</b></div>
+          <div><span>Atomic mass</span><b>${mass} u</b></div>
+          <div><span>At room temp</span><b>${PHASE_LABEL[phase]}</b></div>
+        </div>`;
+    }
+
+    // legend / filter
+    Object.keys(CAT_LABEL).forEach(cat => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.innerHTML = `<i style="background:${CAT_COLOR[cat]}"></i>${CAT_LABEL[cat]}`;
+      btn.addEventListener('click', () => {
+        activeCat = activeCat === cat ? null : cat;
+        applyFilter();
+        ptLegend.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        if(activeCat) btn.classList.add('active');
+      });
+      ptLegend.appendChild(btn);
+    });
+
+    function applyFilter(){
+      const q = (ptSearch.value||'').trim().toLowerCase();
+      document.querySelectorAll('.pt-cell').forEach(c => {
+        const matchCat = !activeCat || c.dataset.cat === activeCat;
+        const matchSearch = !q || c.dataset.search.includes(q);
+        c.classList.toggle('dim', !(matchCat && matchSearch));
+      });
+    }
+    if(ptSearch) ptSearch.addEventListener('input', applyFilter);
+  }
+
+  /* ---------- Chemist of the day ---------- */
+  const CHEMISTS = [
+    { key:'curie', name:'Marie Curie', role:'Physicist & chemist &middot; two-time Nobel laureate', quote:'Nothing in life is to be feared, it is only to be understood.', img:'assets/chemists/marie-curie.jpg' },
+    { key:'lavoisier', name:'Antoine Lavoisier', role:'Father of modern chemistry', quote:'Nothing is lost, nothing is created, everything is transformed.', img:'assets/chemists/antoine-lavoisier.jpg' },
+    { key:'faraday', name:'Michael Faraday', role:'Chemist & physicist', quote:'Nothing is too wonderful to be true if it be consistent with the laws of nature.', img:'assets/chemists/michael-faraday.jpg' },
+    { key:'pasteur', name:'Louis Pasteur', role:'Chemist & microbiologist', quote:'Chance favours only the prepared mind.', img:'assets/chemists/louis-pasteur.jpg' },
+    { key:'pauling', name:'Linus Pauling', role:'Chemist &middot; two-time Nobel laureate', quote:'The best way to have a good idea is to have lots of ideas.', img:'assets/chemists/linus-pauling.jpg' },
+    { key:'franklin', name:'Rosalind Franklin', role:'Chemist & X-ray crystallographer', quote:'Science and everyday life cannot and should not be separated.', img:'assets/chemists/rosalind-franklin.jpg' },
+    { key:'rutherford', name:'Ernest Rutherford', role:'Nobel laureate in Chemistry, 1908', quote:'All science is either physics or stamp collecting.', img:'assets/chemists/ernest-rutherford.jpg' },
+    { key:'davy', name:'Humphry Davy', role:'Chemist &middot; discoverer of multiple elements', quote:'Nothing tends so much to the advancement of knowledge as the application of a new instrument.', img:'assets/chemists/humphry-davy.jpg' }
+  ];
+  (function(){
+    const photoEl = document.getElementById('chemistPhoto');
+    const initEl = document.getElementById('chemistInit');
+    const quoteEl = document.getElementById('chemistQuote');
+    const nameEl = document.getElementById('chemistName');
+    const roleEl = document.getElementById('chemistRole');
+    const timerEl = document.getElementById('chemistTimer');
+    if(!photoEl) return;
+
+    const dayIndex = Math.floor(Date.now() / 86400000);
+    const chemist = CHEMISTS[dayIndex % CHEMISTS.length];
+
+    quoteEl.textContent = chemist.quote;
+    nameEl.textContent = chemist.name;
+    roleEl.innerHTML = chemist.role;
+    initEl.textContent = chemist.name.split(' ').map(w=>w[0]).join('');
+
+    const img = new Image();
+    img.onload = () => { photoEl.innerHTML = ''; const i = document.createElement('img'); i.src = chemist.img; i.alt = chemist.name; photoEl.appendChild(i); };
+    img.onerror = () => { /* keep initials avatar fallback */ };
+    img.src = chemist.img;
+
+    function updateTimer(){
+      const msLeft = 86400000 - (Date.now() % 86400000);
+      const h = Math.floor(msLeft/3600000), m = Math.floor((msLeft%3600000)/60000);
+      timerEl.textContent = `New chemist in ${h}h ${m}m`;
+    }
+    updateTimer();
+    setInterval(updateTimer, 60000);
+  })();
+
 })();
 </script>
 </body>
