@@ -1786,6 +1786,26 @@ setInterval(tickCountdown, 1000);
       cardEl.addEventListener('mouseleave', startAutoplay);
     }
 
+    // swipe support — swipe left for next, right for previous; autoplay keeps running
+    if(cardEl){
+      let touchStartX = 0, touchStartY = 0, touching = false;
+      cardEl.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touching = true;
+      }, { passive: true });
+      cardEl.addEventListener('touchend', (e) => {
+        if(!touching) return;
+        touching = false;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
+          if(dx < 0){ goTo(idx + 1); } else { goTo(idx - 1); }
+          startAutoplay();
+        }
+      }, { passive: true });
+    }
+
     if(timerTextEl) timerTextEl.textContent = 'Live';
     render(idx);
     startAutoplay();
@@ -1940,7 +1960,7 @@ setInterval(tickCountdown, 1000);
       }
     ];
 
-    const HOLD_MS = 5200;
+    const HOLD_MS = 3600;
     const SETTLE_END = 0.8;
     const FLASH_AT = 0.42;
     let idx = 0, cycleStart = performance.now(), lastElapsed = 0, hovering = false, switching = false;
@@ -2045,6 +2065,26 @@ setInterval(tickCountdown, 1000);
     if(cardEl){
       cardEl.addEventListener('mouseenter', () => hovering = true);
       cardEl.addEventListener('mouseleave', () => { hovering = false; cycleStart = performance.now() - lastElapsed; });
+    }
+
+    // swipe support — swipe left for next, right for previous; autoplay keeps running
+    if(cardEl){
+      let touchStartX = 0, touchStartY = 0, touching = false;
+      cardEl.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touching = true;
+      }, { passive: true });
+      cardEl.addEventListener('touchend', (e) => {
+        if(!touching) return;
+        touching = false;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
+          const dir = dx < 0 ? 1 : -1;
+          goTo((idx + dir + REACTIONS.length) % REACTIONS.length);
+        }
+      }, { passive: true });
     }
 
     updateText();
