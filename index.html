@@ -233,7 +233,18 @@
   .chemist-quote::after{content:'\201D'; color:var(--amber);}
   .chemist-name{font-size:16px; font-weight:700; color:var(--amber);}
   .chemist-role{font-size:13.5px; color:rgba(246,244,238,.55); margin-top:2px;}
-  .chemist-timer{margin-top:20px; font-size:12px; letter-spacing:.05em; color:rgba(246,244,238,.4); text-transform:uppercase;}
+  .chemist-timer{margin-top:20px; font-size:12px; letter-spacing:.05em; color:rgba(246,244,238,.4); text-transform:uppercase; display:flex; align-items:center; gap:8px;}
+  .chemist-timer .live-dot{width:7px; height:7px; border-radius:50%; background:var(--amber); display:inline-block; box-shadow:0 0 0 0 rgba(224,149,79,.6); animation:chemistPulse 1.8s infinite;}
+  @keyframes chemistPulse{0%{box-shadow:0 0 0 0 rgba(224,149,79,.55);} 70%{box-shadow:0 0 0 8px rgba(224,149,79,0);} 100%{box-shadow:0 0 0 0 rgba(224,149,79,0);}}
+  .chemist-photo, .chemist-quote, .chemist-name, .chemist-role{transition:opacity .5s ease, transform .5s ease;}
+  .chemist-card.is-switching .chemist-photo{opacity:0; transform:scale(.96);}
+  .chemist-card.is-switching .chemist-quote,
+  .chemist-card.is-switching .chemist-name,
+  .chemist-card.is-switching .chemist-role{opacity:0; transform:translateY(6px);}
+  .chemist-dots{display:flex; gap:7px; margin-top:22px; flex-wrap:wrap;}
+  .chemist-dots button{width:8px; height:8px; padding:0; border-radius:50%; border:none; background:rgba(246,244,238,.25); cursor:pointer; transition:background .3s, transform .3s;}
+  .chemist-dots button.active{background:var(--amber); transform:scale(1.25);}
+  @media(max-width:640px){ .chemist-dots{justify-content:center;} }
 
   /* ---------- Activity gallery ---------- */
   #activities{background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
@@ -461,7 +472,8 @@
           <p class="chemist-quote" id="chemistQuote">Loading&hellip;</p>
           <div class="chemist-name" id="chemistName"></div>
           <div class="chemist-role" id="chemistRole"></div>
-          <div class="chemist-timer" id="chemistTimer"></div>
+          <div class="chemist-timer" id="chemistTimer"><span class="live-dot"></span><span id="chemistTimerText">Live</span></div>
+          <div class="chemist-dots" id="chemistDots"></div>
         </div>
       </div>
     </div>
@@ -1635,34 +1647,73 @@ setInterval(tickCountdown, 1000);
     { key:'davy', name:'Humphry Davy', role:'Chemist &middot; discoverer of multiple elements', quote:'Nothing tends so much to the advancement of knowledge as the application of a new instrument.', img:'assets/chemists/humphry-davy.jpg' }
   ];
   (function(){
+    const cardEl = document.querySelector('.chemist-card');
     const photoEl = document.getElementById('chemistPhoto');
     const initEl = document.getElementById('chemistInit');
     const quoteEl = document.getElementById('chemistQuote');
     const nameEl = document.getElementById('chemistName');
     const roleEl = document.getElementById('chemistRole');
-    const timerEl = document.getElementById('chemistTimer');
+    const timerTextEl = document.getElementById('chemistTimerText');
+    const dotsEl = document.getElementById('chemistDots');
     if(!photoEl) return;
 
-    const dayIndex = Math.floor(Date.now() / 86400000);
-    const chemist = CHEMISTS[dayIndex % CHEMISTS.length];
+    const SWITCH_MS = 6000; // how long each chemist stays on screen
+    const FADE_MS = 380;    // must be <= CSS transition duration
+    let idx = 0;
+    let timer = null;
 
-    quoteEl.textContent = chemist.quote;
-    nameEl.textContent = chemist.name;
-    roleEl.innerHTML = chemist.role;
-    initEl.textContent = chemist.name.split(' ').map(w=>w[0]).join('');
+    function render(i){
+      const chemist = CHEMISTS[i];
+      quoteEl.textContent = chemist.quote;
+      nameEl.textContent = chemist.name;
+      roleEl.innerHTML = chemist.role;
+      initEl.textContent = chemist.name.split(' ').map(w=>w[0]).join('');
+      photoEl.innerHTML = '';
+      photoEl.appendChild(initEl);
 
-    const img = new Image();
-    img.onload = () => { photoEl.innerHTML = ''; const i = document.createElement('img'); i.src = chemist.img; i.alt = chemist.name; photoEl.appendChild(i); };
-    img.onerror = () => { /* keep initials avatar fallback */ };
-    img.src = chemist.img;
+      const img = new Image();
+      img.onload = () => { photoEl.innerHTML = ''; const im = document.createElement('img'); im.src = chemist.img; im.alt = chemist.name; photoEl.appendChild(im); };
+      img.onerror = () => { /* keep initials avatar fallback */ };
+      img.src = chemist.img;
 
-    function updateTimer(){
-      const msLeft = 86400000 - (Date.now() % 86400000);
-      const h = Math.floor(msLeft/3600000), m = Math.floor((msLeft%3600000)/60000);
-      timerEl.textContent = `New chemist in ${h}h ${m}m`;
+      if(dotsEl){
+        dotsEl.querySelectorAll('button').forEach((b,bi) => b.classList.toggle('active', bi === i));
+      }
     }
-    updateTimer();
-    setInterval(updateTimer, 60000);
+
+    function goTo(i){
+      idx = (i + CHEMISTS.length) % CHEMISTS.length;
+      cardEl.classList.add('is-switching');
+      setTimeout(() => {
+        render(idx);
+        cardEl.classList.remove('is-switching');
+      }, FADE_MS);
+    }
+
+    function startAutoplay(){
+      clearInterval(timer);
+      timer = setInterval(() => goTo(idx + 1), SWITCH_MS);
+    }
+
+    if(dotsEl){
+      CHEMISTS.forEach((c, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', `Show ${c.name}`);
+        b.addEventListener('click', () => { goTo(i); startAutoplay(); });
+        dotsEl.appendChild(b);
+      });
+    }
+
+    // pause the live switching while the visitor is looking closely
+    if(cardEl){
+      cardEl.addEventListener('mouseenter', () => clearInterval(timer));
+      cardEl.addEventListener('mouseleave', startAutoplay);
+    }
+
+    if(timerTextEl) timerTextEl.textContent = 'Live';
+    render(idx);
+    startAutoplay();
   })();
 
 })();
