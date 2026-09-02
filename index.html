@@ -966,17 +966,63 @@ function initActivityEditor(){
     statusEl.textContent = '';
   });
 
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let { width, height } = img;
+          if(width > maxDim || height > maxDim){
+            if(width > height){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim/height)); height = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob)=>{
+            if(blob) resolve(blob); else reject(new Error('Could not process image'));
+          }, 'image/jpeg', quality);
+        };
+        img.onerror = ()=>reject(new Error('Could not read image'));
+        img.src = e.target.result;
+      };
+      reader.onerror = ()=>reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function friendlyUploadError(e){
+    const raw = (e && (e.message || e.error_description || e.statusText || e.error)) || String(e);
+    const low = raw.toLowerCase();
+    if(low.includes('bucket not found')) return `${raw} — the "activity-photos" storage bucket doesn't exist yet in Supabase. Create it under Storage → New bucket (name it exactly activity-photos, make it Public).`;
+    if(low.includes('row-level security') || low.includes('rls') || low.includes('permission denied') || low.includes('policy')) return `${raw} — a storage or table policy is blocking this write. Add an INSERT policy for the activity-photos bucket and the ichc_kv table (Storage/Table → Policies).`;
+    if(low.includes('exceeded') || low.includes('too large') || low.includes('payload')) return `${raw} — the photo is still too large for the bucket's file size limit. Try a smaller photo or raise the bucket's size limit in Supabase.`;
+    if(low.includes('jwt') || low.includes('api key') || low.includes('unauthorized') || low.includes('401')) return `${raw} — your ambassador session may have expired. Log out and back in, then try again.`;
+    if(low.includes('failed to fetch') || low.includes('network')) return `${raw} — couldn't reach Supabase. Check your internet connection.`;
+    return raw;
+  }
+
   postBtn.addEventListener('click', async ()=>{
     const file = fileInput.files && fileInput.files[0];
     const caption = captionInput.value.trim();
     if(!file){ statusEl.textContent = 'Choose a photo first.'; statusEl.style.color = '#C0392B'; return; }
     if(!caption){ statusEl.textContent = 'Add a short caption.'; statusEl.style.color = '#C0392B'; return; }
     postBtn.disabled = true;
-    statusEl.textContent = 'Uploading…'; statusEl.style.color = 'var(--muted)';
+    statusEl.textContent = 'Preparing photo…'; statusEl.style.color = 'var(--muted)';
     try{
-      const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+      let uploadBlob = file, ext = 'jpg', contentType = 'image/jpeg';
+      try{
+        uploadBlob = await compressImage(file, 1600, 0.82);
+      }catch(compressErr){
+        console.warn('Compression failed, uploading original file instead', compressErr);
+        uploadBlob = file;
+        ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+        contentType = file.type || 'image/jpeg';
+      }
+      statusEl.textContent = 'Uploading…';
       const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const { error: upErr } = await sb.storage.from(ACTIVITY_BUCKET).upload(path, file, { upsert:false });
+      const { error: upErr } = await sb.storage.from(ACTIVITY_BUCKET).upload(path, uploadBlob, { upsert:false, contentType });
       if(upErr) throw upErr;
       const { data: pub } = sb.storage.from(ACTIVITY_BUCKET).getPublicUrl(path);
       const url = pub.publicUrl;
@@ -996,7 +1042,7 @@ function initActivityEditor(){
       statusEl.textContent = '';
     }catch(e){
       console.error('Activity post failed', e);
-      statusEl.textContent = 'Upload failed — please try again.'; statusEl.style.color = '#C0392B';
+      statusEl.textContent = friendlyUploadError(e); statusEl.style.color = '#C0392B';
     }finally{
       postBtn.disabled = false;
     }
