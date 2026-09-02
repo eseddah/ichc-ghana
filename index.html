@@ -219,6 +219,22 @@
     .pt-detail{position:static;}
   }
 
+  /* ---------- Spell your name in elements ---------- */
+  #namespell .section-head p{max-width:520px;}
+  .namespell-box{max-width:680px;}
+  .namespell-input-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .namespell-input-row input{flex:1; min-width:200px; border:1.5px solid var(--line); border-radius:999px; padding:13px 20px; font-size:15px; font-family:inherit; background:var(--paper);}
+  .namespell-input-row input:focus{outline:none; border-color:var(--amber-deep);}
+  .namespell-output{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px; min-height:70px; align-items:flex-end;}
+  .ns-tile{width:58px; height:58px; border-radius:8px; padding:5px 6px; display:flex; flex-direction:column; justify-content:space-between; color:#fff; font-family:'IBM Plex Sans',sans-serif; opacity:0; transform:translateY(10px) scale(.85); animation:nsPop .38s ease forwards;}
+  .ns-tile .ns-num{font-size:8.5px; opacity:.85; line-height:1;}
+  .ns-tile .ns-sym{font-size:19px; font-weight:700; line-height:1;}
+  .ns-tile .ns-name{font-size:6.5px; opacity:.9; line-height:1.1; text-transform:uppercase; letter-spacing:.02em;}
+  .ns-tile.ns-leftover{background:var(--paper)!important; border:1.5px dashed var(--line); color:var(--muted); align-items:center; justify-content:center; font-size:19px; font-weight:700;}
+  @keyframes nsPop{to{opacity:1; transform:translateY(0) scale(1);}}
+  .namespell-note{margin-top:16px; font-size:13.5px; color:var(--muted); min-height:20px;}
+  .namespell-note.ok{color:var(--teal-deep); font-weight:600;}
+
   /* ---------- Chemist of the day ---------- */
   #chemist{background:var(--navy-deep); color:var(--chalk);}
   #chemist .section-head .eyebrow{color:var(--amber);}
@@ -245,6 +261,27 @@
   .chemist-dots button{width:8px; height:8px; padding:0; border-radius:50%; border:none; background:rgba(246,244,238,.25); cursor:pointer; transition:background .3s, transform .3s;}
   .chemist-dots button.active{background:var(--amber); transform:scale(1.25);}
   @media(max-width:640px){ .chemist-dots{justify-content:center;} }
+
+  /* ---------- Reaction of the moment ---------- */
+  #reaction{background:var(--navy-deep); color:var(--chalk);}
+  #reaction .section-head .eyebrow{color:var(--amber);}
+  #reaction .section-head h2{color:#fff;}
+  #reaction .section-head p{color:rgba(246,244,238,.65);}
+  .reaction-card{background:rgba(246,244,238,.04); border:1px solid rgba(246,244,238,.12); border-radius:var(--radius); padding:30px 30px 26px; text-align:center;}
+  .reaction-canvas-wrap{position:relative; width:100%; max-width:560px; margin:0 auto;}
+  .reaction-canvas-wrap canvas{width:100%; height:auto; display:block;}
+  .reaction-eq{font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:var(--amber); margin-top:12px; transition:opacity .35s ease, transform .35s ease;}
+  .reaction-eq-name{font-size:14px; font-weight:700; margin-top:6px; transition:opacity .35s ease;}
+  .reaction-eq-note{font-size:13.5px; color:rgba(246,244,238,.6); max-width:460px; margin:8px auto 0; line-height:1.6; transition:opacity .35s ease;}
+  .reaction-card.is-switching .reaction-eq,
+  .reaction-card.is-switching .reaction-eq-name,
+  .reaction-card.is-switching .reaction-eq-note{opacity:0;}
+  .reaction-progress{width:100%; max-width:280px; height:3px; background:rgba(246,244,238,.15); border-radius:99px; margin:22px auto 0; overflow:hidden;}
+  .reaction-progress-bar{height:100%; width:0%; background:var(--amber); border-radius:99px;}
+  .reaction-dots{display:flex; gap:7px; justify-content:center; margin-top:16px;}
+  .reaction-dots button{width:8px; height:8px; padding:0; border-radius:50%; border:none; background:rgba(246,244,238,.25); cursor:pointer; transition:background .3s, transform .3s;}
+  .reaction-dots button.active{background:var(--amber); transform:scale(1.25);}
+
 
   /* ---------- Activity gallery ---------- */
   #activities{background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
@@ -460,6 +497,24 @@
     </div>
   </section>
 
+  <section id="namespell" style="background:var(--paper);">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:28px;">
+        <div class="eyebrow">Try it yourself</div>
+        <h2>Spell your name in elements.</h2>
+        <p>Type any name and we'll try to build it out of periodic table symbols — Na for sodium, Th for thorium, and so on.</p>
+      </div>
+      <div class="namespell-box">
+        <div class="namespell-input-row">
+          <input type="text" id="nsInput" placeholder="e.g. Nathan, Chidinma, Yaw&hellip;" autocomplete="off" maxlength="24">
+          <button type="button" class="btn amber" id="nsBtn">Spell it</button>
+        </div>
+        <div class="namespell-output" id="nsOutput"></div>
+        <p class="namespell-note" id="nsNote"></p>
+      </div>
+    </div>
+  </section>
+
   <section id="chemist">
     <div class="wrap">
       <div class="section-head" style="margin-bottom:34px;">
@@ -475,6 +530,26 @@
           <div class="chemist-timer" id="chemistTimer"><span class="live-dot"></span><span id="chemistTimerText">Live</span></div>
           <div class="chemist-dots" id="chemistDots"></div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reaction">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:34px;">
+        <div class="eyebrow">Reactions, live</div>
+        <h2>Chemistry, actually happening.</h2>
+        <p>A different reaction plays out every few seconds — watch the atoms find each other and rearrange.</p>
+      </div>
+      <div class="reaction-card">
+        <div class="reaction-canvas-wrap">
+          <canvas id="reactionCanvas" width="560" height="240" aria-label="Animated chemical reaction"></canvas>
+        </div>
+        <div class="reaction-eq" id="reactionEq">&hellip;</div>
+        <div class="reaction-eq-name" id="reactionName"></div>
+        <p class="reaction-eq-note" id="reactionNote"></p>
+        <div class="reaction-progress"><div class="reaction-progress-bar" id="reactionProgress"></div></div>
+        <div class="reaction-dots" id="reactionDots"></div>
       </div>
     </div>
   </section>
@@ -1714,6 +1789,266 @@ setInterval(tickCountdown, 1000);
     if(timerTextEl) timerTextEl.textContent = 'Live';
     render(idx);
     startAutoplay();
+  })();
+
+  /* ---------- Spell your name in elements ---------- */
+  (function(){
+    const nsInput = document.getElementById('nsInput');
+    const nsBtn = document.getElementById('nsBtn');
+    const nsOutput = document.getElementById('nsOutput');
+    const nsNote = document.getElementById('nsNote');
+    if(!nsInput) return;
+
+    const SYMBOL_MAP = {};
+    ELEMENTS.forEach(e => {
+      const [num, sym, name, mass, cat] = e;
+      SYMBOL_MAP[sym.toLowerCase()] = { num, sym, name, cat };
+    });
+
+    function spell(raw){
+      const letters = raw.replace(/[^a-zA-Z]/g,'');
+      const tiles = [];
+      let matchedLetters = 0;
+      let i = 0;
+      while(i < letters.length){
+        const two = letters.substr(i,2).toLowerCase();
+        if(letters.length - i >= 2 && SYMBOL_MAP[two]){
+          tiles.push({ el: SYMBOL_MAP[two] });
+          matchedLetters += 2;
+          i += 2;
+          continue;
+        }
+        const one = letters.substr(i,1).toLowerCase();
+        if(SYMBOL_MAP[one]){
+          tiles.push({ el: SYMBOL_MAP[one] });
+          matchedLetters += 1;
+          i += 1;
+          continue;
+        }
+        tiles.push({ leftover: letters[i] });
+        i += 1;
+      }
+      return { tiles, matchedLetters, totalLetters: letters.length };
+    }
+
+    function render(){
+      const val = nsInput.value.trim();
+      nsOutput.innerHTML = '';
+      if(!val){
+        nsNote.textContent = '';
+        nsNote.className = 'namespell-note';
+        return;
+      }
+      const { tiles, matchedLetters, totalLetters } = spell(val);
+      tiles.forEach((t, idx) => {
+        const div = document.createElement('div');
+        div.style.animationDelay = (idx * 0.05) + 's';
+        if(t.el){
+          div.className = 'ns-tile';
+          div.style.background = CAT_COLOR[t.el.cat] || 'var(--navy-deep)';
+          div.innerHTML = `<span class="ns-num">${t.el.num}</span><span class="ns-sym">${t.el.sym}</span><span class="ns-name">${t.el.name}</span>`;
+          div.title = `${t.el.name} (${t.el.sym})`;
+        } else {
+          div.className = 'ns-tile ns-leftover';
+          div.textContent = t.leftover.toUpperCase();
+          div.title = 'No single element symbol matches here';
+        }
+        nsOutput.appendChild(div);
+      });
+      if(totalLetters === 0){
+        nsNote.textContent = '';
+        nsNote.className = 'namespell-note';
+      } else if(matchedLetters === totalLetters){
+        nsNote.textContent = `Fully spelled with real elements — ${totalLetters} of ${totalLetters} letters matched.`;
+        nsNote.className = 'namespell-note ok';
+      } else {
+        nsNote.textContent = `Closest match — ${matchedLetters} of ${totalLetters} letters mapped to real elements.`;
+        nsNote.className = 'namespell-note';
+      }
+    }
+
+    nsBtn.addEventListener('click', render);
+    nsInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); render(); } });
+  })();
+
+  /* ---------- Reaction of the moment ---------- */
+  (function(){
+    const canvas = document.getElementById('reactionCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cardEl = document.querySelector('.reaction-card');
+    const eqEl = document.getElementById('reactionEq');
+    const nameEl = document.getElementById('reactionName');
+    const noteEl = document.getElementById('reactionNote');
+    const progressEl = document.getElementById('reactionProgress');
+    const dotsEl = document.getElementById('reactionDots');
+
+    const W = canvas.width, H = canvas.height;
+    const CENTER = { x: W/2, y: H/2 };
+    const H_C = '#bcdcff', O_C = '#ff8a75', NA_C = '#c9a6ff', CL_C = '#8bd17c', ZN_C = '#9fb3c8', C_C = '#e8dfce';
+
+    const REACTIONS = [
+      {
+        eq: '2H\u2082 + O\u2082 \u2192 2H\u2082O',
+        name: 'Water synthesis',
+        note: 'Hydrogen and oxygen combine and release a burst of energy \u2014 the same reaction used in rocket fuel cells.',
+        atoms: [
+          { sym:'H', color:H_C, start:{x:90,y:80},  end:{x:205,y:98} },
+          { sym:'H', color:H_C, start:{x:120,y:80}, end:{x:255,y:98} },
+          { sym:'O', color:O_C, start:{x:480,y:90}, end:{x:230,y:120} },
+          { sym:'H', color:H_C, start:{x:90,y:170}, end:{x:305,y:145} },
+          { sym:'H', color:H_C, start:{x:120,y:170},end:{x:355,y:145} },
+          { sym:'O', color:O_C, start:{x:480,y:150},end:{x:330,y:120} }
+        ],
+        bonds: [[0,2],[1,2],[3,5],[4,5]]
+      },
+      {
+        eq: '2Na + Cl\u2082 \u2192 2NaCl',
+        name: 'Table salt formation',
+        note: 'Sodium gives up an electron to chlorine, forming the ionic bond behind ordinary table salt.',
+        atoms: [
+          { sym:'Na', color:NA_C, start:{x:90,y:90},  end:{x:210,y:120} },
+          { sym:'Cl', color:CL_C, start:{x:470,y:90}, end:{x:250,y:120} },
+          { sym:'Na', color:NA_C, start:{x:90,y:160}, end:{x:310,y:120} },
+          { sym:'Cl', color:CL_C, start:{x:500,y:90}, end:{x:350,y:120} }
+        ],
+        bonds: [[0,1],[2,3]]
+      },
+      {
+        eq: 'Zn + 2HCl \u2192 ZnCl\u2082 + H\u2082',
+        name: 'Metal-acid reaction',
+        note: 'Zinc displaces hydrogen from hydrochloric acid \u2014 the fizzing bubbles are hydrogen gas escaping.',
+        atoms: [
+          { sym:'Zn', color:ZN_C, start:{x:90,y:120}, end:{x:280,y:150} },
+          { sym:'H',  color:H_C,  start:{x:450,y:90}, end:{x:260,y:60} },
+          { sym:'Cl', color:CL_C, start:{x:480,y:90}, end:{x:240,y:110} },
+          { sym:'H',  color:H_C,  start:{x:450,y:160},end:{x:300,y:60} },
+          { sym:'Cl', color:CL_C, start:{x:480,y:160},end:{x:320,y:110} }
+        ],
+        bonds: [[0,2],[0,4],[1,3]]
+      },
+      {
+        eq: 'C + O\u2082 \u2192 CO\u2082',
+        name: 'Combustion',
+        note: 'Carbon binds two oxygen atoms to form carbon dioxide \u2014 the basic chemistry behind every flame.',
+        atoms: [
+          { sym:'C', color:C_C, start:{x:90,y:120},  end:{x:280,y:120} },
+          { sym:'O', color:O_C, start:{x:480,y:90},  end:{x:230,y:120} },
+          { sym:'O', color:O_C, start:{x:480,y:150}, end:{x:330,y:120} }
+        ],
+        bonds: [[0,1],[0,2]]
+      }
+    ];
+
+    const HOLD_MS = 5200;
+    const SETTLE_END = 0.8;
+    const FLASH_AT = 0.42;
+    let idx = 0, cycleStart = performance.now(), lastElapsed = 0, hovering = false, switching = false;
+
+    function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+    function lerpPoint(a,b,t){ return { x: a.x + (b.x-a.x)*t, y: a.y + (b.y-a.y)*t }; }
+
+    function updateText(){
+      const r = REACTIONS[idx];
+      eqEl.textContent = r.eq;
+      nameEl.textContent = r.name;
+      noteEl.textContent = r.note;
+      if(dotsEl) dotsEl.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active', i===idx));
+    }
+
+    function drawFrame(t){
+      ctx.clearRect(0,0,W,H);
+      const r = REACTIONS[idx];
+      const posT = t >= SETTLE_END ? 1 : easeInOutCubic(t/SETTLE_END);
+
+      if(posT > 0.75 && r.bonds){
+        const bondAlpha = Math.min(1, (posT-0.75)/0.25);
+        ctx.strokeStyle = `rgba(227,154,59,${0.6*bondAlpha})`;
+        ctx.lineWidth = 2;
+        r.bonds.forEach(([a,b]) => {
+          const pa = lerpPoint(r.atoms[a].start, r.atoms[a].end, posT);
+          const pb = lerpPoint(r.atoms[b].start, r.atoms[b].end, posT);
+          ctx.beginPath();
+          ctx.moveTo(pa.x, pa.y);
+          ctx.lineTo(pb.x, pb.y);
+          ctx.stroke();
+        });
+      }
+
+      if(t > FLASH_AT - 0.02 && t < FLASH_AT + 0.14){
+        const ft = (t - (FLASH_AT-0.02)) / 0.16;
+        const radius = 20 + ft*70;
+        const alpha = Math.max(0, 1 - ft) * 0.7;
+        const grad = ctx.createRadialGradient(CENTER.x,CENTER.y,0,CENTER.x,CENTER.y,radius);
+        grad.addColorStop(0, `rgba(255,236,196,${alpha})`);
+        grad.addColorStop(1, 'rgba(255,236,196,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(CENTER.x, CENTER.y, radius, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      r.atoms.forEach(atom => {
+        const p = lerpPoint(atom.start, atom.end, posT);
+        let jx=0, jy=0;
+        if(t > FLASH_AT-0.05 && t < FLASH_AT+0.05){
+          jx = (Math.random()-0.5) * 4;
+          jy = (Math.random()-0.5) * 4;
+        }
+        ctx.beginPath();
+        ctx.fillStyle = atom.color;
+        ctx.arc(p.x+jx, p.y+jy, 15, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(10,24,38,0.85)';
+        ctx.font = '700 12px IBM Plex Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(atom.sym, p.x+jx, p.y+jy+1);
+      });
+    }
+
+    function goTo(next){
+      if(switching) return;
+      switching = true;
+      if(cardEl) cardEl.classList.add('is-switching');
+      setTimeout(() => {
+        idx = next;
+        updateText();
+        cycleStart = performance.now();
+        lastElapsed = 0;
+        if(cardEl) cardEl.classList.remove('is-switching');
+        switching = false;
+      }, 300);
+    }
+
+    function loop(now){
+      if(!hovering && !switching){ lastElapsed = now - cycleStart; }
+      const t = Math.min(lastElapsed / HOLD_MS, 1);
+      if(t >= 1 && !hovering && !switching){
+        goTo((idx+1) % REACTIONS.length);
+      }
+      drawFrame(t);
+      if(progressEl) progressEl.style.width = (t*100) + '%';
+      requestAnimationFrame(loop);
+    }
+
+    if(dotsEl){
+      REACTIONS.forEach((r,i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', `Show ${r.name}`);
+        b.addEventListener('click', () => goTo(i));
+        dotsEl.appendChild(b);
+      });
+    }
+
+    if(cardEl){
+      cardEl.addEventListener('mouseenter', () => hovering = true);
+      cardEl.addEventListener('mouseleave', () => { hovering = false; cycleStart = performance.now() - lastElapsed; });
+    }
+
+    updateText();
+    requestAnimationFrame(loop);
   })();
 
 })();
