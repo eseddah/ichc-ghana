@@ -348,7 +348,7 @@
       <a href="#contact">Contact</a>
     </nav>
     <div class="navcta">
-      <a href="#apply" class="btn outline dark" style="padding:9px 18px; font-size:13.5px;">Apply</a>
+      <a href="#apply" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Apply</a>
       <a href="portal.html" class="btn amber" style="padding:9px 18px; font-size:13.5px;">Portal login</a>
     </div>
     <button class="navToggle" id="navToggle">☰</button>
@@ -373,7 +373,7 @@
       <h1 style="color:var(--chalk);" id="edit-heroTitle" data-edit="heroTitle">Your chemistry talent deserves a stage this big.</h1>
       <p class="lead" id="edit-heroLead" data-edit="heroLead">Wherever you're starting from, there's a place for you here. We'll pair you with a mentor, hand you real competition practice, and walk with you every step toward the International Chemistry Competition — because talent should never need a head start to be seen.</p>
       <div class="ctas">
-        <a href="#apply" class="btn amber">Apply to the programme</a>
+        <a href="#apply" class="btn amber" id="heroApplyBtn">Apply to the programme</a>
         <a href="#about" class="btn outline">Learn how it works</a>
       </div>
       <div class="countdown-box">
@@ -727,11 +727,11 @@
   </section>
 
   <section id="apply" style="background:linear-gradient(135deg,#f2b563 0%, var(--amber-deep) 100%); color:#2a1c07;">
-    <div class="wrap" style="max-width:640px; text-align:center;">
+    <div class="wrap" style="max-width:640px; text-align:center;" id="applyCtaWrap">
       <h2 id="edit-applyTitle" data-edit="applyTitle">Ready to begin your journey?</h2>
       <p id="edit-applyLead" data-edit="applyLead" style="max-width:560px; margin:14px auto 30px; font-size:16px; line-height:1.7; opacity:.9;">Applications are reviewed on a rolling basis, right up to the 31 October deadline. No account needed — just fill in the short form to get started.</p>
-      <a href="apply.html" class="btn" style="background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk); font-size:16px; padding:16px 34px;">Start your application →</a>
-      <p style="margin-top:14px; font-size:13px; opacity:.75;">Takes a couple of minutes — you'll get an email if you're accepted.</p>
+      <a href="apply.html" class="btn" id="applyCtaBtn" style="background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk); font-size:16px; padding:16px 34px;">Start your application →</a>
+      <p style="margin-top:14px; font-size:13px; opacity:.75;" id="applyCtaFoot">Takes a couple of minutes — you'll get an email if you're accepted.</p>
     </div>
   </section>
 
@@ -1236,11 +1236,57 @@ async function renderApplicationStatusBanner(){
 renderApplicationStatusBanner();
 
 const APPLICATION_DEADLINE = new Date('2026-10-31T23:59:59');
+
+// ---- Deadline lockout ----
+// Once the deadline passes, the portal should close itself automatically —
+// no manual step required. This swaps the "Apply" CTAs across the page for
+// a closed notice so anyone who lands here after 31 October (including
+// people who bookmarked the page earlier) sees the portal is shut, rather
+// than a form that silently rejects them on submit.
+let applicationsClosed = false;
+function closeApplicationPortal(){
+  if(applicationsClosed) return;
+  applicationsClosed = true;
+
+  // Hero + nav CTAs: stop linking to the closed form, relabel, and grey out.
+  const heroBtn = document.getElementById('heroApplyBtn');
+  if(heroBtn){
+    heroBtn.textContent = 'Applications closed';
+    heroBtn.removeAttribute('href');
+    heroBtn.style.pointerEvents = 'none';
+    heroBtn.style.opacity = '.55';
+  }
+  const navBtn = document.getElementById('navApplyBtn');
+  if(navBtn){
+    navBtn.textContent = 'Applications closed';
+    navBtn.removeAttribute('href');
+    navBtn.style.pointerEvents = 'none';
+    navBtn.style.opacity = '.55';
+  }
+
+  // Main #apply section: replace the form CTA with a closing message.
+  const applyTitle = document.getElementById('edit-applyTitle');
+  const applyLead = document.getElementById('edit-applyLead');
+  const applyBtn = document.getElementById('applyCtaBtn');
+  const applyFoot = document.getElementById('applyCtaFoot');
+  if(applyTitle) applyTitle.textContent = 'Applications are now closed';
+  if(applyLead) applyLead.textContent = `Thanks for your interest — the application window for this round closed on 31 October 2026. We're no longer accepting new applications, but you're welcome to email the Ambassador with any questions, or check back for the next intake.`;
+  if(applyBtn){
+    applyBtn.textContent = 'Application portal closed';
+    applyBtn.removeAttribute('href');
+    applyBtn.style.pointerEvents = 'none';
+    applyBtn.style.opacity = '.55';
+    applyBtn.style.cursor = 'not-allowed';
+  }
+  if(applyFoot) applyFoot.textContent = 'Missed this round? Email the Ambassador — details below — to ask about the next one.';
+}
+
 function tickCountdown(){
   const diff = APPLICATION_DEADLINE - new Date();
   const box = document.getElementById('countdown');
   if(diff <= 0){
     box.innerHTML = '<div class="cd-cell" style="min-width:auto; padding:8px 16px;"><b style="font-size:15px;">Applications closed</b></div>';
+    closeApplicationPortal();
     return;
   }
   const days = Math.floor(diff / 86400000);

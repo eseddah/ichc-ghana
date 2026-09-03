@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apply — IChC Outreach Program, Ghana</title>
-<meta name="description" content="Apply to the IChC Outreach Program Ghana — Ghana's pathway to the International Chemistry Competition.">
+<title>Apply — Chemistry Competition Prep</title>
+<meta name="description" content="Apply to Chemistry Competition Prep — Ghana's pathway to the International Chemistry Competition, run by the Local Ambassador, IChC.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
@@ -53,6 +53,7 @@
   .field{margin-bottom:16px;}
   label{font-size:12.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px;}
   label .opt{text-transform:none; font-weight:400;}
+  label .req{text-transform:none; font-weight:600; color:#C0392B;}
   input, textarea, select{
     width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid var(--line);
     background:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; color:var(--ink);
@@ -122,7 +123,7 @@
       <input id="fEmail" type="email" placeholder="e.g. ama.owusu@email.com">
     </div>
     <div class="field">
-      <label>Phone number <span class="opt">(so a coordinator can reach you — required)</span></label>
+      <label>Phone number <span class="req">(required — so a coordinator can reach you)</span></label>
       <input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000">
     </div>
     <div class="field checkline" style="margin-top:-8px; margin-bottom:18px;">
@@ -179,6 +180,16 @@
   <p class="foot-link">Already accepted? <a href="portal.html">Sign in to the portal →</a></p>
 </div>
 
+<div class="wrap hidden" id="closedScreen">
+  <div class="card done">
+    <div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">⏱</div>
+    <h2 style="font-size:24px; margin:0 0 10px;">Applications are closed</h2>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b>31 October 2026</b>. We're no longer accepting new applications through this form, but you're welcome to email the Ambassador with any questions or to ask about the next intake.</p>
+    <a class="btn" href="mailto:eseyram@amb.intchc.org" style="margin-top:18px; text-decoration:none;">Email the Ambassador →</a>
+  </div>
+  <p class="foot-link">Already applied? <a href="index.html">← Back to the programme page</a> to check your status.</p>
+</div>
+
 <div class="wrap hidden" id="doneScreen">
   <div class="card done">
     <div class="tick">✓</div>
@@ -219,6 +230,19 @@ function paintLogos(){
   });
 }
 paintLogos();
+
+// ---- Deadline lockout ----
+// Same deadline the main site's countdown uses. Checked as soon as the page
+// loads (not just on submit) so anyone who opens this form after the
+// deadline — including from a stale bookmark or tab left open overnight —
+// sees the portal is closed instead of being able to fill in the form.
+const APPLICATION_DEADLINE = new Date('2026-10-31T23:59:59');
+function applicationsAreClosed(){ return (APPLICATION_DEADLINE - new Date()) <= 0; }
+if(applicationsAreClosed()){
+  document.querySelector('.wrap').classList.add('hidden');
+  const closedScreen = document.getElementById('closedScreen');
+  if(closedScreen) closedScreen.classList.remove('hidden');
+}
 
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
@@ -276,8 +300,8 @@ async function sendConfirmationEmail(name, email){
       body: JSON.stringify({
         service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
         template_params: {
-          to_email: email, to_name: name, from_name: 'IChC Outreach Program Ghana',
-          subject: 'We got your application', message: 'Thanks for applying to IChC Outreach Program Ghana — we\'ll be in touch by email once your application has been reviewed.'
+          to_email: email, to_name: name, from_name: 'Chemistry Competition Prep',
+          subject: 'We got your application', message: 'Thanks for applying to Chemistry Competition Prep — we\'ll be in touch by email once your application has been reviewed.'
         }
       })
     });
@@ -302,6 +326,14 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   if(!chosenAge) return errEl.textContent = 'Please select your age range.';
   if(!message) return errEl.textContent = 'Please add a line or two on why you want to join.';
   if(!sbReady) return errEl.textContent = 'Applications aren\'t connected yet — please try again shortly or contact the Ambassador directly.';
+  if(applicationsAreClosed()){
+    // Covers a page left open across the deadline moment — the initial
+    // load check above only fires once, at load time.
+    document.querySelector('.wrap').classList.add('hidden');
+    const closedScreen = document.getElementById('closedScreen');
+    if(closedScreen) closedScreen.classList.remove('hidden');
+    return;
+  }
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; btn.textContent = 'Submitting…';
