@@ -212,17 +212,15 @@
     <h1 class="onb-title" style="font-size:26px;">Almost there, <span id="reqName"></span>.</h1>
     <p class="onb-sub">You're signed in with Google. This email isn't on the programme roster yet — tell us which role you're requesting, and a little about yourself, so the Ambassador can review it.</p>
     <div class="role-grid" style="grid-template-columns:1fr 1fr;">
-      <div class="role-card" data-reqrole-disabled="coordinator" style="cursor:not-allowed; opacity:.55;">
+      <div class="role-card" data-reqrole="coordinator">
         <div class="ring" style="background:rgba(31,138,112,.14); color:var(--teal-deep);">C</div>
         <div class="rname">Coordinator</div>
-        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:6px;">Applications closed</div>
       </div>
       <div class="role-card" data-reqrole="student">
         <div class="ring" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">S</div>
         <div class="rname">Student</div>
       </div>
     </div>
-    <p style="text-align:center; font-size:12.5px; color:var(--muted); margin:-4px 0 0;">We've filled our Coordinator roster and are no longer accepting Coordinator applications. Student applications are still open.</p>
     <div class="field" style="margin-top:16px;">
       <label>A short bio — name, school, and anything that helps the Ambassador decide</label>
       <textarea id="reqBio" rows="4" placeholder="e.g. I'm a final-year student at Achimota School, I've been self-studying organic chemistry for a year and want structured competition prep..."></textarea>
@@ -285,8 +283,6 @@ const SUPABASE_CONFIG = {
   url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
   anonKey: "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn"
 };
-// Fallback WhatsApp group link used until the Ambassador sets/overrides one in Settings.
-const DEFAULT_WHATSAPP_URL = "https://chat.whatsapp.com/EctgAsWf78z3GVVCsQzOPc";
 let sb = null;
 let sbReady = false;
 try{
@@ -377,7 +373,7 @@ async function loadDB(){
   DB.exams        = (await sGet('posts:exams', true)) || [];
   DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
   DB.presence     = await loadAllPresence();
-  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', whatsappGroupUrl:'' };
+  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'' };
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -660,8 +656,7 @@ async function submitAccessRequest(){
   const bio = document.getElementById('reqBio').value.trim();
   const phone = document.getElementById('reqPhone').value.trim();
   const notifySms = document.getElementById('reqNotifySms').checked;
-  if(!chosenRequestRole){ alert('Please choose Student access — Coordinator applications are closed.'); return; }
-  if(chosenRequestRole === 'coordinator'){ alert('Coordinator applications are closed — we\'re no longer accepting new coordinators.'); return; }
+  if(!chosenRequestRole){ alert('Please choose whether you\'re requesting Coordinator or Student access.'); return; }
   if(!bio){ alert('Please add a short bio — your name, school, and anything that helps the Ambassador decide.'); return; }
   if(notifySms && !phone){ alert('Add a phone number to receive text alerts, or untick that option.'); return; }
   const email = googleUser.email.toLowerCase();
@@ -711,8 +706,6 @@ async function signOutEverywhere(){
 
 
 let currentTab = null;
-let editingAnnId = null;  // id of the announcement currently open for inline editing, or null
-let editingNotifId = null;  // id of the notification currently open for inline editing, or null
 function showApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -741,7 +734,7 @@ async function switchUser(){
 function buildTabs(){
   const tabsFor = {
     ambassador:[['overview','Overview'],['requests','Access requests'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['announce','Announcements'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
@@ -756,15 +749,12 @@ function buildTabs(){
 }
 function render(tab){
   stopExamRuntime();
-  if(tab!=='announce') editingAnnId = null;
-  if(tab!=='notifications') editingNotifId = null;
   currentTab = tab;
   const s = document.getElementById('screen');
   if(tab==='notifications'){ s.innerHTML = notificationsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='settings'){ s.innerHTML = settingsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='library'){ s.innerHTML = libraryView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='exams'){ s.innerHTML = examsView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='announce'){ s.innerHTML = announceView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='applications'){ s.innerHTML = applicationsView(); paintLogos(); wireHandlers(tab); return; }
   if(tab==='requests'){ s.innerHTML = requestsView(); paintLogos(); wireHandlers(tab); return; }
   if(ME.role==='ambassador') s.innerHTML = ambassadorView(tab);
@@ -982,7 +972,6 @@ function ambassadorView(tab){
           <div class="item-head"><span class="item-title">${escapeHtml(c.name)}</span><span class="item-meta">joined ${fmtDate(c.joined)}</span></div>
           <div class="item-body">${escapeHtml(c.email||'no email on file')} · ${DB.students.filter(s=>s.coordinatorId===c.id).length} student(s) · ${presenceBadge(c.email)}</div>
           <div class="item-body" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
-            <input data-cfield="name" data-coord-id="${c.id}" value="${escapeHtml(c.name||'')}" placeholder="Full name" style="max-width:160px; font-weight:600;">
             <input data-cfield="subject" data-coord-id="${c.id}" value="${escapeHtml(c.subject||'')}" placeholder="Focus area" style="max-width:160px;">
             <input data-cfield="region" data-coord-id="${c.id}" value="${escapeHtml(c.region||'')}" placeholder="Region" style="max-width:130px;">
             <input data-cfield="phone" data-coord-id="${c.id}" value="${escapeHtml(c.phone||'')}" placeholder="Phone (for SMS)" style="max-width:150px;">
@@ -1044,6 +1033,9 @@ function ambassadorView(tab){
     return `
     <div class="section-title"><div><h2>Activity feed</h2><p>Every call sheet, resource, practice question and message — across all coordinators — in one line of sight.</p></div></div>
     <div class="list">${items.length ? items.map(feedItem).join('') : `<div class="empty">Nothing's been posted yet. As coordinators publish call sheets and materials, they'll appear here automatically.</div>`}</div>`;
+  }
+  if(tab==='announce'){
+    return announceView(true);
   }
 }
 
@@ -1230,6 +1222,9 @@ function studentView(tab){
         </div>`).join('') : `<div class="empty">Nothing posted yet — check back soon.</div>`}
     </div>`;
   }
+  if(tab==='announce'){
+    return announceView(false);
+  }
   if(tab==='practice'){
     const mine = DB.practice.filter(p=>p.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
     const latest = mine[0];
@@ -1331,26 +1326,11 @@ function notificationsView(){
     <div style="font-size:12.5px; color:var(--muted); flex:1; min-width:220px;">Every message always lands here in the app${ME.role==='ambassador'?'; email and SMS delivery depend on the connections set up in Settings.':' — the Ambassador manages whether it also goes out by email or SMS.'}</div>
   </div>
   <div class="list">
-    ${sorted.length ? sorted.map(n=>{
-      const canManage = ME.role==='ambassador' || (ME.role==='coordinator' && n.coordinatorId===ME.id);
-      if(canManage && editingNotifId===n.id){
-        return `
-        <div class="item">
-          <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="editNotifTitle-${n.id}" value="${escapeHtml(n.title)}"></div>
-          <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="editNotifBody-${n.id}" rows="3">${escapeHtml(n.body)}</textarea></div>
-          <div class="item-actions">
-            <button class="btn teal small" data-save-notif="${n.id}">Save</button>
-            <button class="btn ghost small" data-cancel-edit-notif="${n.id}">Cancel</button>
-          </div>
-        </div>`;
-      }
-      return `
+    ${sorted.length ? sorted.map(n=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(n.title)}</span><span class="item-meta">${fmtDate(n.date)}</span></div>
         <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>
-        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-edit-notif="${n.id}">Edit</button><button class="btn ghost small" data-remove-notif="${n.id}">Remove</button></div>` : ''}
-      </div>`;
-    }).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
+      </div>`).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
   </div>`;
 }
 function settingsView(){
@@ -1360,9 +1340,6 @@ function settingsView(){
   <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
   <div class="card" style="margin-bottom:18px;">
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
-    <h3 style="font-size:15px; margin:18px 0 8px;">Applicant WhatsApp group</h3>
-    <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 10px;">Everyone who submits the application form is sent straight to this group afterward, so they're plugged in right away — before you've had a chance to review their application. Portal sign-in is still separate and still requires your review below.</p>
-    <div class="field" style="margin:0 0 10px;"><label>WhatsApp group invite link</label><input id="setWhatsapp" value="${escapeHtml(s.whatsappGroupUrl||'')}" placeholder="${DEFAULT_WHATSAPP_URL}"></div>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email — via EmailJS (free tier available)</h3>
     <div class="field" style="margin:0 0 10px;"><label>Public key</label><input id="setEmailKey" value="${escapeHtml(s.emailjsPublicKey||'')}" placeholder="EmailJS public key"></div>
     <div class="field" style="margin:0 0 10px;"><label>Service ID</label><input id="setEmailService" value="${escapeHtml(s.emailjsServiceId||'')}" placeholder="EmailJS service ID"></div>
@@ -1377,38 +1354,22 @@ function settingsView(){
     <b>Why not send SMS (or call Claude) directly?</b> Sending real texts, or generating exam drafts with Claude, both need a private account key (Twilio, Anthropic, etc.) that can never sit safely inside a page anyone can view or download — it would be stealable in seconds. Routing through your own webhook/proxy keeps that key on your side, out of this page entirely. If this page is opened straight from a file instead of a real hosted link, browsers may also block these outgoing requests altogether — hosting it (Netlify, Vercel, etc.) makes delivery reliable.
   </div>`;
 }
-function announceView(){
-  const canPost = ME.role==='ambassador' || ME.role==='coordinator';
+function announceView(canPost){
   const list = [...DB.announcements].sort((a,b)=>b.date.localeCompare(a.date));
   return `
-  <div class="section-title"><div><h2>Announcements</h2><p>${ME.role==='ambassador' ? 'From the Ambassador desk, for the whole programme.' : ME.role==='coordinator' ? 'Programme-wide updates, plus anything you post for your own students.' : 'From the Ambassador desk and your coordinator.'}</p></div></div>
+  <div class="section-title"><div><h2>Announcements</h2><p>From the Ambassador desk, for the whole programme.</p></div></div>
   ${canPost ? `
   <div class="card" style="margin-bottom:18px;">
     <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="annTitle" placeholder="e.g. Application deadline reminder"></div>
     <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="annBody" rows="3" placeholder="Write your announcement"></textarea></div>
-    <button class="btn amber small" id="addAnnBtn">Post announcement${ME.role==='coordinator'?' (to your students)':''}</button>
+    <button class="btn amber small" id="addAnnBtn">Post announcement</button>
   </div>` : ''}
   <div class="list">
-    ${list.length ? list.map(a=>{
-      const canManage = ME.role==='ambassador' || (ME.role==='coordinator' && a.coordinatorId===ME.id);
-      if(canManage && editingAnnId===a.id){
-        return `
-        <div class="item">
-          <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="editAnnTitle-${a.id}" value="${escapeHtml(a.title)}"></div>
-          <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="editAnnBody-${a.id}" rows="3">${escapeHtml(a.body)}</textarea></div>
-          <div class="item-actions">
-            <button class="btn teal small" data-save-ann="${a.id}">Save</button>
-            <button class="btn ghost small" data-cancel-edit-ann="${a.id}">Cancel</button>
-          </div>
-        </div>`;
-      }
-      return `
+    ${list.length ? list.map(a=>`
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}${a.authorName?' · '+escapeHtml(a.authorName):''}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
         <div class="item-body">${linkify(a.body)}</div>
-        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-edit-ann="${a.id}">Edit</button><button class="btn ghost small" data-remove-ann="${a.id}">Remove</button></div>` : ''}
-      </div>`;
-    }).join('') : `<div class="empty">No announcements yet.</div>`}
+      </div>`).join('') : `<div class="empty">No announcements yet.</div>`}
   </div>`;
 }
 function commentThread(items, coordinatorId){
@@ -1578,7 +1539,7 @@ function examsManageView(){
       <label>Exam content / questions</label>
       <textarea id="examContent" rows="6" placeholder="Write or paste the real exam problem(s) here"></textarea>
       <button class="btn ghost small" id="genExamBtn" style="margin-top:8px;">✦ Generate a draft with Claude</button>
-      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;">${!(DB.settings||{}).aiWebhookUrl ? (ME.role==='ambassador' ? 'Connect a webhook in Settings to enable this.' : 'Not connected yet — ask your Ambassador to add a Claude webhook in Settings.') : ''}</span>
+      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;"></span>
     </div>
     <button class="btn teal small" id="addExamBtn">Post exam${ME.role==='ambassador'?' (programme-wide)':''}</button>
   </div>
@@ -1649,8 +1610,6 @@ function wireHandlers(tab){
     const id = b.dataset.saveCoord;
     const c = DB.coordinators.find(c=>c.id===id);
     if(!c) return;
-    const nameInp = document.querySelector(`[data-coord-id="${id}"][data-cfield="name"]`);
-    if(nameInp && !nameInp.value.trim()) return alert('Name can\'t be empty.');
     document.querySelectorAll(`[data-coord-id="${id}"]`).forEach(inp=>{
       c[inp.dataset.cfield] = inp.value.trim();
     });
@@ -1701,57 +1660,11 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    const coordinatorId = ME.role==='coordinator' ? ME.id : null;
-    DB.announcements.push({id:uid(), title, body, date:today(), coordinatorId, authorName:ME.name});
+    DB.announcements.push({id:uid(), title, body, date:today()});
     await saveKey('announcements');
-    await notifyBroadcast({title, body, coordinatorId, author:ME.name, role:ME.role});
+    await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
     render('announce');
   });
-  document.querySelectorAll('[data-edit-ann]').forEach(b=>b.addEventListener('click', ()=>{
-    editingAnnId = b.dataset.editAnn; render('announce');
-  }));
-  document.querySelectorAll('[data-cancel-edit-ann]').forEach(b=>b.addEventListener('click', ()=>{
-    editingAnnId = null; render('announce');
-  }));
-  document.querySelectorAll('[data-save-ann]').forEach(b=>b.addEventListener('click', async ()=>{
-    const a = DB.announcements.find(a=>a.id===b.dataset.saveAnn); if(!a) return;
-    const titleInp = document.querySelector(`#editAnnTitle-${a.id}`);
-    const bodyInp = document.querySelector(`#editAnnBody-${a.id}`);
-    const title = titleInp ? titleInp.value.trim() : a.title;
-    const body = bodyInp ? bodyInp.value.trim() : a.body;
-    if(!title||!body) return alert('Please fill in both fields.');
-    a.title = title; a.body = body;
-    await saveKey('announcements');
-    editingAnnId = null; render('announce');
-  }));
-  document.querySelectorAll('[data-remove-ann]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this announcement?')) return;
-    DB.announcements = DB.announcements.filter(a=>a.id!==b.dataset.removeAnn);
-    await saveKey('announcements'); render('announce');
-  }));
-
-  document.querySelectorAll('[data-edit-notif]').forEach(b=>b.addEventListener('click', ()=>{
-    editingNotifId = b.dataset.editNotif; render('notifications');
-  }));
-  document.querySelectorAll('[data-cancel-edit-notif]').forEach(b=>b.addEventListener('click', ()=>{
-    editingNotifId = null; render('notifications');
-  }));
-  document.querySelectorAll('[data-save-notif]').forEach(b=>b.addEventListener('click', async ()=>{
-    const n = DB.notifications.find(n=>n.id===b.dataset.saveNotif); if(!n) return;
-    const titleInp = document.querySelector(`#editNotifTitle-${n.id}`);
-    const bodyInp = document.querySelector(`#editNotifBody-${n.id}`);
-    const title = titleInp ? titleInp.value.trim() : n.title;
-    const body = bodyInp ? bodyInp.value.trim() : n.body;
-    if(!title||!body) return alert('Please fill in both fields.');
-    n.title = title; n.body = body;
-    await saveKey('notifications');
-    editingNotifId = null; render('notifications');
-  }));
-  document.querySelectorAll('[data-remove-notif]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this notification? It will disappear from everyone\'s feed — this only removes the in-app log entry, any email or text already sent can\'t be recalled.')) return;
-    DB.notifications = DB.notifications.filter(n=>n.id!==b.dataset.removeNotif);
-    await saveKey('notifications'); render('notifications');
-  }));
 
   document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
     const sid=b.dataset.saveGroup;
@@ -1831,8 +1744,7 @@ function wireHandlers(tab){
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
       webhookUrl: q('setWebhook').value.trim(),
-      aiWebhookUrl: q('setAiWebhook').value.trim(),
-      whatsappGroupUrl: q('setWhatsapp').value.trim()
+      aiWebhookUrl: q('setAiWebhook').value.trim()
     };
     try{
       const ok = await saveKey('settings');
@@ -1874,7 +1786,10 @@ function wireHandlers(tab){
       await saveKey('students'); await syncPublicDirectory();
     }
     await notifyApplicantDecision({app, decision:'accepted', reason});
-    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), decision:'accepted', reason, date: today() });
+    // Carries the applicant's private token forward (when present) so the
+    // status banner on the public site can match this decision without
+    // relying on email alone — see apply.html for why that matters.
+    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
     await saveKey('applicationDecisions');
     DB.applications = DB.applications.filter(a=>a.id!==app.id);
     await saveKey('applications');
@@ -1886,7 +1801,7 @@ function wireHandlers(tab){
     const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
     const reason = reasonInp ? reasonInp.value.trim() : '';
     await notifyApplicantDecision({app, decision:'declined', reason});
-    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), decision:'declined', reason, date: today() });
+    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
     await saveKey('applicationDecisions');
     DB.applications = DB.applications.filter(a=>a.id!==app.id);
     await saveKey('applications'); render('applications');
@@ -1983,12 +1898,7 @@ function wireHandlers(tab){
     }));
     if(q('genExamBtn')) q('genExamBtn').addEventListener('click', async ()=>{
       const s = DB.settings || {};
-      if(!s.aiWebhookUrl){
-        alert(ME.role==='ambassador'
-          ? 'Connect a Claude exam-generation webhook first, in Settings.'
-          : 'A Claude exam-generation webhook hasn\'t been connected yet — ask your Ambassador to add one in Settings.');
-        return;
-      }
+      if(!s.aiWebhookUrl){ alert('Connect a Claude exam-generation webhook first, in Settings.'); return; }
       const btn = q('genExamBtn'), status = q('genExamStatus');
       const subject = q('examSubject').value.trim() || 'general chemistry';
       const difficulty = q('examDifficulty').value;

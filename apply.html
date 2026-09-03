@@ -339,14 +339,16 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   btn.disabled = true; btn.textContent = 'Submitting…';
 
   try{
-    // Read-modify-write on a single shared row: fine at this programme's scale,
-    // but if applications ever arrive in the same instant from two people,
-    // the later write could overwrite the earlier one. Worth moving to one
-    // row per application (via an RPC/insert) if volume grows.
-    const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-    const list = (data && data.value) || [];
-    list.push({ id: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today() });
-    const { error } = await sb.from('ichc_kv').upsert({ key:'applications:list', value:list });
+    // Atomic append via a Postgres function (see the SQL you need to run once
+    // in Supabase — ask me if you haven't yet) instead of read-then-write from
+    // the browser. That closes the race condition where two applicants
+    // submitting at the same instant could have one overwrite the other.
+    // A random token, private to this browser, generated fresh for this
+    // submission and never shown anywhere. The status banner below matches
+    // on this instead of the applicant's email, so someone can't see another
+    // applicant's review status/decision reason just by knowing their email.
+    const newApplication = { id: uid(), token: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today() };
+    const { error } = await sb.rpc('append_kv_item', { p_key: 'applications:list', p_item: newApplication });
     if(error) throw error;
 
     sendConfirmationEmail(name, email);
@@ -354,7 +356,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     // Remember who applied on this device/browser, so the status banner (below)
     // can look up and show them where their application stands on any page of
     // this site, without requiring a login.
-    try{ localStorage.setItem('ichc_applicant', JSON.stringify({ email, name })); }catch(e){}
+    try{ localStorage.setItem('ichc_applicant', JSON.stringify({ email, name, token: newApplication.token })); }catch(e){}
     renderApplicationStatusBanner();
 
     document.getElementById('formCard').parentElement.querySelectorAll('.card, .foot-link').forEach(el=>el.remove());
@@ -364,6 +366,15 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     startWhatsappRedirect(whatsappUrl);
   }catch(e){
     console.error(e);
+    // The database itself now rejects late submissions too (a safety net
+    // behind the client-side deadline check above) — recognize that specific
+    // rejection and show the closed screen rather than a generic error.
+    if(e && e.message && /applications are closed/i.test(e.message)){
+      document.querySelector('.wrap').classList.add('hidden');
+      const closedScreen = document.getElementById('closedScreen');
+      if(closedScreen) closedScreen.classList.remove('hidden');
+      return;
+    }
     errEl.textContent = 'Something went wrong submitting your application — please check your connection and try again.';
     btn.disabled = false; btn.textContent = 'Submit application';
   }
@@ -375,23 +386,40 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 // data on every page load. Shows "in review", "accepted", or "declined" at the
 // top of the page. Each decision gets its own dismiss key so a NEW decision (e.g.
 // pending -> accepted) always reappears even if an earlier banner was dismissed.
+//
+// Matching is token-first: the private token generated at submission time
+// (never displayed anywhere) is what's checked, not the email address alone —
+// otherwise anyone who knew another applicant's email could see their status
+// and any private decision reason. The email-only match below only fires for
+// applications submitted before this token existed, so nothing already in
+// progress breaks; those get upgraded to token matching automatically once a
+// fresh application/decision record (with a token) exists for that email.
+function findApplicantMatches(list, applicant){
+  if(applicant.token){
+    const byToken = list.filter(x => x.token && x.token === applicant.token);
+    if(byToken.length) return byToken;
+  }
+  if(!applicant.email) return [];
+  const email = applicant.email.toLowerCase();
+  return list.filter(x => x.email && x.email.toLowerCase()===email && !x.token);
+}
+
 async function renderApplicationStatusBanner(){
   document.querySelectorAll('.ichc-app-banner').forEach(b=>b.remove());
   if(!sbReady) return;
   let applicant;
   try{ applicant = JSON.parse(localStorage.getItem('ichc_applicant')||'null'); }catch(e){ applicant = null; }
   if(!applicant || !applicant.email) return;
-  const email = applicant.email.toLowerCase();
 
   let state = null; // {type:'pending'|'accepted'|'declined', reason, key}
   try{
     const { data: appData } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-    const pending = ((appData && appData.value) || []).find(a=>a.email && a.email.toLowerCase()===email);
+    const pending = findApplicantMatches((appData && appData.value) || [], applicant)[0];
     if(pending){
       state = { type:'pending', key:'pending:'+pending.id };
     } else {
       const { data: decData } = await sb.from('ichc_kv').select('value').eq('key','application_decisions:list').maybeSingle();
-      const decisions = ((decData && decData.value) || []).filter(d=>d.email && d.email.toLowerCase()===email);
+      const decisions = findApplicantMatches((decData && decData.value) || [], applicant);
       const latest = decisions.sort((a,b)=>b.date.localeCompare(a.date))[0];
       if(latest) state = { type: latest.decision, reason: latest.reason, key: latest.id };
     }

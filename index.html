@@ -1184,23 +1184,40 @@ if(applyForm){
 // data on every page load. Shows "in review", "accepted", or "declined" at the
 // top of the page. Each decision gets its own dismiss key so a NEW decision (e.g.
 // pending -> accepted) always reappears even if an earlier banner was dismissed.
+//
+// Matching is token-first: the private token generated at submission time
+// (never displayed anywhere) is what's checked, not the email address alone —
+// otherwise anyone who knew another applicant's email could see their status
+// and any private decision reason. The email-only match below only fires for
+// applications submitted before this token existed, so nothing already in
+// progress breaks; those get upgraded to token matching automatically once a
+// fresh application/decision record (with a token) exists for that email.
+function findApplicantMatches(list, applicant){
+  if(applicant.token){
+    const byToken = list.filter(x => x.token && x.token === applicant.token);
+    if(byToken.length) return byToken;
+  }
+  if(!applicant.email) return [];
+  const email = applicant.email.toLowerCase();
+  return list.filter(x => x.email && x.email.toLowerCase()===email && !x.token);
+}
+
 async function renderApplicationStatusBanner(){
   document.querySelectorAll('.ichc-app-banner').forEach(b=>b.remove());
   if(!sbReady) return;
   let applicant;
   try{ applicant = JSON.parse(localStorage.getItem('ichc_applicant')||'null'); }catch(e){ applicant = null; }
   if(!applicant || !applicant.email) return;
-  const email = applicant.email.toLowerCase();
 
   let state = null; // {type:'pending'|'accepted'|'declined', reason, key}
   try{
     const { data: appData } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-    const pending = ((appData && appData.value) || []).find(a=>a.email && a.email.toLowerCase()===email);
+    const pending = findApplicantMatches((appData && appData.value) || [], applicant)[0];
     if(pending){
       state = { type:'pending', key:'pending:'+pending.id };
     } else {
       const { data: decData } = await sb.from('ichc_kv').select('value').eq('key','application_decisions:list').maybeSingle();
-      const decisions = ((decData && decData.value) || []).filter(d=>d.email && d.email.toLowerCase()===email);
+      const decisions = findApplicantMatches((decData && decData.value) || [], applicant);
       const latest = decisions.sort((a,b)=>b.date.localeCompare(a.date))[0];
       if(latest) state = { type: latest.decision, reason: latest.reason, key: latest.id };
     }
@@ -1510,6 +1527,7 @@ setInterval(tickCountdown, 1000);
     });
   }
 
+  let sectionVisible = true, rafPending = false;
   function loop(){
     if(!dragging){
       if(!userInteracted){ rotY += 0.006; }
@@ -1519,7 +1537,8 @@ setInterval(tickCountdown, 1000);
       }
     }
     draw();
-    requestAnimationFrame(loop);
+    rafPending = false;
+    if(sectionVisible){ rafPending = true; requestAnimationFrame(loop); }
   }
 
   function pos(e){
@@ -1584,7 +1603,22 @@ setInterval(tickCountdown, 1000);
   });
 
   setMolecule('methane');
-  loop();
+  draw();
+  // Only run the rotation loop while this section is actually on screen —
+  // it's a continuous 60fps canvas redraw, no reason to burn CPU/battery
+  // on it while someone's reading a different part of the page.
+  const molSection = document.getElementById('molecule');
+  if(molSection && 'IntersectionObserver' in window){
+    new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        sectionVisible = entry.isIntersecting;
+        if(sectionVisible && !rafPending){ rafPending = true; requestAnimationFrame(loop); }
+      });
+    }, { threshold: 0.01 }).observe(molSection);
+  } else {
+    rafPending = true;
+    requestAnimationFrame(loop);
+  }
 })();
 </script>
 
@@ -2055,7 +2089,7 @@ setInterval(tickCountdown, 1000);
     const HOLD_MS = 3600;
     const SETTLE_END = 0.8;
     const FLASH_AT = 0.42;
-    let idx = 0, cycleStart = performance.now(), lastElapsed = 0, hovering = false, switching = false;
+    let idx = 0, cycleStart = performance.now(), lastElapsed = 0, hovering = false, switching = false, offscreen = false, rafPending = false;
 
     function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
     function lerpPoint(a,b,t){ return { x: a.x + (b.x-a.x)*t, y: a.y + (b.y-a.y)*t }; }
@@ -2134,14 +2168,15 @@ setInterval(tickCountdown, 1000);
     }
 
     function loop(now){
-      if(!hovering && !switching){ lastElapsed = now - cycleStart; }
+      if(!hovering && !switching && !offscreen){ lastElapsed = now - cycleStart; }
       const t = Math.min(lastElapsed / HOLD_MS, 1);
-      if(t >= 1 && !hovering && !switching){
+      if(t >= 1 && !hovering && !switching && !offscreen){
         goTo((idx+1) % REACTIONS.length);
       }
       drawFrame(t);
       if(progressEl) progressEl.style.width = (t*100) + '%';
-      requestAnimationFrame(loop);
+      rafPending = false;
+      if(!offscreen){ rafPending = true; requestAnimationFrame(loop); }
     }
 
     if(dotsEl){
@@ -2180,7 +2215,26 @@ setInterval(tickCountdown, 1000);
     }
 
     updateText();
-    requestAnimationFrame(loop);
+    // Same idea as the molecule viewer above — pause this continuous canvas
+    // loop while the reaction section is scrolled out of view.
+    const reactionSection = document.getElementById('reaction');
+    if(reactionSection && 'IntersectionObserver' in window){
+      new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const wasOffscreen = offscreen;
+          offscreen = !entry.isIntersecting;
+          if(offscreen && !wasOffscreen){
+            lastElapsed = performance.now() - cycleStart; // freeze progress
+          } else if(!offscreen && wasOffscreen){
+            cycleStart = performance.now() - lastElapsed; // resume without a jump
+          }
+          if(!offscreen && !rafPending){ rafPending = true; requestAnimationFrame(loop); }
+        });
+      }, { threshold: 0.01 }).observe(reactionSection);
+    } else {
+      rafPending = true;
+      requestAnimationFrame(loop);
+    }
   })();
 
 })();
