@@ -747,19 +747,70 @@ function buildTabs(){
   }));
   render(tabs[0][0]);
 }
+// Identifies an input/select/textarea so its typed value can survive a re-render.
+// Prefers a plain id (used by the freeform "add coordinator/student" boxes); falls
+// back to its data-* attributes (used by the per-record edit fields), so in-progress
+// typing isn't lost just because a background sync (e.g. presence heartbeats) forces
+// this tab to redraw underneath the user.
+function getFieldKey(el){
+  if(el.id) return 'id:'+el.id;
+  const attrs = Array.from(el.attributes)
+    .filter(a=>a.name.startsWith('data-'))
+    .map(a=>a.name+'='+a.value)
+    .sort()
+    .join('|');
+  return attrs ? el.tagName+':'+attrs : null;
+}
+function captureFormState(container){
+  const state = { values:{}, focusKey:null, selStart:null, selEnd:null };
+  const active = document.activeElement;
+  container.querySelectorAll('input, textarea, select').forEach(el=>{
+    const key = getFieldKey(el);
+    if(!key) return;
+    state.values[key] = (el.type==='checkbox' || el.type==='radio')
+      ? { checked: el.checked }
+      : { value: el.value };
+    if(el===active && container.contains(active)){
+      state.focusKey = key;
+      if(typeof el.selectionStart==='number'){ state.selStart = el.selectionStart; state.selEnd = el.selectionEnd; }
+    }
+  });
+  return state;
+}
+function restoreFormState(container, state){
+  if(!state) return;
+  let focusEl = null;
+  container.querySelectorAll('input, textarea, select').forEach(el=>{
+    const key = getFieldKey(el);
+    if(!key || !(key in state.values)) return;
+    const saved = state.values[key];
+    if('checked' in saved) el.checked = saved.checked; else el.value = saved.value;
+    if(key === state.focusKey) focusEl = el;
+  });
+  if(focusEl){
+    focusEl.focus();
+    if(state.selStart!=null && typeof focusEl.setSelectionRange==='function'){
+      try{ focusEl.setSelectionRange(state.selStart, state.selEnd); }catch(e){}
+    }
+  }
+}
 function render(tab){
   stopExamRuntime();
   currentTab = tab;
   const s = document.getElementById('screen');
-  if(tab==='notifications'){ s.innerHTML = notificationsView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='settings'){ s.innerHTML = settingsView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='library'){ s.innerHTML = libraryView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='exams'){ s.innerHTML = examsView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='applications'){ s.innerHTML = applicationsView(); paintLogos(); wireHandlers(tab); return; }
-  if(tab==='requests'){ s.innerHTML = requestsView(); paintLogos(); wireHandlers(tab); return; }
-  if(ME.role==='ambassador') s.innerHTML = ambassadorView(tab);
-  if(ME.role==='coordinator') s.innerHTML = coordinatorView(tab);
-  if(ME.role==='student') s.innerHTML = studentView(tab);
+  const formState = captureFormState(s);
+  let html;
+  if(tab==='notifications') html = notificationsView();
+  else if(tab==='settings') html = settingsView();
+  else if(tab==='library') html = libraryView();
+  else if(tab==='exams') html = examsView();
+  else if(tab==='applications') html = applicationsView();
+  else if(tab==='requests') html = requestsView();
+  else if(ME.role==='ambassador') html = ambassadorView(tab);
+  else if(ME.role==='coordinator') html = coordinatorView(tab);
+  else if(ME.role==='student') html = studentView(tab);
+  s.innerHTML = html;
+  restoreFormState(s, formState);
   paintLogos();
   wireHandlers(tab);
 }
