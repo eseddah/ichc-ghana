@@ -402,6 +402,33 @@ async function reloadDbKey(key){
   DB[prop] = (await sGet(key, true)) || fallback;
   return prop;
 }
+// True while the user's cursor is actually in a text field on screen. Background
+// syncs (presence pings, other people's edits landing over realtime) should never
+// yank a rebuild out from under someone mid-keystroke, even if capture/restore
+// would technically recover the value a moment later — better to just not touch
+// the DOM at all while they're actively typing.
+function isEditingScreen(){
+  const s = document.getElementById('screen');
+  const active = document.activeElement;
+  return !!(s && active && s.contains(active) && (active.tagName==='INPUT' || active.tagName==='TEXTAREA'));
+}
+let deferredRenderTab = null, deferredRenderTimer = null;
+function renderOrDefer(tab){
+  if(isEditingScreen()){
+    deferredRenderTab = tab;
+    if(!deferredRenderTimer){
+      deferredRenderTimer = setInterval(()=>{
+        if(deferredRenderTab && !isEditingScreen()){
+          const t = deferredRenderTab; deferredRenderTab = null;
+          clearInterval(deferredRenderTimer); deferredRenderTimer = null;
+          render(t);
+        }
+      }, 1000);
+    }
+    return;
+  }
+  render(tab);
+}
 function startRealtimeSync(){
   if(!sbReady || realtimeChannel) return;
   try{
@@ -421,14 +448,14 @@ function startRealtimeSync(){
           } else {
             DB.presence[email] = row.value;
           }
-          if(currentTab) render(currentTab);
+          if(currentTab) renderOrDefer(currentTab);
           return;
         }
         if(row.key === PRESENCE_PREFIX+'map') return;
 
         const prop = await reloadDbKey(row.key);
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
-          render(currentTab);
+          renderOrDefer(currentTab);
         }
       })
       .subscribe();
@@ -947,7 +974,7 @@ function startPresenceLoop(){
     await refreshPresence();
     const presenceTabs = ['people','students','welcome','calls','hub','space'];
     if(presenceTabs.includes(currentTab)) {
-      render(currentTab);
+      renderOrDefer(currentTab);
     }
   }, 45000);
 }
