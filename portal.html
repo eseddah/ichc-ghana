@@ -328,7 +328,7 @@ const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : M
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
-let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], accessRequests:[], decisions:[], applicationDecisions:[], exams:[], examAttempts:[], presence:{} };
+let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], accessRequests:[], decisions:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], presence:{} };
 let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -372,6 +372,8 @@ async function loadDB(){
   DB.applicationDecisions = (await sGet('application_decisions:list', true)) || [];
   DB.exams        = (await sGet('posts:exams', true)) || [];
   DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
+  DB.attendance   = (await sGet('posts:attendance', true)) || [];
+  DB.progressNotes = (await sGet('posts:progressNotes', true)) || [];
   DB.presence     = await loadAllPresence();
   DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'' };
 }
@@ -380,7 +382,7 @@ const KEY_MAP = {
   materials:'posts:materials', callsheets:'posts:callsheets', practice:'posts:practice', comments:'posts:comments',
   notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
   accessRequests:'access_requests:list', decisions:'access_decisions:list', applicationDecisions:'application_decisions:list',
-  exams:'posts:exams', examAttempts:'posts:examAttempts'
+  exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -733,6 +735,8 @@ async function signOutEverywhere(){
 
 
 let currentTab = null;
+let peopleSearch = ''; // live filter text for the ambassador's People tab (search box), kept across re-renders
+let attendanceOpenFor = null; // callsheet id currently showing its attendance checklist, for coordinators
 function showApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
@@ -862,6 +866,24 @@ function chainDivider(){
   return `<div class="divider-chain"><div class="seg"></div><div class="hexlogo" style="width:60px; color:var(--line);"></div><div class="seg"></div></div>`;
 }
 function coordName(id){ const c = DB.coordinators.find(c=>c.id===id); return c ? c.name : 'Unassigned'; }
+
+function csvCell(v){
+  const s = (v==null) ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function toCSV(rows, headers){
+  const lines = [headers.map(h=>csvCell(h.label)).join(',')];
+  rows.forEach(row=>{ lines.push(headers.map(h=>csvCell(h.get(row))).join(',')); });
+  return lines.join('\r\n');
+}
+function downloadCSV(filename, csvText){
+  const blob = new Blob([csvText], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
 
 function accraDate(dateTimeLocalValue){
   if(!dateTimeLocalValue) return null;
@@ -1032,8 +1054,20 @@ function ambassadorView(tab){
     </div>`;
   }
   if(tab==='people'){
+    const pq = (peopleSearch||'').toLowerCase().trim();
+    const coordMatch = c => !pq || [c.name,c.email,c.subject,c.region,c.bio].some(v=>v && String(v).toLowerCase().includes(pq));
+    const studentMatch = s => !pq || [s.name,s.email,s.school,s.region,s.group,s.ageRange,s.howHeard,s.status,coordName(s.coordinatorId)].some(v=>v && String(v).toLowerCase().includes(pq));
+    const shownCoords = DB.coordinators.filter(coordMatch);
+    const shownStudents = DB.students.filter(studentMatch);
     return `
-    <div class="section-title"><div><h2>Coordinators</h2><p>The mentors running each student group. Add them here first — this is what lets them sign in.</p></div></div>
+    <div class="card" style="margin-bottom:22px; display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+      <input id="peopleSearchInput" value="${escapeHtml(peopleSearch)}" placeholder="Search by name, email, school, region, coordinator, status…" style="flex:1; min-width:220px;">
+      ${peopleSearch ? `<button class="btn ghost small" id="peopleSearchClear">Clear</button>` : ''}
+      <span style="font-size:12.5px; color:var(--muted); white-space:nowrap;">${shownCoords.length} coordinator(s) · ${shownStudents.length} student(s)</span>
+    </div>
+    <div class="section-title"><div><h2>Coordinators</h2><p>The mentors running each student group. Add them here first — this is what lets them sign in.</p></div>
+      <button class="btn ghost small" id="exportCoordsCsv">Export CSV</button>
+    </div>
     <div class="card" style="margin-bottom:18px;">
       <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px; align-items:end;">
         <div class="field" style="margin:0;"><label>Name</label><input id="cName" placeholder="Full name"></div>
@@ -1045,7 +1079,7 @@ function ambassadorView(tab){
       <button class="btn amber small" id="addCoordBtn" style="margin-top:10px;">Add coordinator</button>
     </div>
     <div class="list" style="margin-bottom:30px;">
-      ${DB.coordinators.length ? DB.coordinators.map(c=>`
+      ${shownCoords.length ? shownCoords.map(c=>`
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(c.name)}</span><span class="item-meta">joined ${fmtDate(c.joined)}</span></div>
           <div class="item-body">${escapeHtml(c.email||'no email on file')} · ${DB.students.filter(s=>s.coordinatorId===c.id).length} student(s) · ${presenceBadge(c.email)}</div>
@@ -1060,10 +1094,12 @@ function ambassadorView(tab){
             <button class="btn teal small" data-save-coord="${c.id}">Save</button>
           </div>
           <div class="item-actions"><button class="btn ghost small" data-remove-coord="${c.id}">Remove</button></div>
-        </div>`).join('') : `<div class="empty">No coordinators yet. <b>Add the first one above</b> to start building your team.</div>`}
+        </div>`).join('') : `<div class="empty">${pq ? 'No coordinators match your search.' : 'No coordinators yet. <b>Add the first one above</b> to start building your team.'}</div>`}
     </div>
     ${chainDivider()}
-    <div class="section-title" style="margin-top:24px;"><div><h2>Students</h2><p>Everyone accepted into the outreach programme. Add them here first — this is what lets them sign in.</p></div></div>
+    <div class="section-title" style="margin-top:24px;"><div><h2>Students</h2><p>Everyone accepted into the outreach programme. Add them here first — this is what lets them sign in.</p></div>
+      <button class="btn ghost small" id="exportStudentsCsv">Export CSV</button>
+    </div>
     <div class="card" style="margin-bottom:18px;">
       <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px; align-items:end;">
         <div class="field" style="margin:0;"><label>Name</label><input id="sName" placeholder="Full name"></div>
@@ -1079,12 +1115,22 @@ function ambassadorView(tab){
       <button class="btn amber small" id="addStudentBtn" style="margin-top:10px;">Add student</button>
     </div>
     <div class="list">
-      ${DB.students.length ? DB.students.map(s=>`
+      ${shownStudents.length ? shownStudents.map(s=>`
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">${s.group?('Group '+escapeHtml(s.group)+' · '):''}joined ${fmtDate(s.joined)}</span></div>
           <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(s.email||'no email on file')}${s.phone?(' · '+escapeHtml(s.phone)):''}${s.ageRange?(' · Age '+escapeHtml(s.ageRange)):''}${s.school?(' · '+escapeHtml(s.school)):''}${s.region?(' · '+escapeHtml(s.region)):''}</div>
           ${s.howHeard ? `<div class="item-body" style="font-size:12px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(s.howHeard)}</div>` : ''}
           ${s.message ? `<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px; font-size:13px;">${linkify(s.message)}</div>` : ''}
+          ${(()=>{
+            const notes = DB.progressNotes.filter(n=>n.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
+            if(!notes.length) return '';
+            return `<div class="item-body" style="margin-top:6px;">
+              <span style="font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;">Coordinator notes</span>
+              <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                ${notes.map(n=>`<div style="padding:8px 10px; background:var(--chalk); border-radius:8px; font-size:12.5px;"><span style="color:var(--muted);">${fmtDate(n.date)} · ${escapeHtml(coordName(n.coordinatorId))}</span> — ${linkify(n.note)}</div>`).join('')}
+              </div>
+            </div>`;
+          })()}
           <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
             <span>${presenceBadge(s.email)}</span>
             <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
@@ -1106,7 +1152,7 @@ function ambassadorView(tab){
           </div>
           <div class="item-body" style="margin-top:6px; font-size:12px; color:var(--muted);">Stage: <b>${currentStageLabel(s)}</b></div>
           <div class="item-actions"><button class="btn ghost small" data-remove-student="${s.id}">Remove</button></div>
-        </div>`).join('') : `<div class="empty">No students yet. Once applications close, <b>add each confirmed student</b> above.</div>`}
+        </div>`).join('') : `<div class="empty">${pq ? 'No students match your search.' : 'No students yet. Once applications close, <b>add each confirmed student</b> above.'}</div>`}
     </div>`;
   }
   if(tab==='feed'){
@@ -1144,7 +1190,9 @@ function coordinatorView(tab){
     return `
     <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster.</p></div></div>
     <div class="list">
-      ${mine.length ? mine.map(s=>`
+      ${mine.length ? mine.map(s=>{
+        const notes = DB.progressNotes.filter(n=>n.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
+        return `
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">joined ${fmtDate(s.joined)}</span></div>
           <div class="item-body">${presenceBadge(s.email)}</div>
@@ -1153,12 +1201,22 @@ function coordinatorView(tab){
             <input style="max-width:140px;" data-group-for="${s.id}" value="${escapeHtml(s.group||'')}" placeholder="e.g. A">
             <button class="btn ghost small" data-save-group="${s.id}">Save</button>
           </div>
-        </div>`).join('') : `<div class="empty">No students assigned to you yet. Once the Ambassador places students on your roster, they'll show up here.</div>`}
+          <div class="item-body" style="margin-top:10px;">
+            <label style="text-transform:none; font-weight:600; color:var(--muted); font-size:12px; display:block; margin-bottom:4px;">Progress notes <span style="font-weight:400;">(private — visible to you and the Ambassador)</span></label>
+            <textarea data-note-for="${s.id}" rows="2" placeholder="e.g. Strong on stoichiometry, still shaky on equilibrium — plan a 1:1 this week."></textarea>
+            <button class="btn ghost small" data-add-note="${s.id}" style="margin-top:6px;">Add note</button>
+          </div>
+          ${notes.length ? `<div class="item-body" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+            ${notes.map(n=>`<div style="padding:8px 10px; background:var(--chalk); border-radius:8px; font-size:12.5px;"><span style="color:var(--muted);">${fmtDate(n.date)}</span> — ${linkify(n.note)}</div>`).join('')}
+          </div>` : ''}
+        </div>`;
+      }).join('') : `<div class="empty">No students assigned to you yet. Once the Ambassador places students on your roster, they'll show up here.</div>`}
     </div>
     ${groups.length ? `<p style="margin-top:16px; font-size:13px; color:var(--muted);">Active groups: ${groups.map(g=>`<span class="badge coord" style="margin-right:6px;">Group ${escapeHtml(g)}</span>`).join('')}</p>` : ''}`;
   }
   if(tab==='calls'){
     const mine = DB.callsheets.filter(c=>c.coordinatorId===ME.id).sort((a,b)=>(b.startAt||'').localeCompare(a.startAt||''));
+    const myRoster = myStudents();
     return `
     <div class="section-title"><div><h2>Call sheets</h2><p>Publish your session schedule — status updates automatically as the session starts and ends, in Accra time.</p></div></div>
     <div class="card" style="margin-bottom:18px;">
@@ -1172,16 +1230,38 @@ function coordinatorView(tab){
       <button class="btn teal small" id="addCallBtn">Post call sheet</button>
     </div>
     <div class="list">
-      ${mine.length ? mine.map(c=>`
+      ${mine.length ? mine.map(c=>{
+        const records = DB.attendance.filter(a=>a.callsheetId===c.id);
+        const presentCount = records.filter(a=>a.present).length;
+        const taken = records.length > 0;
+        const isOpen = attendanceOpenFor === c.id;
+        return `
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
           <div class="item-meta" style="margin-bottom:6px;">${fmtSessionTime(c)}</div>
           <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Link: ${linkifyUrl(c.link)}`:''}</div>
+          <div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:4px;">${taken ? `Attendance: <b>${presentCount}/${myRoster.length}</b> marked present` : 'Attendance not taken yet'}</div>
           <div class="item-actions">
+            <button class="btn ghost small" data-toggle-attendance="${c.id}">${isOpen ? 'Hide attendance' : (taken ? 'Edit attendance' : 'Take attendance')}</button>
             ${!c.cancelled ? `<button class="btn ghost small" data-cancel-call="${c.id}">Cancel session</button>` : `<button class="btn ghost small" data-uncancel-call="${c.id}">Un-cancel</button>`}
             <button class="btn ghost small" data-remove-call="${c.id}">Remove</button>
           </div>
-        </div>`).join('') : `<div class="empty">No call sheets posted yet. Your first one appears here — and instantly for your students.</div>`}
+          ${isOpen ? `
+          <div class="card" style="margin-top:10px; background:var(--chalk);">
+            ${myRoster.length ? `
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${myRoster.map(s=>{
+                const rec = records.find(a=>a.studentId===s.id);
+                return `<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:500; color:var(--ink); text-transform:none;">
+                  <input type="checkbox" data-attend-for="${s.id}" ${rec && rec.present ? 'checked' : ''} style="width:auto;"> ${escapeHtml(s.name)}
+                </label>`;
+              }).join('')}
+            </div>
+            <button class="btn teal small" data-save-attendance="${c.id}" style="margin-top:12px;">Save attendance</button>
+            ` : `<div class="empty">No students assigned to you yet — attendance will be available once you have a roster.</div>`}
+          </div>` : ''}
+        </div>`;
+      }).join('') : `<div class="empty">No call sheets posted yet. Your first one appears here — and instantly for your students.</div>`}
     </div>`;
   }
   if(tab==='materials'){
@@ -1674,6 +1754,33 @@ function examsView(){
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
 
+  if(q('peopleSearchInput')) q('peopleSearchInput').addEventListener('input', (e)=>{
+    peopleSearch = e.target.value;
+    render('people');
+  });
+  if(q('peopleSearchClear')) q('peopleSearchClear').addEventListener('click', ()=>{
+    peopleSearch = '';
+    render('people');
+  });
+  if(q('exportCoordsCsv')) q('exportCoordsCsv').addEventListener('click', ()=>{
+    const csv = toCSV(DB.coordinators, [
+      {label:'Name', get:c=>c.name}, {label:'Email', get:c=>c.email},
+      {label:'Focus area', get:c=>c.subject}, {label:'Region', get:c=>c.region},
+      {label:'Phone', get:c=>c.phone}, {label:'Students', get:c=>DB.students.filter(s=>s.coordinatorId===c.id).length},
+      {label:'Joined', get:c=>c.joined}
+    ]);
+    downloadCSV(`ichc-coordinators-${today()}.csv`, csv);
+  });
+  if(q('exportStudentsCsv')) q('exportStudentsCsv').addEventListener('click', ()=>{
+    const csv = toCSV(DB.students, [
+      {label:'Name', get:s=>s.name}, {label:'Email', get:s=>s.email}, {label:'Phone', get:s=>s.phone},
+      {label:'Status', get:s=>s.status}, {label:'Coordinator', get:s=>coordName(s.coordinatorId)},
+      {label:'Group', get:s=>s.group}, {label:'Age range', get:s=>s.ageRange}, {label:'School', get:s=>s.school},
+      {label:'Region', get:s=>s.region}, {label:'How heard', get:s=>s.howHeard}, {label:'Joined', get:s=>s.joined}
+    ]);
+    downloadCSV(`ichc-students-${today()}.csv`, csv);
+  });
+
   if(q('addCoordBtn')) q('addCoordBtn').addEventListener('click', async ()=>{
     const name=q('cName').value.trim(); const email=q('cEmail').value.trim().toLowerCase();
     if(!name) return alert('Name required.');
@@ -1752,6 +1859,15 @@ function wireHandlers(tab){
     const val=document.querySelector(`[data-group-for="${sid}"]`).value.trim();
     const s=DB.students.find(s=>s.id===sid); if(s){ s.group=val; await saveKey('students'); await syncPublicDirectory(); render('students'); }
   }));
+  document.querySelectorAll('[data-add-note]').forEach(b=>b.addEventListener('click', async ()=>{
+    const sid = b.dataset.addNote;
+    const inp = document.querySelector(`[data-note-for="${sid}"]`);
+    const note = inp ? inp.value.trim() : '';
+    if(!note) return;
+    DB.progressNotes.push({ id:uid(), studentId:sid, coordinatorId:ME.id, note, date:today() });
+    await saveKey('progressNotes');
+    render('students');
+  }));
 
   if(q('addCallBtn')) q('addCallBtn').addEventListener('click', async ()=>{
     const title=q('callTitle').value.trim(), startAt=q('callStart').value, endAt=q('callEnd').value;
@@ -1763,8 +1879,27 @@ function wireHandlers(tab){
     await notifyBroadcast({title:`New call sheet: ${title}`, body:`${fmtSessionTime(cs)}${cs.notes?' — '+cs.notes:''}`, coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
   document.querySelectorAll('[data-remove-call]').forEach(b=>b.addEventListener('click', async ()=>{
-    DB.callsheets = DB.callsheets.filter(c=>c.id!==b.dataset.removeCall);
-    await saveKey('callsheets'); await syncPublicDirectory(); render('calls');
+    const csId = b.dataset.removeCall;
+    DB.callsheets = DB.callsheets.filter(c=>c.id!==csId);
+    const hadAttendance = DB.attendance.some(a=>a.callsheetId===csId);
+    DB.attendance = DB.attendance.filter(a=>a.callsheetId!==csId);
+    await saveKey('callsheets'); if(hadAttendance) await saveKey('attendance'); await syncPublicDirectory(); render('calls');
+  }));
+  document.querySelectorAll('[data-toggle-attendance]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.toggleAttendance;
+    attendanceOpenFor = (attendanceOpenFor === id) ? null : id;
+    render('calls');
+  }));
+  document.querySelectorAll('[data-save-attendance]').forEach(b=>b.addEventListener('click', async ()=>{
+    const csId = b.dataset.saveAttendance;
+    const checks = document.querySelectorAll('[data-attend-for]');
+    DB.attendance = DB.attendance.filter(a=>a.callsheetId!==csId);
+    checks.forEach(chk=>{
+      DB.attendance.push({ id:uid(), callsheetId:csId, studentId:chk.dataset.attendFor, present:chk.checked, date:today() });
+    });
+    await saveKey('attendance');
+    attendanceOpenFor = null;
+    render('calls');
   }));
   document.querySelectorAll('[data-cancel-call]').forEach(b=>b.addEventListener('click', async ()=>{
     const cs = DB.callsheets.find(c=>c.id===b.dataset.cancelCall);
