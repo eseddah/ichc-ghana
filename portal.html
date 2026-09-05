@@ -1082,8 +1082,11 @@ function ambassadorView(tab){
       ${DB.students.length ? DB.students.map(s=>`
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">${s.group?('Group '+escapeHtml(s.group)+' · '):''}joined ${fmtDate(s.joined)}</span></div>
-          <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
-            <span>${escapeHtml(s.email||'no email on file')} · ${presenceBadge(s.email)}</span>
+          <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(s.email||'no email on file')}${s.phone?(' · '+escapeHtml(s.phone)):''}${s.ageRange?(' · Age '+escapeHtml(s.ageRange)):''}${s.school?(' · '+escapeHtml(s.school)):''}${s.region?(' · '+escapeHtml(s.region)):''}</div>
+          ${s.howHeard ? `<div class="item-body" style="font-size:12px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(s.howHeard)}</div>` : ''}
+          ${s.message ? `<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px; font-size:13px;">${linkify(s.message)}</div>` : ''}
+          <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
+            <span>${presenceBadge(s.email)}</span>
             <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
               ${['Accepted','Applied','Waitlisted'].map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('')}
             </select>
@@ -1860,7 +1863,7 @@ function wireHandlers(tab){
     if(DB.students.some(s=>s.email && s.email.toLowerCase()===app.email.toLowerCase())){
       alert('A student with this email already exists.');
     } else {
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
     }
     await notifyApplicantDecision({app, decision:'accepted', reason});
