@@ -373,7 +373,7 @@
       <h1 style="color:var(--chalk);" id="edit-heroTitle" data-edit="heroTitle">Your chemistry talent deserves a stage this big.</h1>
       <p class="lead" id="edit-heroLead" data-edit="heroLead">Wherever you're starting from, there's a place for you here. We'll pair you with a mentor, hand you real competition practice, and walk with you every step toward the International Chemistry Competition — because talent should never need a head start to be seen.</p>
       <div class="ctas">
-        <a href="#apply" class="btn amber" id="heroApplyBtn">Apply to the programme</a>
+        <a href="#apply" class="btn amber" id="heroApplyBtn">Join Programme Now</a>
         <a href="#about" class="btn outline">Learn how it works</a>
       </div>
       <div class="countdown-box">
@@ -384,7 +384,7 @@
           <div class="cd-cell"><b id="cdMins">--</b><span>Min</span></div>
           <div class="cd-cell"><b id="cdSecs">--</b><span>Sec</span></div>
         </div>
-        <div class="cd-deadline">Deadline: 31 October 2026</div>
+        <div class="cd-deadline">Deadline: <span id="cdDeadlineText">30 September 2026</span></div>
       </div>
       <div class="stats">
         <a href="#team" class="stat" style="text-decoration:none; color:inherit; cursor:pointer;"><b>Meet the team →</b><span>See coordinator profiles</span></a>
@@ -729,8 +729,8 @@
   <section id="apply" style="background:linear-gradient(135deg,#f2b563 0%, var(--amber-deep) 100%); color:#2a1c07;">
     <div class="wrap" style="max-width:640px; text-align:center;" id="applyCtaWrap">
       <h2 id="edit-applyTitle" data-edit="applyTitle">Ready to begin your journey?</h2>
-      <p id="edit-applyLead" data-edit="applyLead" style="max-width:560px; margin:14px auto 30px; font-size:16px; line-height:1.7; opacity:.9;">Applications are reviewed on a rolling basis, right up to the 31 October deadline. No account needed — just fill in the short form to get started.</p>
-      <a href="apply.html" class="btn" id="applyCtaBtn" style="background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk); font-size:16px; padding:16px 34px;">Start your application →</a>
+      <p id="edit-applyLead" data-edit="applyLead" style="max-width:560px; margin:14px auto 30px; font-size:16px; line-height:1.7; opacity:.9;">Applications are reviewed on a rolling basis, right up to the 30 September deadline. No account needed — just fill in the short form to get started.</p>
+      <a href="apply.html" class="btn" id="applyCtaBtn" style="background:var(--navy-deep); border-color:var(--navy-deep); color:var(--chalk); font-size:16px; padding:16px 34px;">Join Programme Now →</a>
       <p style="margin-top:14px; font-size:13px; opacity:.75;" id="applyCtaFoot">Takes a couple of minutes — you'll get an email if you're accepted.</p>
     </div>
   </section>
@@ -1144,40 +1144,6 @@ async function initAmbassadorEditing(){
 }
 applySiteContent().then(initAmbassadorEditing);
 
-const applyForm = document.getElementById('applyForm');
-if(applyForm){
-  applyForm.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const statusEl = document.getElementById('applyStatus');
-    const name = document.getElementById('apName').value.trim();
-    const email = document.getElementById('apEmail').value.trim();
-    const phone = document.getElementById('apPhone').value.trim();
-    const message = document.getElementById('apMessage').value.trim();
-    if(!name || !email){ statusEl.textContent = 'Please fill in your name and email.'; statusEl.style.color = '#C0392B'; return; }
-    if(!sbReady){ statusEl.textContent = 'Sorry, applications aren\'t connected yet — please try again shortly or email us directly.'; statusEl.style.color = '#C0392B'; return; }
-    statusEl.textContent = 'Submitting…'; statusEl.style.color = 'var(--muted)';
-    try{
-      const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-      const list = (data && data.value) ? data.value : [];
-      list.push({ id: Math.random().toString(36).slice(2,9), name, email, phone, message, date: new Date().toISOString().slice(0,10) });
-      const { error } = await sb.from('ichc_kv').upsert({ key:'applications:list', value: list });
-      if(error) throw error;
-      applyForm.reset();
-      statusEl.textContent = '✓ Application received — we\'ll be in touch by email.';
-      statusEl.style.color = 'var(--teal-deep)';
-      // Remember who applied on this device/browser, so the status banner (defined
-      // below) can look up and show them where their application stands on any
-      // page of this site, without requiring a login.
-      try{ localStorage.setItem('ichc_applicant', JSON.stringify({ email, name })); }catch(e){}
-      renderApplicationStatusBanner();
-    }catch(e){
-      console.error('Application submit failed', e);
-      statusEl.textContent = 'Something went wrong — please try again, or email eseyram@amb.intchc.org directly.';
-      statusEl.style.color = '#C0392B';
-    }
-  });
-}
-
 // ---- Application status banner ----
 // No login exists for applicants, so we remember their email locally (set above,
 // right after a successful submit) and look it up against the live application
@@ -1252,12 +1218,33 @@ async function renderApplicationStatusBanner(){
 }
 renderApplicationStatusBanner();
 
-const APPLICATION_DEADLINE = new Date('2026-10-31T23:59:59');
+// Sourced from the portal's Settings tab (same "settings:notify" row the
+// WhatsApp link and email connections use) so the Ambassador can move the
+// deadline without editing this file. Falls back to this default until the
+// Ambassador sets one from the portal.
+let APPLICATION_DEADLINE = new Date('2026-09-30T23:59:59Z');
+function fmtDeadlineDate(d){
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
+}
+async function loadDeadlineFromPortal(){
+  try{
+    if(!sbReady) return;
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+    const s = (data && data.value) || {};
+    if(s.applicationDeadline){
+      const d = new Date(s.applicationDeadline);
+      if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
+    }
+  }catch(e){ /* keep fallback */ }
+  const deadlineEl = document.getElementById('cdDeadlineText');
+  if(deadlineEl) deadlineEl.textContent = fmtDeadlineDate(APPLICATION_DEADLINE);
+  tickCountdown();
+}
 
 // ---- Deadline lockout ----
 // Once the deadline passes, the portal should close itself automatically —
 // no manual step required. This swaps the "Apply" CTAs across the page for
-// a closed notice so anyone who lands here after 31 October (including
+// a closed notice so anyone who lands here after the deadline (including
 // people who bookmarked the page earlier) sees the portal is shut, rather
 // than a form that silently rejects them on submit.
 let applicationsClosed = false;
@@ -1287,7 +1274,7 @@ function closeApplicationPortal(){
   const applyBtn = document.getElementById('applyCtaBtn');
   const applyFoot = document.getElementById('applyCtaFoot');
   if(applyTitle) applyTitle.textContent = 'Applications are now closed';
-  if(applyLead) applyLead.textContent = `Thanks for your interest — the application window for this round closed on 31 October 2026. We're no longer accepting new applications, but you're welcome to email the Ambassador with any questions, or check back for the next intake.`;
+  if(applyLead) applyLead.textContent = `Thanks for your interest — the application window for this round closed on ${fmtDeadlineDate(APPLICATION_DEADLINE)}. We're no longer accepting new applications, but you're welcome to email the Ambassador with any questions, or check back for the next intake.`;
   if(applyBtn){
     applyBtn.textContent = 'Application portal closed';
     applyBtn.removeAttribute('href');
@@ -1317,7 +1304,9 @@ function tickCountdown(){
 }
 tickCountdown();
 setInterval(tickCountdown, 1000);
+loadDeadlineFromPortal();
 </script>
+
 
 <script>
 /* ---------- Interactive molecule viewer (no external deps) ---------- */

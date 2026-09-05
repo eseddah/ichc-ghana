@@ -184,7 +184,7 @@
   <div class="card done">
     <div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">⏱</div>
     <h2 style="font-size:24px; margin:0 0 10px;">Applications are closed</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b>31 October 2026</b>. We're no longer accepting new applications through this form, but you're welcome to email the Ambassador with any questions or to ask about the next intake.</p>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b id="deadlineDateText">30 September 2026</b>. We're no longer accepting new applications through this form, but you're welcome to email the Ambassador with any questions or to ask about the next intake.</p>
     <a class="btn" href="mailto:eseyram@amb.intchc.org" style="margin-top:18px; text-decoration:none;">Email the Ambassador →</a>
   </div>
   <p class="foot-link">Already applied? <a href="index.html">← Back to the programme page</a> to check your status.</p>
@@ -232,17 +232,44 @@ function paintLogos(){
 paintLogos();
 
 // ---- Deadline lockout ----
-// Same deadline the main site's countdown uses. Checked as soon as the page
-// loads (not just on submit) so anyone who opens this form after the
-// deadline — including from a stale bookmark or tab left open overnight —
-// sees the portal is closed instead of being able to fill in the form.
-const APPLICATION_DEADLINE = new Date('2026-10-31T23:59:59');
+// Same deadline the main site's countdown uses, and — like the WhatsApp group
+// link above — sourced from the portal's Settings tab (same "settings:notify"
+// row) so the Ambassador can move the deadline without editing this file.
+// Falls back to this default until the Ambassador sets one from the portal.
+let APPLICATION_DEADLINE = new Date('2026-09-30T23:59:59Z');
 function applicationsAreClosed(){ return (APPLICATION_DEADLINE - new Date()) <= 0; }
-if(applicationsAreClosed()){
-  document.querySelector('.wrap').classList.add('hidden');
-  const closedScreen = document.getElementById('closedScreen');
-  if(closedScreen) closedScreen.classList.remove('hidden');
+function fmtDeadlineDate(d){
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
 }
+function applyDeadlineState(){
+  const dateEl = document.getElementById('deadlineDateText');
+  if(dateEl) dateEl.textContent = fmtDeadlineDate(APPLICATION_DEADLINE);
+  if(applicationsAreClosed()){
+    document.querySelector('.wrap').classList.add('hidden');
+    const closedScreen = document.getElementById('closedScreen');
+    if(closedScreen) closedScreen.classList.remove('hidden');
+  }
+}
+applyDeadlineState();
+
+// Checked as soon as the page loads (not just on submit) so anyone who opens
+// this form after the deadline — including from a stale bookmark or tab left
+// open overnight — sees the portal is closed instead of being able to fill
+// in the form. Re-checked once the live deadline loads below, in case it
+// differs from the fallback above.
+async function loadDeadlineFromPortal(){
+  try{
+    if(!sbReady) return;
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+    const s = (data && data.value) || {};
+    if(s.applicationDeadline){
+      const d = new Date(s.applicationDeadline);
+      if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
+    }
+  }catch(e){ /* keep fallback */ }
+  applyDeadlineState();
+}
+loadDeadlineFromPortal();
 
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);

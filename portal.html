@@ -375,7 +375,7 @@ async function loadDB(){
   DB.attendance   = (await sGet('posts:attendance', true)) || [];
   DB.progressNotes = (await sGet('posts:progressNotes', true)) || [];
   DB.presence     = await loadAllPresence();
-  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'' };
+  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z' };
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -1497,7 +1497,16 @@ function notificationsView(){
 function settingsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can manage notification connections.</div>`;
   const s = DB.settings || {};
+  const deadlineIso = s.applicationDeadline || '2026-09-30T23:59:59Z';
+  const deadlineInputValue = deadlineIso.replace(/Z$/,'').slice(0,16);
+  const deadlineDisplay = (()=>{ const d = new Date(deadlineIso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' }); })();
   return `
+  <div class="section-title"><div><h2>Application deadline</h2><p>Controls the countdown, the cutoff, and the closing date shown on the public site and application form — change it here and both update automatically, no code edits needed.</p></div></div>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="field" style="margin:0 0 6px; max-width:280px;"><label>Deadline (Accra time)</label><input id="setDeadline" type="datetime-local" value="${deadlineInputValue}"></div>
+    <p style="font-size:12.5px; color:var(--muted); margin:0 0 10px;">Currently set to <b>${deadlineDisplay}</b>.</p>
+    <button class="btn amber small" id="saveDeadlineBtn">Save deadline</button>
+  </div>
   <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
   <div class="card" style="margin-bottom:18px;">
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
@@ -1956,6 +1965,7 @@ function wireHandlers(tab){
     btn.textContent = 'Saving…';
     btn.disabled = true;
     DB.settings = {
+      ...DB.settings,
       emailjsPublicKey: q('setEmailKey').value.trim(),
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
@@ -1975,6 +1985,33 @@ function wireHandlers(tab){
       btn.textContent = originalText;
       btn.disabled = false;
       alert('Save failed — check your internet connection and try again. If this keeps happening, open the browser console (F12) and send a screenshot of any red error.');
+    }
+  });
+
+  if(q('saveDeadlineBtn')) q('saveDeadlineBtn').addEventListener('click', async ()=>{
+    const btn = q('saveDeadlineBtn');
+    const val = q('setDeadline').value;
+    if(!val) return alert('Pick a deadline date and time first.');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    // Stored as an explicit UTC ISO string. Ghana runs UTC+0 year-round, so a
+    // value typed here as "Accra time" is numerically identical to UTC — same
+    // convention the coordinator call-sheet times use (see accraDate()).
+    DB.settings = { ...DB.settings, applicationDeadline: val + ':00Z' };
+    try{
+      const ok = await saveKey('settings');
+      if(!ok) throw new Error('save returned false');
+      render('settings');
+      const toast = document.createElement('div');
+      toast.textContent = '✓ Deadline saved — the public site and application form pick it up automatically';
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.2);';
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(), 3000);
+    }catch(e){
+      btn.textContent = originalText;
+      btn.disabled = false;
+      alert('Save failed — check your internet connection and try again.');
     }
   });
 
