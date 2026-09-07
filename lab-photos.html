@@ -140,8 +140,21 @@
   <section>
     <div class="wrap" style="max-width:640px;">
       <div class="eyebrow" style="margin-bottom:6px;">Submit</div>
-      <h2 style="font-size:24px; margin-bottom:18px;">Share your lab moment</h2>
-      <div class="card">
+      <h2 style="font-size:24px; margin-bottom:6px;">Share your lab moment</h2>
+      <p style="color:var(--muted); font-size:13.5px; margin:0 0 18px;">One photo per person. Submissions close <strong>13 September 2026</strong> — this form closes automatically after that.</p>
+
+      <div class="card" id="lpClosedCard" style="display:none;">
+        <strong style="color:var(--navy-deep);">Submissions are now closed</strong>
+        <p style="color:var(--muted); font-size:14px; margin:8px 0 0;">The deadline (13 September 2026) has passed. Thanks to everyone who shared a photo!</p>
+      </div>
+
+      <div class="card" id="lpOwnCard" style="display:none;">
+        <strong style="color:var(--navy-deep);">You've already shared a photo</strong>
+        <p style="color:var(--muted); font-size:13px; margin:6px 0 0;">Only one submission is allowed per person, and submissions can't be removed once sent.</p>
+        <div id="lpOwnBody" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" id="lpFormCard">
         <div class="field">
           <label>Your name</label>
           <input type="text" id="lpName" placeholder="Full name">
@@ -172,6 +185,7 @@
             <input type="file" id="lpFile" accept="image/*">
             <small>A photo of you or your group in the lab, working on the experiment. Large photos are resized automatically.</small>
             <img id="lpPreview" style="display:none;">
+            <button type="button" id="lpClearFile" style="display:none; margin-top:10px; background:none; border:none; color:var(--muted); font-size:12.5px; text-decoration:underline; cursor:pointer; padding:0;">Remove photo</button>
           </div>
         </div>
         <div class="field">
@@ -246,6 +260,77 @@ function escapeHtml(str){
 const LABPHOTO_BUCKET = 'lab-photos';
 const LABPHOTO_KEY = 'labphotos:list';
 const AMBASSADOR_EMAIL_PUBLIC = 'edmondeddah999@gmail.com';
+
+// Identifies "your own" submission on this device/browser so a visitor can
+// see and remove their own photo without needing an account. It's stored
+// locally and travels with the submission (and later the approved activity
+// entry) so it still matches after approval.
+const OWNER_TOKEN_KEY = 'lp_owner_token';
+function getOwnerToken(){
+  let t = localStorage.getItem(OWNER_TOKEN_KEY);
+  if(!t){ t = 'own_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,10); localStorage.setItem(OWNER_TOKEN_KEY, t); }
+  return t;
+}
+const OWNER_TOKEN = getOwnerToken();
+
+// Submissions close after 13 September 2026 (end of that day, local time).
+const SUBMISSION_DEADLINE = new Date('2026-09-14T00:00:00');
+function isSubmissionClosed(){ return new Date() >= SUBMISSION_DEADLINE; }
+
+// Shows the right card in the submit section: closed notice, "you already
+// submitted" card (with a remove button), or the form itself. One photo per
+// person is enforced here, and this is what lets a visitor remove their own
+// photo whether it's still pending review or already live on the wall.
+async function refreshSubmissionGate(){
+  const closedCard = document.getElementById('lpClosedCard');
+  const ownCard = document.getElementById('lpOwnCard');
+  const formCard = document.getElementById('lpFormCard');
+  if(isSubmissionClosed()){
+    closedCard.style.display = 'block';
+    ownCard.style.display = 'none';
+    formCard.style.display = 'none';
+    return;
+  }
+  closedCard.style.display = 'none';
+  if(!sbReady){ ownCard.style.display = 'none'; formCard.style.display = 'block'; return; }
+
+  try{
+    const [pending, activities] = await Promise.all([getLabPhotos(), getActivities()]);
+    const ownPending = pending.find(p=>p.ownerToken===OWNER_TOKEN);
+    const ownLive = activities.find(a=>a.ownerToken===OWNER_TOKEN);
+    const own = ownPending || ownLive;
+    if(own){
+      formCard.style.display = 'none';
+      ownCard.style.display = 'block';
+      const statusLabel = ownPending ? 'Waiting for review' : 'Live on the wall below';
+      document.getElementById('lpOwnBody').innerHTML = `
+        <div style="display:flex; gap:14px; align-items:flex-start;">
+          <img src="${escapeHtml(own.url)}" alt="" style="width:88px; height:88px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:12.5px; color:var(--teal-deep); font-weight:600;">${statusLabel}</div>
+            <div style="font-size:13.5px; color:#39424D; margin-top:4px;">${escapeHtml(own.note || own.caption || '')}</div>
+          </div>
+        </div>`;
+    } else {
+      formCard.style.display = 'block';
+      ownCard.style.display = 'none';
+    }
+  }catch(e){
+    console.error('Could not check for an existing submission', e);
+    formCard.style.display = 'block';
+    ownCard.style.display = 'none';
+  }
+}
+
+// Flips the form to "closed" the instant the deadline hits, even if the
+// page has been left open — no refresh needed. setTimeout's delay is capped
+// at ~24.8 days, comfortably more than the run-up to this deadline.
+(function scheduleAutoClose(){
+  const msUntilDeadline = SUBMISSION_DEADLINE.getTime() - Date.now();
+  if(msUntilDeadline > 0 && msUntilDeadline < 2147483647){
+    setTimeout(refreshSubmissionGate, msUntilDeadline + 500);
+  }
+})();
 
 function compressImage(file, maxDim, quality){
   return new Promise((resolve, reject)=>{
@@ -355,6 +440,7 @@ async function removeActivityItem(id){
       try{ await sb.storage.from(target.bucket || 'activity-photos').remove([target.path]); }catch(e){ console.warn('Storage cleanup failed', e); }
     }
     renderGallery();
+    refreshSubmissionGate();
   }catch(e){
     console.error('Remove failed', e);
     alert('Sorry, that failed — please try again.');
@@ -383,12 +469,19 @@ async function rejectSubmission(id){
 // ---- Submission form ----
 const fileInput = document.getElementById('lpFile');
 const previewImg = document.getElementById('lpPreview');
+const clearFileBtn = document.getElementById('lpClearFile');
 fileInput.addEventListener('change', ()=>{
   const file = fileInput.files && fileInput.files[0];
-  if(!file){ previewImg.style.display = 'none'; return; }
+  if(!file){ previewImg.style.display = 'none'; clearFileBtn.style.display = 'none'; return; }
   const reader = new FileReader();
-  reader.onload = (e)=>{ previewImg.src = e.target.result; previewImg.style.display = 'block'; };
+  reader.onload = (e)=>{ previewImg.src = e.target.result; previewImg.style.display = 'block'; clearFileBtn.style.display = 'inline-block'; };
   reader.readAsDataURL(file);
+});
+clearFileBtn.addEventListener('click', ()=>{
+  fileInput.value = '';
+  previewImg.style.display = 'none';
+  previewImg.src = '';
+  clearFileBtn.style.display = 'none';
 });
 
 document.getElementById('lpSubmitBtn').addEventListener('click', async ()=>{
@@ -407,8 +500,21 @@ document.getElementById('lpSubmitBtn').addEventListener('click', async ()=>{
   if(!file){ statusEl.textContent = 'Please choose a photo.'; statusEl.style.color = '#C0392B'; return; }
   if(!consent){ statusEl.textContent = 'Please confirm you have permission to share this photo.'; statusEl.style.color = '#C0392B'; return; }
   if(!sbReady){ statusEl.textContent = "Sorry, submissions aren't connected yet — please try again shortly."; statusEl.style.color = '#C0392B'; return; }
+  if(isSubmissionClosed()){ statusEl.textContent = 'Submissions are closed — the deadline (13 September 2026) has passed.'; statusEl.style.color = '#C0392B'; refreshSubmissionGate(); return; }
 
   btn.disabled = true;
+  statusEl.textContent = 'Checking…'; statusEl.style.color = 'var(--muted)';
+  try{
+    const [pendingCheck, activitiesCheck] = await Promise.all([getLabPhotos(), getActivities()]);
+    if(pendingCheck.some(p=>p.ownerToken===OWNER_TOKEN) || activitiesCheck.some(a=>a.ownerToken===OWNER_TOKEN)){
+      statusEl.textContent = "You've already shared a photo from this device — only one submission is allowed per person.";
+      statusEl.style.color = '#C0392B';
+      btn.disabled = false;
+      refreshSubmissionGate();
+      return;
+    }
+  }catch(e){ console.warn('Could not verify existing submission, proceeding', e); }
+
   statusEl.textContent = 'Preparing photo…'; statusEl.style.color = 'var(--muted)';
   try{
     let uploadBlob = file, ext = 'jpg', contentType = 'image/jpeg';
@@ -431,7 +537,8 @@ document.getElementById('lpSubmitBtn').addEventListener('click', async ()=>{
       id: 'lp_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       name, school, type, note, email,
       url: pub.publicUrl, path,
-      date: new Date().toISOString().slice(0,10)
+      date: new Date().toISOString().slice(0,10),
+      ownerToken: OWNER_TOKEN
     });
     await saveLabPhotos(list);
 
@@ -446,6 +553,7 @@ document.getElementById('lpSubmitBtn').addEventListener('click', async ()=>{
     statusEl.style.color = 'var(--teal-deep)';
     statusEl.textContent = "✓ Thanks! Your photo is under review and will appear on the wall below once it's approved.";
     renderPending();
+    refreshSubmissionGate();
   }catch(e){
     console.error('Submission failed', e);
     statusEl.textContent = friendlyUploadError(e); statusEl.style.color = '#C0392B';
@@ -502,13 +610,15 @@ async function approveSubmission(id, btn){
     activities.push({
       id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       url: item.url, path: item.path, bucket: LABPHOTO_BUCKET,
-      caption, date: item.date || new Date().toISOString().slice(0,10)
+      caption, date: item.date || new Date().toISOString().slice(0,10),
+      ownerToken: item.ownerToken
     });
     await saveActivities(activities);
 
     await saveLabPhotos(pendingList.filter(p=>p.id!==id));
     renderPending();
     renderGallery();
+    refreshSubmissionGate();
   }catch(e){
     console.error('Approve failed', e);
     alert('Could not approve — please try again.');
@@ -533,6 +643,7 @@ async function initAmbassadorCheck(){
 
 renderGallery();
 initAmbassadorCheck();
+refreshSubmissionGate();
 </script>
 </body>
 </html>
