@@ -381,6 +381,7 @@
       <a href="#team">Team</a>
       <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
+      <a href="lab-photos.html" style="color:var(--teal-deep);">Share Your Lab Moment</a>
     </nav>
     <div class="navcta">
       <a href="apply.html" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Apply</a>
@@ -720,6 +721,15 @@
     </div>
   </section>
 
+  <section style="background:var(--navy-deep); color:var(--chalk); text-align:center;">
+    <div class="wrap" style="max-width:600px;">
+      <div class="eyebrow" style="color:var(--amber);">Your turn</div>
+      <h2 style="color:var(--chalk); font-size:26px; margin:10px 0 14px;">Got a lab photo of your own?</h2>
+      <p style="opacity:.85; font-size:15px; line-height:1.7; margin-bottom:26px;">Working through a titration, a synthesis, or any hands-on chemistry — share a photo of yourself or your group and a short note on what you're doing. It could show up right here.</p>
+      <a href="lab-photos.html" class="btn amber">Share Your Lab Moment</a>
+    </div>
+  </section>
+
   <section id="team">
     <div class="wrap">
       <div class="section-head">
@@ -790,7 +800,7 @@
       <p style="font-size:13px; line-height:1.6; opacity:.7; max-width:280px;">Founded by Local Ambassador, IChC — practice, mentorship, and a community built to train students toward the international stage.</p>
     </div>
     <div><h4>Programme</h4><ul><li><a href="#about">About</a></li><li><a href="#how">How it works</a></li><li><a href="#impact">Impact</a></li><li><a href="#faq">FAQ</a></li></ul></div>
-    <div><h4>Get involved</h4><ul><li><a href="apply.html">Apply as a student</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Become a coordinator</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Partner with us</a></li></ul></div>
+    <div><h4>Get involved</h4><ul><li><a href="apply.html">Apply as a student</a></li><li><a href="lab-photos.html">Share your lab moment</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Become a coordinator</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Partner with us</a></li></ul></div>
     <div><h4>Legal</h4><ul><li><a href="#" id="openPrivacy">Privacy policy</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Contact</a></li></ul></div>
   </div>
   <div class="fbottom">
@@ -955,7 +965,11 @@ async function removeActivity(id){
     const { error: saveErr } = await sb.from('ichc_kv').upsert({ key:'site:activities', value:newList });
     if(saveErr) throw saveErr;
     if(target && target.path){
-      try{ await sb.storage.from(ACTIVITY_BUCKET).remove([target.path]); }catch(e){ console.warn('Storage cleanup failed', e); }
+      // Items approved in from the lab-photos submission wall record which
+      // bucket their file actually lives in (it's never re-uploaded on
+      // approval — see lab-photos.html); anything without that field is an
+      // ambassador-posted photo, which always lives in ACTIVITY_BUCKET.
+      try{ await sb.storage.from(target.bucket || ACTIVITY_BUCKET).remove([target.path]); }catch(e){ console.warn('Storage cleanup failed', e); }
     }
     renderActivities(newList);
   }catch(e){
