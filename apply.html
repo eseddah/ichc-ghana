@@ -296,17 +296,46 @@ async function getWhatsappUrl(){
   }catch(e){ return DEFAULT_WHATSAPP_URL; }
 }
 
+// Flags this application as having actually reached the WhatsApp link — either
+// the auto-redirect firing or the button being clicked by hand. This is a plain
+// read-modify-write on the shared 'applications:list' row rather than another
+// atomic RPC like the submit above: the field is best-effort and only used for
+// the Ambassador's own visibility, so the worst case of a lost update (two
+// people finishing this exact step in the same instant) is a flag that stays
+// unset, not lost or corrupted application data — a much lower bar than what
+// append_kv_item protects against on submission.
+let whatsappMarked = false;
+async function markWhatsappRedirected(app){
+  if(!sbReady || !app || whatsappMarked) return;
+  whatsappMarked = true;
+  try{
+    const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
+    const list = (data && data.value) || [];
+    const idx = list.findIndex(x=>x.id===app.id);
+    if(idx > -1 && !list[idx].whatsappRedirected){
+      list[idx] = { ...list[idx], whatsappRedirected: true, whatsappRedirectedAt: new Date().toISOString() };
+      await sb.from('ichc_kv').upsert({ key:'applications:list', value:list });
+    }
+  }catch(e){ console.error('Failed to record WhatsApp redirect (non-blocking)', e); }
+}
+
 let redirectTimer = null, redirectInterval = null;
-function startWhatsappRedirect(url){
+function startWhatsappRedirect(url, app){
   const btn = document.getElementById('joinWhatsappBtn');
   btn.href = url;
+  btn.addEventListener('click', ()=>{ markWhatsappRedirected(app); });
   let secs = 4;
   const secsEl = document.getElementById('redirectSecs');
   redirectInterval = setInterval(()=>{
     secs -= 1;
     if(secsEl) secsEl.textContent = String(Math.max(secs,0));
   }, 1000);
-  redirectTimer = setTimeout(()=>{ window.location.href = url; }, 4000);
+  redirectTimer = setTimeout(async ()=>{
+    // Mark first, then navigate — once the browser leaves this page, an
+    // in-flight fetch has no guarantee of finishing.
+    await markWhatsappRedirected(app);
+    window.location.href = url;
+  }, 4000);
   document.getElementById('cancelRedirectBtn').addEventListener('click', ()=>{
     clearTimeout(redirectTimer); clearInterval(redirectInterval);
     const cd = document.getElementById('redirectCountdown');
@@ -374,7 +403,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     // submission and never shown anywhere. The status banner below matches
     // on this instead of the applicant's email, so someone can't see another
     // applicant's review status/decision reason just by knowing their email.
-    const newApplication = { id: uid(), token: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today() };
+    const newApplication = { id: uid(), token: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today(), whatsappRedirected: false };
     const { error } = await sb.rpc('append_kv_item', { p_key: 'applications:list', p_item: newApplication });
     if(error) throw error;
 
@@ -390,7 +419,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     document.querySelector('.wrap').classList.add('hidden');
     document.getElementById('doneScreen').classList.remove('hidden');
     const whatsappUrl = await getWhatsappUrl();
-    startWhatsappRedirect(whatsappUrl);
+    startWhatsappRedirect(whatsappUrl, newApplication);
   }catch(e){
     console.error(e);
     // The database itself now rejects late submissions too (a safety net

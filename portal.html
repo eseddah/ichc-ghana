@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
   :root{
     --navy:#0F2438;
@@ -866,6 +867,15 @@ function chainDivider(){
   return `<div class="divider-chain"><div class="seg"></div><div class="hexlogo" style="width:60px; color:var(--line);"></div><div class="seg"></div></div>`;
 }
 function coordName(id){ const c = DB.coordinators.find(c=>c.id===id); return c ? c.name : 'Unassigned'; }
+// Older applications/students recorded before this tracking existed have no
+// whatsappRedirected field at all — that's "unknown", not "didn't join", so it
+// renders nothing rather than a false warning.
+function whatsappBadge(flag){
+  if(typeof flag !== 'boolean') return '';
+  return flag
+    ? `<span class="badge coord" style="font-size:11px;">✓ In WhatsApp group</span>`
+    : `<span class="badge" style="font-size:11px; background:rgba(227,154,59,.18); color:var(--amber-deep);">⚠ Not in WhatsApp group yet</span>`;
+}
 
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
@@ -885,6 +895,50 @@ function downloadCSV(filename, csvText){
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 
+// Builds a real .docx (not an HTML-pretending-to-be-Word file) entirely in the
+// browser, using the `docx` library loaded in <head>. One heading per
+// coordinator with their assigned students listed underneath, then an
+// "Unassigned" section for anyone still waiting on a coordinator.
+async function exportRosterDocx(){
+  if(typeof docx === 'undefined'){ alert('The document library hasn\'t loaded yet — check your connection and try again.'); return; }
+  const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docx;
+  const children = [];
+  children.push(new Paragraph({ text: 'IChC Outreach Program — Ghana', heading: HeadingLevel.TITLE }));
+  children.push(new Paragraph({ text: `Coordinators & Students — as of ${fmtDate(today())}`, heading: HeadingLevel.HEADING_2, spacing:{after:280} }));
+
+  const personLine = (p) => [p.name, p.email, p.phone].filter(Boolean).join(' — ');
+
+  const sortedCoords = [...DB.coordinators].sort((a,b)=>a.name.localeCompare(b.name));
+  if(!sortedCoords.length){
+    children.push(new Paragraph({ text:'No coordinators added yet.', italics:true }));
+  }
+  sortedCoords.forEach(c=>{
+    const students = DB.students.filter(s=>s.coordinatorId===c.id).sort((a,b)=>a.name.localeCompare(b.name));
+    children.push(new Paragraph({ text: c.name + (c.subject?` — ${c.subject}`:''), heading: HeadingLevel.HEADING_3, spacing:{before:320} }));
+    if(c.email || c.phone) children.push(new Paragraph({ children:[ new TextRun({ text: [c.email,c.phone].filter(Boolean).join(' — '), italics:true, color:'6B7280' }) ] }));
+    if(!students.length){
+      children.push(new Paragraph({ text:'No students assigned yet.', italics:true }));
+    } else {
+      students.forEach(s=>{ children.push(new Paragraph({ text: personLine(s), bullet:{ level:0 } })); });
+    }
+  });
+
+  const unassigned = DB.students.filter(s=>!s.coordinatorId).sort((a,b)=>a.name.localeCompare(b.name));
+  children.push(new Paragraph({ text:'Unassigned students', heading: HeadingLevel.HEADING_3, spacing:{before:320} }));
+  if(!unassigned.length){
+    children.push(new Paragraph({ text:'None — every student currently has a coordinator.', italics:true }));
+  } else {
+    unassigned.forEach(s=>{ children.push(new Paragraph({ text: personLine(s), bullet:{ level:0 } })); });
+  }
+
+  const doc = new Document({ sections:[{ children }] });
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `ichc-coordinators-students-${today()}.docx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
 function accraDate(dateTimeLocalValue){
   if(!dateTimeLocalValue) return null;
   const d = new Date(dateTimeLocalValue + ':00Z');
@@ -1064,6 +1118,7 @@ function ambassadorView(tab){
       <input id="peopleSearchInput" value="${escapeHtml(peopleSearch)}" placeholder="Search by name, email, school, region, coordinator, status…" style="flex:1; min-width:220px;">
       ${peopleSearch ? `<button class="btn ghost small" id="peopleSearchClear">Clear</button>` : ''}
       <span style="font-size:12.5px; color:var(--muted); white-space:nowrap;">${shownCoords.length} coordinator(s) · ${shownStudents.length} student(s)</span>
+      <button class="btn amber small" id="exportRosterDocx">Download roster (.docx)</button>
     </div>
     <div class="section-title"><div><h2>Coordinators</h2><p>The mentors running each student group. Add them here first — this is what lets them sign in.</p></div>
       <button class="btn ghost small" id="exportCoordsCsv">Export CSV</button>
@@ -1133,6 +1188,7 @@ function ambassadorView(tab){
           })()}
           <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
             <span>${presenceBadge(s.email)}</span>
+            <span>${whatsappBadge(s.whatsappRedirected)}</span>
             <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
               ${['Accepted','Applied','Waitlisted'].map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('')}
             </select>
@@ -1430,13 +1486,15 @@ function requestsView(){
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
   const sorted = [...DB.applications].sort((a,b)=>b.date.localeCompare(a.date));
+  const notJoined = DB.applications.filter(a=>a.whatsappRedirected===false).length;
   return `
   <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public website's application form — approve to add someone straight to the student roster. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
+  ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
     ${sorted.length ? sorted.map(a=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
-        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${a.ageRange?(' · Age '+escapeHtml(a.ageRange)):''}${a.school?(' · '+escapeHtml(a.school)):''}${a.region?(' · '+escapeHtml(a.region)):''}</div>
+        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${a.ageRange?(' · Age '+escapeHtml(a.ageRange)):''}${a.school?(' · '+escapeHtml(a.school)):''}${a.region?(' · '+escapeHtml(a.region)):''} ${whatsappBadge(a.whatsappRedirected)}</div>
         ${a.howHeard ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(a.howHeard)}</div>` : ''}
         ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;">${linkify(a.message)}</div>`):''}
         <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — included in the email/text to the applicant"></div>
@@ -1464,7 +1522,18 @@ function libraryView(){
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(l.title)}</span><span class="item-meta">${fmtDate(l.date)}</span></div>
         <div class="item-body">${linkify(l.body)} ${l.link?`<br>${linkifyUrl(l.link)}`:''}</div>
-        ${canManage ? `<div class="item-actions"><button class="btn ghost small" data-remove-lib="${l.id}">Remove</button></div>` : ''}
+        ${canManage ? `
+        <div class="item-body" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+          <input data-libfield="title" data-lib-id="${l.id}" value="${escapeHtml(l.title)}" placeholder="Title" style="flex:1; min-width:160px;">
+          <input data-libfield="link" data-lib-id="${l.id}" value="${escapeHtml(l.link||'')}" placeholder="Link (optional)" style="flex:1; min-width:160px;">
+        </div>
+        <div class="item-body" style="margin-top:6px;">
+          <textarea data-libfield="body" data-lib-id="${l.id}" rows="2" placeholder="Description">${escapeHtml(l.body||'')}</textarea>
+        </div>
+        <div class="item-actions">
+          <button class="btn teal small" data-save-lib="${l.id}">Save</button>
+          <button class="btn ghost small" data-remove-lib="${l.id}">Remove</button>
+        </div>` : ''}
       </div>`).join('') : `<div class="empty">The library is empty for now — the Ambassador will curate shared resources here as the programme grows.</div>`}
   </div>`;
 }
@@ -1539,6 +1608,15 @@ function announceView(canPost){
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
         <div class="item-body">${linkify(a.body)}</div>
+        ${canPost ? `
+        <div class="item-body" style="margin-top:8px;">
+          <input data-annfield="title" data-ann-id="${a.id}" value="${escapeHtml(a.title)}" placeholder="Title" style="margin-bottom:6px;">
+          <textarea data-annfield="body" data-ann-id="${a.id}" rows="2" placeholder="Message">${escapeHtml(a.body)}</textarea>
+        </div>
+        <div class="item-actions">
+          <button class="btn teal small" data-save-ann="${a.id}">Save</button>
+          <button class="btn ghost small" data-remove-ann="${a.id}">Remove</button>
+        </div>` : ''}
       </div>`).join('') : `<div class="empty">No announcements yet.</div>`}
   </div>`;
 }
@@ -1771,6 +1849,14 @@ function wireHandlers(tab){
     peopleSearch = '';
     render('people');
   });
+  if(q('exportRosterDocx')) q('exportRosterDocx').addEventListener('click', async ()=>{
+    const btn = q('exportRosterDocx');
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Building…';
+    try{ await exportRosterDocx(); }
+    catch(e){ console.error('Docx export failed', e); alert('Something went wrong building the document — please try again.'); }
+    finally{ btn.disabled = false; btn.textContent = original; }
+  });
   if(q('exportCoordsCsv')) q('exportCoordsCsv').addEventListener('click', ()=>{
     const csv = toCSV(DB.coordinators, [
       {label:'Name', get:c=>c.name}, {label:'Email', get:c=>c.email},
@@ -1862,6 +1948,19 @@ function wireHandlers(tab){
     await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
     render('announce');
   });
+  document.querySelectorAll('[data-save-ann]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = b.dataset.saveAnn;
+    const a = DB.announcements.find(a=>a.id===id);
+    if(!a) return;
+    document.querySelectorAll(`[data-ann-id="${id}"]`).forEach(inp=>{ a[inp.dataset.annfield] = inp.value.trim(); });
+    if(!a.title || !a.body){ alert('Please fill in both fields.'); return; }
+    await saveKey('announcements'); render('announce');
+  }));
+  document.querySelectorAll('[data-remove-ann]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this announcement? This can\'t be undone.')) return;
+    DB.announcements = DB.announcements.filter(a=>a.id!==b.dataset.removeAnn);
+    await saveKey('announcements'); render('announce');
+  }));
 
   document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
     const sid=b.dataset.saveGroup;
@@ -2022,7 +2121,16 @@ function wireHandlers(tab){
     await saveKey('library'); render('library');
     await notifyBroadcast({title:`New resource in the library: ${title}`, body:body||'A new resource was just added to the library.', coordinatorId:null, author:ME.name, role:ME.role});
   });
+  document.querySelectorAll('[data-save-lib]').forEach(b=>b.addEventListener('click', async ()=>{
+    const id = b.dataset.saveLib;
+    const l = DB.library.find(l=>l.id===id);
+    if(!l) return;
+    document.querySelectorAll(`[data-lib-id="${id}"]`).forEach(inp=>{ l[inp.dataset.libfield] = inp.value.trim(); });
+    if(!l.title){ alert('Title required.'); return; }
+    await saveKey('library'); render('library');
+  }));
   document.querySelectorAll('[data-remove-lib]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this resource from the library? This can\'t be undone.')) return;
     DB.library = DB.library.filter(l=>l.id!==b.dataset.removeLib);
     await saveKey('library'); render('library');
   }));
@@ -2035,7 +2143,7 @@ function wireHandlers(tab){
     if(DB.students.some(s=>s.email && s.email.toLowerCase()===app.email.toLowerCase())){
       alert('A student with this email already exists.');
     } else {
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
     }
     await notifyApplicantDecision({app, decision:'accepted', reason});
