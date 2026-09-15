@@ -906,7 +906,7 @@ async function exportRosterDocx(){
   children.push(new Paragraph({ text: 'IChC Outreach Program — Ghana', heading: HeadingLevel.TITLE }));
   children.push(new Paragraph({ text: `Coordinators & Students — as of ${fmtDate(today())}`, heading: HeadingLevel.HEADING_2, spacing:{after:280} }));
 
-  const personLine = (p) => [p.name, p.email, p.phone].filter(Boolean).join(' — ');
+  const personLine = (p) => [p.name, p.school, p.email, p.phone].filter(Boolean).join(' — ');
 
   const sortedCoords = [...DB.coordinators].sort((a,b)=>a.name.localeCompare(b.name));
   if(!sortedCoords.length){
