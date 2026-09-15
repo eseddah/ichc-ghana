@@ -257,6 +257,17 @@
   </div>
 </div>
 
+<div id="roleSelect" class="hidden">
+  <div class="onb-box">
+    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title" style="font-size:26px;">Welcome back, <span id="roleSelName"></span>.</h1>
+    <p class="onb-sub" id="roleSelSub">This Google account is approved on the roster. Which role are you signing in as?</p>
+    <div class="role-grid" id="roleSelGrid"></div>
+    <button class="btn amber" id="roleSelContinueBtn" disabled style="width:100%; justify-content:center; opacity:.5;">Continue</button>
+    <button class="btn ghost" id="roleSelSignOutBtn" style="width:100%; justify-content:center; margin-top:10px;">Sign out</button>
+  </div>
+</div>
+
 <div id="app" class="hidden">
   <div class="topbar">
     <div class="topbar-inner">
@@ -585,7 +596,7 @@ async function handleGoogleSignIn(){
   }
 }
 
-let googleUser = null, chosenRequestRole = null;
+let googleUser = null, chosenRequestRole = null, roleSelMatches = [], chosenRoleSel = null;
 
 async function resolveGoogleSession(){
   if(!sbReady) return false;
@@ -595,27 +606,26 @@ async function resolveGoogleSession(){
   const email = session.user.email.toLowerCase();
   const name = (session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || email;
 
+  // An email can be approved for more than one role (rare, but an Ambassador's
+  // own address could also end up in the coordinator or student roster by
+  // mistake, or on paper an Ambassador may also coordinate). Rather than
+  // silently picking one, collect every role this email is actually approved
+  // for and let the person confirm which one they're signing in as.
+  const matches = [];
   if(isAmbassadorEmail(email)){
-    ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null };
-    await sSet('me', ME, false);
-    showApp();
-    await maybeShowApprovedToast(email);
-    return true;
+    matches.push({ role:'ambassador', build:() => ({ id:'amb-'+email, name: ambassadorName(email), email, role:'ambassador', coordinatorId:null }) });
   }
   const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
   if(coordMatch){
-    ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null };
-    await sSet('me', ME, false);
-    showApp();
-    await maybeShowApprovedToast(email);
-    return true;
+    matches.push({ role:'coordinator', build:() => ({ id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null }) });
   }
   const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
   if(studentMatch){
-    ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId };
-    await sSet('me', ME, false);
-    showApp();
-    await maybeShowApprovedToast(email);
+    matches.push({ role:'student', build:() => ({ id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId }) });
+  }
+
+  if(matches.length){
+    showRoleSelectScreen(name, matches);
     return true;
   }
 
@@ -633,6 +643,58 @@ async function resolveGoogleSession(){
 
   showRequestRoleScreen(name);
   return true;
+}
+
+const ROLE_LABELS = { ambassador:{ letter:'A', label:'Ambassador', ring:'background:rgba(15,36,56,.08); color:var(--navy-deep);' },
+  coordinator:{ letter:'C', label:'Coordinator', ring:'background:rgba(31,138,112,.14); color:var(--teal-deep);' },
+  student:{ letter:'S', label:'Student', ring:'background:rgba(227,154,59,.18); color:var(--amber-deep);' } };
+
+function showRoleSelectScreen(name, matches){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('requestRole').classList.add('hidden');
+  document.getElementById('pendingScreen').classList.add('hidden');
+  document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('roleSelect').classList.remove('hidden');
+  document.getElementById('roleSelName').textContent = name;
+  document.getElementById('roleSelSub').textContent = matches.length > 1
+    ? "This Google account is approved for more than one role. Which one are you signing in as?"
+    : "This Google account is approved on the roster. Confirm the role you're signing in as.";
+  roleSelMatches = matches;
+  chosenRoleSel = null;
+  const grid = document.getElementById('roleSelGrid');
+  grid.innerHTML = matches.map(m=>{
+    const info = ROLE_LABELS[m.role];
+    return `<div class="role-card" data-roleopt="${m.role}"><div class="ring" style="${info.ring}">${info.letter}</div><div class="rname">${info.label}</div></div>`;
+  }).join('');
+  paintLogos();
+  const continueBtn = document.getElementById('roleSelContinueBtn');
+  const freshContinueBtn = continueBtn.cloneNode(true);
+  continueBtn.parentNode.replaceChild(freshContinueBtn, continueBtn);
+  freshContinueBtn.disabled = true;
+  freshContinueBtn.style.opacity = '.5';
+  document.querySelectorAll('[data-roleopt]').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      document.querySelectorAll('[data-roleopt]').forEach(c=>c.classList.remove('active'));
+      card.classList.add('active');
+      chosenRoleSel = card.dataset.roleopt;
+      freshContinueBtn.disabled = false;
+      freshContinueBtn.style.opacity = '1';
+    });
+  });
+  freshContinueBtn.addEventListener('click', confirmRoleSelection);
+  const signOutBtn = document.getElementById('roleSelSignOutBtn');
+  const freshSignOutBtn = signOutBtn.cloneNode(true);
+  signOutBtn.parentNode.replaceChild(freshSignOutBtn, signOutBtn);
+  freshSignOutBtn.addEventListener('click', signOutEverywhere);
+}
+
+async function confirmRoleSelection(){
+  if(!chosenRoleSel) return;
+  const match = roleSelMatches.find(m=>m.role===chosenRoleSel);
+  if(!match) return;
+  ME = match.build();
+  showApp();
+  await maybeShowApprovedToast(ME.email);
 }
 
 async function maybeShowApprovedToast(email){
@@ -731,6 +793,7 @@ async function signOutEverywhere(){
   document.getElementById('requestRole').classList.add('hidden');
   document.getElementById('pendingScreen').classList.add('hidden');
   document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('roleSelect').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
 }
 
@@ -2284,7 +2347,6 @@ function wireHandlers(tab){
 
 (async function boot(){
   await loadDB();
-  const savedMe = await sGet('me', false);
   initOnboarding();
   if(!sbReady){
     const banner = document.createElement('div');
@@ -2293,13 +2355,9 @@ function wireHandlers(tab){
     document.body.prepend(banner);
     return;
   }
-  if(savedMe){
-    let stillValid = false;
-    if(savedMe.role==='ambassador' && savedMe.email && isAmbassadorEmail(savedMe.email)) stillValid = true;
-    if(savedMe.role==='coordinator' && DB.coordinators.some(c=>c.id===savedMe.id)) stillValid = true;
-    if(savedMe.role==='student' && DB.students.some(s=>s.id===savedMe.id)) stillValid = true;
-    if(stillValid){ ME = savedMe; showApp(); return; }
-  }
+  // Deliberately not restoring a cached role here — every load re-resolves
+  // against the live Google session, so someone approved for more than one
+  // role gets asked which one they're signing in as every time, not just once.
   await resolveGoogleSession();
 })();
 </script>
