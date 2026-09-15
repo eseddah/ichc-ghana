@@ -87,7 +87,7 @@
   .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
 
   
-  #onboarding, #requestRole, #pendingScreen, #declinedScreen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
+  #onboarding, #emailNotFound{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
   .onb-box{max-width:620px; width:100%;}
   .onb-logo{display:flex; justify-content:center; margin-bottom:18px;}
   .onb-title{text-align:center; font-size:34px; margin:0 0 6px;}
@@ -201,59 +201,17 @@
     </button>
     <p id="googleMsg" style="text-align:center; font-size:13px; margin:-4px 0 6px; min-height:16px; color:#C0392B;"></p>
     <p style="text-align:center; font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;">
-      Coordinators and students: sign in with the same Google account your Ambassador registered you with.<br>
-      Not added yet, or applying for the first time? Sign in with Google anyway — you'll be able to request access right after.
+      Coordinators and students: sign in with the same Google account your Ambassador registered you with.
     </p>
   </div>
 </div>
 
-<div id="requestRole" class="hidden">
-  <div class="onb-box">
-    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:26px;">Almost there, <span id="reqName"></span>.</h1>
-    <p class="onb-sub">You're signed in with Google. This email isn't on the programme roster yet — tell us which role you're requesting, and a little about yourself, so the Ambassador can review it.</p>
-    <div class="role-grid" style="grid-template-columns:1fr 1fr;">
-      <div class="role-card" data-reqrole="coordinator">
-        <div class="ring" style="background:rgba(31,138,112,.14); color:var(--teal-deep);">C</div>
-        <div class="rname">Coordinator</div>
-      </div>
-      <div class="role-card" data-reqrole="student">
-        <div class="ring" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">S</div>
-        <div class="rname">Student</div>
-      </div>
-    </div>
-    <div class="field" style="margin-top:16px;">
-      <label>A short bio — name, school, and anything that helps the Ambassador decide</label>
-      <textarea id="reqBio" rows="4" placeholder="e.g. I'm a final-year student at Achimota School, I've been self-studying organic chemistry for a year and want structured competition prep..."></textarea>
-    </div>
-    <div class="field">
-      <label>Phone number <span style="text-transform:none; font-weight:400;">(optional — for SMS alerts on call sheets and announcements)</span></label>
-      <input id="reqPhone" type="tel" placeholder="e.g. +233 24 000 0000">
-    </div>
-    <div class="field" style="display:flex; align-items:center; gap:7px;">
-      <label style="display:flex; align-items:center; gap:7px; text-transform:none; font-weight:500; color:var(--ink); margin:0;"><input type="checkbox" id="reqNotifySms" style="width:auto;"> Text me new messages</label>
-    </div>
-    <button class="btn amber" id="submitRequestBtn" style="width:100%; justify-content:center; margin-top:16px;">Send request to the Ambassador</button>
-    <button class="btn ghost" id="cancelRequestBtn" style="width:100%; justify-content:center; margin-top:10px;">Sign out</button>
-  </div>
-</div>
-
-<div id="pendingScreen" class="hidden">
+<div id="emailNotFound" class="hidden">
   <div class="onb-box" style="text-align:center;">
     <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:26px;">Request sent</h1>
-    <p class="onb-sub">Your access request is waiting for the Ambassador to approve it. You'll be able to sign in as soon as it's approved — just come back and sign in with Google again.</p>
-    <button class="btn ghost" id="pendingSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
-  </div>
-</div>
-
-<div id="declinedScreen" class="hidden">
-  <div class="onb-box" style="text-align:center;">
-    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:26px;">Your request wasn't approved</h1>
-    <p class="onb-sub" id="declineReasonText">The Ambassador didn't approve this request.</p>
-    <button class="btn amber" id="tryAgainBtn" style="width:100%; justify-content:center;">Submit a new request</button>
-    <button class="btn ghost" id="declinedSignOutBtn" style="width:100%; justify-content:center; margin-top:10px;">Sign out</button>
+    <h1 class="onb-title" style="font-size:26px;">Email not found</h1>
+    <p class="onb-sub"><span id="notFoundEmailText"></span> isn't on the programme roster. Check that you signed in with the same Google account your Ambassador registered you with, or reach out to the Ambassador directly.</p>
+    <button class="btn ghost" id="notFoundSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
   </div>
 </div>
 
@@ -329,7 +287,7 @@ const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : M
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
-let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], accessRequests:[], decisions:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], presence:{} };
+let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], presence:{} };
 let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -368,8 +326,6 @@ async function loadDB(){
   DB.notifications= (await sGet('posts:notifications', true)) || [];
   DB.library      = (await sGet('posts:library', true)) || [];
   DB.applications = (await sGet('applications:list', true)) || [];
-  DB.accessRequests = (await sGet('access_requests:list', true)) || [];
-  DB.decisions    = (await sGet('access_decisions:list', true)) || [];
   DB.applicationDecisions = (await sGet('application_decisions:list', true)) || [];
   DB.exams        = (await sGet('posts:exams', true)) || [];
   DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
@@ -382,7 +338,7 @@ const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
   materials:'posts:materials', callsheets:'posts:callsheets', practice:'posts:practice', comments:'posts:comments',
   notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
-  accessRequests:'access_requests:list', decisions:'access_decisions:list', applicationDecisions:'application_decisions:list',
+  applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
@@ -392,7 +348,7 @@ async function saveKey(name){
 
 // ---- Live sync: keep every open dashboard current the moment anyone posts an update ----
 let realtimeChannel = null;
-const LIVE_RERENDER_TABS = new Set(['overview','requests','applications','people','feed','announce','library','notifications',
+const LIVE_RERENDER_TABS = new Set(['overview','applications','people','feed','announce','library','notifications',
   'space','students','calls','materials','practice','messages',
   'welcome','hub','ask']);
 // 'exams' is deliberately excluded: a student's in-progress exam textarea would get
@@ -596,8 +552,15 @@ function initOnboarding(){
 }
 
 async function handleGoogleSignIn(){
+  const btn = document.getElementById('googleSignInBtn');
   const msg = document.getElementById('googleMsg');
   if(!sbReady){ msg.textContent = 'Sign-in isn\'t connected yet — check back shortly.'; return; }
+  // Flip the button state synchronously, before the await below, so there's no
+  // dead gap between the click and visible feedback while the browser sets up
+  // the redirect to Google.
+  btn.disabled = true;
+  btn.style.opacity = '.7';
+  msg.textContent = 'Redirecting to Google…';
   try{
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
@@ -605,11 +568,13 @@ async function handleGoogleSignIn(){
     });
     if(error) throw error;
   }catch(e){
-    msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador, or use the form below.';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador.';
   }
 }
 
-let googleUser = null, chosenRequestRole = null;
+let googleUser = null;
 
 async function resolveGoogleSession(){
   if(!sbReady) return false;
@@ -623,7 +588,6 @@ async function resolveGoogleSession(){
     ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null };
     await sSet('me', ME, false);
     showApp();
-    await maybeShowApprovedToast(email);
     return true;
   }
   const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
@@ -631,7 +595,6 @@ async function resolveGoogleSession(){
     ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null };
     await sSet('me', ME, false);
     showApp();
-    await maybeShowApprovedToast(email);
     return true;
   }
   const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
@@ -639,123 +602,29 @@ async function resolveGoogleSession(){
     ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId };
     await sSet('me', ME, false);
     showApp();
-    await maybeShowApprovedToast(email);
     return true;
   }
 
-  const declineNotice = DB.decisions.find(d=>d.email && d.email.toLowerCase()===email && d.decision==='declined');
-  if(declineNotice){
-    showDeclinedScreen(declineNotice);
-    return true;
-  }
-
-  const pending = DB.accessRequests.find(r=>r.email && r.email.toLowerCase()===email);
-  if(pending){
-    showPendingScreen();
-    return true;
-  }
-
-  showRequestRoleScreen(name);
+  showEmailNotFoundScreen(email);
   notifyEmailNotFound(email, name); // fire-and-forget — doesn't block the screen from showing
   return true;
 }
 
-async function maybeShowApprovedToast(email){
-  const notice = DB.decisions.find(d=>d.email && d.email.toLowerCase()===email && d.decision==='approved');
-  if(!notice) return;
-  DB.decisions = DB.decisions.filter(d=>d.id!==notice.id);
-  await saveKey('decisions');
-  const toast = document.createElement('div');
-  toast.textContent = `✓ You've been approved as a ${notice.role}!` + (notice.reason ? ` — "${notice.reason}"` : '');
-  toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.2); max-width:360px;';
-  document.body.appendChild(toast);
-  setTimeout(()=>toast.remove(), 6000);
-}
-
-function showRequestRoleScreen(name){
+function showEmailNotFoundScreen(email){
   document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('pendingScreen').classList.add('hidden');
-  document.getElementById('declinedScreen').classList.add('hidden');
-  document.getElementById('requestRole').classList.remove('hidden');
-  document.getElementById('reqName').textContent = name;
-  document.getElementById('reqBio').value = '';
-  document.getElementById('reqPhone').value = '';
-  document.getElementById('reqNotifySms').checked = false;
-  chosenRequestRole = null;
-  document.querySelectorAll('[data-reqrole]').forEach(c=>c.classList.remove('active'));
+  document.getElementById('emailNotFound').classList.remove('hidden');
+  document.getElementById('notFoundEmailText').textContent = email;
   paintLogos();
-  // This screen can be shown more than once per session (declined -> "Submit a new
-  // request" -> declined again). Clone-and-replace the interactive elements so we
-  // never stack a second set of listeners on top of the first — without this, a
-  // single click could fire submitAccessRequest() multiple times.
-  document.querySelectorAll('[data-reqrole]').forEach(card=>{
-    const fresh = card.cloneNode(true);
-    card.parentNode.replaceChild(fresh, card);
-    fresh.addEventListener('click', ()=>{
-      document.querySelectorAll('[data-reqrole]').forEach(c=>c.classList.remove('active'));
-      fresh.classList.add('active');
-      chosenRequestRole = fresh.dataset.reqrole;
-    });
-  });
-  const submitBtn = document.getElementById('submitRequestBtn');
-  const freshSubmitBtn = submitBtn.cloneNode(true);
-  submitBtn.parentNode.replaceChild(freshSubmitBtn, submitBtn);
-  freshSubmitBtn.addEventListener('click', submitAccessRequest);
-  const cancelBtn = document.getElementById('cancelRequestBtn');
-  const freshCancelBtn = cancelBtn.cloneNode(true);
-  cancelBtn.parentNode.replaceChild(freshCancelBtn, cancelBtn);
-  freshCancelBtn.addEventListener('click', signOutEverywhere);
-}
-
-async function submitAccessRequest(){
-  const bio = document.getElementById('reqBio').value.trim();
-  const phone = document.getElementById('reqPhone').value.trim();
-  const notifySms = document.getElementById('reqNotifySms').checked;
-  if(!chosenRequestRole){ alert('Please choose whether you\'re requesting Coordinator or Student access.'); return; }
-  if(!bio){ alert('Please add a short bio — your name, school, and anything that helps the Ambassador decide.'); return; }
-  if(notifySms && !phone){ alert('Add a phone number to receive text alerts, or untick that option.'); return; }
-  const email = googleUser.email.toLowerCase();
-  const name = (googleUser.user_metadata && (googleUser.user_metadata.full_name || googleUser.user_metadata.name)) || email;
-  DB.decisions = DB.decisions.filter(d=>!(d.email && d.email.toLowerCase()===email));
-  await saveKey('decisions');
-  DB.accessRequests.push({ id: uid(), name, email, role: chosenRequestRole, bio, phone, notifySms, date: today() });
-  await saveKey('accessRequests');
-  showPendingScreen();
-}
-
-function showPendingScreen(){
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('requestRole').classList.add('hidden');
-  document.getElementById('declinedScreen').classList.add('hidden');
-  document.getElementById('pendingScreen').classList.remove('hidden');
-  paintLogos();
-  document.getElementById('pendingSignOutBtn').addEventListener('click', signOutEverywhere);
-}
-
-function showDeclinedScreen(notice){
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('requestRole').classList.add('hidden');
-  document.getElementById('pendingScreen').classList.add('hidden');
-  document.getElementById('declinedScreen').classList.remove('hidden');
-  document.getElementById('declineReasonText').textContent = notice.reason
-    ? `The Ambassador didn't approve this request: "${notice.reason}"`
-    : 'The Ambassador didn\'t approve this request this time.';
-  paintLogos();
-  document.getElementById('tryAgainBtn').addEventListener('click', async ()=>{
-    DB.decisions = DB.decisions.filter(d=>d.id!==notice.id);
-    await saveKey('decisions');
-    const name = (googleUser.user_metadata && (googleUser.user_metadata.full_name || googleUser.user_metadata.name)) || googleUser.email;
-    showRequestRoleScreen(name);
-  });
-  document.getElementById('declinedSignOutBtn').addEventListener('click', signOutEverywhere);
+  const signOutBtn = document.getElementById('notFoundSignOutBtn');
+  const freshSignOutBtn = signOutBtn.cloneNode(true);
+  signOutBtn.parentNode.replaceChild(freshSignOutBtn, signOutBtn);
+  freshSignOutBtn.addEventListener('click', signOutEverywhere);
 }
 
 async function signOutEverywhere(){
   if(sbReady) await sb.auth.signOut();
   googleUser = null;
-  document.getElementById('requestRole').classList.add('hidden');
-  document.getElementById('pendingScreen').classList.add('hidden');
-  document.getElementById('declinedScreen').classList.add('hidden');
+  document.getElementById('emailNotFound').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
 }
 
@@ -791,7 +660,7 @@ async function switchUser(){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['requests','Access requests'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
   };
@@ -863,7 +732,6 @@ function render(tab){
   else if(tab==='library') html = libraryView();
   else if(tab==='exams') html = examsView();
   else if(tab==='applications') html = applicationsView();
-  else if(tab==='requests') html = requestsView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
@@ -1112,7 +980,6 @@ function ambassadorView(tab){
       <b style="color:var(--teal-deep);">${activeSessions.length} session${activeSessions.length===1?'':'s'} active right now</b> — ${activeSessions.map(c=>escapeHtml(c.title)).join(', ')}
     </div>` : ''}
     ${DB.applications.length ? `<div class="card" style="margin-bottom:14px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${DB.applications.length} new application${DB.applications.length===1?'':'s'}</b> waiting — check the <b>Applications</b> tab.</div>` : ''}
-    ${DB.accessRequests.length ? `<div class="card" style="margin-bottom:14px; border-color:var(--teal-deep); background:rgba(31,138,112,.08);"><b>${DB.accessRequests.length} access request${DB.accessRequests.length===1?'':'s'}</b> pending — check the <b>Access requests</b> tab.</div>` : ''}
     <div class="stat-row">
       <div class="stat"><div class="n">${DB.coordinators.length}</div><div class="l">Coordinators</div></div>
       <div class="stat"><div class="n">${DB.students.length}</div><div class="l">Students</div></div>
@@ -1490,25 +1357,6 @@ function studentView(tab){
   }
 }
 
-function requestsView(){
-  if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review access requests.</div>`;
-  const sorted = [...DB.accessRequests].sort((a,b)=>b.date.localeCompare(a.date));
-  return `
-  <div class="section-title"><div><h2>Access requests</h2><p>People who signed in with Google and asked to join — approve to add them straight to the roster with sign-in already working. Add a reason if you like; it's shown to the applicant.</p></div></div>
-  <div class="list">
-    ${sorted.length ? sorted.map(r=>`
-      <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(r.name)}</span><span class="item-meta">${fmtDate(r.date)}</span></div>
-        <div class="item-body">${escapeHtml(r.email)}${r.phone?(' · '+escapeHtml(r.phone)):''} · requesting <b>${escapeHtml(r.role)}</b> access</div>
-        ${r.bio ? `<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b>Bio:</b> ${linkify(r.bio)}</div>` : ''}
-        <div class="field" style="margin:10px 0 0;"><input data-reason-for="${r.id}" placeholder="Reason (optional) — shown to the applicant"></div>
-        <div class="item-actions">
-          <button class="btn teal small" data-approve-req="${r.id}">Approve as ${escapeHtml(r.role)}</button>
-          <button class="btn ghost small" data-decline-req="${r.id}">Decline</button>
-        </div>
-      </div>`).join('') : `<div class="empty">No pending requests — anyone who signs in with Google and isn't already on the roster shows up here.</div>`}
-  </div>`;
-}
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
   const sorted = [...DB.applications].sort((a,b)=>b.date.localeCompare(a.date));
@@ -2192,43 +2040,6 @@ function wireHandlers(tab){
     await saveKey('applicationDecisions');
     DB.applications = DB.applications.filter(a=>a.id!==app.id);
     await saveKey('applications'); render('applications');
-  }));
-
-  document.querySelectorAll('[data-approve-req]').forEach(b=>b.addEventListener('click', async ()=>{
-    const req = DB.accessRequests.find(r=>r.id===b.dataset.approveReq);
-    if(!req) return;
-    const reasonInp = document.querySelector(`[data-reason-for="${req.id}"]`);
-    const reason = reasonInp ? reasonInp.value.trim() : '';
-    if(req.role === 'coordinator'){
-      if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===req.email.toLowerCase())){
-        alert('A coordinator with this email already exists.');
-      } else {
-        DB.coordinators.push({id:uid(), name:req.name, email:req.email.toLowerCase(), subject:'General Chemistry', region:'', bio:req.bio||'', phone:req.phone||'', notifyEmail:true, notifySms:!!req.notifySms, joined:today()});
-        await saveKey('coordinators'); await syncPublicDirectory();
-      }
-    } else {
-      if(DB.students.some(s=>s.email && s.email.toLowerCase()===req.email.toLowerCase())){
-        alert('A student with this email already exists.');
-      } else {
-        DB.students.push({id:uid(), name:req.name, email:req.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:req.phone||'', notifyEmail:true, notifySms:!!req.notifySms, joined:today()});
-        await saveKey('students'); await syncPublicDirectory();
-      }
-    }
-    DB.decisions.push({ id: uid(), name: req.name, email: req.email, role: req.role, decision:'approved', reason, date: today() });
-    await saveKey('decisions');
-    DB.accessRequests = DB.accessRequests.filter(r=>r.id!==req.id);
-    await saveKey('accessRequests');
-    render('requests');
-  }));
-  document.querySelectorAll('[data-decline-req]').forEach(b=>b.addEventListener('click', async ()=>{
-    const req = DB.accessRequests.find(r=>r.id===b.dataset.declineReq);
-    if(!req) return;
-    const reasonInp = document.querySelector(`[data-reason-for="${req.id}"]`);
-    const reason = reasonInp ? reasonInp.value.trim() : '';
-    DB.decisions.push({ id: uid(), name: req.name, email: req.email, role: req.role, decision:'declined', reason, date: today() });
-    await saveKey('decisions');
-    DB.accessRequests = DB.accessRequests.filter(r=>r.id!==req.id);
-    await saveKey('accessRequests'); render('requests');
   }));
 
   if(tab==='exams'){
