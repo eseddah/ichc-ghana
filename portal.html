@@ -413,6 +413,11 @@ function startRealtimeSync(){
         if(row.key === PRESENCE_PREFIX+'map') return;
 
         const prop = await reloadDbKey(row.key);
+        // A coordinator assignment (or any other roster edit) landing over realtime
+        // should reach the signed-in person's own session immediately, not just the
+        // shared DB arrays — otherwise the dashboard keeps reading the coordinator
+        // (or name, phone, notification prefs) that was true when they first signed in.
+        if(prop==='students' || prop==='coordinators') await refreshMeFromDB();
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
           renderOrDefer(currentTab);
         }
@@ -1116,6 +1121,49 @@ function ambassadorView(tab){
 }
 
 function myStudents(){ return DB.students.filter(s=>s.coordinatorId===ME.id); }
+// ME.coordinatorId is only ever a snapshot taken at the moment a student's session
+// was created (see resolveGoogleSession / boot). If an Ambassador assigns or changes
+// a coordinator afterward, that snapshot goes stale even though DB.students updates
+// live. Every read of "which coordinator is this student's" must go through here so
+// it always reflects the current roster, not whatever was true at login time.
+function myCoordinatorId(){
+  if(!ME || ME.role!=='student') return ME ? ME.coordinatorId : null;
+  const live = DB.students.find(s=>s.id===ME.id);
+  return live ? live.coordinatorId : ME.coordinatorId;
+}
+// Keeps ME's mirrored fields (coordinator assignment, name, phone, notification
+// prefs, group, status) in step with the live roster record, and persists the
+// refreshed session so a future page load doesn't reopen with old data either.
+// Called on boot and whenever the roster tables come in over realtime sync.
+async function refreshMeFromDB(){
+  if(!ME) return;
+  let live = null;
+  if(ME.role==='student') live = DB.students.find(s=>s.id===ME.id);
+  else if(ME.role==='coordinator') live = DB.coordinators.find(c=>c.id===ME.id);
+  if(!live) return;
+  const before = JSON.stringify(ME);
+  if(ME.role==='student'){
+    ME.coordinatorId = live.coordinatorId;
+    ME.name = live.name;
+    ME.phone = live.phone;
+    ME.notifyEmail = live.notifyEmail;
+    ME.notifySms = live.notifySms;
+    ME.group = live.group;
+    ME.status = live.status;
+  } else if(ME.role==='coordinator'){
+    ME.name = live.name;
+    ME.phone = live.phone;
+    ME.notifyEmail = live.notifyEmail;
+    ME.notifySms = live.notifySms;
+  }
+  if(JSON.stringify(ME) !== before){
+    await sSet('me', ME, false);
+    // showApp() only paints the topbar name once, on sign-in — if it changed
+    // (an Ambassador corrected a typo, etc.) the label needs a manual nudge too.
+    const label = document.getElementById('unameLabel');
+    if(label) label.textContent = ME.name + (ME.email ? ' · ' + ME.email : '');
+  }
+}
 function coordinatorView(tab){
   if(tab==='space'){
     const upcoming = DB.callsheets.filter(c=>c.coordinatorId===ME.id && !c.cancelled && (sessionStatus(c)==='Upcoming' || sessionStatus(c)==='Active')).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
@@ -1262,10 +1310,10 @@ function studentView(tab){
   if(tab==='welcome'){
     const myRecord = DB.students.find(s=>s.id===ME.id);
     const upcomingSession = DB.callsheets
-      .filter(c=>c.coordinatorId===ME.coordinatorId && sessionStatus(c)==='Upcoming')
+      .filter(c=>c.coordinatorId===myCoordinatorId() && sessionStatus(c)==='Upcoming')
       .sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
     const activeSession = DB.callsheets
-      .filter(c=>c.coordinatorId===ME.coordinatorId && sessionStatus(c)==='Active')[0];
+      .filter(c=>c.coordinatorId===myCoordinatorId() && sessionStatus(c)==='Active')[0];
     return `
     <div class="hero stud">
       <div class="eyebrow">Your space</div>
@@ -1296,7 +1344,7 @@ function studentView(tab){
       </div>
       <div class="card">
         <div style="font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:10px;">Your programme</div>
-        <div style="margin-bottom:8px;"><b>Coordinator:</b> ${escapeHtml(coordName(ME.coordinatorId))}${ME.coordinatorId ? ` · ${presenceBadge((DB.coordinators.find(c=>c.id===ME.coordinatorId)||{}).email)}` : '<span style="color:var(--muted);"> — not assigned yet</span>'}</div>
+        <div style="margin-bottom:8px;"><b>Coordinator:</b> ${escapeHtml(coordName(myCoordinatorId()))}${myCoordinatorId() ? ` · ${presenceBadge((DB.coordinators.find(c=>c.id===myCoordinatorId())||{}).email)}` : '<span style="color:var(--muted);"> — not assigned yet</span>'}</div>
         ${myRecord && myRecord.group ? `<div style="margin-bottom:8px;"><b>Group:</b> ${escapeHtml(myRecord.group)}</div>` : ''}
         <div><b>Status:</b> <span class="badge stud">${escapeHtml(myStudentStatus())}</span></div>
       </div>
@@ -1310,8 +1358,8 @@ function studentView(tab){
     </div>`;
   }
   if(tab==='hub'){
-    const calls = DB.callsheets.filter(c=>c.coordinatorId===ME.coordinatorId).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
-    const mats = DB.materials.filter(m=>m.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+    const calls = DB.callsheets.filter(c=>c.coordinatorId===myCoordinatorId()).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
+    const mats = DB.materials.filter(m=>m.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
     return `
     <div class="section-title"><div><h2>Call sheets</h2><p>Your coordinator's session schedule — status updates automatically.</p></div></div>
     <div class="list" style="margin-bottom:26px;">
@@ -1336,7 +1384,7 @@ function studentView(tab){
     return announceView(false);
   }
   if(tab==='practice'){
-    const mine = DB.practice.filter(p=>p.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+    const mine = DB.practice.filter(p=>p.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
     const latest = mine[0];
     return `
     <div class="section-title"><div><h2>Practice question</h2><p>Try it before you scroll to the hint.</p></div></div>
@@ -1350,10 +1398,10 @@ function studentView(tab){
       <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(p.question)}</div></div>`).join('')}</div>` : ''}`;
   }
   if(tab==='ask'){
-    const relevant = DB.comments.filter(c=>c.coordinatorId===ME.coordinatorId);
+    const relevant = DB.comments.filter(c=>c.coordinatorId===myCoordinatorId());
     return `
     <div class="section-title"><div><h2>Ask a question</h2><p>Talk to your coordinator and the Ambassador desk — and see what your groupmates are asking too.</p></div></div>
-    ${commentThread(relevant, ME.coordinatorId)}`;
+    ${commentThread(relevant, myCoordinatorId())}`;
   }
 }
 
@@ -1420,7 +1468,7 @@ function channelStatus(){
 function notificationsView(){
   const {emailOn, smsOn} = channelStatus();
   const mine = ME.role==='ambassador' ? DB.notifications
-    : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===ME.coordinatorId || n.coordinatorId===ME.id);
+    : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id);
   const sorted = [...mine].sort((a,b)=>b.ts-a.ts);
   return `
   <div class="section-title"><div><h2>Notifications</h2><p>Every announcement and group message the Ambassador or your coordinator has sent, in one feed.</p></div></div>
@@ -1621,7 +1669,7 @@ function examRunningScreen(exam, attempt){
   </div>`;
 }
 function studentExamsBlock(){
-  const visible = DB.exams.filter(e=> e.coordinatorId===null || e.coordinatorId===ME.coordinatorId).sort((a,b)=>b.date.localeCompare(a.date));
+  const visible = DB.exams.filter(e=> e.coordinatorId===null || e.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
   return `
   <div class="section-title"><div><h2>Exams</h2><p>Timed, real exam-style problems. One attempt each — the timer runs the moment you begin.</p></div></div>
   <div class="list">
@@ -2135,7 +2183,16 @@ function wireHandlers(tab){
     if(savedMe.role==='ambassador' && savedMe.email && isAmbassadorEmail(savedMe.email)) stillValid = true;
     if(savedMe.role==='coordinator' && DB.coordinators.some(c=>c.id===savedMe.id)) stillValid = true;
     if(savedMe.role==='student' && DB.students.some(s=>s.id===savedMe.id)) stillValid = true;
-    if(stillValid){ ME = savedMe; showApp(); return; }
+    if(stillValid){
+      ME = savedMe;
+      // The cached session is only a snapshot from whenever the person last signed
+      // in. Bring it up to date with the live roster (coordinator assignment, name,
+      // etc.) before the dashboard renders, instead of waiting for a realtime event
+      // that may never arrive during this visit.
+      await refreshMeFromDB();
+      showApp();
+      return;
+    }
   }
   await resolveGoogleSession();
 })();
