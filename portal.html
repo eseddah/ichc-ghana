@@ -2756,56 +2756,10 @@ function wireHandlers(tab){
   // policy that should be added in the Supabase dashboard), a request made before
   // the session is attached comes back empty — and DB.coordinators/DB.students
   // being empty breaks the email-matching in resolveGoogleSession() below.
-  let sessionEmail = null, sessionCheckError = '';
-  if(sb) {
-    try{
-      const { data, error } = await sb.auth.getSession();
-      if(error) throw error;
-      sessionEmail = data && data.session && data.session.user ? data.session.user.email : null;
-    }catch(e){ console.error('Session check failed', e); sessionCheckError = (e && e.message) ? e.message : String(e); }
-  }
+  if(sb) { try{ await sb.auth.getSession(); }catch(e){ console.error('Session check failed', e); } }
   await loadDB();
   const savedMe = await sGet('me', false);
   initOnboarding();
-
-  // On-screen diagnostic panel — always shown, regardless of what happens
-  // below. This isn't guesswork about what might be wrong; it's the actual
-  // runtime state (is there a Supabase session, did the roster read error,
-  // how many rows came back) so that can be reported directly instead of
-  // just "it shows 0 students."
-  (function showDebugPanel(){
-    const panel = document.createElement('div');
-    panel.style.cssText = 'position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#0A1826; color:#F6F4EE; font-family:monospace; font-size:11.5px; padding:8px 12px; line-height:1.6; max-height:40vh; overflow:auto;';
-    const lines = [
-      'sbReady (Supabase configured): ' + sbReady,
-      'Signed-in session email: ' + (sessionEmail || '(none — not signed in)'),
-      'Session check error: ' + (sessionCheckError || '(none)'),
-      'roster:students loaded: ' + DB.students.length + ' row(s)',
-      'roster:coordinators loaded: ' + DB.coordinators.length + ' row(s)',
-      'Shared read error occurred: ' + dbLoadError,
-      'Shared read error message: ' + (dbLoadErrorMsg || '(none)'),
-      'Page URL: ' + location.href
-    ];
-    const text = document.createElement('div');
-    text.textContent = 'DEBUG — ' + lines.join(' | ');
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'margin-top:4px;';
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'Copy debug info';
-    copyBtn.style.cssText = 'font-family:monospace; font-size:11px; padding:3px 8px; margin-right:8px; cursor:pointer;';
-    copyBtn.onclick = ()=>{
-      const full = lines.join('\n');
-      if(navigator.clipboard) navigator.clipboard.writeText(full).then(()=>{ copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy debug info', 1500); });
-    };
-    const hideBtn = document.createElement('button');
-    hideBtn.textContent = 'Hide';
-    hideBtn.style.cssText = 'font-family:monospace; font-size:11px; padding:3px 8px; cursor:pointer;';
-    hideBtn.onclick = ()=> panel.remove();
-    btnRow.appendChild(copyBtn); btnRow.appendChild(hideBtn);
-    panel.appendChild(text); panel.appendChild(btnRow);
-    document.body.appendChild(panel);
-  })();
-
   if(!sbReady){
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C0392B; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
