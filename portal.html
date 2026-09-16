@@ -469,21 +469,25 @@ function stopRealtimeSync(){
 let _emailQueue = Promise.resolve();
 function queueEmailSend(payload){
   _emailQueue = _emailQueue.then(()=> new Promise(resolve=>{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 10000);
     fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal
     })
     .then(res=>{ if(!res.ok) console.error('EmailJS send failed', res.status, payload.template_params && payload.template_params.to_email); })
-    .catch(e=>console.error('EmailJS send error', e))
-    .finally(()=> setTimeout(resolve, 1200));
+    .catch(e=>console.error('EmailJS send error', e.name==='AbortError' ? 'timed out after 10s' : e))
+    .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 1200); });
   }));
 }
 let _smsQueue = Promise.resolve();
 function queueSmsSend(url, payload){
   _smsQueue = _smsQueue.then(()=> new Promise(resolve=>{
-    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 10000);
+    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal })
       .then(res=>{ if(!res.ok) console.error('SMS webhook failed', res.status, payload.to); })
-      .catch(e=>console.error('SMS webhook error', e))
-      .finally(()=> setTimeout(resolve, 800));
+      .catch(e=>console.error('SMS webhook error', e.name==='AbortError' ? 'timed out after 10s' : e, payload.to))
+      .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 800); });
   }));
 }
 
@@ -590,8 +594,14 @@ function alertsAdminView(scopeCoordinatorId){
   const pool = scopeCoordinatorId ? DB.students.filter(s=>s.coordinatorId===scopeCoordinatorId) : DB.students;
   const groups = [...new Set(pool.map(s=>s.group).filter(Boolean))].sort();
   const list = (scopeCoordinatorId ? DB.alerts.filter(a=>a.coordinatorId===scopeCoordinatorId) : DB.alerts).slice().sort((a,b)=>b.ts-a.ts);
+  const {emailOn, smsOn} = channelStatus();
   return `
   <div class="section-title"><div><h2>Alerts</h2><p>Priority notices for students — Critical alerts stay pinned at the top of their dashboard until they acknowledge.</p></div></div>
+  <div class="card" style="margin-bottom:18px; display:flex; gap:22px; flex-wrap:wrap;">
+    <div><span class="badge ${emailOn?'coord':'ghost'}" style="${emailOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">Email ${emailOn?'connected':'not connected'}</span></div>
+    <div><span class="badge ${smsOn?'coord':'ghost'}" style="${smsOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">SMS ${smsOn?'connected':'not connected'}</span></div>
+    <div style="font-size:12.5px; color:var(--muted); flex:1; min-width:240px;">Critical and Important alerts also text and email everyone targeted, the moment they're sent (to whoever has opted in and has a phone/email on file). Normal alerts stay in-app only.${!smsOn && !emailOn && ME.role==='ambassador' ? ' Connect these in Settings to enable real delivery.' : ''}</div>
+  </div>
   <div class="card" style="margin-bottom:24px;">
     <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
       <div class="field" style="margin:0;"><label>Title</label><input id="alertTitle" placeholder="e.g. Exam venue changed"></div>
@@ -853,6 +863,34 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
   if(s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body });
+    });
+  }
+}
+
+// Alerts get their own dispatch (rather than reusing notifyBroadcast) because their
+// audience is resolved from the alert's own group/student targeting via
+// resolveAlertAudience(), not the simpler "this coordinator's whole roster" that
+// audienceFor() gives everything else. Normal-priority alerts stay in-app only —
+// only Critical and Important are urgent enough to justify a real text/email.
+async function dispatchAlertNotifications(alert){
+  if(alert.priority==='normal') return;
+  const targets = resolveAlertAudience(alert);
+  const s = DB.settings || {};
+  const prefix = alert.priority==='critical' ? '🔴 CRITICAL ALERT' : '⚠️ IMPORTANT ALERT';
+  const title = `${prefix}: ${alert.title}`;
+  const body = alert.actionUrl ? `${alert.message} ${normalizeUrl(alert.actionUrl)}` : alert.message;
+
+  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
+    targets.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
+      queueEmailSend({
+        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
+        template_params: { to_email:r.email, to_name:r.name, from_name:alert.author, subject:title, message:body }
+      });
+    });
+  }
+  if(s.webhookUrl){
+    targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:body });
     });
   }
 }
@@ -2180,8 +2218,10 @@ function wireHandlers(tab){
       target = {scope:'students', groups:[], studentIds:ids};
     }
     const coordinatorId = ME.role==='coordinator' ? ME.id : null;
-    DB.alerts.push({ id:uid(), title, message, priority, actionLabel, actionUrl, target, coordinatorId, author:ME.name, authorRole:ME.role, date:today(), ts:Date.now(), views:{}, acks:{} });
+    const newAlert = { id:uid(), title, message, priority, actionLabel, actionUrl, target, coordinatorId, author:ME.name, authorRole:ME.role, date:today(), ts:Date.now(), views:{}, acks:{} };
+    DB.alerts.push(newAlert);
     await saveKey('alerts');
+    await dispatchAlertNotifications(newAlert);
     render('alerts');
   });
   document.querySelectorAll('[data-remove-alert]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -2708,6 +2748,12 @@ function wireHandlers(tab){
 }
 
 (async function boot(){
+  // Resolving the Supabase auth session has to happen before the very first data
+  // read. Once the ichc_kv table requires an authenticated request (see the RLS
+  // policy that should be added in the Supabase dashboard), a request made before
+  // the session is attached comes back empty — and DB.coordinators/DB.students
+  // being empty breaks the email-matching in resolveGoogleSession() below.
+  if(sb) { try{ await sb.auth.getSession(); }catch(e){ console.error('Session check failed', e); } }
   await loadDB();
   const savedMe = await sGet('me', false);
   initOnboarding();
