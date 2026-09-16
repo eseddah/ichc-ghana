@@ -77,30 +77,6 @@
   .badge.amb{background:rgba(15,36,56,.08); color:var(--navy-deep);}
   .badge.coord{background:rgba(31,138,112,.12); color:var(--teal-deep);}
   .badge.stud{background:rgba(227,154,59,.16); color:var(--amber-deep);}
-  .badge.alert-crit{background:rgba(179,38,30,.14); color:#B3261E;}
-  .badge.alert-imp{background:rgba(227,154,59,.2); color:var(--amber-deep);}
-  .badge.alert-norm{background:rgba(15,36,56,.08); color:var(--navy-deep);}
-  #alertBanner{display:flex; flex-direction:column; gap:10px; margin:18px auto 0;}
-  #alertBanner:empty{margin:0;}
-  .alert-banner-item{border:1.5px solid #B3261E; background:rgba(211,47,47,.06); border-radius:var(--radius); padding:16px 18px;}
-  .alert-banner-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;}
-  .alert-banner-title{font-weight:700; font-size:15px; color:var(--navy-deep);}
-  .alert-banner-date{font-size:12px; color:var(--muted); margin-left:auto;}
-  .alert-banner-body{font-size:14px; color:#39424D; line-height:1.55; margin-bottom:10px;}
-  .alert-banner-actions{display:flex; gap:8px; flex-wrap:wrap;}
-  .alert-scope-opt{text-transform:none; font-weight:500; color:var(--ink); display:inline-flex; align-items:center; gap:6px;}
-  .alert-chip{border:1px solid var(--line); border-radius:999px; padding:5px 12px; font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; text-transform:none; font-weight:500; color:var(--ink);}
-  .poll-row{margin-bottom:10px;}
-  .poll-row-label{display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;}
-  .poll-bar-track{background:var(--chalk); border-radius:8px; height:10px; overflow:hidden;}
-  .poll-bar-fill{background:var(--teal); height:100%; border-radius:8px; transition:width .3s ease;}
-  .poll-bar-fill.mine{background:var(--amber);}
-  .quiz-opt{display:flex; align-items:center; gap:10px; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:8px; cursor:pointer; font-size:14px;}
-  .quiz-opt:hover{border-color:var(--amber);}
-  .quiz-opt.correct{border-color:var(--teal-deep); background:rgba(31,138,112,.08);}
-  .quiz-opt.wrong{border-color:#B3261E; background:rgba(211,47,47,.06);}
-  .lounge-post{border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; margin-bottom:14px; background:var(--paper);}
-  .lounge-reply{border-left:2.5px solid var(--line); margin:10px 0 0 10px; padding:8px 0 8px 14px;}
   .empty{
     border:1.5px dashed var(--line); border-radius:var(--radius); padding:30px; text-align:center; color:var(--muted);
   }
@@ -256,7 +232,6 @@
     </div>
     <div class="tabs" id="tabs"></div>
   </div>
-  <div class="wrap" id="alertBanner"></div>
   <main><div class="wrap" id="screen"></div></main>
   <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench.</footer>
 </div>
@@ -269,7 +244,6 @@ const SUPABASE_CONFIG = {
 };
 let sb = null;
 let sbReady = false;
-let dbLoadError = false; // set true if a shared (Supabase) read fails — lets boot() tell "blocked/broken" apart from "genuinely empty"
 try{
   if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
     sb = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
@@ -286,7 +260,7 @@ async function sGet(key, shared){
     const { data, error } = await sb.from('ichc_kv').select('value').eq('key', key).maybeSingle();
     if(error) throw error;
     return data ? data.value : null;
-  }catch(e){ console.error('Supabase get failed', e); dbLoadError = true; return null; }
+  }catch(e){ console.error('Supabase get failed', e); return null; }
 }
 async function sSet(key, val, shared){
   if(!shared){
@@ -313,7 +287,7 @@ const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : M
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
-let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], alerts:[], loungePosts:[], polls:[], quizzes:[], presence:{} };
+let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], presence:{} };
 let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -342,7 +316,6 @@ async function loadAllPresence(){
   }catch(e){ console.error('Supabase presence load failed', e); return {}; }
 }
 async function loadDB(){
-  dbLoadError = false;
   DB.coordinators = (await sGet('roster:coordinators', true)) || [];
   DB.students     = (await sGet('roster:students', true)) || [];
   DB.announcements= (await sGet('posts:announcements', true)) || [];
@@ -358,10 +331,6 @@ async function loadDB(){
   DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
   DB.attendance   = (await sGet('posts:attendance', true)) || [];
   DB.progressNotes = (await sGet('posts:progressNotes', true)) || [];
-  DB.loungePosts  = (await sGet('posts:lounge', true)) || [];
-  DB.polls        = (await sGet('posts:polls', true)) || [];
-  DB.quizzes      = (await sGet('posts:quizzes', true)) || [];
-  DB.alerts       = (await sGet('posts:alerts', true)) || [];
   DB.presence     = await loadAllPresence();
   DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z' };
 }
@@ -370,8 +339,7 @@ const KEY_MAP = {
   materials:'posts:materials', callsheets:'posts:callsheets', practice:'posts:practice', comments:'posts:comments',
   notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
   applicationDecisions:'application_decisions:list',
-  exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
-  alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes'
+  exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -382,7 +350,7 @@ async function saveKey(name){
 let realtimeChannel = null;
 const LIVE_RERENDER_TABS = new Set(['overview','applications','people','feed','announce','library','notifications',
   'space','students','calls','materials','practice','messages',
-  'welcome','hub','ask','alerts','lounge','polls','quizzes']);
+  'welcome','hub','ask']);
 // 'exams' is deliberately excluded: a student's in-progress exam textarea would get
 // wiped mid-typing by any unrelated background update elsewhere in the app. Exam data
 // is still fresh every time someone opens or switches into the tab.
@@ -450,10 +418,6 @@ function startRealtimeSync(){
         // shared DB arrays — otherwise the dashboard keeps reading the coordinator
         // (or name, phone, notification prefs) that was true when they first signed in.
         if(prop==='students' || prop==='coordinators') await refreshMeFromDB();
-        // The critical-alert banner sits outside the tab content and must react to a
-        // new or acknowledged alert immediately, no matter which tab is open — it
-        // can't wait on the LIVE_RERENDER_TABS gate below, which only covers #screen.
-        if(prop==='alerts') renderAlertBanner();
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
           renderOrDefer(currentTab);
         }
@@ -471,374 +435,22 @@ function stopRealtimeSync(){
 let _emailQueue = Promise.resolve();
 function queueEmailSend(payload){
   _emailQueue = _emailQueue.then(()=> new Promise(resolve=>{
-    const controller = new AbortController();
-    const timeout = setTimeout(()=>controller.abort(), 10000);
     fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
     })
     .then(res=>{ if(!res.ok) console.error('EmailJS send failed', res.status, payload.template_params && payload.template_params.to_email); })
-    .catch(e=>console.error('EmailJS send error', e.name==='AbortError' ? 'timed out after 10s' : e))
-    .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 1200); });
+    .catch(e=>console.error('EmailJS send error', e))
+    .finally(()=> setTimeout(resolve, 1200));
   }));
 }
 let _smsQueue = Promise.resolve();
 function queueSmsSend(url, payload){
   _smsQueue = _smsQueue.then(()=> new Promise(resolve=>{
-    const controller = new AbortController();
-    const timeout = setTimeout(()=>controller.abort(), 10000);
-    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal })
+    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
       .then(res=>{ if(!res.ok) console.error('SMS webhook failed', res.status, payload.to); })
-      .catch(e=>console.error('SMS webhook error', e.name==='AbortError' ? 'timed out after 10s' : e, payload.to))
-      .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 800); });
+      .catch(e=>console.error('SMS webhook error', e))
+      .finally(()=> setTimeout(resolve, 800));
   }));
-}
-
-// ---- Student Alerts: priority notices with per-student view/acknowledge tracking ----
-function normalizeUrl(u){ if(!u) return ''; return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
-function fmtDateTime(ts){
-  try{ return new Date(ts).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; }
-}
-function alertPriorityBadge(p){
-  const map = { critical:['Critical','alert-crit'], important:['Important','alert-imp'], normal:['Normal','alert-norm'] };
-  const [label,cls] = map[p] || map.normal;
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-// An alert's audience is resolved live from the current roster every time it's needed
-// (rather than snapshotted at send time) so a student added to a targeted group later
-// still sees the alert, and one removed from it stops seeing it.
-function resolveAlertAudience(alert){
-  const pool = alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice();
-  const t = alert.target || {scope:'all', groups:[], studentIds:[]};
-  if(t.scope==='groups') return pool.filter(s=>s.group && t.groups.includes(s.group));
-  if(t.scope==='students') return pool.filter(s=>t.studentIds.includes(s.id));
-  return pool;
-}
-function isAlertForMe(alert){
-  if(!ME || ME.role!=='student') return false;
-  return resolveAlertAudience(alert).some(s=>s.id===ME.id);
-}
-function myAlerts(){ return (DB.alerts||[]).filter(isAlertForMe); }
-function myCriticalUnacked(){
-  return myAlerts().filter(a=>a.priority==='critical' && !(a.acks && a.acks[ME.id]));
-}
-function alertStats(alert){
-  const targets = resolveAlertAudience(alert);
-  let acknowledged=0, viewed=0;
-  targets.forEach(s=>{
-    if(alert.acks && alert.acks[s.id]) acknowledged++;
-    else if(alert.views && alert.views[s.id]) viewed++;
-  });
-  const total = targets.length;
-  return { total, acknowledged, viewed, notYet: total - acknowledged - viewed };
-}
-async function markAlertViewed(alertId){
-  if(!ME || ME.role!=='student') return;
-  const a = (DB.alerts||[]).find(x=>x.id===alertId);
-  if(!a) return;
-  a.views = a.views || {};
-  if(a.views[ME.id]) return;
-  a.views[ME.id] = Date.now();
-  await saveKey('alerts');
-}
-async function acknowledgeAlert(alertId){
-  if(!ME || ME.role!=='student') return;
-  const a = (DB.alerts||[]).find(x=>x.id===alertId);
-  if(!a) return;
-  a.views = a.views || {}; a.acks = a.acks || {};
-  if(!a.views[ME.id]) a.views[ME.id] = Date.now();
-  a.acks[ME.id] = Date.now();
-  await saveKey('alerts');
-}
-// Renders into #alertBanner, which lives outside #screen so a critical alert stays
-// pinned at the top of every tab, not just whichever one happened to be open when it
-// arrived. Being shown here counts as "viewed" — the student doesn't have to click in.
-function renderAlertBanner(){
-  const el = document.getElementById('alertBanner');
-  if(!el) return;
-  if(!ME || ME.role!=='student'){ el.innerHTML=''; return; }
-  const active = myCriticalUnacked().sort((a,b)=>b.ts-a.ts);
-  if(!active.length){ el.innerHTML=''; return; }
-  active.forEach(a=>markAlertViewed(a.id));
-  el.innerHTML = active.map(a=>`
-    <div class="alert-banner-item">
-      <div class="alert-banner-top">
-        ${alertPriorityBadge(a.priority)}
-        <span class="alert-banner-title">${escapeHtml(a.title)}</span>
-        <span class="alert-banner-date">${fmtDateTime(a.ts)}</span>
-      </div>
-      <div class="alert-banner-body">${linkify(a.message)}</div>
-      <div class="alert-banner-actions">
-        ${a.actionUrl ? `<a class="btn amber small" href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener">${escapeHtml(a.actionLabel||'Open link')}</a>` : ''}
-        <button class="btn small" style="background:#fff; border-color:#B3261E; color:#B3261E;" data-ack-alert="${a.id}">Acknowledge</button>
-      </div>
-    </div>`).join('');
-}
-function alertsSectionForStudentHtml(){
-  const mine = myAlerts().sort((a,b)=>b.ts-a.ts);
-  if(!mine.length) return '';
-  mine.forEach(a=>markAlertViewed(a.id));
-  return `
-  <div class="section-title"><div><h2>Alerts</h2><p>Priority notices from the Ambassador desk and your coordinator.</p></div></div>
-  <div class="list" style="margin-bottom:26px;">
-    ${mine.map(a=>{
-      const acked = a.acks && a.acks[ME.id];
-      return `
-      <div class="item"${a.priority==='critical' && !acked ? ' style="border-color:#B3261E;"' : ''}>
-        <div class="item-head"><span class="item-title">${alertPriorityBadge(a.priority)} ${escapeHtml(a.title)}</span><span class="item-meta">${fmtDateTime(a.ts)}</span></div>
-        <div class="item-body">${linkify(a.message)}</div>
-        ${a.actionUrl ? `<div class="item-body" style="margin-top:4px;"><a href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline;">${escapeHtml(a.actionLabel||'Open link')}</a></div>` : ''}
-        ${a.priority==='critical' ? `<div class="item-actions">${acked ? `<span class="badge coord">Acknowledged</span>` : `<button class="btn small" style="background:#fff;border-color:#B3261E;color:#B3261E;" data-ack-alert="${a.id}">Acknowledge</button>`}</div>` : ''}
-      </div>`;
-    }).join('')}
-  </div>`;
-}
-function alertsAdminView(scopeCoordinatorId){
-  const pool = scopeCoordinatorId ? DB.students.filter(s=>s.coordinatorId===scopeCoordinatorId) : DB.students;
-  const groups = [...new Set(pool.map(s=>s.group).filter(Boolean))].sort();
-  const list = (scopeCoordinatorId ? DB.alerts.filter(a=>a.coordinatorId===scopeCoordinatorId) : DB.alerts).slice().sort((a,b)=>b.ts-a.ts);
-  const {emailOn, smsOn} = channelStatus();
-  return `
-  <div class="section-title"><div><h2>Alerts</h2><p>Priority notices for students — Critical alerts stay pinned at the top of their dashboard until they acknowledge.</p></div></div>
-  <div class="card" style="margin-bottom:18px; display:flex; gap:22px; flex-wrap:wrap;">
-    <div><span class="badge ${emailOn?'coord':'ghost'}" style="${emailOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">Email ${emailOn?'connected':'not connected'}</span></div>
-    <div><span class="badge ${smsOn?'coord':'ghost'}" style="${smsOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">SMS ${smsOn?'connected':'not connected'}</span></div>
-    <div style="font-size:12.5px; color:var(--muted); flex:1; min-width:240px;">Critical and Important alerts also text and email everyone targeted, the moment they're sent (to whoever has opted in and has a phone/email on file). Normal alerts stay in-app only.${!smsOn && !emailOn && ME.role==='ambassador' ? ' Connect these in Settings to enable real delivery.' : ''}</div>
-  </div>
-  <div class="card" style="margin-bottom:24px;">
-    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="field" style="margin:0;"><label>Title</label><input id="alertTitle" placeholder="e.g. Exam venue changed"></div>
-      <div class="field" style="margin:0;"><label>Priority</label>
-        <select id="alertPriority">
-          <option value="normal">Normal</option>
-          <option value="important">Important</option>
-          <option value="critical">Critical</option>
-        </select>
-      </div>
-    </div>
-    <div class="field"><label>Message</label><textarea id="alertMessage" rows="3" placeholder="What students need to know"></textarea></div>
-    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="field" style="margin:0;"><label>Action button label (optional)</label><input id="alertActionLabel" placeholder="e.g. View schedule"></div>
-      <div class="field" style="margin:0;"><label>Action link (optional)</label><input id="alertActionUrl" placeholder="https://…"></div>
-    </div>
-    <div class="field">
-      <label>Send to</label>
-      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px;">
-        <label class="alert-scope-opt"><input type="radio" name="alertScope" value="all" checked style="width:auto;"> All ${scopeCoordinatorId?'my':''} students</label>
-        <label class="alert-scope-opt"><input type="radio" name="alertScope" value="groups" style="width:auto;"> Selected groups</label>
-        <label class="alert-scope-opt"><input type="radio" name="alertScope" value="students" style="width:auto;"> Selected students</label>
-      </div>
-      <div id="alertGroupsPicker" class="hidden" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-        ${groups.length ? groups.map(g=>`<label class="alert-chip"><input type="checkbox" value="${escapeHtml(g)}" class="alertGroupChk" style="width:auto;">Group ${escapeHtml(g)}</label>`).join('') : `<span style="font-size:12.5px; color:var(--muted);">No groups set up yet.</span>`}
-      </div>
-      <div id="alertStudentsPicker" class="hidden" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; border:1px solid var(--line); border-radius:10px; padding:10px;">
-        ${pool.length ? pool.map(s=>`<label class="alert-scope-opt" style="font-size:13.5px;"><input type="checkbox" value="${s.id}" class="alertStudentChk" style="width:auto;">${escapeHtml(s.name)}${s.group?` <span style="color:var(--muted);">(Group ${escapeHtml(s.group)})</span>`:''}</label>`).join('') : `<span style="font-size:12.5px; color:var(--muted);">No students in scope yet.</span>`}
-      </div>
-    </div>
-    <button class="btn amber small" id="addAlertBtn">Send alert</button>
-  </div>
-  <div class="list">
-    ${list.length ? list.map(a=>{
-      const stats = alertStats(a);
-      const t = a.target || {scope:'all', groups:[], studentIds:[]};
-      const targetLabel = t.scope==='groups' ? `Group${t.groups.length>1?'s':''}: ${t.groups.map(g=>escapeHtml(g)).join(', ')}`
-        : t.scope==='students' ? `${t.studentIds.length} selected student${t.studentIds.length===1?'':'s'}`
-        : (scopeCoordinatorId ? 'All my students' : 'All students');
-      return `
-      <div class="item">
-        <div class="item-head"><span class="item-title">${alertPriorityBadge(a.priority)} ${escapeHtml(a.title)}</span><span class="item-meta">${fmtDateTime(a.ts)}</span></div>
-        <div class="item-body">${linkify(a.message)}</div>
-        ${a.actionUrl ? `<div class="item-body" style="margin-top:4px;"><a href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline;">${escapeHtml(a.actionLabel||'Open link')}</a></div>` : ''}
-        <div class="item-body" style="margin-top:8px; font-size:12.5px; color:var(--muted);">Sent to: ${targetLabel}${(!scopeCoordinatorId && a.coordinatorId) ? ' · posted by '+escapeHtml(coordName(a.coordinatorId)) : ''}</div>
-        <div class="item-body" style="margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; font-size:13px;">
-          <span><b>${stats.total}</b> targeted</span>
-          <span style="color:var(--teal-deep);"><b>${stats.acknowledged}</b> acknowledged</span>
-          <span style="color:var(--amber-deep);"><b>${stats.viewed}</b> viewed only</span>
-          <span style="color:#B3261E;"><b>${stats.notYet}</b> not yet viewed</span>
-        </div>
-        <div class="item-actions">
-          <button class="btn ghost small" data-remove-alert="${a.id}">Remove</button>
-        </div>
-      </div>`;
-    }).join('') : `<div class="empty">No alerts sent yet.</div>`}
-  </div>`;
-}
-// ---- Coordinator Lounge: shared space for coordinators + the Ambassador desk only ----
-function loungeView(){
-  if(ME.role==='student') return `<div class="empty">Not available.</div>`;
-  const posts = [...(DB.loungePosts||[])].sort((a,b)=>b.ts-a.ts);
-  return `
-  <div class="section-title"><div><h2>Coordinator Lounge</h2><p>A shared space for coordinators and the Ambassador desk to swap tips, ask each other things, and coordinate — students never see this.</p></div></div>
-  <div class="card" style="margin-bottom:20px;">
-    <div class="field" style="margin:0 0 10px;"><label>Post something</label><textarea id="loungeBody" rows="3" placeholder="Share a tip, ask the group a question…"></textarea></div>
-    <button class="btn teal small" id="addLoungePostBtn">Post</button>
-  </div>
-  <div>
-    ${posts.length ? posts.map(loungePostHtml).join('') : `<div class="empty">Nothing posted yet — be the first to say hello.</div>`}
-  </div>`;
-}
-function loungePostHtml(p){
-  const canDeletePost = ME.role==='ambassador' || p.authorId===ME.id;
-  const replies = (p.replies||[]).slice().sort((a,b)=>a.ts-b.ts);
-  return `
-  <div class="lounge-post">
-    <div class="item-head"><span class="item-title">${escapeHtml(p.author)} <span class="badge ${p.role==='ambassador'?'amb':'coord'}" style="margin-left:6px;">${p.role}</span></span><span class="item-meta">${fmtDateTime(p.ts)}</span></div>
-    <div class="item-body">${linkify(p.body)}</div>
-    ${canDeletePost ? `<div class="item-actions"><button class="btn ghost small" data-remove-lounge-post="${p.id}">Remove</button></div>` : ''}
-    ${replies.map(r=>`
-      <div class="lounge-reply">
-        <div class="item-head"><span class="item-title" style="font-size:13.5px;">${escapeHtml(r.author)} <span class="badge ${r.role==='ambassador'?'amb':'coord'}" style="margin-left:6px;">${r.role}</span></span><span class="item-meta">${fmtDateTime(r.ts)}</span></div>
-        <div class="item-body" style="font-size:13.5px;">${linkify(r.body)}</div>
-        ${(ME.role==='ambassador' || r.authorId===ME.id) ? `<button class="btn ghost small" data-remove-lounge-reply="${p.id}:${r.id}" style="margin-top:4px;">Remove</button>` : ''}
-      </div>`).join('')}
-    <div style="margin-top:10px; display:flex; gap:8px;">
-      <input data-lounge-reply-input="${p.id}" placeholder="Reply…" style="flex:1;">
-      <button class="btn ghost small" data-lounge-reply-btn="${p.id}">Reply</button>
-    </div>
-  </div>`;
-}
-
-// ---- Polls: coordinator posts a question, their students vote, results are live ----
-function pollResults(poll){
-  const counts = poll.options.map(()=>0);
-  let total = 0;
-  Object.values(poll.votes||{}).forEach(idx=>{ if(counts[idx]!==undefined){ counts[idx]++; total++; } });
-  return {counts, total};
-}
-function pollsView(){
-  if(ME.role==='coordinator') return pollsCoordinatorView();
-  if(ME.role==='student') return pollsStudentView();
-  return `<div class="empty">Not available.</div>`;
-}
-function pollsCoordinatorView(){
-  const mine = DB.polls.filter(p=>p.coordinatorId===ME.id).sort((a,b)=>b.ts-a.ts);
-  return `
-  <div class="section-title"><div><h2>Polls</h2><p>Quick multiple-choice questions for your group — see live results as votes come in.</p></div></div>
-  <div class="card" style="margin-bottom:20px;">
-    <div class="field" style="margin:0 0 10px;"><label>Question</label><input id="pollQuestion" placeholder="e.g. Which day works best for the next mock exam?"></div>
-    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="field" style="margin:0;"><label>Option 1</label><input id="pollOpt1" placeholder="Option"></div>
-      <div class="field" style="margin:0;"><label>Option 2</label><input id="pollOpt2" placeholder="Option"></div>
-      <div class="field" style="margin:0;"><label>Option 3 (optional)</label><input id="pollOpt3" placeholder="Option"></div>
-      <div class="field" style="margin:0;"><label>Option 4 (optional)</label><input id="pollOpt4" placeholder="Option"></div>
-    </div>
-    <button class="btn teal small" id="addPollBtn">Post poll</button>
-  </div>
-  <div class="list">
-    ${mine.length ? mine.map(p=>{
-      const {counts, total} = pollResults(p);
-      return `
-      <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(p.question)}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
-        ${p.options.map((o,i)=>`
-          <div class="poll-row">
-            <div class="poll-row-label"><span>${escapeHtml(o)}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
-            <div class="poll-bar-track"><div class="poll-bar-fill" style="width:${total?Math.round(counts[i]/total*100):0}%;"></div></div>
-          </div>`).join('')}
-        <div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:4px;">${total} total vote${total===1?'':'s'}</div>
-        <div class="item-actions">
-          <button class="btn ghost small" data-toggle-poll="${p.id}">${p.closed?'Reopen':'Close'} poll</button>
-          <button class="btn ghost small" data-remove-poll="${p.id}">Remove</button>
-        </div>
-      </div>`;
-    }).join('') : `<div class="empty">No polls posted yet.</div>`}
-  </div>`;
-}
-function pollsStudentView(){
-  const mine = DB.polls.filter(p=>p.coordinatorId===myCoordinatorId()).sort((a,b)=>b.ts-a.ts);
-  return `
-  <div class="section-title"><div><h2>Polls</h2><p>Have your say — results appear once you vote.</p></div></div>
-  <div class="list">
-    ${mine.length ? mine.map(p=>{
-      const myVote = p.votes ? p.votes[ME.id] : undefined;
-      const hasVoted = myVote!==undefined && myVote!==null;
-      const showResults = hasVoted || p.closed;
-      const {counts, total} = pollResults(p);
-      return `
-      <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(p.question)}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
-        ${showResults ? p.options.map((o,i)=>`
-          <div class="poll-row">
-            <div class="poll-row-label"><span>${escapeHtml(o)}${hasVoted && myVote===i?' <b>(your vote)</b>':''}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
-            <div class="poll-bar-track"><div class="poll-bar-fill${hasVoted && myVote===i?' mine':''}" style="width:${total?Math.round(counts[i]/total*100):0}%;"></div></div>
-          </div>`).join('') : `
-          <div>${p.options.map((o,i)=>`<label class="quiz-opt"><input type="radio" name="pollvote-${p.id}" value="${i}" style="width:auto;">${escapeHtml(o)}</label>`).join('')}</div>
-          <button class="btn amber small" data-vote-poll="${p.id}" style="margin-top:6px;">Submit vote</button>`}
-      </div>`;
-    }).join('') : `<div class="empty">No polls yet — your coordinator hasn't posted one.</div>`}
-  </div>`;
-}
-
-// ---- Quizzes: single-question, auto-graded multiple choice — lighter than a timed Exam ----
-function quizStats(quiz){
-  const attempts = Object.values(quiz.attempts||{});
-  const total = attempts.length;
-  const correct = attempts.filter(a=>a.correct).length;
-  return {total, correct};
-}
-function quizzesView(){
-  if(ME.role==='coordinator') return quizzesCoordinatorView();
-  if(ME.role==='student') return quizzesStudentView();
-  return `<div class="empty">Not available.</div>`;
-}
-function quizzesCoordinatorView(){
-  const mine = DB.quizzes.filter(q=>q.coordinatorId===ME.id).sort((a,b)=>b.ts-a.ts);
-  return `
-  <div class="section-title"><div><h2>Quizzes</h2><p>Quick auto-graded multiple-choice checks — lighter than a full timed Exam.</p></div></div>
-  <div class="card" style="margin-bottom:20px;">
-    <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="quizQuestion" rows="2" placeholder="Write the question here"></textarea></div>
-    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="field" style="margin:0;"><label>Option A</label><input id="quizOptA" placeholder="Option A"></div>
-      <div class="field" style="margin:0;"><label>Option B</label><input id="quizOptB" placeholder="Option B"></div>
-      <div class="field" style="margin:0;"><label>Option C (optional)</label><input id="quizOptC" placeholder="Option C"></div>
-      <div class="field" style="margin:0;"><label>Option D (optional)</label><input id="quizOptD" placeholder="Option D"></div>
-    </div>
-    <div class="field" style="max-width:200px;"><label>Correct option</label>
-      <select id="quizCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
-    </div>
-    <button class="btn teal small" id="addQuizBtn">Post quiz question</button>
-  </div>
-  <div class="list">
-    ${mine.length ? mine.map(qz=>{
-      const {total, correct} = quizStats(qz);
-      return `
-      <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(qz.question)}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
-        <div class="item-body">
-          ${qz.options.map((o,i)=>`<div style="padding:4px 0;">${i===qz.correctIndex?'✅':'—'} ${escapeHtml(o)}</div>`).join('')}
-        </div>
-        <div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:4px;">${total} attempt${total===1?'':'s'} · ${total?Math.round(correct/total*100):0}% correct</div>
-        <div class="item-actions"><button class="btn ghost small" data-remove-quiz="${qz.id}">Remove</button></div>
-      </div>`;
-    }).join('') : `<div class="empty">No quiz questions posted yet.</div>`}
-  </div>`;
-}
-function quizzesStudentView(){
-  const mine = DB.quizzes.filter(q=>q.coordinatorId===myCoordinatorId()).sort((a,b)=>b.ts-a.ts);
-  return `
-  <div class="section-title"><div><h2>Quizzes</h2><p>Answer for instant feedback — you can try again any time.</p></div></div>
-  <div class="list">
-    ${mine.length ? mine.map(qz=>{
-      const mineAttempt = qz.attempts && qz.attempts[ME.id];
-      return `
-      <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(qz.question)}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
-        <div>
-          ${qz.options.map((o,i)=>{
-            let cls = 'quiz-opt';
-            if(mineAttempt){
-              if(i===qz.correctIndex) cls += ' correct';
-              else if(i===mineAttempt.selectedIndex) cls += ' wrong';
-            }
-            return `<label class="${cls}"><input type="radio" name="quiz-${qz.id}" value="${i}" style="width:auto;" ${mineAttempt && mineAttempt.selectedIndex===i?'checked':''} ${mineAttempt?'disabled':''}>${escapeHtml(o)}</label>`;
-          }).join('')}
-        </div>
-        ${mineAttempt
-          ? `<div class="item-body" style="margin-top:6px;">${mineAttempt.correct?`<span style="color:var(--teal-deep); font-weight:600;">Correct!</span>`:`<span style="color:#B3261E; font-weight:600;">Not quite — correct answer highlighted above.</span>`}</div>
-             <div class="item-actions"><button class="btn ghost small" data-retake-quiz="${qz.id}">Try again</button></div>`
-          : `<div class="item-actions"><button class="btn amber small" data-submit-quiz="${qz.id}">Submit answer</button></div>`}
-      </div>`;
-    }).join('') : `<div class="empty">No quiz questions yet — your coordinator hasn't posted one.</div>`}
-  </div>`;
 }
 
 function audienceFor(coordinatorId){
@@ -865,34 +477,6 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
   if(s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body });
-    });
-  }
-}
-
-// Alerts get their own dispatch (rather than reusing notifyBroadcast) because their
-// audience is resolved from the alert's own group/student targeting via
-// resolveAlertAudience(), not the simpler "this coordinator's whole roster" that
-// audienceFor() gives everything else. Normal-priority alerts stay in-app only —
-// only Critical and Important are urgent enough to justify a real text/email.
-async function dispatchAlertNotifications(alert){
-  if(alert.priority==='normal') return;
-  const targets = resolveAlertAudience(alert);
-  const s = DB.settings || {};
-  const prefix = alert.priority==='critical' ? '🔴 CRITICAL ALERT' : '⚠️ IMPORTANT ALERT';
-  const title = `${prefix}: ${alert.title}`;
-  const body = alert.actionUrl ? `${alert.message} ${normalizeUrl(alert.actionUrl)}` : alert.message;
-
-  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
-    targets.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
-      queueEmailSend({
-        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-        template_params: { to_email:r.email, to_name:r.name, from_name:alert.author, subject:title, message:body }
-      });
-    });
-  }
-  if(s.webhookUrl){
-    targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
-      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:body });
     });
   }
 }
@@ -1081,9 +665,9 @@ async function switchUser(){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['exams','Exams'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -1153,17 +737,12 @@ function render(tab){
   else if(tab==='library') html = libraryView();
   else if(tab==='exams') html = examsView();
   else if(tab==='applications') html = applicationsView();
-  else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
-  else if(tab==='lounge') html = loungeView();
-  else if(tab==='polls') html = pollsView();
-  else if(tab==='quizzes') html = quizzesView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
   s.innerHTML = html;
   restoreFormState(s, formState);
   paintLogos();
-  renderAlertBanner();
   wireHandlers(tab);
 }
 
@@ -1892,7 +1471,6 @@ function notificationsView(){
     : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id);
   const sorted = [...mine].sort((a,b)=>b.ts-a.ts);
   return `
-  ${ME.role==='student' ? alertsSectionForStudentHtml() : ''}
   <div class="section-title"><div><h2>Notifications</h2><p>Every announcement and group message the Ambassador or your coordinator has sent, in one feed.</p></div></div>
   <div class="card" style="margin-bottom:20px; display:flex; gap:22px; flex-wrap:wrap;">
     <div><span class="badge ${emailOn?'coord':'ghost'}" style="${emailOn?'':'background:rgba(0,0,0,.05); color:var(--muted);'}">Email ${emailOn?'connected':'not connected'}</span></div>
@@ -2184,166 +1762,6 @@ function examsView(){
 
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
-
-  // Shared by the pinned banner and the student's Notifications tab — both render
-  // a data-ack-alert button for the same underlying alert.
-  document.querySelectorAll('[data-ack-alert]').forEach(b=>b.addEventListener('click', async ()=>{
-    await acknowledgeAlert(b.dataset.ackAlert);
-    renderAlertBanner();
-    if(currentTab==='notifications') render('notifications');
-  }));
-
-  document.querySelectorAll('input[name="alertScope"]').forEach(r=>r.addEventListener('change', ()=>{
-    const checked = document.querySelector('input[name="alertScope"]:checked');
-    const v = checked ? checked.value : 'all';
-    const gp = q('alertGroupsPicker'), sp = q('alertStudentsPicker');
-    if(gp) gp.classList.toggle('hidden', v!=='groups');
-    if(sp) sp.classList.toggle('hidden', v!=='students');
-  }));
-  if(q('addAlertBtn')) q('addAlertBtn').addEventListener('click', async ()=>{
-    const title = q('alertTitle').value.trim();
-    const message = q('alertMessage').value.trim();
-    if(!title || !message) return alert('Please fill in both the title and the message.');
-    const priority = q('alertPriority').value;
-    const actionLabel = q('alertActionLabel').value.trim();
-    const actionUrl = q('alertActionUrl').value.trim();
-    const scopeChecked = document.querySelector('input[name="alertScope"]:checked');
-    const scope = scopeChecked ? scopeChecked.value : 'all';
-    let target = {scope:'all', groups:[], studentIds:[]};
-    if(scope==='groups'){
-      const groups = Array.from(document.querySelectorAll('.alertGroupChk:checked')).map(c=>c.value);
-      if(!groups.length) return alert('Select at least one group.');
-      target = {scope:'groups', groups, studentIds:[]};
-    } else if(scope==='students'){
-      const ids = Array.from(document.querySelectorAll('.alertStudentChk:checked')).map(c=>c.value);
-      if(!ids.length) return alert('Select at least one student.');
-      target = {scope:'students', groups:[], studentIds:ids};
-    }
-    const coordinatorId = ME.role==='coordinator' ? ME.id : null;
-    const newAlert = { id:uid(), title, message, priority, actionLabel, actionUrl, target, coordinatorId, author:ME.name, authorRole:ME.role, date:today(), ts:Date.now(), views:{}, acks:{} };
-    DB.alerts.push(newAlert);
-    await saveKey('alerts');
-    await dispatchAlertNotifications(newAlert);
-    render('alerts');
-  });
-  document.querySelectorAll('[data-remove-alert]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this alert? Students will no longer see it.')) return;
-    DB.alerts = DB.alerts.filter(a=>a.id!==b.dataset.removeAlert);
-    await saveKey('alerts');
-    render('alerts');
-  }));
-
-  // ---- Coordinator Lounge ----
-  if(q('addLoungePostBtn')) q('addLoungePostBtn').addEventListener('click', async ()=>{
-    const body = q('loungeBody').value.trim();
-    if(!body) return;
-    DB.loungePosts.push({id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now(), replies:[]});
-    await saveKey('loungePosts');
-    render('lounge');
-  });
-  document.querySelectorAll('[data-remove-lounge-post]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this post?')) return;
-    DB.loungePosts = DB.loungePosts.filter(p=>p.id!==b.dataset.removeLoungePost);
-    await saveKey('loungePosts');
-    render('lounge');
-  }));
-  document.querySelectorAll('[data-remove-lounge-reply]').forEach(b=>b.addEventListener('click', async ()=>{
-    const [postId, replyId] = b.dataset.removeLoungeReply.split(':');
-    const p = DB.loungePosts.find(p=>p.id===postId);
-    if(!p) return;
-    if(!confirm('Remove this reply?')) return;
-    p.replies = (p.replies||[]).filter(r=>r.id!==replyId);
-    await saveKey('loungePosts');
-    render('lounge');
-  }));
-  document.querySelectorAll('[data-lounge-reply-btn]').forEach(b=>b.addEventListener('click', async ()=>{
-    const postId = b.dataset.loungeReplyBtn;
-    const inp = document.querySelector(`[data-lounge-reply-input="${postId}"]`);
-    const body = inp ? inp.value.trim() : '';
-    if(!body) return;
-    const p = DB.loungePosts.find(p=>p.id===postId);
-    if(!p) return;
-    p.replies = p.replies || [];
-    p.replies.push({id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now()});
-    await saveKey('loungePosts');
-    render('lounge');
-  }));
-
-  // ---- Polls ----
-  if(q('addPollBtn')) q('addPollBtn').addEventListener('click', async ()=>{
-    const question = q('pollQuestion').value.trim();
-    const options = [q('pollOpt1').value.trim(), q('pollOpt2').value.trim(), q('pollOpt3').value.trim(), q('pollOpt4').value.trim()].filter(Boolean);
-    if(!question) return alert('Add a question.');
-    if(options.length<2) return alert('Add at least two options.');
-    DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, date:today(), ts:Date.now()});
-    await saveKey('polls');
-    render('polls');
-  });
-  document.querySelectorAll('[data-toggle-poll]').forEach(b=>b.addEventListener('click', async ()=>{
-    const p = DB.polls.find(p=>p.id===b.dataset.togglePoll);
-    if(!p) return;
-    p.closed = !p.closed;
-    await saveKey('polls');
-    render('polls');
-  }));
-  document.querySelectorAll('[data-remove-poll]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this poll?')) return;
-    DB.polls = DB.polls.filter(p=>p.id!==b.dataset.removePoll);
-    await saveKey('polls');
-    render('polls');
-  }));
-  document.querySelectorAll('[data-vote-poll]').forEach(b=>b.addEventListener('click', async ()=>{
-    const pollId = b.dataset.votePoll;
-    const checked = document.querySelector(`input[name="pollvote-${pollId}"]:checked`);
-    if(!checked) return alert('Choose an option first.');
-    const p = DB.polls.find(p=>p.id===pollId);
-    if(!p) return;
-    p.votes = p.votes || {};
-    p.votes[ME.id] = parseInt(checked.value, 10);
-    await saveKey('polls');
-    render('polls');
-  }));
-
-  // ---- Quizzes ----
-  if(q('addQuizBtn')) q('addQuizBtn').addEventListener('click', async ()=>{
-    const question = q('quizQuestion').value.trim();
-    const rawOpts = [q('quizOptA').value.trim(), q('quizOptB').value.trim(), q('quizOptC').value.trim(), q('quizOptD').value.trim()];
-    const letterIndex = parseInt(q('quizCorrect').value, 10);
-    if(!question) return alert('Add a question.');
-    if(!rawOpts[letterIndex]) return alert('The selected correct option is empty — fill it in, or pick a different one as correct.');
-    const filled = rawOpts.map((text,i)=>({text,i})).filter(o=>o.text);
-    if(filled.length<2) return alert('Add at least two options.');
-    const options = filled.map(o=>o.text);
-    const correctIndex = filled.findIndex(o=>o.i===letterIndex);
-    DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, date:today(), ts:Date.now()});
-    await saveKey('quizzes');
-    render('quizzes');
-  });
-  document.querySelectorAll('[data-remove-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this quiz question?')) return;
-    DB.quizzes = DB.quizzes.filter(qz=>qz.id!==b.dataset.removeQuiz);
-    await saveKey('quizzes');
-    render('quizzes');
-  }));
-  document.querySelectorAll('[data-submit-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
-    const quizId = b.dataset.submitQuiz;
-    const checked = document.querySelector(`input[name="quiz-${quizId}"]:checked`);
-    if(!checked) return alert('Choose an answer first.');
-    const qz = DB.quizzes.find(qz=>qz.id===quizId);
-    if(!qz) return;
-    const selectedIndex = parseInt(checked.value, 10);
-    qz.attempts = qz.attempts || {};
-    qz.attempts[ME.id] = { selectedIndex, correct: selectedIndex===qz.correctIndex, ts: Date.now() };
-    await saveKey('quizzes');
-    render('quizzes');
-  }));
-  document.querySelectorAll('[data-retake-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
-    const qz = DB.quizzes.find(qz=>qz.id===b.dataset.retakeQuiz);
-    if(!qz || !qz.attempts) return;
-    delete qz.attempts[ME.id];
-    await saveKey('quizzes');
-    render('quizzes');
-  }));
 
   if(q('peopleSearchInput')) q('peopleSearchInput').addEventListener('input', (e)=>{
     peopleSearch = e.target.value;
@@ -2750,12 +2168,6 @@ function wireHandlers(tab){
 }
 
 (async function boot(){
-  // Resolving the Supabase auth session has to happen before the very first data
-  // read. Once the ichc_kv table requires an authenticated request (see the RLS
-  // policy that should be added in the Supabase dashboard), a request made before
-  // the session is attached comes back empty — and DB.coordinators/DB.students
-  // being empty breaks the email-matching in resolveGoogleSession() below.
-  if(sb) { try{ await sb.auth.getSession(); }catch(e){ console.error('Session check failed', e); } }
   await loadDB();
   const savedMe = await sGet('me', false);
   initOnboarding();
@@ -2765,15 +2177,6 @@ function wireHandlers(tab){
     banner.textContent = '⚠ Storage isn\'t connected yet — nobody\'s data will save. Open this file, find SUPABASE_CONFIG near the top of the <script>, and paste in your Supabase project URL and key.';
     document.body.prepend(banner);
     return;
-  }
-  if(dbLoadError && !(DB.coordinators.length || DB.students.length)){
-    // Roster came back empty AND a read actually failed — this is very likely
-    // a stale/expired sign-in session (blocked by the database's access rules),
-    // not real data loss. Say so plainly instead of quietly showing "nothing".
-    const banner = document.createElement('div');
-    banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C97F22; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
-    banner.textContent = '⚠ Couldn\'t load the live roster — this usually means your sign-in session has expired, not that any data was lost. Try signing out and back in with Google, or refresh the page.';
-    document.body.prepend(banner);
   }
   if(savedMe){
     let stillValid = false;
