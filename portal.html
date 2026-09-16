@@ -269,6 +269,7 @@ const SUPABASE_CONFIG = {
 };
 let sb = null;
 let sbReady = false;
+let dbLoadError = false; // set true if a shared (Supabase) read fails — lets boot() tell "blocked/broken" apart from "genuinely empty"
 try{
   if(SUPABASE_CONFIG.url && !SUPABASE_CONFIG.url.startsWith('PASTE_')){
     sb = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
@@ -285,7 +286,7 @@ async function sGet(key, shared){
     const { data, error } = await sb.from('ichc_kv').select('value').eq('key', key).maybeSingle();
     if(error) throw error;
     return data ? data.value : null;
-  }catch(e){ console.error('Supabase get failed', e); return null; }
+  }catch(e){ console.error('Supabase get failed', e); dbLoadError = true; return null; }
 }
 async function sSet(key, val, shared){
   if(!shared){
@@ -341,6 +342,7 @@ async function loadAllPresence(){
   }catch(e){ console.error('Supabase presence load failed', e); return {}; }
 }
 async function loadDB(){
+  dbLoadError = false;
   DB.coordinators = (await sGet('roster:coordinators', true)) || [];
   DB.students     = (await sGet('roster:students', true)) || [];
   DB.announcements= (await sGet('posts:announcements', true)) || [];
@@ -2763,6 +2765,15 @@ function wireHandlers(tab){
     banner.textContent = '⚠ Storage isn\'t connected yet — nobody\'s data will save. Open this file, find SUPABASE_CONFIG near the top of the <script>, and paste in your Supabase project URL and key.';
     document.body.prepend(banner);
     return;
+  }
+  if(dbLoadError && !(DB.coordinators.length || DB.students.length)){
+    // Roster came back empty AND a read actually failed — this is very likely
+    // a stale/expired sign-in session (blocked by the database's access rules),
+    // not real data loss. Say so plainly instead of quietly showing "nothing".
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C97F22; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
+    banner.textContent = '⚠ Couldn\'t load the live roster — this usually means your sign-in session has expired, not that any data was lost. Try signing out and back in with Google, or refresh the page.';
+    document.body.prepend(banner);
   }
   if(savedMe){
     let stillValid = false;

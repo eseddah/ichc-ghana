@@ -469,16 +469,16 @@ async function renderApplicationStatusBanner(){
 
   let state = null; // {type:'pending'|'accepted'|'declined', reason, key}
   try{
-    const { data: appData } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-    const pending = findApplicantMatches((appData && appData.value) || [], applicant)[0];
-    if(pending){
-      state = { type:'pending', key:'pending:'+pending.id };
-    } else {
-      const { data: decData } = await sb.from('ichc_kv').select('value').eq('key','application_decisions:list').maybeSingle();
-      const decisions = findApplicantMatches((decData && decData.value) || [], applicant);
-      const latest = decisions.sort((a,b)=>b.date.localeCompare(a.date))[0];
-      if(latest) state = { type: latest.decision, reason: latest.reason, key: latest.id };
-    }
+    // applications:list / application_decisions:list correctly require
+    // ambassador/coordinator access to read directly now — an applicant's
+    // own status is looked up server-side instead, via a function that
+    // returns only their own match and nothing about anyone else.
+    const { data, error } = await sb.rpc('get_my_application_status', {
+      p_token: applicant.token || null,
+      p_email: applicant.email || null
+    });
+    if(error) throw error;
+    if(data) state = data;
   }catch(e){ console.error('Application status check failed', e); return; }
   if(!state) return;
 
