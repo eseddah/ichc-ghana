@@ -1411,6 +1411,21 @@ let APPLICATION_DEADLINE = new Date('2026-09-30T23:59:59Z');
 function fmtDeadlineDate(d){
   return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
 }
+// ---- System status banner ----
+// Ambassador-set from the portal's Settings tab (same settings:notify row as the
+// deadline above). Absent entirely when status is "operational" — this should
+// never be a fixture visitors see by default, only when something's actually up.
+function renderSystemStatusBanner(status, message){
+  document.querySelectorAll('.ichc-system-status-banner').forEach(b=>b.remove());
+  if(!status || status==='operational') return;
+  const isMaint = status==='maintenance';
+  const bar = document.createElement('div');
+  bar.className = 'ichc-system-status-banner';
+  bar.style.cssText = `background:${isMaint?'#F6E9E7':'#FDF3E1'}; border-bottom:1px solid ${isMaint?'#D9A79C':'#E7C179'}; color:${isMaint?'#7A2E1F':'#7A5416'}; padding:12px 20px; font-size:13.5px; font-weight:500; text-align:center; line-height:1.5;`;
+  bar.innerHTML = `<span>${isMaint?'🛠️':'⚠️'} ${escapeHtml(message || (isMaint ? 'The programme site is temporarily down for maintenance — some features may be unavailable.' : "Something isn't working quite right — the team's aware and on it."))}</span>`;
+  document.body.prepend(bar);
+}
+
 async function loadDeadlineFromPortal(){
   try{
     if(!sbReady) return;
@@ -1420,6 +1435,7 @@ async function loadDeadlineFromPortal(){
       const d = new Date(s.applicationDeadline);
       if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
     }
+    renderSystemStatusBanner(s.systemStatus, s.systemStatusMessage);
   }catch(e){ /* keep fallback */ }
   const deadlineEl = document.getElementById('cdDeadlineText');
   if(deadlineEl) deadlineEl.textContent = fmtDeadlineDate(APPLICATION_DEADLINE);

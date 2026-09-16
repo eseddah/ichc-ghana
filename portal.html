@@ -101,6 +101,15 @@
   .quiz-opt.wrong{border-color:#B3261E; background:rgba(211,47,47,.06);}
   .lounge-post{border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; margin-bottom:14px; background:var(--paper);}
   .lounge-reply{border-left:2.5px solid var(--line); margin:10px 0 0 10px; padding:8px 0 8px 14px;}
+  #statusBanner{margin:18px auto 0;}
+  #statusBanner:empty{margin:0;}
+  .status-banner-item{display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-radius:var(--radius); padding:12px 18px; font-size:13.5px;}
+  .status-banner-item.maint{border:1.5px solid #B3261E; background:rgba(211,47,47,.06); color:var(--navy-deep);}
+  .status-banner-item.degraded{border:1.5px solid var(--amber); background:rgba(227,154,59,.1); color:var(--navy-deep);}
+  #updateToast{position:fixed; bottom:20px; right:20px; z-index:60; max-width:300px; background:var(--navy-deep); color:#fff; border-radius:var(--radius); padding:14px 16px; box-shadow:0 8px 24px rgba(0,0,0,.25); display:none; font-size:13.5px;}
+  #updateToast.show{display:block;}
+  #updateToast .toast-actions{display:flex; gap:10px; margin-top:10px;}
+  #updateToast a, #updateToast button{font-size:12.5px;}
   .empty{
     border:1.5px dashed var(--line); border-radius:var(--radius); padding:30px; text-align:center; color:var(--muted);
   }
@@ -256,8 +265,10 @@
     </div>
     <div class="tabs" id="tabs"></div>
   </div>
+  <div class="wrap" id="statusBanner"></div>
   <div class="wrap" id="alertBanner"></div>
   <main><div class="wrap" id="screen"></div></main>
+  <div id="updateToast"></div>
   <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench.</footer>
 </div>
 
@@ -364,7 +375,7 @@ async function loadDB(){
   DB.quizzes      = (await sGet('posts:quizzes', true)) || [];
   DB.alerts       = (await sGet('posts:alerts', true)) || [];
   DB.presence     = await loadAllPresence();
-  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z' };
+  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -454,7 +465,11 @@ function startRealtimeSync(){
         // The critical-alert banner sits outside the tab content and must react to a
         // new or acknowledged alert immediately, no matter which tab is open — it
         // can't wait on the LIVE_RERENDER_TABS gate below, which only covers #screen.
-        if(prop==='alerts') renderAlertBanner();
+        if(prop==='alerts'){ renderAlertBanner(); renderUpdateToast(); }
+        if(prop==='announcements') renderUpdateToast();
+        // Same reasoning for a rename or a status change made from Settings — the
+        // topbar/footer and the status banner both live outside #screen too.
+        if(prop==='settings'){ applyProgramIdentity(); renderStatusBanner(); }
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
           renderOrDefer(currentTab);
         }
@@ -494,7 +509,35 @@ function queueSmsSend(url, payload){
   }));
 }
 
-// ---- Student Alerts: priority notices with per-student view/acknowledge tracking ----
+// ---- Program identity & system status: single source of truth for the whole
+// dashboard (and, via the same settings:notify row, the public site/apply form) ----
+function programName(){ return (DB.settings && DB.settings.programName && DB.settings.programName.trim()) || 'Chemistry Competition Prep'; }
+function systemStatus(){ return (DB.settings && DB.settings.systemStatus) || 'operational'; }
+function systemStatusMessage(){ return (DB.settings && DB.settings.systemStatusMessage) || ''; }
+// Updates the parts of the page shell that sit outside #screen (topbar brand,
+// footer) so a rename in Settings shows up immediately everywhere, not just on
+// the next full reload — mirrors why #alertBanner/#statusBanner live outside
+// #screen too: the shell should never be stuck showing stale identity text.
+function applyProgramIdentity(){
+  const nameEl = document.querySelector('.brandmini .name');
+  if(nameEl){ nameEl.childNodes[0].nodeValue = programName(); }
+  const footer = document.querySelector('footer');
+  if(footer) footer.textContent = `${programName()} · Ghana Chapter — built with care for every student chasing a spot on the international bench.`;
+  document.title = programName();
+}
+function renderStatusBanner(){
+  const el = document.getElementById('statusBanner');
+  if(!el) return;
+  const status = systemStatus();
+  if(status==='operational'){ el.innerHTML = ''; return; }
+  const msg = systemStatusMessage();
+  const isMaintenance = status==='maintenance';
+  el.innerHTML = `
+    <div class="status-banner-item ${isMaintenance?'maint':'degraded'}">
+      <span class="badge ${isMaintenance?'alert-crit':'alert-imp'}">${isMaintenance?'Maintenance':'Degraded'}</span>
+      <span>${escapeHtml(msg || (isMaintenance ? 'The programme site is temporarily down for maintenance — some features may be unavailable.' : "Something isn't working quite right — the team's aware and on it."))}</span>
+    </div>`;
+}
 function normalizeUrl(u){ if(!u) return ''; return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
 function fmtDateTime(ts){
   try{ return new Date(ts).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; }
@@ -593,6 +636,51 @@ function alertsSectionForStudentHtml(){
     }).join('')}
   </div>`;
 }
+// ---- Unread-updates toast: a light, dismissible nudge (distinct from the
+// persistent Critical-alert banner) covering Alerts + Announcements together,
+// so a student never has to go hunting for what's new. Opening the relevant
+// tab is what marks things read — the toast itself never does. ----
+function myUnreadAnnouncements(){
+  if(!ME || ME.role!=='student') return [];
+  return DB.announcements.filter(a=>!(a.seenBy && a.seenBy[ME.id]));
+}
+async function markAnnouncementSeen(id){
+  if(!ME || ME.role!=='student') return;
+  const a = DB.announcements.find(x=>x.id===id);
+  if(!a) return;
+  a.seenBy = a.seenBy || {};
+  if(a.seenBy[ME.id]) return;
+  a.seenBy[ME.id] = Date.now();
+  await saveKey('announcements');
+}
+function myUnreadUpdatesCount(){
+  if(!ME || ME.role!=='student') return 0;
+  return myAlerts().filter(a=>!(a.views && a.views[ME.id])).length + myUnreadAnnouncements().length;
+}
+let toastDismissedFor = 0; // unread count the student last dismissed the toast at — re-shows once it grows past this
+function renderUpdateToast(){
+  const el = document.getElementById('updateToast');
+  if(!el) return;
+  if(!ME || ME.role!=='student'){ el.classList.remove('show'); return; }
+  const n = myUnreadUpdatesCount();
+  if(n===0 || n<=toastDismissedFor || currentTab==='notifications' || currentTab==='announce'){
+    el.classList.remove('show');
+    if(n===0) toastDismissedFor = 0;
+    return;
+  }
+  el.innerHTML = `
+    <div>🔔 You have <b>${n}</b> unread update${n===1?'':'s'}.</div>
+    <div class="toast-actions">
+      <button class="btn amber small" id="toastViewBtn">View</button>
+      <button class="btn ghost small" id="toastDismissBtn" style="background:transparent; border-color:rgba(255,255,255,.4); color:#fff;">Dismiss</button>
+    </div>`;
+  el.classList.add('show');
+  const viewBtn = document.getElementById('toastViewBtn');
+  const dismissBtn = document.getElementById('toastDismissBtn');
+  if(viewBtn) viewBtn.onclick = ()=>{ el.classList.remove('show'); render('notifications'); };
+  if(dismissBtn) dismissBtn.onclick = ()=>{ toastDismissedFor = n; el.classList.remove('show'); };
+}
+
 function alertsAdminView(scopeCoordinatorId){
   const pool = scopeCoordinatorId ? DB.students.filter(s=>s.coordinatorId===scopeCoordinatorId) : DB.students;
   const groups = [...new Set(pool.map(s=>s.group).filter(Boolean))].sort();
@@ -1058,6 +1146,7 @@ function showApp(){
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   paintLogos();
+  applyProgramIdentity();
   document.getElementById('unameLabel').textContent = ME.name + (ME.email ? ' · ' + ME.email : '');
   const rb = document.getElementById('roleBadge');
   rb.textContent = ME.role === 'ambassador' ? 'Ambassador' : ME.role === 'coordinator' ? 'Coordinator' : 'Student';
@@ -1165,6 +1254,8 @@ function render(tab){
   restoreFormState(s, formState);
   paintLogos();
   renderAlertBanner();
+  renderStatusBanner();
+  renderUpdateToast();
   wireHandlers(tab);
 }
 
@@ -1915,6 +2006,22 @@ function settingsView(){
   const deadlineInputValue = deadlineIso.replace(/Z$/,'').slice(0,16);
   const deadlineDisplay = (()=>{ const d = new Date(deadlineIso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' }); })();
   return `
+  <div class="section-title"><div><h2>Programme identity & status</h2><p>The name here appears on the dashboard header, footer, and the application form/site — change it once, it updates everywhere. The status banner shows on every dashboard and the public site until you set it back to Operational.</p></div></div>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="field" style="margin:0 0 10px; max-width:340px;"><label>Programme name</label><input id="setProgramName" value="${escapeHtml(programName())}" placeholder="e.g. Chemistry Competition Prep"></div>
+    <div class="grid2" style="grid-template-columns:200px 1fr; gap:10px; align-items:end;">
+      <div class="field" style="margin:0;"><label>System status</label>
+        <select id="setSystemStatus">
+          <option value="operational" ${systemStatus()==='operational'?'selected':''}>Operational</option>
+          <option value="degraded" ${systemStatus()==='degraded'?'selected':''}>Degraded</option>
+          <option value="maintenance" ${systemStatus()==='maintenance'?'selected':''}>Maintenance</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0;"><label>Status message (shown when not Operational)</label><input id="setSystemStatusMsg" value="${escapeHtml(systemStatusMessage())}" placeholder="e.g. Upgrading the database — back by 6pm GMT"></div>
+    </div>
+    <p style="font-size:12.5px; color:var(--muted); margin:10px 0 0;">Maintenance also pauses new applications on the public form until you switch this back.</p>
+    <button class="btn amber small" id="saveProgramBtn" style="margin-top:12px;">Save programme & status</button>
+  </div>
   <div class="section-title"><div><h2>Application deadline</h2><p>Controls the countdown, the cutoff, and the closing date shown on the public site and application form — change it here and both update automatically, no code edits needed.</p></div></div>
   <div class="card" style="margin-bottom:24px;">
     <div class="field" style="margin:0 0 6px; max-width:280px;"><label>Deadline (Accra time)</label><input id="setDeadline" type="datetime-local" value="${deadlineInputValue}"></div>
@@ -1940,6 +2047,9 @@ function settingsView(){
 }
 function announceView(canPost){
   const list = [...DB.announcements].sort((a,b)=>b.date.localeCompare(a.date));
+  // Opening this tab is what "reads" an announcement for the unread-updates
+  // toast — same convention as alerts marking themselves viewed when shown.
+  if(ME.role==='student') list.forEach(a=>markAnnouncementSeen(a.id));
   return `
   <div class="section-title"><div><h2>Announcements</h2><p>From the Ambassador desk, for the whole programme.</p></div></div>
   ${canPost ? `
@@ -2191,6 +2301,7 @@ function wireHandlers(tab){
   document.querySelectorAll('[data-ack-alert]').forEach(b=>b.addEventListener('click', async ()=>{
     await acknowledgeAlert(b.dataset.ackAlert);
     renderAlertBanner();
+    renderUpdateToast();
     if(currentTab==='notifications') render('notifications');
   }));
 
@@ -2448,7 +2559,7 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    DB.announcements.push({id:uid(), title, body, date:today()});
+    DB.announcements.push({id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{}});
     await saveKey('announcements');
     await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
     render('announce');
@@ -2589,6 +2700,35 @@ function wireHandlers(tab){
       btn.textContent = originalText;
       btn.disabled = false;
       alert('Save failed — check your internet connection and try again. If this keeps happening, open the browser console (F12) and send a screenshot of any red error.');
+    }
+  });
+
+  if(q('saveProgramBtn')) q('saveProgramBtn').addEventListener('click', async ()=>{
+    const btn = q('saveProgramBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    DB.settings = {
+      ...DB.settings,
+      programName: q('setProgramName').value.trim() || 'Chemistry Competition Prep',
+      systemStatus: q('setSystemStatus').value,
+      systemStatusMessage: q('setSystemStatusMsg').value.trim()
+    };
+    try{
+      const ok = await saveKey('settings');
+      if(!ok) throw new Error('save returned false');
+      applyProgramIdentity();
+      renderStatusBanner();
+      render('settings');
+      const toast = document.createElement('div');
+      toast.textContent = '✓ Programme & status saved — reflected everywhere immediately';
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; background:var(--teal); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600; box-shadow:0 8px 20px rgba(0,0,0,.2);';
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(), 3000);
+    }catch(e){
+      btn.textContent = originalText;
+      btn.disabled = false;
+      alert('Save failed — check your internet connection and try again.');
     }
   });
 

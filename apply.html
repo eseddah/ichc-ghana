@@ -223,6 +223,43 @@ try{
   }
 }catch(e){ console.error('Supabase init failed', e); }
 
+// Single cached read of settings:notify — deadline, WhatsApp link, program name,
+// system status, and EmailJS config all live in this one row, and several things
+// on this page need it (deadline lockout, WhatsApp redirect, confirmation email,
+// status banner). One shared fetch instead of each of those hitting the network
+// separately.
+let PORTAL_SETTINGS = null, portalSettingsPromise = null;
+async function getPortalSettings(){
+  if(PORTAL_SETTINGS) return PORTAL_SETTINGS;
+  if(portalSettingsPromise) return portalSettingsPromise;
+  portalSettingsPromise = (async ()=>{
+    try{
+      if(!sbReady){ PORTAL_SETTINGS = {}; return PORTAL_SETTINGS; }
+      const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+      PORTAL_SETTINGS = (data && data.value) || {};
+    }catch(e){ PORTAL_SETTINGS = {}; }
+    return PORTAL_SETTINGS;
+  })();
+  return portalSettingsPromise;
+}
+function programName(){ return (PORTAL_SETTINGS && PORTAL_SETTINGS.programName && PORTAL_SETTINGS.programName.trim()) || 'Chemistry Competition Prep'; }
+
+// ---- System status banner ----
+// Same status the portal's other surfaces show. During "maintenance" this also
+// blocks new submissions (below) rather than just warning about them — a real
+// breakdown shouldn't let people submit into a pipeline that isn't working.
+function renderSystemStatusBanner(status, message){
+  document.querySelectorAll('.ichc-system-status-banner').forEach(b=>b.remove());
+  if(!status || status==='operational') return;
+  const isMaint = status==='maintenance';
+  const bar = document.createElement('div');
+  bar.className = 'ichc-system-status-banner';
+  bar.style.cssText = `background:${isMaint?'#F6E9E7':'#FDF3E1'}; border-bottom:1px solid ${isMaint?'#D9A79C':'#E7C179'}; color:${isMaint?'#7A2E1F':'#7A5416'}; padding:12px 20px; font-size:13.5px; font-weight:500; text-align:center; line-height:1.5;`;
+  bar.innerHTML = `<span>${isMaint?'🛠️':'⚠️'} ${escapeHtml(message || (isMaint ? 'Applications are temporarily paused for maintenance — please check back shortly.' : "Something isn't working quite right — the team's aware and on it."))}</span>`;
+  document.body.prepend(bar);
+}
+let maintenanceActive = false;
+
 function paintLogos(){
   document.querySelectorAll('.hexlogo').forEach(el=>{
     const tpl = document.getElementById('hexlogo-tpl').content.cloneNode(true);
@@ -258,18 +295,26 @@ applyDeadlineState();
 // in the form. Re-checked once the live deadline loads below, in case it
 // differs from the fallback above.
 async function loadDeadlineFromPortal(){
-  try{
-    if(!sbReady) return;
-    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
-    const s = (data && data.value) || {};
-    if(s.applicationDeadline){
-      const d = new Date(s.applicationDeadline);
-      if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
-    }
-  }catch(e){ /* keep fallback */ }
+  const s = await getPortalSettings();
+  if(s.applicationDeadline){
+    const d = new Date(s.applicationDeadline);
+    if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
+  }
+  renderSystemStatusBanner(s.systemStatus, s.systemStatusMessage);
+  maintenanceActive = s.systemStatus === 'maintenance';
+  if(s.programName) document.title = 'Apply — ' + s.programName;
   applyDeadlineState();
+  applyMaintenanceState();
 }
 loadDeadlineFromPortal();
+
+// A real breakdown shouldn't accept new applications into a pipeline that isn't
+// working — same lockout pattern as the deadline check, just a different cause.
+function applyMaintenanceState(){
+  if(!maintenanceActive) return;
+  const submitBtn = document.getElementById('submitBtn');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Applications paused for maintenance'; }
+}
 
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
@@ -288,12 +333,8 @@ document.querySelectorAll('#ageChips .chip').forEach(chip=>{
 });
 
 async function getWhatsappUrl(){
-  try{
-    if(!sbReady) return DEFAULT_WHATSAPP_URL;
-    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
-    const s = (data && data.value) || {};
-    return (s.whatsappGroupUrl && s.whatsappGroupUrl.trim()) || DEFAULT_WHATSAPP_URL;
-  }catch(e){ return DEFAULT_WHATSAPP_URL; }
+  const s = await getPortalSettings();
+  return (s.whatsappGroupUrl && s.whatsappGroupUrl.trim()) || DEFAULT_WHATSAPP_URL;
 }
 
 // Flags this application as having actually reached the WhatsApp link — either
@@ -347,17 +388,15 @@ async function sendConfirmationEmail(name, email){
   // Best-effort only — if Settings > Connections isn't configured yet in the
   // portal, this silently does nothing and the application is still saved.
   try{
-    if(!sbReady) return;
-    const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
-    const s = (data && data.value) || {};
+    const s = await getPortalSettings();
     if(!(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)) return;
     await fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
         template_params: {
-          to_email: email, to_name: name, from_name: 'Chemistry Competition Prep',
-          subject: 'We got your application', message: 'Thanks for applying to Chemistry Competition Prep — we\'ll be in touch by email once your application has been reviewed.'
+          to_email: email, to_name: name, from_name: programName(),
+          subject: 'We got your application', message: `Thanks for applying to ${programName()} — we'll be in touch by email once your application has been reviewed.`
         }
       })
     });
@@ -389,6 +428,11 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     const closedScreen = document.getElementById('closedScreen');
     if(closedScreen) closedScreen.classList.remove('hidden');
     return;
+  }
+  if(maintenanceActive){
+    // Same idea as the deadline recheck above, for a maintenance window toggled
+    // on after this page was already loaded.
+    return errEl.textContent = 'Applications are temporarily paused for maintenance — please check back shortly.';
   }
 
   const btn = document.getElementById('submitBtn');
