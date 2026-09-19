@@ -1308,46 +1308,122 @@ function downloadCSV(filename, csvText){
 }
 
 // Builds a real .docx (not an HTML-pretending-to-be-Word file) entirely in the
-// browser, using the `docx` library loaded in <head>. One heading per
-// coordinator with their assigned students listed underneath, then an
-// "Unassigned" section for anyone still waiting on a coordinator.
+// browser, using the `docx` library loaded in <head>. This is the placement
+// summary — a colored table per coordinator with their assigned students, a
+// KPI strip up top, and a flagged "Unassigned" table so nobody gets missed.
 async function exportRosterDocx(){
   if(typeof docx === 'undefined'){ alert('The document library hasn\'t loaded yet — check your connection and try again.'); return; }
-  const { Document, Packer, Paragraph, HeadingLevel, TextRun } = docx;
+  const { Document, Packer, Paragraph, HeadingLevel, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, VerticalAlign, AlignmentType } = docx;
+
+  // ---- palette (matches the dashboard's own design system) ----
+  const NAVY = '0F2438', NAVY_DEEP = '0A1826', AMBER = 'E39A3B', AMBER_DEEP = 'C97F22';
+  const TEAL = '1F8A70', TEAL_DEEP = '146956', CHALK = 'F6F4EE', LINE = 'DDD8C9';
+  const INK = '1B2430', MUTED = '6B7280', WHITE = 'FFFFFF';
+  const DANGER = 'B3261E', DANGER_TINT = 'F6E9E7';
+
+  const border = { style: BorderStyle.SINGLE, size: 2, color: LINE };
+  const tableBorders = { top:border, bottom:border, left:border, right:border, insideHorizontal:border, insideVertical:border };
+  const colWidths5 = [6, 26, 24, 26, 18]; // #, Name, School, Email, Phone — sums to 100
+  const colWidths4 = [30, 26, 26, 18];    // Name, School, Email, Phone — no coordinator column needed
+
+  const pct = (n) => ({ size:n, type:WidthType.PERCENTAGE });
+  function cell(text, opts){
+    opts = opts || {};
+    return new TableCell({
+      columnSpan: opts.span || 1,
+      shading: opts.fill ? { fill: opts.fill } : undefined,
+      verticalAlign: VerticalAlign.CENTER,
+      margins:{ top:80, bottom:80, left:130, right:130 },
+      children:[ new Paragraph({ alignment: opts.align || AlignmentType.LEFT,
+        children:[ new TextRun({ text: text || '—', bold: !!opts.bold, italics: !!opts.italic, color: opts.color || INK, size: opts.size || 20 }) ] }) ]
+    });
+  }
+  function headerRow(labels, widths, style){
+    return new TableRow({ children: labels.map((l,i)=>cell(l, { fill: style.fill, color: style.color||WHITE, bold:true, size:19 })) });
+  }
+  function dataRow(values, widths, style){
+    return new TableRow({ children: values.map((v)=>cell(v, { fill: style.fill, size:19 })) });
+  }
+  function emptyRow(text, span, fill){
+    return new TableRow({ children:[ cell(text, { span:span, italic:true, color:MUTED, fill:fill, align:AlignmentType.CENTER }) ] });
+  }
+
+  function personRow(s, idx, widths, fill){
+    const values = widths.length===5 ? [String(idx), s.name, s.school||'', s.email||'', s.phone||''] : [s.name, s.school||'', s.email||'', s.phone||''];
+    return dataRow(values, widths, { fill:fill });
+  }
+
   const children = [];
-  children.push(new Paragraph({ text: 'IChC Outreach Program — Ghana', heading: HeadingLevel.TITLE }));
-  children.push(new Paragraph({ text: `Coordinators & Students — as of ${fmtDate(today())}`, heading: HeadingLevel.HEADING_2, spacing:{after:280} }));
+  children.push(new Paragraph({ text: programName(), heading: HeadingLevel.TITLE }));
+  children.push(new Paragraph({ text:`Placement summary — coordinators & students`, heading: HeadingLevel.HEADING_2, spacing:{after:60} }));
+  children.push(new Paragraph({ children:[ new TextRun({ text:`Generated ${fmtDate(today())}`, italics:true, color:MUTED, size:19 }) ], spacing:{after:300} }));
 
-  const personLine = (p) => [p.name, p.school, p.email, p.phone].filter(Boolean).join(' — ');
+  // ---- KPI strip ----
+  const totalCoords = DB.coordinators.length;
+  const totalStudents = DB.students.length;
+  const assignedCount = DB.students.filter(s=>s.coordinatorId).length;
+  const unassignedCount = totalStudents - assignedCount;
+  children.push(new Table({
+    width: pct(100), borders: tableBorders,
+    rows:[
+      new TableRow({ children:[
+        cell('COORDINATORS', { fill:NAVY_DEEP, color:WHITE, bold:true, size:16, align:AlignmentType.CENTER }),
+        cell('STUDENTS', { fill:TEAL_DEEP, color:WHITE, bold:true, size:16, align:AlignmentType.CENTER }),
+        cell('ASSIGNED', { fill:AMBER_DEEP, color:WHITE, bold:true, size:16, align:AlignmentType.CENTER }),
+        cell('UNASSIGNED', { fill: unassignedCount ? DANGER : TEAL_DEEP, color:WHITE, bold:true, size:16, align:AlignmentType.CENTER }),
+      ]}),
+      new TableRow({ children:[
+        cell(String(totalCoords), { fill:NAVY, color:WHITE, bold:true, size:32, align:AlignmentType.CENTER }),
+        cell(String(totalStudents), { fill:TEAL, color:WHITE, bold:true, size:32, align:AlignmentType.CENTER }),
+        cell(String(assignedCount), { fill:AMBER, color:NAVY_DEEP, bold:true, size:32, align:AlignmentType.CENTER }),
+        cell(String(unassignedCount), { fill: unassignedCount ? DANGER_TINT : CHALK, color: unassignedCount ? DANGER : TEAL_DEEP, bold:true, size:32, align:AlignmentType.CENTER }),
+      ]}),
+    ]
+  }));
+  children.push(new Paragraph({ text:'', spacing:{after:360} }));
 
+  // ---- one colored table per coordinator ----
   const sortedCoords = [...DB.coordinators].sort((a,b)=>a.name.localeCompare(b.name));
   if(!sortedCoords.length){
-    children.push(new Paragraph({ text:'No coordinators added yet.', italics:true }));
+    children.push(new Paragraph({ text:'No coordinators added yet.', italics:true, spacing:{after:240} }));
   }
   sortedCoords.forEach(c=>{
     const students = DB.students.filter(s=>s.coordinatorId===c.id).sort((a,b)=>a.name.localeCompare(b.name));
-    children.push(new Paragraph({ text: c.name + (c.subject?` — ${c.subject}`:''), heading: HeadingLevel.HEADING_3, spacing:{before:320} }));
-    if(c.email || c.phone) children.push(new Paragraph({ children:[ new TextRun({ text: [c.email,c.phone].filter(Boolean).join(' — '), italics:true, color:'6B7280' }) ] }));
+    const contact = [c.email, c.phone].filter(Boolean).join('  ·  ');
+    const rows = [
+      new TableRow({ children:[ cell(
+        c.name + (c.subject ? `  —  ${c.subject}` : '') + (contact ? `\n${contact}` : ''),
+        { fill:NAVY_DEEP, color:WHITE, bold:true, size:22, span:5 }
+      ) ] }),
+      headerRow(['#','Student','School','Email','Phone'], colWidths5, { fill:AMBER, color:NAVY_DEEP }),
+    ];
     if(!students.length){
-      children.push(new Paragraph({ text:'No students assigned yet.', italics:true }));
+      rows.push(emptyRow('No students assigned yet.', 5, WHITE));
     } else {
-      students.forEach(s=>{ children.push(new Paragraph({ text: personLine(s), bullet:{ level:0 } })); });
+      students.forEach((s,i)=> rows.push(personRow(s, i+1, colWidths5, i%2===0 ? WHITE : CHALK)));
     }
+    children.push(new Table({ width: pct(100), borders: tableBorders, rows: rows }));
+    children.push(new Paragraph({ text:'', spacing:{after:280} }));
   });
 
+  // ---- unassigned, flagged for attention ----
   const unassigned = DB.students.filter(s=>!s.coordinatorId).sort((a,b)=>a.name.localeCompare(b.name));
-  children.push(new Paragraph({ text:'Unassigned students', heading: HeadingLevel.HEADING_3, spacing:{before:320} }));
+  const unassignedRows = [
+    new TableRow({ children:[ cell('⚠ Unassigned students — needs placement', { fill:DANGER, color:WHITE, bold:true, size:22, span:4 }) ] }),
+    headerRow(['Student','School','Email','Phone'], colWidths4, { fill:DANGER_TINT, color:DANGER }),
+  ];
   if(!unassigned.length){
-    children.push(new Paragraph({ text:'None — every student currently has a coordinator.', italics:true }));
+    unassignedRows.push(emptyRow('None — every student currently has a coordinator.', 4, WHITE));
   } else {
-    unassigned.forEach(s=>{ children.push(new Paragraph({ text: personLine(s), bullet:{ level:0 } })); });
+    unassigned.forEach((s,i)=> unassignedRows.push(personRow(s, null, colWidths4, i%2===0 ? WHITE : DANGER_TINT)));
   }
+  children.push(new Table({ width: pct(100), borders: tableBorders, rows: unassignedRows }));
 
   const doc = new Document({ sections:[{ children }] });
   const blob = await Packer.toBlob(doc);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `ichc-coordinators-students-${today()}.docx`;
+  a.href = url; a.download = `placement-summary-${today()}.docx`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
@@ -1529,7 +1605,7 @@ function ambassadorView(tab){
       <input id="peopleSearchInput" value="${escapeHtml(peopleSearch)}" placeholder="Search by name, email, school, region, coordinator, status…" style="flex:1; min-width:220px;">
       ${peopleSearch ? `<button class="btn ghost small" id="peopleSearchClear">Clear</button>` : ''}
       <span style="font-size:12.5px; color:var(--muted); white-space:nowrap;">${shownCoords.length} coordinator(s) · ${shownStudents.length} student(s)</span>
-      <button class="btn amber small" id="exportRosterDocx">Download roster (.docx)</button>
+      <button class="btn amber small" id="exportRosterDocx">Download placement summary (.docx)</button>
     </div>
     <div class="section-title"><div><h2>Coordinators</h2><p>The mentors running each student group. Add them here first — this is what lets them sign in.</p></div>
       <button class="btn ghost small" id="exportCoordsCsv">Export CSV</button>
