@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --navy:#0F2438;
@@ -343,27 +343,8 @@ async function sDelete(key, shared){
   }catch(e){ console.error('Supabase delete failed', e); return false; }
 }
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
-// A silent JS error anywhere used to mean a click just did nothing with no
-// clue why. This surfaces it as a small dismissible banner instead, so a
-// failure is at minimum visible (and its message copyable) rather than mute.
-window.addEventListener('error', (e)=>{
-  console.error('Uncaught error', e.error || e.message);
-  showJsErrorBanner((e.error && e.error.message) || e.message || 'Unknown error');
-});
-window.addEventListener('unhandledrejection', (e)=>{
-  console.error('Unhandled promise rejection', e.reason);
-  showJsErrorBanner((e.reason && e.reason.message) || String(e.reason) || 'Unknown error');
-});
-function showJsErrorBanner(msg){
-  let el = document.getElementById('jsErrorBanner');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'jsErrorBanner';
-    el.style.cssText = 'position:fixed; bottom:16px; left:16px; right:16px; z-index:999; max-width:520px; margin:0 auto; background:#B3261E; color:#fff; padding:12px 16px; border-radius:10px; font-family:sans-serif; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.3); display:flex; align-items:flex-start; gap:10px;';
-    document.body.appendChild(el);
-  }
-  el.innerHTML = `<span style="flex:1;">⚠ Something went wrong: ${String(msg).replace(/</g,'&lt;')}</span><button style="background:none; border:none; color:#fff; font-weight:700; cursor:pointer; font-size:15px;" onclick="this.parentElement.remove()">×</button>`;
-}
+window.addEventListener('error', (e)=>{ console.error('Uncaught error', e.error || e.message); });
+window.addEventListener('unhandledrejection', (e)=>{ console.error('Unhandled promise rejection', e.reason); });
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
@@ -1885,25 +1866,18 @@ async function downloadCertificatePdf(id){
   doc.text('Issued ' + fmtDate(String(c.issue_date)), cardX+30, stripY+11);
 
   // QR code, in its own small bordered box so it reads as an intentional
-  // "seal" rather than a loose image. Built with an explicit two-step
-  // fallback (toDataURL, then toCanvas) and a visible on-page notice if both
-  // fail, so a broken QR is never just silently missing again.
+  // "seal" rather than a loose image. Generated synchronously via a small
+  // off-DOM canvas (no Promises, no reliance on any single CDN's uptime), with
+  // a visible on-page notice if it genuinely fails, so a broken QR is never
+  // just silently missing.
   const qrSize = 56, qrBoxPad = 7;
   const qrBoxX = W-cardX-30-qrSize-qrBoxPad*2, qrBoxY = stripY-qrSize-qrBoxPad+9;
   let qrDataUrl = null;
   const verifyUrl = certVerifyUrl(c.id);
   try{
-    qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin:1, width:256, color:{ dark:'#0A1826', light:'#FFFFFF' } });
-  }catch(e1){
-    console.error('QR toDataURL failed, trying canvas fallback', e1);
-    try{
-      const cvs = document.createElement('canvas');
-      await new Promise((resolve,reject)=>QRCode.toCanvas(cvs, verifyUrl, { margin:1, width:256 }, (err)=>err?reject(err):resolve()));
-      qrDataUrl = cvs.toDataURL('image/png');
-    }catch(e2){
-      console.error('QR canvas fallback also failed', e2);
-      showJsErrorBanner('Could not generate the QR code for this certificate (' + (e2.message||e2) + '). The certificate ID still works for manual verification.');
-    }
+    qrDataUrl = generateQrDataUrl(verifyUrl, 256);
+  }catch(e){
+    console.error('QR generation failed', e);
   }
   if(qrDataUrl){
     doc.setDrawColor(...LINE); doc.setLineWidth(0.75); doc.setFillColor(...PAPER);
@@ -1917,6 +1891,23 @@ async function downloadCertificatePdf(id){
   }
 
   doc.save(`${c.type==='service'?'Certificate-of-Service':'Certificate-of-Participation'}-${c.recipient_name.replace(/[^a-z0-9]+/gi,'-')}.pdf`);
+}
+// qrcodejs (cdnjs) renders synchronously into an off-screen container, using
+// a <canvas> under the hood — no network round-trip, no Promise, nothing that
+// can silently hang.
+function generateQrDataUrl(text, size){
+  if(typeof QRCode === 'undefined'){ throw new Error('QR library did not load (QRCode is undefined) — check your internet connection or that cdnjs.cloudflare.com is reachable'); }
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:absolute; left:-9999px; top:-9999px;';
+  document.body.appendChild(holder);
+  try{
+    new QRCode(holder, { text, width:size, height:size, colorDark:'#0A1826', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.M });
+    const canvas = holder.querySelector('canvas');
+    if(!canvas) throw new Error('QR library rendered no canvas element');
+    return canvas.toDataURL('image/png');
+  } finally {
+    document.body.removeChild(holder);
+  }
 }
 function drawCornerBrackets(doc, x, y, w, h, len, color){
   doc.setDrawColor(...color); doc.setLineWidth(1.1);
