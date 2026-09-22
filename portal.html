@@ -238,6 +238,9 @@
     <p style="text-align:center; font-size:12.5px; color:var(--muted); line-height:1.6; margin:0;">
       Coordinators and students: sign in with the same Google account your Ambassador registered you with.
     </p>
+    <p style="text-align:center; font-size:12.5px; margin:18px 0 0;">
+      <a href="?verify" id="onboardingVerifyLink" style="color:var(--amber-deep); font-weight:600; text-decoration:none;">Verify a certificate →</a>
+    </p>
   </div>
 </div>
 
@@ -287,7 +290,7 @@
   <div class="wrap" id="alertBanner"></div>
   <main><div class="wrap" id="screen"></div></main>
   <div id="updateToast"></div>
-  <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench.</footer>
+  <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a></footer>
 </div>
 
 <script>
@@ -615,7 +618,7 @@ function applyProgramIdentity(){
   const nameEl = document.querySelector('.brandmini .name');
   if(nameEl){ nameEl.childNodes[0].nodeValue = programName(); }
   const footer = document.querySelector('footer');
-  if(footer) footer.textContent = `${programName()} · Ghana Chapter — built with care for every student chasing a spot on the international bench.`;
+  if(footer) footer.innerHTML = `${escapeHtml(programName())} · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a>`;
   document.title = programName();
 }
 function renderStatusBanner(){
