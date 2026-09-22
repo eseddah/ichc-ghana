@@ -1628,11 +1628,11 @@ let certTypeFilter = 'coordinator'; // which roster the bulk-issue picker is cur
 const CERT_COPY = {
   service: {
     label: 'Certificate of Service',
-    body: (name, program, year) => `In recognition of dedicated service and generous mentorship, this certificate is presented to ${name} for their role as a coordinator with the ${program}${year?(', '+year+' cohort'):''}. Their guidance, consistency, and encouragement helped shape the students under their care, and their contribution to the programme's community is gratefully acknowledged.`
+    body: (name, program, year) => `in recognition of their dedicated service as a Coordinator with ${program}, supporting, mentoring, and guiding students in their chemistry learning and preparation for an international chemistry competition.\n\nTheir selflessness, commitment, and valuable contribution to the development of aspiring chemistry students are sincerely recognized and appreciated.`
   },
   participation: {
     label: 'Certificate of Participation',
-    body: (name, program, year) => `In recognition of commitment and active engagement, this certificate is presented to ${name} for their participation in the ${program}${year?(', '+year+' cohort'):''}. Their consistent presence in practice sessions, dedication to the learning materials, and contribution to the programme's community is warmly acknowledged.`
+    body: (name, program, year) => `in recognition of their participation in ${program} and their commitment to developing their knowledge, skills, and understanding of chemistry in preparation for an international chemistry competition.\n\nTheir dedication to learning and active engagement throughout the programme are duly recognized and appreciated.`
   }
 };
 const CERT_DISCLAIMER = 'This certificate recognizes programme participation and is not an academic qualification.';
@@ -1797,96 +1797,136 @@ async function downloadCertificatePdf(id){
         INK=[27,36,48], LINE=[221,216,201], MUTED=[107,114,128];
   const accent = c.type==='service' ? TEAL_DEEP : AMBER_DEEP;
   const accentSoft = c.type==='service' ? TEAL : AMBER;
+  const cardX=34, cardY=34, cardW=W-68, cardH=H-68;
 
   // page background = chalk (matches the dashboard's body background), with a
   // paper-white rounded card inset — the same visual language as every card
   // in the app itself
   doc.setFillColor(...CHALK); doc.rect(0,0,W,H,'F');
   doc.setFillColor(...PAPER); doc.setDrawColor(...NAVY_DEEP); doc.setLineWidth(2);
-  doc.roundedRect(26,26,W-52,H-52,16,16,'FD');
+  doc.roundedRect(cardX,cardY,cardW,cardH,18,18,'FD');
   doc.setDrawColor(...accentSoft); doc.setLineWidth(1);
-  doc.roundedRect(38,38,W-76,H-76,12,12,'D');
+  doc.roundedRect(cardX+11,cardY+11,cardW-22,cardH-22,13,13,'D');
 
-  // small three-hexagon brand mark, echoing the site's own logo, centered above the eyebrow
-  drawHexMark(doc, W/2, 58, 8, NAVY_DEEP, accentSoft);
+  // four small corner brackets instead of a busy inner rule — a quieter,
+  // slicker way to frame the certificate than a dot/logo cluster up top
+  drawCornerBrackets(doc, cardX+24, cardY+24, cardW-48, cardH-48, 16, accent);
 
-  doc.setTextColor(...NAVY_DEEP);
-  doc.setFont('helvetica','bold'); doc.setFontSize(11.5);
-  doc.text(trackedCaps(c.program_name || 'Chemistry Competition Prep'), W/2, 92, { align:'center' });
+  // solid navy header band carrying the programme name — replaces the old
+  // three-dot mark with something that actually reads as a brand header
+  const bandY = cardY+40, bandH = 40;
+  doc.setFillColor(...NAVY_DEEP);
+  doc.rect(cardX+60, bandY, cardW-120, bandH, 'F');
+  doc.setTextColor(...CHALK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text(trackedCaps(c.program_name || 'Chemistry Competition Prep'), W/2, bandY+bandH/2+4.5, { align:'center' });
 
-  doc.setDrawColor(...accentSoft); doc.setLineWidth(1.2);
-  doc.line(W/2-64, 102, W/2+64, 102);
+  let y = bandY + bandH + 46;
 
   doc.setTextColor(...accent);
-  doc.setFont('times','bold'); doc.setFontSize(31);
-  doc.text(CERT_COPY[c.type].label, W/2, 140, { align:'center' });
+  doc.setFont('times','bold'); doc.setFontSize(32);
+  doc.text(CERT_COPY[c.type].label, W/2, y, { align:'center' });
+  y += 40;
 
-  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(...MUTED);
-  doc.text('is proudly presented to', W/2, 163, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor(...MUTED);
+  doc.text('This certificate is proudly presented to', W/2, y, { align:'center' });
+  y += 38;
 
-  doc.setTextColor(...NAVY_DEEP); doc.setFont('times','bolditalic'); doc.setFontSize(32);
-  doc.text(c.recipient_name, W/2, 200, { align:'center' });
+  doc.setTextColor(...NAVY_DEEP); doc.setFont('times','bolditalic'); doc.setFontSize(33);
+  doc.text(c.recipient_name, W/2, y, { align:'center' });
   doc.setDrawColor(...accent); doc.setLineWidth(1);
-  const nameWidth = Math.min(doc.getTextWidth(c.recipient_name)+40, W-180);
-  doc.line(W/2-nameWidth/2, 210, W/2+nameWidth/2, 210);
+  const nameWidth = Math.min(doc.getTextWidth(c.recipient_name)+40, W-200);
+  doc.line(W/2-nameWidth/2, y+12, W/2+nameWidth/2, y+12);
+  y += 50;
 
-  doc.setTextColor(...INK); doc.setFont('helvetica','normal'); doc.setFontSize(12);
+  doc.setTextColor(...INK); doc.setFont('helvetica','normal'); doc.setFontSize(12.5);
+  const defaultLineHeightFactor = doc.getLineHeightFactor ? doc.getLineHeightFactor() : 1.15;
+  doc.setLineHeightFactor(1.55); // generous breathing room between wrapped lines
   const bodyText = CERT_COPY[c.type].body(c.recipient_name, c.program_name, c.cohort_year);
-  const bodyLines = doc.splitTextToSize(bodyText, W-280);
-  doc.text(bodyLines, W/2, 234, { align:'center' });
-  let cursorY = 234 + bodyLines.length*15.5;
+  const bodyLines = doc.splitTextToSize(bodyText, W-300);
+  doc.text(bodyLines, W/2, y, { align:'center' });
+  y += bodyLines.length * 12.5 * 1.55 + 14;
+  doc.setLineHeightFactor(defaultLineHeightFactor); // restore for every line drawn after this
 
   if(c.details){
     doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(...MUTED);
-    const detailLines = doc.splitTextToSize(c.details, W-320);
-    doc.text(detailLines, W/2, cursorY+16, { align:'center' });
-    cursorY += 16 + detailLines.length*13;
+    const detailLines = doc.splitTextToSize(c.details, W-340);
+    doc.text(detailLines, W/2, y, { align:'center' });
+    y += detailLines.length*14 + 10;
   }
 
-  doc.setFont('helvetica','italic'); doc.setFontSize(9); doc.setTextColor(...MUTED);
-  doc.text(CERT_DISCLAIMER, W/2, cursorY+22, { align:'center' });
-
   // ---- signature block: one column, the Ambassador's actual signature
-  // rendered above a single rule, no second "date" field or dashed divider ----
-  const sigLineY = H-122;
+  // rendered above a single rule, generously separated from the body copy ----
+  const sigLineY = Math.min(Math.max(y+56, H-146), H-130);
   const sigImgW = 92, sigImgH = 58; // matches the source crop's aspect ratio
-  try{ doc.addImage(CERT_SIGNATURE_PNG, 'PNG', W/2-sigImgW/2, sigLineY-sigImgH+10, sigImgW, sigImgH); }
+  try{ doc.addImage(CERT_SIGNATURE_PNG, 'PNG', W/2-sigImgW/2, sigLineY-sigImgH+8, sigImgW, sigImgH); }
   catch(e){ console.error('Signature image failed to draw', e); }
   doc.setDrawColor(...NAVY_DEEP); doc.setLineWidth(0.8);
   doc.line(W/2-105, sigLineY, W/2+105, sigLineY);
   doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...INK);
-  doc.text(c.issued_by || 'Ambassador', W/2, sigLineY+16, { align:'center' });
+  doc.text(c.issued_by || 'Ambassador', W/2, sigLineY+17, { align:'center' });
   doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...MUTED);
-  doc.text('Ambassador · ' + (c.program_name||''), W/2, sigLineY+29, { align:'center' });
+  doc.text('Ambassador · ' + (c.program_name||''), W/2, sigLineY+31, { align:'center' });
 
   // ---- bottom strip: only what matters — issue date, certificate ID, and a
   // QR code to verify. No repeated long URL. ----
-  const stripY = H-70;
+  const stripY = H-56;
+
+  // the recognition-not-qualification acknowledgment — a single quiet line at
+  // the very bottom, not bolded, sitting above the ID/date/QR row
+  doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+  doc.text(CERT_DISCLAIMER, W/2, stripY-34, { align:'center' });
+
   doc.setDrawColor(...LINE); doc.setLineWidth(0.75);
-  doc.line(64, stripY-16, W-64, stripY-16);
+  doc.line(cardX+30, stripY-22, W-cardX-30, stripY-22);
 
   doc.setFont('courier','normal'); doc.setFontSize(9.5); doc.setTextColor(...NAVY_DEEP);
-  doc.text('Certificate ID  ' + c.id, 64, stripY);
+  doc.text('Certificate ID   ' + c.id, cardX+30, stripY-4);
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
-  doc.text('Issued ' + fmtDate(String(c.issue_date)), 64, stripY+14);
+  doc.text('Issued ' + fmtDate(String(c.issue_date)), cardX+30, stripY+11);
 
+  // QR code, in its own small bordered box so it reads as an intentional
+  // "seal" rather than a loose image. Built with an explicit two-step
+  // fallback (toDataURL, then toCanvas) and a visible on-page notice if both
+  // fail, so a broken QR is never just silently missing again.
+  const qrSize = 56, qrBoxPad = 7;
+  const qrBoxX = W-cardX-30-qrSize-qrBoxPad*2, qrBoxY = stripY-qrSize-qrBoxPad+9;
+  let qrDataUrl = null;
+  const verifyUrl = certVerifyUrl(c.id);
   try{
-    const verifyUrl = certVerifyUrl(c.id);
-    const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin:1, width:220, color:{ dark:'#0A1826', light:'#FFFFFF' } });
-    const qrSize = 54;
-    doc.addImage(qrDataUrl, 'PNG', W-64-qrSize, stripY-qrSize+16, qrSize, qrSize);
+    qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin:1, width:256, color:{ dark:'#0A1826', light:'#FFFFFF' } });
+  }catch(e1){
+    console.error('QR toDataURL failed, trying canvas fallback', e1);
+    try{
+      const cvs = document.createElement('canvas');
+      await new Promise((resolve,reject)=>QRCode.toCanvas(cvs, verifyUrl, { margin:1, width:256 }, (err)=>err?reject(err):resolve()));
+      qrDataUrl = cvs.toDataURL('image/png');
+    }catch(e2){
+      console.error('QR canvas fallback also failed', e2);
+      showJsErrorBanner('Could not generate the QR code for this certificate (' + (e2.message||e2) + '). The certificate ID still works for manual verification.');
+    }
+  }
+  if(qrDataUrl){
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.75); doc.setFillColor(...PAPER);
+    doc.roundedRect(qrBoxX, qrBoxY, qrSize+qrBoxPad*2, qrSize+qrBoxPad*2, 6, 6, 'FD');
+    doc.addImage(qrDataUrl, 'PNG', qrBoxX+qrBoxPad, qrBoxY+qrBoxPad, qrSize, qrSize);
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-    doc.text('Scan to verify · ' + location.host, W-64-qrSize/2, stripY+22, { align:'center' });
-  }catch(e){ console.error('QR generation failed', e); }
+    doc.text('Scan to verify · ' + location.host, qrBoxX+qrSize/2+qrBoxPad, qrBoxY+qrSize+qrBoxPad+11, { align:'center' });
+  } else {
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
+    doc.text(doc.splitTextToSize('QR unavailable — verify with the Certificate ID at ' + location.host, 150), qrBoxX+qrSize/2+qrBoxPad, qrBoxY+10, { align:'center' });
+  }
 
   doc.save(`${c.type==='service'?'Certificate-of-Service':'Certificate-of-Participation'}-${c.recipient_name.replace(/[^a-z0-9]+/gi,'-')}.pdf`);
 }
-function drawHexMark(doc, cx, cy, r, strokeColor, fillColor){
-  // three small dots echoing the site's own hexlogo brand mark — kept simple
-  // and safe rather than hand-rolling hexagon polygons in PDF point-space
-  const positions = [[cx-r*1.3, cy],[cx+r*1.3, cy],[cx, cy-r*1.1]];
-  doc.setDrawColor(...strokeColor); doc.setFillColor(...fillColor); doc.setLineWidth(0.6);
-  positions.forEach(([x,y])=>{ doc.circle(x, y, r*0.55, 'FD'); });
+function drawCornerBrackets(doc, x, y, w, h, len, color){
+  doc.setDrawColor(...color); doc.setLineWidth(1.1);
+  const corners = [
+    [[x,y+len],[x,y],[x+len,y]],               // top-left
+    [[x+w-len,y],[x+w,y],[x+w,y+len]],          // top-right
+    [[x,y+h-len],[x,y+h],[x+len,y+h]],          // bottom-left
+    [[x+w-len,y+h],[x+w,y+h],[x+w,y+h-len]],    // bottom-right
+  ];
+  corners.forEach(pts=>{ for(let i=0;i<pts.length-1;i++) doc.line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]); });
 }
 
 // ---- Public verification page (no sign-in) ----
