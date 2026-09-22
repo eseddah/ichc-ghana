@@ -340,6 +340,27 @@ async function sDelete(key, shared){
   }catch(e){ console.error('Supabase delete failed', e); return false; }
 }
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2,9) + Date.now().toString(36);
+// A silent JS error anywhere used to mean a click just did nothing with no
+// clue why. This surfaces it as a small dismissible banner instead, so a
+// failure is at minimum visible (and its message copyable) rather than mute.
+window.addEventListener('error', (e)=>{
+  console.error('Uncaught error', e.error || e.message);
+  showJsErrorBanner((e.error && e.error.message) || e.message || 'Unknown error');
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  console.error('Unhandled promise rejection', e.reason);
+  showJsErrorBanner((e.reason && e.reason.message) || String(e.reason) || 'Unknown error');
+});
+function showJsErrorBanner(msg){
+  let el = document.getElementById('jsErrorBanner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'jsErrorBanner';
+    el.style.cssText = 'position:fixed; bottom:16px; left:16px; right:16px; z-index:999; max-width:520px; margin:0 auto; background:#B3261E; color:#fff; padding:12px 16px; border-radius:10px; font-family:sans-serif; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.3); display:flex; align-items:flex-start; gap:10px;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<span style="flex:1;">⚠ Something went wrong: ${String(msg).replace(/</g,'&lt;')}</span><button style="background:none; border:none; color:#fff; font-weight:700; cursor:pointer; font-size:15px;" onclick="this.parentElement.remove()">×</button>`;
+}
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
@@ -424,20 +445,26 @@ function genCertId(){
   return out;
 }
 async function insertCertificate(cert){
-  if(!sbReady) return false;
+  if(!sbReady) return { ok:false, error:'Storage isn\'t connected (Supabase not configured).' };
   try{
     const { error } = await sb.from('ichc_certificates').insert(cert);
     if(error) throw error;
-    return true;
-  }catch(e){ console.error('Certificate insert failed', e); return false; }
+    return { ok:true };
+  }catch(e){
+    console.error('Certificate insert failed', e);
+    return { ok:false, error: (e && (e.message||e.details||e.hint||e.code)) ? (e.message||e.details||e.hint||e.code) : String(e) };
+  }
 }
 async function updateCertificateStatus(id, status){
-  if(!sbReady) return false;
+  if(!sbReady) return { ok:false, error:'Storage isn\'t connected.' };
   try{
     const { error } = await sb.from('ichc_certificates').update({ status }).eq('id', id);
     if(error) throw error;
-    return true;
-  }catch(e){ console.error('Certificate status update failed', e); return false; }
+    return { ok:true };
+  }catch(e){
+    console.error('Certificate status update failed', e);
+    return { ok:false, error: (e && (e.message||e.details||e.hint||e.code)) ? (e.message||e.details||e.hint||e.code) : String(e) };
+  }
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -1663,6 +1690,7 @@ function certificatesAmbassadorView(){
       <span style="font-size:12.5px; color:var(--muted);">${certSelectedIds.size} selected</span>
       <button class="btn amber small" id="certIssueBtn" style="margin-left:auto;">Issue certificate${certSelectedIds.size===1?'':'s'}</button>
     </div>
+    <div id="certIssueStatus" style="font-size:13px; margin-top:10px; min-height:18px;"></div>
   </div>
 
   <div class="section-title"><div><h2>Issued certificates</h2></div></div>
@@ -1683,7 +1711,9 @@ function certificatesAmbassadorView(){
 
 async function issueCertificatesBulk(){
   const btn = document.getElementById('certIssueBtn');
-  if(!certSelectedIds.size){ alert('Select at least one person first.'); return; }
+  const status = document.getElementById('certIssueStatus');
+  const setStatus = (text, color) => { if(status){ status.textContent = text; status.style.color = color || 'var(--muted)'; } };
+  if(!certSelectedIds.size){ setStatus('Select at least one person first.', '#B3261E'); return; }
   const program = (document.getElementById('certProgram').value||'').trim() || programName();
   const year = (document.getElementById('certYear').value||'').trim();
   const dateVal = document.getElementById('certDate').value || today();
@@ -1691,7 +1721,9 @@ async function issueCertificatesBulk(){
   const type = certTypeFilter==='coordinator' ? 'service' : 'participation';
   const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
   if(btn){ btn.disabled = true; btn.textContent = 'Issuing…'; }
+  setStatus('Issuing…');
   let okCount = 0;
+  const errors = [];
   for(const id of certSelectedIds){
     const person = pool.find(p=>p.id===id);
     if(!person) continue;
@@ -1708,17 +1740,31 @@ async function issueCertificatesBulk(){
       status: 'active',
       issued_by: ME.name
     };
-    const ok = await insertCertificate(cert);
-    if(ok) okCount++;
+    const result = await insertCertificate(cert);
+    if(result.ok) okCount++;
+    else errors.push(`${person.name}: ${result.error}`);
   }
   certSelectedIds = new Set();
   DB.certificates = await loadCertificates();
   render('certificates');
-  if(okCount) alert(`Issued ${okCount} certificate${okCount===1?'':'s'}.`);
+  // render() rebuilds #certIssueStatus fresh, so grab it again before writing the outcome
+  const finalStatus = document.getElementById('certIssueStatus');
+  if(finalStatus){
+    if(okCount && !errors.length){
+      finalStatus.textContent = `✓ Issued ${okCount} certificate${okCount===1?'':'s'}.`;
+      finalStatus.style.color = 'var(--teal-deep)';
+    } else if(okCount && errors.length){
+      finalStatus.textContent = `Issued ${okCount}, but ${errors.length} failed — ${errors[0]}`;
+      finalStatus.style.color = 'var(--amber-deep)';
+    } else {
+      finalStatus.textContent = `Failed to issue: ${errors[0] || 'unknown error'}`;
+      finalStatus.style.color = '#B3261E';
+    }
+  }
 }
 async function revokeCert(id, status){
-  const ok = await updateCertificateStatus(id, status);
-  if(!ok){ alert('Could not update that certificate — check your connection and try again.'); return; }
+  const result = await updateCertificateStatus(id, status);
+  if(!result.ok){ alert('Could not update that certificate: ' + (result.error||'unknown error')); return; }
   DB.certificates = await loadCertificates();
   render('certificates');
 }
