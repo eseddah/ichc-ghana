@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   :root{
     --navy:#0F2438;
@@ -248,6 +250,22 @@
   </div>
 </div>
 
+<div id="verifyPage" class="hidden">
+  <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
+    <div style="max-width:560px; width:100%;">
+      <div class="hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+      <h1 style="text-align:center; font-size:26px; margin:0 0 6px;">Verify a certificate</h1>
+      <p style="text-align:center; color:var(--muted); font-size:14px; margin:0 0 26px; line-height:1.6;">Enter the certificate ID printed on the certificate, or found under its QR code, to confirm it was genuinely issued by the IChC Outreach Program — Ghana Chapter.</p>
+      <div class="card" style="display:flex; gap:10px; margin-bottom:22px;">
+        <input id="verifyCodeInput" placeholder="e.g. ABCD1234" style="text-transform:uppercase;">
+        <button class="btn amber" id="verifyCodeBtn" style="white-space:nowrap;">Verify</button>
+      </div>
+      <div id="verifyResult"></div>
+      <p style="text-align:center; margin-top:26px;"><a href="#" id="verifyBackLink" style="font-size:13px; color:var(--muted);">← Back to the programme portal</a></p>
+    </div>
+  </div>
+</div>
+
 <div id="app" class="hidden">
   <div class="topbar">
     <div class="topbar-inner">
@@ -325,7 +343,7 @@ const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : M
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
-let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], alerts:[], loungePosts:[], polls:[], quizzes:[], presence:{} };
+let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], attendance:[], progressNotes:[], alerts:[], loungePosts:[], polls:[], quizzes:[], presence:{}, certificates:[] };
 let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -376,6 +394,50 @@ async function loadDB(){
   DB.alerts       = (await sGet('posts:alerts', true)) || [];
   DB.presence     = await loadAllPresence();
   DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
+  DB.certificates = await loadCertificates();
+}
+// Certificates live in their own Supabase table (not the generic ichc_kv store)
+// because the verify page has to read a single record WITHOUT anyone being signed
+// in — a public, no-login lookup by ID. That table has its own RLS: open SELECT,
+// writes restricted to signed-in (authenticated) sessions.
+async function loadCertificates(){
+  if(!sbReady) return [];
+  try{
+    const { data, error } = await sb.from('ichc_certificates').select('*').order('created_at', { ascending:false });
+    if(error) throw error;
+    return data || [];
+  }catch(e){ console.error('Certificate load failed', e); return []; }
+}
+async function fetchCertificateById(id){
+  if(!sbReady || !id) return null;
+  try{
+    const { data, error } = await sb.from('ichc_certificates').select('*').eq('id', id.trim().toUpperCase()).maybeSingle();
+    if(error) throw error;
+    return data || null;
+  }catch(e){ console.error('Certificate lookup failed', e); return null; }
+}
+function genCertId(){
+  // 8 chars, unambiguous alphabet (no 0/O/1/I) so it's easy to read off a printed page or type by hand
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for(let i=0;i<8;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
+  return out;
+}
+async function insertCertificate(cert){
+  if(!sbReady) return false;
+  try{
+    const { error } = await sb.from('ichc_certificates').insert(cert);
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error('Certificate insert failed', e); return false; }
+}
+async function updateCertificateStatus(id, status){
+  if(!sbReady) return false;
+  try{
+    const { error } = await sb.from('ichc_certificates').update({ status }).eq('id', id);
+    if(error) throw error;
+    return true;
+  }catch(e){ console.error('Certificate status update failed', e); return false; }
 }
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
@@ -473,6 +535,10 @@ function startRealtimeSync(){
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
           renderOrDefer(currentTab);
         }
+      })
+      .on('postgres_changes', { event:'*', schema:'public', table:'ichc_certificates' }, async ()=>{
+        DB.certificates = await loadCertificates();
+        if(currentTab==='certificates') renderOrDefer('certificates');
       })
       .subscribe();
   }catch(e){ console.error('Realtime sync failed to start', e); }
@@ -1171,9 +1237,9 @@ async function switchUser(){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['notifications','Notifications']]
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -1247,6 +1313,7 @@ function render(tab){
   else if(tab==='lounge') html = loungeView();
   else if(tab==='polls') html = pollsView();
   else if(tab==='quizzes') html = quizzesView();
+  else if(tab==='certificates') html = certificatesView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
@@ -1517,6 +1584,275 @@ function presenceBadge(email){
   const label = rec ? formatLastSeen(rec.lastSeen) : 'Never signed in';
   return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; color:var(--muted);"><span style="width:8px; height:8px; border-radius:50%; background:var(--line); display:inline-block;"></span>${escapeHtml(label)}</span>`;
 }
+// ==================== Certificates ====================
+// Certificate of Service (coordinators) / Certificate of Participation (students).
+// Explicitly framed throughout as recognition of participation, not an academic
+// qualification. Issued manually by the Ambassador, with editable fields before
+// anything is saved. Each issued record gets a short public verification code —
+// looked up from the public /?verify= page, which needs no sign-in (see
+// loadCertificates/fetchCertificateById and the RLS policy on ichc_certificates).
+
+let certSelectedIds = new Set(); // people checked in the bulk-issue picker, kept across re-renders
+let certTypeFilter = 'coordinator'; // which roster the bulk-issue picker is currently showing
+
+const CERT_COPY = {
+  service: {
+    label: 'Certificate of Service',
+    body: (name, program, year) => `This certificate is presented to ${name} in recognition of their service as a coordinator with the ${program}${year?(', '+year):''}, for the guidance, time and encouragement given to the students under their mentorship.`
+  },
+  participation: {
+    label: 'Certificate of Participation',
+    body: (name, program, year) => `This certificate is presented to ${name} in recognition of their participation in the ${program}${year?(', '+year):''}, and their commitment to the practice sessions, materials and community that make up the programme.`
+  }
+};
+const CERT_DISCLAIMER = 'This certificate recognizes participation in the programme. It is not an academic qualification and does not certify any grade, result, or course completion.';
+
+function certVerifyUrl(id){
+  const base = location.origin + location.pathname;
+  return `${base}?verify=${encodeURIComponent(id)}`;
+}
+function myCertificates(){
+  if(!ME) return [];
+  return DB.certificates.filter(c=>c.recipient_id===ME.id);
+}
+function certificatesView(){
+  if(ME.role==='ambassador') return certificatesAmbassadorView();
+  const mine = myCertificates().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  return `
+  <div class="section-title"><div><h2>My certificates</h2><p>Issued by your Ambassador to recognize your ${ME.role==='coordinator'?'service':'participation'} in the programme. Anyone can confirm these are genuine using the verification link.</p></div></div>
+  ${mine.length ? `<div class="list">${mine.map(certItemHtml).join('')}</div>` : `<div class="empty">No certificates issued to you yet. Your Ambassador issues these individually once eligible.</div>`}`;
+}
+function certItemHtml(c){
+  const revoked = c.status==='revoked';
+  return `
+  <div class="item">
+    <div class="item-head"><span class="item-title">${escapeHtml(CERT_COPY[c.type].label)}</span><span class="item-meta">issued ${fmtDate(String(c.issue_date))}</span></div>
+    <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(c.program_name)}${c.cohort_year?(' · '+escapeHtml(c.cohort_year)):''}${revoked?' · <span style="color:#B3261E; font-weight:600;">Revoked</span>':''}</div>
+    <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
+      <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
+      <button class="btn ghost small" data-copy-verify="${c.id}">Copy verify link</button>
+      <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+    </div>
+  </div>`;
+}
+function certificatesAmbassadorView(){
+  const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+  const issued = [...DB.certificates].sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  const defaultProgram = programName();
+  return `
+  <div class="section-title"><div><h2>Certificates</h2><p>Issue a Certificate of Service to coordinators, or a Certificate of Participation to students. Each one gets a unique ID anyone can use to verify it's genuine — this is recognition of participation, not an academic qualification.</p></div></div>
+
+  <div class="card" style="margin-bottom:24px;">
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button class="btn ${certTypeFilter==='coordinator'?'amber':'ghost'} small" data-cert-filter="coordinator">Coordinators → Certificate of Service</button>
+      <button class="btn ${certTypeFilter==='student'?'amber':'ghost'} small" data-cert-filter="student">Students → Certificate of Participation</button>
+    </div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field" style="margin:0;"><label>Programme name</label><input id="certProgram" value="${escapeHtml(defaultProgram)}"></div>
+      <div class="field" style="margin:0;"><label>Cohort / year</label><input id="certYear" placeholder="e.g. 2026" value="${new Date().getFullYear()}"></div>
+      <div class="field" style="margin:0;"><label>Issue date</label><input id="certDate" type="date" value="${today()}"></div>
+      <div class="field" style="margin:0;"><label>Additional note <span style="text-transform:none; font-weight:400;">(optional, shown on the certificate)</span></label><input id="certDetails" placeholder="e.g. Regional coordinator, Kumasi chapter"></div>
+    </div>
+    <div class="field" style="margin:14px 0 6px;"><label>${certTypeFilter==='coordinator'?'Coordinators':'Students'} to issue to</label></div>
+    <div style="max-height:220px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+      ${pool.length ? pool.map(p=>`<label class="alert-scope-opt" style="font-size:13.5px;"><input type="checkbox" value="${p.id}" class="certPersonChk" ${certSelectedIds.has(p.id)?'checked':''} style="width:auto;">${escapeHtml(p.name)}${p.email?(' · '+escapeHtml(p.email)):''}</label>`).join('') : `<div class="empty" style="padding:14px;">No ${certTypeFilter==='coordinator'?'coordinators':'students'} on the roster yet.</div>`}
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+      <button class="btn ghost small" id="certSelectAll">Select all</button>
+      <button class="btn ghost small" id="certSelectNone">Clear</button>
+      <span style="font-size:12.5px; color:var(--muted);">${certSelectedIds.size} selected</span>
+      <button class="btn amber small" id="certIssueBtn" style="margin-left:auto;">Issue certificate${certSelectedIds.size===1?'':'s'}</button>
+    </div>
+  </div>
+
+  <div class="section-title"><div><h2>Issued certificates</h2></div></div>
+  ${issued.length ? `<div class="list">${issued.map(c=>`
+    <div class="item">
+      <div class="item-head"><span class="item-title">${escapeHtml(c.recipient_name)} <span class="badge ${c.type==='service'?'coord':'stud'}" style="margin-left:6px;">${escapeHtml(CERT_COPY[c.type].label)}</span></span><span class="item-meta">${fmtDate(String(c.issue_date))}</span></div>
+      <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(c.program_name)}${c.cohort_year?(' · '+escapeHtml(c.cohort_year)):''}${c.details?(' · '+escapeHtml(c.details)):''}${c.status==='revoked'?' · <span style="color:#B3261E; font-weight:600;">Revoked</span>':''}</div>
+      <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
+        <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
+        <button class="btn ghost small" data-copy-verify="${c.id}">Copy verify link</button>
+        <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+        ${c.status==='revoked'
+          ? `<button class="btn ghost small" data-reinstate-cert="${c.id}">Reinstate</button>`
+          : `<button class="btn ghost small" data-revoke-cert="${c.id}">Revoke</button>`}
+      </div>
+    </div>`).join('')}</div>` : `<div class="empty">No certificates issued yet.</div>`}`;
+}
+
+async function issueCertificatesBulk(){
+  const btn = document.getElementById('certIssueBtn');
+  if(!certSelectedIds.size){ alert('Select at least one person first.'); return; }
+  const program = (document.getElementById('certProgram').value||'').trim() || programName();
+  const year = (document.getElementById('certYear').value||'').trim();
+  const dateVal = document.getElementById('certDate').value || today();
+  const details = (document.getElementById('certDetails').value||'').trim();
+  const type = certTypeFilter==='coordinator' ? 'service' : 'participation';
+  const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+  if(btn){ btn.disabled = true; btn.textContent = 'Issuing…'; }
+  let okCount = 0;
+  for(const id of certSelectedIds){
+    const person = pool.find(p=>p.id===id);
+    if(!person) continue;
+    const cert = {
+      id: genCertId(),
+      type,
+      recipient_id: person.id,
+      recipient_name: person.name,
+      recipient_role_label: type==='service' ? (person.subject||person.region||'') : (person.school||person.region||''),
+      program_name: program,
+      cohort_year: year,
+      issue_date: dateVal,
+      details: details,
+      status: 'active',
+      issued_by: ME.name
+    };
+    const ok = await insertCertificate(cert);
+    if(ok) okCount++;
+  }
+  certSelectedIds = new Set();
+  DB.certificates = await loadCertificates();
+  render('certificates');
+  if(okCount) alert(`Issued ${okCount} certificate${okCount===1?'':'s'}.`);
+}
+async function revokeCert(id, status){
+  const ok = await updateCertificateStatus(id, status);
+  if(!ok){ alert('Could not update that certificate — check your connection and try again.'); return; }
+  DB.certificates = await loadCertificates();
+  render('certificates');
+}
+
+// ---- PDF generation (jsPDF, drawn entirely in the browser — matches the
+// dashboard's own palette) ----
+async function downloadCertificatePdf(id){
+  const c = DB.certificates.find(x=>x.id===id) || await fetchCertificateById(id);
+  if(!c){ alert('Could not find that certificate.'); return; }
+  if(typeof window.jspdf === 'undefined'){ alert('The PDF library hasn\'t loaded yet — check your connection and try again.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+
+  const NAVY = [15,36,56], NAVY_DEEP = [10,24,38], AMBER = [227,154,59], AMBER_DEEP=[201,127,34];
+  const TEAL_DEEP = [20,105,86], MUTED = [107,114,128], INK=[27,36,48];
+
+  // background + border
+  doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F');
+  doc.setDrawColor(...NAVY_DEEP); doc.setLineWidth(2.5); doc.rect(24,24,W-48,H-48);
+  doc.setDrawColor(...AMBER); doc.setLineWidth(1); doc.rect(34,34,W-68,H-68);
+
+  doc.setTextColor(...NAVY_DEEP);
+  doc.setFont('times','bold'); doc.setFontSize(13);
+  doc.text('IChC OUTREACH PROGRAM — GHANA CHAPTER', W/2, 78, { align:'center' });
+
+  doc.setDrawColor(...AMBER); doc.setLineWidth(1.2);
+  doc.line(W/2-70, 90, W/2+70, 90);
+
+  doc.setFont('times','bold'); doc.setFontSize(30);
+  doc.text(CERT_COPY[c.type].label, W/2, 130, { align:'center' });
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(...MUTED);
+  doc.text('This certificate is proudly presented to', W/2, 156, { align:'center' });
+
+  doc.setTextColor(...TEAL_DEEP); doc.setFont('times','bolditalic'); doc.setFontSize(34);
+  doc.text(c.recipient_name, W/2, 196, { align:'center' });
+  doc.setDrawColor(...NAVY_DEEP); doc.setLineWidth(0.8);
+  const nameWidth = Math.min(doc.getTextWidth(c.recipient_name)+40, W-160);
+  doc.line(W/2-nameWidth/2, 206, W/2+nameWidth/2, 206);
+
+  doc.setTextColor(...INK); doc.setFont('helvetica','normal'); doc.setFontSize(12.5);
+  const bodyText = CERT_COPY[c.type].body(c.recipient_name, c.program_name, c.cohort_year);
+  const bodyLines = doc.splitTextToSize(bodyText, W-260);
+  doc.text(bodyLines, W/2, 234, { align:'center' });
+
+  if(c.details){
+    doc.setFont('helvetica','italic'); doc.setFontSize(11); doc.setTextColor(...MUTED);
+    doc.text(doc.splitTextToSize(c.details, W-300), W/2, 234 + bodyLines.length*16 + 14, { align:'center' });
+  }
+
+  // signature + date block
+  const sigY = H-118;
+  doc.setDrawColor(...NAVY_DEEP); doc.setLineWidth(0.8);
+  doc.line(W/2-190, sigY, W/2-60, sigY);
+  doc.line(W/2+60, sigY, W/2+190, sigY);
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...INK);
+  doc.text(c.issued_by || 'Ambassador', W/2-125, sigY+16, { align:'center' });
+  doc.text(fmtDate(String(c.issue_date)), W/2+125, sigY+16, { align:'center' });
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...MUTED);
+  doc.text('Ambassador, ' + c.program_name, W/2-125, sigY+30, { align:'center' });
+  doc.text('Date issued', W/2+125, sigY+30, { align:'center' });
+
+  // disclaimer
+  doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
+  doc.text(doc.splitTextToSize(CERT_DISCLAIMER, W-300), W/2, H-56, { align:'center' });
+
+  // QR + verification code, bottom-right corner
+  try{
+    const verifyUrl = certVerifyUrl(c.id);
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin:1, width:220, color:{ dark:'#0A1826', light:'#FFFFFF' } });
+    const qrSize = 66;
+    doc.addImage(qrDataUrl, 'PNG', W-64-qrSize, H-64-qrSize, qrSize, qrSize);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+    doc.text('Scan to verify', W-64-qrSize/2, H-64+12, { align:'center' });
+  }catch(e){ console.error('QR generation failed', e); }
+
+  doc.setFont('courier','normal'); doc.setFontSize(9); doc.setTextColor(...NAVY_DEEP);
+  doc.text('Certificate ID: ' + c.id, 64, H-64);
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
+  doc.text('Verify at ' + certVerifyUrl(c.id), 64, H-50);
+
+  doc.save(`${c.type==='service'?'Certificate-of-Service':'Certificate-of-Participation'}-${c.recipient_name.replace(/[^a-z0-9]+/gi,'-')}.pdf`);
+}
+
+// ---- Public verification page (no sign-in) ----
+async function renderVerifyResult(code){
+  const el = document.getElementById('verifyResult');
+  if(!el) return;
+  if(!code || !code.trim()){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="empty">Checking…</div>`;
+  const c = await fetchCertificateById(code);
+  if(!c){
+    el.innerHTML = `<div class="card" style="border-color:#B3261E; background:rgba(211,47,47,.06);">
+      <b style="color:#B3261E;">No certificate found</b>
+      <p style="font-size:13.5px; color:var(--ink); margin:6px 0 0;">No certificate matches ID <span class="mono">${escapeHtml(code.trim().toUpperCase())}</span>. Double-check the code and try again.</p>
+    </div>`;
+    return;
+  }
+  if(c.status==='revoked'){
+    el.innerHTML = `<div class="card" style="border-color:var(--amber-deep); background:rgba(227,154,59,.1);">
+      <b style="color:var(--amber-deep);">⚠ This certificate has been revoked</b>
+      <p style="font-size:13.5px; color:var(--ink); margin:6px 0 0;">A certificate with ID <span class="mono">${escapeHtml(c.id)}</span> was issued to <b>${escapeHtml(c.recipient_name)}</b> but has since been revoked by the programme and is no longer valid.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="card" style="border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
+    <b style="color:var(--teal-deep);">✓ Certificate verified</b>
+    <p style="font-size:13.5px; color:var(--ink); margin:10px 0 0; line-height:1.7;">
+      <b>${escapeHtml(c.recipient_name)}</b> was issued a <b>${escapeHtml(CERT_COPY[c.type].label)}</b><br>
+      Programme: ${escapeHtml(c.program_name)}${c.cohort_year?(' · '+escapeHtml(c.cohort_year)):''}<br>
+      Issue date: ${fmtDate(String(c.issue_date))}<br>
+      Certificate ID: <span class="mono">${escapeHtml(c.id)}</span>
+    </p>
+    <p style="font-size:11.5px; color:var(--muted); margin:12px 0 0; font-style:italic;">${CERT_DISCLAIMER}</p>
+  </div>`;
+}
+function initVerifyPage(){
+  const params = new URLSearchParams(location.search);
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('emailNotFound').classList.add('hidden');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('verifyPage').classList.remove('hidden');
+  paintLogos();
+  const initialCode = params.get('verify') || '';
+  const input = document.getElementById('verifyCodeInput');
+  if(initialCode) input.value = initialCode.toUpperCase();
+  const backLink = document.getElementById('verifyBackLink');
+  if(backLink){ backLink.href = location.pathname; }
+  document.getElementById('verifyCodeBtn').addEventListener('click', ()=>renderVerifyResult(input.value));
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') renderVerifyResult(input.value); });
+  if(initialCode) renderVerifyResult(initialCode);
+}
+
 async function touchPresence(){
   if(!ME || !ME.email || !sbReady) return;
   const rec = { name: ME.name, role: ME.role, lastSeen: new Date().toISOString() };
@@ -2964,9 +3300,59 @@ function wireHandlers(tab){
       }
     });
   }
+
+  // ---- Certificates ----
+  if(tab==='certificates' && ME.role==='ambassador'){
+    document.querySelectorAll('[data-cert-filter]').forEach(b=>b.addEventListener('click', ()=>{
+      certTypeFilter = b.dataset.certFilter;
+      certSelectedIds = new Set();
+      render('certificates');
+    }));
+    document.querySelectorAll('.certPersonChk').forEach(chk=>chk.addEventListener('change', ()=>{
+      if(chk.checked) certSelectedIds.add(chk.value); else certSelectedIds.delete(chk.value);
+      const counter = document.querySelector('#screen .card span[style*="color:var(--muted)"]');
+      // cheap live count without a full re-render (keeps the checkbox list scroll position intact)
+      const countEl = Array.from(document.querySelectorAll('#screen .card span')).find(s=>/selected$/.test(s.textContent||''));
+      if(countEl) countEl.textContent = `${certSelectedIds.size} selected`;
+    }));
+    if(q('certSelectAll')) q('certSelectAll').addEventListener('click', ()=>{
+      const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+      pool.forEach(p=>certSelectedIds.add(p.id));
+      render('certificates');
+    });
+    if(q('certSelectNone')) q('certSelectNone').addEventListener('click', ()=>{
+      certSelectedIds = new Set();
+      render('certificates');
+    });
+    if(q('certIssueBtn')) q('certIssueBtn').addEventListener('click', issueCertificatesBulk);
+    document.querySelectorAll('[data-revoke-cert]').forEach(b=>b.addEventListener('click', ()=>{
+      if(confirm('Revoke this certificate? It will show as revoked on the public verification page.')) revokeCert(b.dataset.revokeCert, 'revoked');
+    }));
+    document.querySelectorAll('[data-reinstate-cert]').forEach(b=>b.addEventListener('click', ()=>{
+      revokeCert(b.dataset.reinstateCert, 'active');
+    }));
+  }
+  if(tab==='certificates'){
+    document.querySelectorAll('[data-download-cert]').forEach(b=>b.addEventListener('click', ()=>{
+      b.disabled = true; const orig = b.textContent; b.textContent = 'Building…';
+      downloadCertificatePdf(b.dataset.downloadCert).finally(()=>{ b.disabled=false; b.textContent = orig; });
+    }));
+    document.querySelectorAll('[data-copy-verify]').forEach(b=>b.addEventListener('click', async ()=>{
+      const url = certVerifyUrl(b.dataset.copyVerify);
+      try{ await navigator.clipboard.writeText(url); const orig=b.textContent; b.textContent='Copied!'; setTimeout(()=>b.textContent=orig, 1400); }
+      catch(e){ prompt('Copy this link:', url); }
+    }));
+  }
 }
 
 (async function boot(){
+  // Public certificate verification bypasses sign-in entirely — anyone with a
+  // certificate ID (from the PDF or its QR code) can land on ?verify=<id> and
+  // get an answer, no Google account or roster membership required.
+  if(new URLSearchParams(location.search).has('verify')){
+    initVerifyPage();
+    return;
+  }
   // Resolving the Supabase auth session has to happen before the very first data
   // read. Once the ichc_kv table requires an authenticated request (see the RLS
   // policy that should be added in the Supabase dashboard), a request made before
