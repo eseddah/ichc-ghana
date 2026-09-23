@@ -450,6 +450,17 @@ async function updateCertificateStatus(id, status){
     return { ok:false, error: (e && (e.message||e.details||e.hint||e.code)) ? (e.message||e.details||e.hint||e.code) : String(e) };
   }
 }
+async function deleteCertificateRow(id){
+  if(!sbReady) return { ok:false, error:'Storage isn\'t connected.' };
+  try{
+    const { error } = await sb.from('ichc_certificates').delete().eq('id', id);
+    if(error) throw error;
+    return { ok:true };
+  }catch(e){
+    console.error('Certificate delete failed', e);
+    return { ok:false, error: (e && (e.message||e.details||e.hint||e.code)) ? (e.message||e.details||e.hint||e.code) : String(e) };
+  }
+}
 const KEY_MAP = {
   coordinators:'roster:coordinators', students:'roster:students', announcements:'posts:announcements',
   materials:'posts:materials', callsheets:'posts:callsheets', practice:'posts:practice', comments:'posts:comments',
@@ -467,7 +478,7 @@ async function saveKey(name){
 let realtimeChannel = null;
 const LIVE_RERENDER_TABS = new Set(['overview','applications','people','feed','announce','library','notifications',
   'space','students','calls','materials','practice','messages',
-  'welcome','hub','ask','alerts','lounge','polls','quizzes']);
+  'welcome','hub','ask','alerts','lounge']);
 // 'exams' is deliberately excluded: a student's in-progress exam textarea would get
 // wiped mid-typing by any unrelated background update elsewhere in the app. Exam data
 // is still fresh every time someone opens or switches into the tab.
@@ -870,11 +881,6 @@ function pollResults(poll){
   Object.values(poll.votes||{}).forEach(idx=>{ if(counts[idx]!==undefined){ counts[idx]++; total++; } });
   return {counts, total};
 }
-function pollsView(){
-  if(ME.role==='coordinator') return pollsCoordinatorView();
-  if(ME.role==='student') return pollsStudentView();
-  return `<div class="empty">Not available.</div>`;
-}
 function pollsCoordinatorView(){
   const mine = DB.polls.filter(p=>p.coordinatorId===ME.id).sort((a,b)=>b.ts-a.ts);
   return `
@@ -941,11 +947,6 @@ function quizStats(quiz){
   const correct = attempts.filter(a=>a.correct).length;
   return {total, correct};
 }
-function quizzesView(){
-  if(ME.role==='coordinator') return quizzesCoordinatorView();
-  if(ME.role==='student') return quizzesStudentView();
-  return `<div class="empty">Not available.</div>`;
-}
 function quizzesCoordinatorView(){
   const mine = DB.quizzes.filter(q=>q.coordinatorId===ME.id).sort((a,b)=>b.ts-a.ts);
   return `
@@ -1005,6 +1006,54 @@ function quizzesStudentView(){
       </div>`;
     }).join('') : `<div class="empty">No quiz questions yet — your coordinator hasn't posted one.</div>`}
   </div>`;
+}
+
+// ---- Practice question, Polls, and Quizzes now live together under one
+// "Practice question" tab (coordinator + student), switched by a small
+// sub-nav rather than three separate top-level tabs ----
+let practiceSubTab = 'practice'; // 'practice' | 'polls' | 'quizzes'
+function practiceHubView(role){
+  const tabs = [['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes']];
+  const body = practiceSubTab==='polls' ? (role==='coordinator' ? pollsCoordinatorView() : pollsStudentView())
+             : practiceSubTab==='quizzes' ? (role==='coordinator' ? quizzesCoordinatorView() : quizzesStudentView())
+             : practiceQuestionSection(role);
+  return `
+  <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+    ${tabs.map(([key,label])=>`<button class="btn ${practiceSubTab===key?'amber':'ghost'} small" data-practice-sub="${key}">${label}</button>`).join('')}
+  </div>
+  ${body}`;
+}
+function practiceQuestionSection(role){
+  if(role==='coordinator'){
+    const mine = DB.practice.filter(p=>p.coordinatorId===ME.id).sort((a,b)=>b.date.localeCompare(a.date));
+    return `
+    <div class="section-title"><div><h2>Practice question</h2><p>One sharp problem a week keeps competition instincts warm.</p></div></div>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="pracQ" rows="3" placeholder="Write the practice question here"></textarea></div>
+      <div class="field" style="margin:0 0 10px;"><label>Hint / answer (optional, shown separately)</label><input id="pracA" placeholder="Optional hint or worked answer"></div>
+      <button class="btn teal small" id="addPracBtn">Post practice question</button>
+    </div>
+    <div class="list">
+      ${mine.length ? mine.map(p=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">Posted ${fmtDate(p.date)}</span></div>
+          <div class="item-body">${linkify(p.question)}${p.answer?`<br><span style="color:var(--muted);">Hint: ${linkify(p.answer)}</span>`:''}</div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-prac="${p.id}">Remove</button></div>
+        </div>`).join('') : `<div class="empty">No practice question posted this week yet.</div>`}
+    </div>`;
+  }
+  const mine = DB.practice.filter(p=>p.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
+  const latest = mine[0];
+  return `
+  <div class="section-title"><div><h2>Practice question</h2><p>Try it before you scroll to the hint.</p></div></div>
+  ${latest ? `
+    <div class="card" style="margin-bottom:20px;">
+      <div class="badge stud" style="margin-bottom:10px;">This week</div>
+      <div style="font-size:16px; line-height:1.6;">${escapeHtml(latest.question)}</div>
+      ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(latest.answer)}</p></details>` : ''}
+    </div>` : `<div class="empty">No practice question yet — your coordinator will post one soon.</div>`}
+  ${mine.length>1 ? `<h3 style="font-size:15px; margin:20px 0 10px;">Past questions</h3><div class="list">${mine.slice(1).map(p=>`
+    <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(p.question)}</div></div>`).join('')}</div>` : ''}`;
 }
 
 function audienceFor(coordinatorId){
@@ -1249,8 +1298,8 @@ async function switchUser(){
 function buildTabs(){
   const tabsFor = {
     ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['polls','Polls'],['quizzes','Quizzes'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -1322,8 +1371,6 @@ function render(tab){
   else if(tab==='applications') html = applicationsView();
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
-  else if(tab==='polls') html = pollsView();
-  else if(tab==='quizzes') html = quizzesView();
   else if(tab==='certificates') html = certificatesView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
@@ -1693,6 +1740,7 @@ function certificatesAmbassadorView(){
         ${c.status==='revoked'
           ? `<button class="btn ghost small" data-reinstate-cert="${c.id}">Reinstate</button>`
           : `<button class="btn ghost small" data-revoke-cert="${c.id}">Revoke</button>`}
+        <button class="btn ghost small" data-delete-cert="${c.id}" style="color:#B3261E; border-color:#B3261E;">Delete permanently</button>
       </div>
     </div>`).join('')}</div>` : `<div class="empty">No certificates issued yet.</div>`}`;
 }
@@ -1753,6 +1801,12 @@ async function issueCertificatesBulk(){
 async function revokeCert(id, status){
   const result = await updateCertificateStatus(id, status);
   if(!result.ok){ alert('Could not update that certificate: ' + (result.error||'unknown error')); return; }
+  DB.certificates = await loadCertificates();
+  render('certificates');
+}
+async function deleteCertificate(id){
+  const result = await deleteCertificateRow(id);
+  if(!result.ok){ alert('Could not delete that certificate: ' + (result.error||'unknown error')); return; }
   DB.certificates = await loadCertificates();
   render('certificates');
 }
@@ -2330,22 +2384,7 @@ function coordinatorView(tab){
     </div>`;
   }
   if(tab==='practice'){
-    const mine = DB.practice.filter(p=>p.coordinatorId===ME.id).sort((a,b)=>b.date.localeCompare(a.date));
-    return `
-    <div class="section-title"><div><h2>Practice question</h2><p>One sharp problem a week keeps competition instincts warm.</p></div></div>
-    <div class="card" style="margin-bottom:18px;">
-      <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="pracQ" rows="3" placeholder="Write the practice question here"></textarea></div>
-      <div class="field" style="margin:0 0 10px;"><label>Hint / answer (optional, shown separately)</label><input id="pracA" placeholder="Optional hint or worked answer"></div>
-      <button class="btn teal small" id="addPracBtn">Post practice question</button>
-    </div>
-    <div class="list">
-      ${mine.length ? mine.map(p=>`
-        <div class="item">
-          <div class="item-head"><span class="item-title">Posted ${fmtDate(p.date)}</span></div>
-          <div class="item-body">${linkify(p.question)}${p.answer?`<br><span style="color:var(--muted);">Hint: ${linkify(p.answer)}</span>`:''}</div>
-          <div class="item-actions"><button class="btn ghost small" data-remove-prac="${p.id}">Remove</button></div>
-        </div>`).join('') : `<div class="empty">No practice question posted this week yet.</div>`}
-    </div>`;
+    return practiceHubView('coordinator');
   }
   if(tab==='messages'){
     const relevant = DB.comments.filter(c=>c.coordinatorId===ME.id);
@@ -2433,18 +2472,7 @@ function studentView(tab){
     return announceView(false);
   }
   if(tab==='practice'){
-    const mine = DB.practice.filter(p=>p.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
-    const latest = mine[0];
-    return `
-    <div class="section-title"><div><h2>Practice question</h2><p>Try it before you scroll to the hint.</p></div></div>
-    ${latest ? `
-      <div class="card" style="margin-bottom:20px;">
-        <div class="badge stud" style="margin-bottom:10px;">This week</div>
-        <div style="font-size:16px; line-height:1.6;">${escapeHtml(latest.question)}</div>
-        ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(latest.answer)}</p></details>` : ''}
-      </div>` : `<div class="empty">No practice question yet — your coordinator will post one soon.</div>`}
-    ${mine.length>1 ? `<h3 style="font-size:15px; margin:20px 0 10px;">Past questions</h3><div class="list">${mine.slice(1).map(p=>`
-      <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(p.question)}</div></div>`).join('')}</div>` : ''}`;
+    return practiceHubView('student');
   }
   if(tab==='ask'){
     const relevant = DB.comments.filter(c=>c.coordinatorId===myCoordinatorId());
@@ -2917,6 +2945,12 @@ function wireHandlers(tab){
     render('lounge');
   }));
 
+  // ---- Practice question / Polls / Quizzes sub-nav ----
+  document.querySelectorAll('[data-practice-sub]').forEach(b=>b.addEventListener('click', ()=>{
+    practiceSubTab = b.dataset.practiceSub;
+    render('practice');
+  }));
+
   // ---- Polls ----
   if(q('addPollBtn')) q('addPollBtn').addEventListener('click', async ()=>{
     const question = q('pollQuestion').value.trim();
@@ -2925,20 +2959,20 @@ function wireHandlers(tab){
     if(options.length<2) return alert('Add at least two options.');
     DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, date:today(), ts:Date.now()});
     await saveKey('polls');
-    render('polls');
+    render('practice');
   });
   document.querySelectorAll('[data-toggle-poll]').forEach(b=>b.addEventListener('click', async ()=>{
     const p = DB.polls.find(p=>p.id===b.dataset.togglePoll);
     if(!p) return;
     p.closed = !p.closed;
     await saveKey('polls');
-    render('polls');
+    render('practice');
   }));
   document.querySelectorAll('[data-remove-poll]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!confirm('Remove this poll?')) return;
     DB.polls = DB.polls.filter(p=>p.id!==b.dataset.removePoll);
     await saveKey('polls');
-    render('polls');
+    render('practice');
   }));
   document.querySelectorAll('[data-vote-poll]').forEach(b=>b.addEventListener('click', async ()=>{
     const pollId = b.dataset.votePoll;
@@ -2949,7 +2983,7 @@ function wireHandlers(tab){
     p.votes = p.votes || {};
     p.votes[ME.id] = parseInt(checked.value, 10);
     await saveKey('polls');
-    render('polls');
+    render('practice');
   }));
 
   // ---- Quizzes ----
@@ -2965,13 +2999,13 @@ function wireHandlers(tab){
     const correctIndex = filled.findIndex(o=>o.i===letterIndex);
     DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, date:today(), ts:Date.now()});
     await saveKey('quizzes');
-    render('quizzes');
+    render('practice');
   });
   document.querySelectorAll('[data-remove-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!confirm('Remove this quiz question?')) return;
     DB.quizzes = DB.quizzes.filter(qz=>qz.id!==b.dataset.removeQuiz);
     await saveKey('quizzes');
-    render('quizzes');
+    render('practice');
   }));
   document.querySelectorAll('[data-submit-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
     const quizId = b.dataset.submitQuiz;
@@ -2983,14 +3017,14 @@ function wireHandlers(tab){
     qz.attempts = qz.attempts || {};
     qz.attempts[ME.id] = { selectedIndex, correct: selectedIndex===qz.correctIndex, ts: Date.now() };
     await saveKey('quizzes');
-    render('quizzes');
+    render('practice');
   }));
   document.querySelectorAll('[data-retake-quiz]').forEach(b=>b.addEventListener('click', async ()=>{
     const qz = DB.quizzes.find(qz=>qz.id===b.dataset.retakeQuiz);
     if(!qz || !qz.attempts) return;
     delete qz.attempts[ME.id];
     await saveKey('quizzes');
-    render('quizzes');
+    render('practice');
   }));
 
   if(q('peopleSearchInput')) q('peopleSearchInput').addEventListener('input', (e)=>{
@@ -3454,6 +3488,10 @@ function wireHandlers(tab){
     }));
     document.querySelectorAll('[data-reinstate-cert]').forEach(b=>b.addEventListener('click', ()=>{
       revokeCert(b.dataset.reinstateCert, 'active');
+    }));
+    document.querySelectorAll('[data-delete-cert]').forEach(b=>b.addEventListener('click', ()=>{
+      const id = b.dataset.deleteCert;
+      if(confirm(`Permanently delete certificate ${id}? This cannot be undone — the recipient will lose access to it and the verification link will stop working.`)) deleteCertificate(id);
     }));
   }
   if(tab==='certificates'){
