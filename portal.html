@@ -1855,38 +1855,38 @@ async function downloadCertificatePdf(id){
   doc.setTextColor(...CHALK); doc.setFont('helvetica','bold'); doc.setFontSize(13);
   doc.text(trackedCaps(c.program_name || 'Chemistry Competition Prep'), W/2, bandY+bandH/2+4.5, { align:'center' });
 
-  let y = bandY + bandH + 26;
+  let y = bandY + bandH + 29;
 
   doc.setTextColor(...accent);
   doc.setFont('times','bold'); doc.setFontSize(28);
   doc.text(CERT_COPY[c.type].label, W/2, y, { align:'center' });
-  y += 30;
+  y += 29;
 
   doc.setFont('helvetica','normal'); doc.setFontSize(11.5); doc.setTextColor(...MUTED);
   doc.text('This certificate is proudly presented to', W/2, y, { align:'center' });
-  y += 26;
+  y += 27;
 
   doc.setTextColor(...NAVY_DEEP); doc.setFont('times','bolditalic'); doc.setFontSize(28);
   doc.text(c.recipient_name, W/2, y, { align:'center' });
   doc.setDrawColor(...accent); doc.setLineWidth(1);
   const nameWidth = Math.min(doc.getTextWidth(c.recipient_name)+40, W-200);
   doc.line(W/2-nameWidth/2, y+10, W/2+nameWidth/2, y+10);
-  y += 36;
+  y += 37;
 
   doc.setTextColor(...INK); doc.setFont('helvetica','normal'); doc.setFontSize(11.5);
   const defaultLineHeightFactor = doc.getLineHeightFactor ? doc.getLineHeightFactor() : 1.15;
-  doc.setLineHeightFactor(1.32); // generous breathing room between wrapped lines
+  doc.setLineHeightFactor(1.35); // generous breathing room between wrapped lines
   const bodyText = CERT_COPY[c.type].body(c.recipient_name, c.program_name, c.cohort_year);
   const bodyLines = doc.splitTextToSize(bodyText, W-300);
   doc.text(bodyLines, W/2, y, { align:'center' });
-  y += bodyLines.length * 11.5 * 1.32 + 10;
+  y += bodyLines.length * 11.5 * 1.35 + 11;
   doc.setLineHeightFactor(defaultLineHeightFactor); // restore for every line drawn after this
 
   if(c.details){
     doc.setFont('helvetica','italic'); doc.setFontSize(10.5); doc.setTextColor(...MUTED);
     const detailLines = doc.splitTextToSize(c.details, W-340);
     doc.text(detailLines, W/2, y, { align:'center' });
-    y += detailLines.length*13 + 6;
+    y += detailLines.length*13 + 7;
   }
 
   // ---- footer block: signature, disclaimer, and the ID/QR row are laid out
@@ -1894,18 +1894,21 @@ async function downloadCertificatePdf(id){
   // every piece inside it sits at a constant offset from every other piece —
   // they can never land on top of each other regardless of how long the body
   // text above happens to run. The block is placed just below the body text,
-  // but capped at a ceiling that always keeps the QR caption safely inside
-  // the card's inner border, however little room the body text leaves. ----
+  // but capped at a ceiling that always keeps the QR caption — and the ID/date
+  // lines beside it — safely clear of the card's inner border and the corner
+  // brackets, however little room the body text leaves. ----
   const innerBorderBottom = cardY + 11 + (cardH - 22);
+  const bracketBottom = cardY + 24 + (cardH - 48); // corner brackets sit inside the accent border
+  const safeBottom = Math.min(innerBorderBottom, bracketBottom);
 
   const sigImgW = 74, sigImgH = 46;        // matches the source crop's aspect ratio
   const sigTopPad = sigImgH - 8;           // image top -> signature line
-  const lineToName = 15, nameToTitle = 12; // signature line -> name -> title
-  const titleToDisclaimer = 11;
-  const disclaimerToQr = 14;
-  const qrSize = 50, qrBoxPad = 6, qrBoxH = qrSize + qrBoxPad*2;
-  const qrToCaption = 10;
-  const bottomSafety = 10; // caption baseline must clear the inner border by this much
+  const lineToName = 14, nameToTitle = 11; // signature line -> name -> title
+  const titleToDisclaimer = 9;
+  const disclaimerToQr = 12;
+  const qrSize = 48, qrBoxPad = 5, qrBoxH = qrSize + qrBoxPad*2;
+  const qrToCaption = 9;
+  const bottomSafety = 9; // caption / ID+date baseline must clear the corner brackets by this much
 
   // offsets, all measured from footerBlockTop (= signature image top)
   const offSigLine = sigTopPad;
@@ -1915,7 +1918,7 @@ async function downloadCertificatePdf(id){
   const offQrBox = offDisclaimer + disclaimerToQr;
   const offCaption = offQrBox + qrBoxH + qrToCaption;
 
-  const maxFooterBlockTop = innerBorderBottom - bottomSafety - offCaption;
+  const maxFooterBlockTop = safeBottom - bottomSafety - offCaption;
   const minGapAfterBody = 14;
   const footerBlockTop = Math.min(maxFooterBlockTop, y + minGapAfterBody);
 
@@ -1948,21 +1951,21 @@ async function downloadCertificatePdf(id){
   try{ qrDataUrl = generateQrDataUrl(verifyUrl, 256); }
   catch(e){ console.error('QR generation failed', e); }
 
-  // ID + issue date sit on their own single line, vertically centered against
-  // the QR box so the whole row reads as one tidy strip instead of loose,
-  // scattered pieces at different heights
-  const rowCenterY = qrBoxY + qrBoxH/2;
-  doc.setFont('courier','normal'); doc.setFontSize(9.5); doc.setTextColor(...NAVY_DEEP);
-  doc.text('Certificate ID  ' + c.id, cardX+40, rowCenterY-4);
+  // ID + issue date sit on their own two-line block, bottom-aligned with the
+  // QR caption below it so both sides of the footer row end at the same
+  // height near the card's bottom edge instead of floating at different levels
+  const rowGap = 15;
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
-  doc.text('Issued ' + fmtDate(String(c.issue_date)), cardX+40, rowCenterY+11);
+  doc.text('Issued ' + fmtDate(String(c.issue_date)), cardX+40, captionY);
+  doc.setFont('courier','normal'); doc.setFontSize(9.5); doc.setTextColor(...NAVY_DEEP);
+  doc.text('Certificate ID  ' + c.id, cardX+40, captionY-rowGap);
 
   if(qrDataUrl){
     doc.setDrawColor(...LINE); doc.setLineWidth(0.75); doc.setFillColor(...PAPER);
     doc.roundedRect(qrBoxX, qrBoxY, qrBoxH, qrBoxH, 6, 6, 'FD');
     doc.addImage(qrDataUrl, 'PNG', qrBoxX+qrBoxPad, qrBoxY+qrBoxPad, qrSize, qrSize);
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-    doc.text('Scan to verify · ' + location.host, qrBoxX+qrBoxH/2, captionY, { align:'center' });
+    doc.text('Scan to verify', qrBoxX+qrBoxH/2, captionY, { align:'center' });
   } else {
     doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
     doc.text(doc.splitTextToSize('QR unavailable — verify with the Certificate ID above', 150), qrBoxX+qrBoxH/2, qrBoxY+qrBoxH/2+3, { align:'center' });
