@@ -317,6 +317,19 @@
   </div>
 </div>
 
+<div id="roleMismatch" class="hidden">
+  <div class="onb-box" style="text-align:center;">
+    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
+    <h1 class="onb-title" style="font-size:26px;">Wrong door</h1>
+    <p class="onb-sub" id="roleMismatchText"></p>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
+      <button class="btn amber" id="roleMismatchCorrectBtn" style="width:100%; justify-content:center;"></button>
+      <a href="apply.html" class="btn secondary" style="width:100%; justify-content:center;">Apply for that role instead →</a>
+      <button class="btn ghost" id="roleMismatchSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
+    </div>
+  </div>
+</div>
+
 <div id="verifyPage" class="hidden">
   <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;">
     <div style="max-width:560px; width:100%;">
@@ -1253,14 +1266,21 @@ function initOnboarding(){
   });
 }
 
-async function handleGoogleSignIn(){
+async function handleGoogleSignIn(ev){
   const picks = document.querySelectorAll('.portal-pick');
   const msg = document.getElementById('googleMsg');
   if(!sbReady){ msg.textContent = 'Sign-in isn\'t connected yet — check back shortly.'; return; }
+  const clickedRole = ev.currentTarget.dataset.role;
+  // This flag is the ONLY thing that authorizes an automatic sign-in — in
+  // resolveGoogleSession() and in boot()'s cached-session check. No click
+  // this tab visit, no login, even if Google or a cached "me" record would
+  // otherwise let someone straight through. It also records which door was
+  // picked, so the account's actual role can be checked against it once
+  // we're back from Google — see resolveGoogleSession().
+  sessionStorage.setItem('ichc_pending_role', clickedRole);
   // Flip every option's state synchronously, before the await below, so there's
   // no dead gap between the click and visible feedback while the browser sets
-  // up the redirect to Google. Whichever portal card was clicked is cosmetic —
-  // the account's actual role is looked up from the roster after sign-in.
+  // up the redirect to Google.
   picks.forEach(p=>{ p.disabled = true; });
   msg.textContent = 'Redirecting to Google…';
   try{
@@ -1270,6 +1290,7 @@ async function handleGoogleSignIn(){
     });
     if(error) throw error;
   }catch(e){
+    sessionStorage.removeItem('ichc_pending_role');
     picks.forEach(p=>{ p.disabled = false; });
     msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador.';
   }
@@ -1279,36 +1300,77 @@ let googleUser = null;
 
 async function resolveGoogleSession(){
   if(!sbReady) return false;
+  const pendingRole = sessionStorage.getItem('ichc_pending_role');
+  // No click this tab visit → no automatic sign-in, no matter what Google's
+  // own session says. Leave the onboarding screen exactly as it is.
+  if(!pendingRole) return false;
   const { data: { session } } = await sb.auth.getSession();
-  if(!session || !session.user || !session.user.email) return false;
+  if(!session || !session.user || !session.user.email){
+    sessionStorage.removeItem('ichc_pending_role');
+    return false;
+  }
   googleUser = session.user;
   const email = session.user.email.toLowerCase();
   const name = (session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || email;
+  sessionStorage.removeItem('ichc_pending_role');
 
-  if(isAmbassadorEmail(email)){
+  let actualRole = null;
+  if(isAmbassadorEmail(email)) actualRole = 'ambassador';
+  else if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===email)) actualRole = 'coordinator';
+  else if(DB.students.some(s=>s.email && s.email.toLowerCase()===email)) actualRole = 'student';
+
+  if(actualRole===null){
+    showEmailNotFoundScreen(email);
+    notifyEmailNotFound(email, name); // fire-and-forget — doesn't block the screen from showing
+    return true;
+  }
+
+  // The account is real, but not for the door that was clicked — refuse the
+  // login instead of quietly signing them in under their real role.
+  if(actualRole !== pendingRole){
+    showRoleMismatchScreen(actualRole, pendingRole);
+    return true;
+  }
+
+  if(actualRole==='ambassador'){
     ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null };
-    await sSet('me', ME, false);
-    showApp();
-    return true;
-  }
-  const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
-  if(coordMatch){
+  }else if(actualRole==='coordinator'){
+    const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
     ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null };
-    await sSet('me', ME, false);
-    showApp();
-    return true;
-  }
-  const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
-  if(studentMatch){
+  }else{
+    const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
     ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId };
-    await sSet('me', ME, false);
-    showApp();
-    return true;
   }
-
-  showEmailNotFoundScreen(email);
-  notifyEmailNotFound(email, name); // fire-and-forget — doesn't block the screen from showing
+  await sSet('me', ME, false);
+  showApp();
   return true;
+}
+
+const ROLE_LABEL = { ambassador:'Ambassador', coordinator:'Coordinator', student:'Student' };
+const ROLE_MISMATCH_LINES = {
+  ambassador: "you run the programme — the Coordinator and Student doors won't recognize you, and there's nothing to apply for.",
+  coordinator: "you're registered as a Coordinator, so the Student and Ambassador doors won't recognize you.",
+  student: "you're registered as a Student, so the Coordinator and Ambassador doors won't recognize you."
+};
+function showRoleMismatchScreen(actualRole, pendingRole){
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('roleMismatch').classList.remove('hidden');
+  document.getElementById('roleMismatchText').textContent =
+    `You clicked ${ROLE_LABEL[pendingRole]}, but this account is registered as ${ROLE_LABEL[actualRole]} — ${ROLE_MISMATCH_LINES[actualRole]}`;
+  const correctBtn = document.getElementById('roleMismatchCorrectBtn');
+  correctBtn.textContent = `Continue as ${ROLE_LABEL[actualRole]} →`;
+  const freshCorrectBtn = correctBtn.cloneNode(true);
+  correctBtn.parentNode.replaceChild(freshCorrectBtn, correctBtn);
+  freshCorrectBtn.addEventListener('click', ()=>{
+    sessionStorage.setItem('ichc_pending_role', actualRole);
+    document.getElementById('roleMismatch').classList.add('hidden');
+    resolveGoogleSession();
+  });
+  paintLogos();
+  const signOutBtn = document.getElementById('roleMismatchSignOutBtn');
+  const freshSignOutBtn = signOutBtn.cloneNode(true);
+  signOutBtn.parentNode.replaceChild(freshSignOutBtn, signOutBtn);
+  freshSignOutBtn.addEventListener('click', signOutEverywhere);
 }
 
 function showEmailNotFoundScreen(email){
@@ -1325,7 +1387,9 @@ function showEmailNotFoundScreen(email){
 async function signOutEverywhere(){
   if(sbReady) await sb.auth.signOut();
   googleUser = null;
+  sessionStorage.removeItem('ichc_pending_role');
   document.getElementById('emailNotFound').classList.add('hidden');
+  document.getElementById('roleMismatch').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
 }
 
@@ -3624,12 +3688,26 @@ function wireHandlers(tab){
     banner.textContent = '⚠ Couldn\'t load the live roster — this usually means your sign-in session has expired, not that any data was lost. Try signing out and back in with Google, or refresh the page.';
     document.body.prepend(banner);
   }
+  // Nothing past this point may sign anyone in automatically — a cached "me"
+  // record and a still-live Google session are both worthless on their own.
+  // Only a click on one of the onboarding options this tab visit (see
+  // handleGoogleSignIn) sets this flag and authorizes a login.
+  const pendingRole = sessionStorage.getItem('ichc_pending_role');
+  if(!pendingRole) return;
+
   if(savedMe){
     let stillValid = false;
     if(savedMe.role==='ambassador' && savedMe.email && isAmbassadorEmail(savedMe.email)) stillValid = true;
     if(savedMe.role==='coordinator' && DB.coordinators.some(c=>c.id===savedMe.id)) stillValid = true;
     if(savedMe.role==='student' && DB.students.some(s=>s.id===savedMe.id)) stillValid = true;
     if(stillValid){
+      sessionStorage.removeItem('ichc_pending_role');
+      // The click has to match this account's real, cached role too — picking
+      // the wrong door doesn't quietly log you in under your actual one.
+      if(savedMe.role !== pendingRole){
+        showRoleMismatchScreen(savedMe.role, pendingRole);
+        return;
+      }
       ME = savedMe;
       // The cached session is only a snapshot from whenever the person last signed
       // in. Bring it up to date with the live roster (coordinator assignment, name,
