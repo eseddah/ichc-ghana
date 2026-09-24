@@ -447,28 +447,62 @@ async function loadAllPresence(){
 }
 async function loadDB(){
   dbLoadError = false;
-  DB.coordinators = (await sGet('roster:coordinators', true)) || [];
-  DB.students     = (await sGet('roster:students', true)) || [];
-  DB.announcements= (await sGet('posts:announcements', true)) || [];
-  DB.materials    = (await sGet('posts:materials', true)) || [];
-  DB.callsheets   = (await sGet('posts:callsheets', true)) || [];
-  DB.practice     = (await sGet('posts:practice', true)) || [];
-  DB.comments     = (await sGet('posts:comments', true)) || [];
-  DB.notifications= (await sGet('posts:notifications', true)) || [];
-  DB.library      = (await sGet('posts:library', true)) || [];
-  DB.applications = (await sGet('applications:list', true)) || [];
-  DB.applicationDecisions = (await sGet('application_decisions:list', true)) || [];
-  DB.exams        = (await sGet('posts:exams', true)) || [];
-  DB.examAttempts = (await sGet('posts:examAttempts', true)) || [];
-  DB.attendance   = (await sGet('posts:attendance', true)) || [];
-  DB.progressNotes = (await sGet('posts:progressNotes', true)) || [];
-  DB.loungePosts  = (await sGet('posts:lounge', true)) || [];
-  DB.polls        = (await sGet('posts:polls', true)) || [];
-  DB.quizzes      = (await sGet('posts:quizzes', true)) || [];
-  DB.alerts       = (await sGet('posts:alerts', true)) || [];
-  DB.presence     = await loadAllPresence();
-  DB.settings     = (await sGet('settings:notify', true)) || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
-  DB.certificates = await loadCertificates();
+  // Fire every read at once instead of waiting on each one in turn — this was
+  // ~20 sequential round trips to Supabase before, which is most of what made
+  // sign-in and the popups feel slow. sGet() already catches its own errors
+  // and sets dbLoadError, so running them concurrently changes nothing else.
+  const [
+    coordinators, students, announcements, materials, callsheets, practice,
+    comments, notifications, library, applications, applicationDecisions,
+    exams, examAttempts, attendance, progressNotes, loungePosts, polls,
+    quizzes, alerts, settings, certificates
+  ] = await Promise.all([
+    sGet('roster:coordinators', true),
+    sGet('roster:students', true),
+    sGet('posts:announcements', true),
+    sGet('posts:materials', true),
+    sGet('posts:callsheets', true),
+    sGet('posts:practice', true),
+    sGet('posts:comments', true),
+    sGet('posts:notifications', true),
+    sGet('posts:library', true),
+    sGet('applications:list', true),
+    sGet('application_decisions:list', true),
+    sGet('posts:exams', true),
+    sGet('posts:examAttempts', true),
+    sGet('posts:attendance', true),
+    sGet('posts:progressNotes', true),
+    sGet('posts:lounge', true),
+    sGet('posts:polls', true),
+    sGet('posts:quizzes', true),
+    sGet('posts:alerts', true),
+    sGet('settings:notify', true),
+    loadCertificates()
+  ]);
+  DB.coordinators = coordinators || [];
+  DB.students      = students || [];
+  DB.announcements = announcements || [];
+  DB.materials     = materials || [];
+  DB.callsheets    = callsheets || [];
+  DB.practice      = practice || [];
+  DB.comments      = comments || [];
+  DB.notifications = notifications || [];
+  DB.library       = library || [];
+  DB.applications  = applications || [];
+  DB.applicationDecisions = applicationDecisions || [];
+  DB.exams         = exams || [];
+  DB.examAttempts  = examAttempts || [];
+  DB.attendance    = attendance || [];
+  DB.progressNotes = progressNotes || [];
+  DB.loungePosts   = loungePosts || [];
+  DB.polls         = polls || [];
+  DB.quizzes       = quizzes || [];
+  DB.alerts        = alerts || [];
+  DB.settings      = settings || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
+  DB.certificates  = certificates || [];
+  // Presence needs the roster in place first, so it stays a separate step —
+  // everything above it is independent and safe to run together.
+  DB.presence = await loadAllPresence();
 }
 // Certificates live in their own Supabase table (not the generic ichc_kv store)
 // because the verify page has to read a single record WITHOUT anyone being signed
@@ -3645,15 +3679,19 @@ function wireHandlers(tab){
     initVerifyPage();
     return;
   }
+  // Wire up the onboarding buttons right away — this only touches the DOM,
+  // no network — so a click is never stuck waiting on Supabase before it
+  // even registers.
+  initOnboarding();
   // Resolving the Supabase auth session has to happen before the very first data
   // read. Once the ichc_kv table requires an authenticated request (see the RLS
   // policy that should be added in the Supabase dashboard), a request made before
   // the session is attached comes back empty — and DB.coordinators/DB.students
   // being empty breaks the email-matching in resolveGoogleSession() below.
   if(sb) { try{ await sb.auth.getSession(); }catch(e){ console.error('Session check failed', e); } }
-  await loadDB();
-  const savedMe = await sGet('me', false);
-  initOnboarding();
+  // savedMe is a plain localStorage read, so it doesn't need to wait on loadDB —
+  // run them together instead of one after the other.
+  const [savedMe] = await Promise.all([ sGet('me', false), loadDB() ]);
   if(!sbReady){
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C0392B; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
