@@ -122,7 +122,10 @@
   .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
 
   
-  #onboarding, #emailNotFound{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
+  #onboarding{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
+  #authPopup{position:fixed; inset:0; z-index:80; background:rgba(10,24,38,.55); display:flex; align-items:center; justify-content:center; padding:20px;}
+  #authPopup.hidden{display:none !important;}
+  #authPopup .onb-box{max-width:420px;}
   .onb-box{max-width:620px; width:100%;}
   .onb-logo{display:flex; justify-content:center; margin-bottom:18px;}
   .onb-title{text-align:center; font-size:34px; margin:0 0 6px;}
@@ -308,24 +311,13 @@
   </div>
 </div>
 
-<div id="emailNotFound" class="hidden">
-  <div class="onb-box" style="text-align:center;">
-    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:26px;">Email not found</h1>
-    <p class="onb-sub"><span id="notFoundEmailText"></span> isn't on the programme roster. Check that you signed in with the same Google account your Ambassador registered you with, or reach out to the Ambassador directly.</p>
-    <button class="btn ghost" id="notFoundSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
-  </div>
-</div>
-
-<div id="roleMismatch" class="hidden">
-  <div class="onb-box" style="text-align:center;">
-    <div class="onb-logo hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:26px;">Wrong door</h1>
-    <p class="onb-sub" id="roleMismatchText"></p>
-    <div style="display:flex; flex-direction:column; gap:10px; margin-top:6px;">
-      <button class="btn amber" id="roleMismatchCorrectBtn" style="width:100%; justify-content:center;"></button>
-      <a href="apply.html" class="btn secondary" style="width:100%; justify-content:center;">Apply for that role instead →</a>
-      <button class="btn ghost" id="roleMismatchSignOutBtn" style="width:100%; justify-content:center;">Sign out</button>
+<div id="authPopup" class="hidden">
+  <div class="onb-box card" style="text-align:center;">
+    <h3 id="authPopupTitle" style="margin:0 0 10px; font-size:20px;"></h3>
+    <p id="authPopupText" style="color:var(--muted); font-size:14.5px; line-height:1.65; margin:0 0 18px;"></p>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <a href="apply.html" id="authPopupApplyLink" class="btn amber hidden" style="width:100%; justify-content:center;">Apply here →</a>
+      <button class="btn secondary" id="authPopupOkBtn" style="width:100%; justify-content:center;">OK</button>
     </div>
   </div>
 </div>
@@ -1347,49 +1339,39 @@ async function resolveGoogleSession(){
 }
 
 const ROLE_LABEL = { ambassador:'Ambassador', coordinator:'Coordinator', student:'Student' };
-const ROLE_MISMATCH_LINES = {
-  ambassador: "you run the programme — the Coordinator and Student doors won't recognize you, and there's nothing to apply for.",
-  coordinator: "you're registered as a Coordinator, so the Student and Ambassador doors won't recognize you.",
-  student: "you're registered as a Student, so the Coordinator and Ambassador doors won't recognize you."
-};
-function showRoleMismatchScreen(actualRole, pendingRole){
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('roleMismatch').classList.remove('hidden');
-  document.getElementById('roleMismatchText').textContent =
-    `You clicked ${ROLE_LABEL[pendingRole]}, but this account is registered as ${ROLE_LABEL[actualRole]} — ${ROLE_MISMATCH_LINES[actualRole]}`;
-  const correctBtn = document.getElementById('roleMismatchCorrectBtn');
-  correctBtn.textContent = `Continue as ${ROLE_LABEL[actualRole]} →`;
-  const freshCorrectBtn = correctBtn.cloneNode(true);
-  correctBtn.parentNode.replaceChild(freshCorrectBtn, correctBtn);
-  freshCorrectBtn.addEventListener('click', ()=>{
-    sessionStorage.setItem('ichc_pending_role', actualRole);
-    document.getElementById('roleMismatch').classList.add('hidden');
-    resolveGoogleSession();
+function showAuthPopup(title, message, opts={}){
+  document.getElementById('authPopupTitle').textContent = title;
+  document.getElementById('authPopupText').textContent = message;
+  document.getElementById('authPopupApplyLink').classList.toggle('hidden', !opts.applyLink);
+  document.getElementById('authPopup').classList.remove('hidden');
+  const okBtn = document.getElementById('authPopupOkBtn');
+  const freshOkBtn = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(freshOkBtn, okBtn);
+  freshOkBtn.addEventListener('click', ()=>{
+    document.getElementById('authPopup').classList.add('hidden');
   });
-  paintLogos();
-  const signOutBtn = document.getElementById('roleMismatchSignOutBtn');
-  const freshSignOutBtn = signOutBtn.cloneNode(true);
-  signOutBtn.parentNode.replaceChild(freshSignOutBtn, signOutBtn);
-  freshSignOutBtn.addEventListener('click', signOutEverywhere);
+}
+
+function showRoleMismatchScreen(actualRole, pendingRole){
+  showAuthPopup(
+    `You're not registered as ${ROLE_LABEL[pendingRole]}`,
+    `You've been registered as ${ROLE_LABEL[actualRole]}. Select the ${ROLE_LABEL[actualRole]} option to sign in.`
+  );
 }
 
 function showEmailNotFoundScreen(email){
-  document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('emailNotFound').classList.remove('hidden');
-  document.getElementById('notFoundEmailText').textContent = email;
-  paintLogos();
-  const signOutBtn = document.getElementById('notFoundSignOutBtn');
-  const freshSignOutBtn = signOutBtn.cloneNode(true);
-  signOutBtn.parentNode.replaceChild(freshSignOutBtn, signOutBtn);
-  freshSignOutBtn.addEventListener('click', signOutEverywhere);
+  showAuthPopup(
+    'No record found',
+    `${email} has no record in the programme database. Kindly apply.`,
+    { applyLink: true }
+  );
 }
 
 async function signOutEverywhere(){
   if(sbReady) await sb.auth.signOut();
   googleUser = null;
   sessionStorage.removeItem('ichc_pending_role');
-  document.getElementById('emailNotFound').classList.add('hidden');
-  document.getElementById('roleMismatch').classList.add('hidden');
+  document.getElementById('authPopup').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
 }
 
@@ -2165,7 +2147,7 @@ async function renderVerifyResult(code){
 function initVerifyPage(){
   const params = new URLSearchParams(location.search);
   document.getElementById('onboarding').classList.add('hidden');
-  document.getElementById('emailNotFound').classList.add('hidden');
+  document.getElementById('authPopup').classList.add('hidden');
   document.getElementById('app').classList.add('hidden');
   document.getElementById('verifyPage').classList.remove('hidden');
   paintLogos();
