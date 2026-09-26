@@ -122,7 +122,7 @@
   .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
 
   
-  #onboarding{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px;}
+  #onboarding{min-height:100vh;}
   #authPopup{position:fixed; inset:0; z-index:80; background:rgba(10,24,38,.55); display:flex; align-items:center; justify-content:center; padding:20px;}
   #authPopup.hidden{display:none !important;}
   #authPopup .onb-box{max-width:420px;}
@@ -130,6 +130,55 @@
   .onb-logo{display:flex; justify-content:center; margin-bottom:18px;}
   .onb-title{text-align:center; font-size:34px; margin:0 0 6px;}
   .onb-sub{text-align:center; color:var(--muted); margin:0 0 30px; font-size:15.5px; line-height:1.6;}
+
+  /* Split-screen portal login */
+  .onb-split{min-height:100vh; display:flex;}
+  .onb-hero{
+    flex:1 1 46%; background:linear-gradient(160deg, var(--navy-deep), var(--navy) 75%); color:var(--chalk);
+    padding:56px 48px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+  }
+  .onb-hero-bg{position:absolute; inset:0; opacity:.14; pointer-events:none;}
+  .onb-hero-inner{max-width:400px; position:relative; z-index:2;}
+  .onb-hero-brand{display:flex; align-items:center; gap:12px; margin-bottom:52px;}
+  .onb-hero-brand .hexlogo{width:44px; color:var(--amber);}
+  .onb-hero-brand .hexlogo text{fill:var(--chalk);}
+  .onb-hero-brand .name{font-family:'Fraunces',serif; font-weight:700; font-size:18px; line-height:1.25; color:var(--chalk);}
+  .onb-hero-brand .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:rgba(246,244,238,.55);}
+  .onb-hero-eyebrow{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--amber); margin-bottom:12px;}
+  .onb-hero h1{font-family:'Fraunces',serif; font-size:38px; font-weight:700; line-height:1.12; margin:0 0 14px; color:var(--chalk);}
+  .onb-hero p.lead{font-size:15px; color:rgba(246,244,238,.78); line-height:1.65; max-width:330px; margin:0 0 36px;}
+  .onb-hero-feats{display:flex; gap:24px; flex-wrap:wrap; position:relative; z-index:2;}
+  .onb-hero-feat{display:flex; align-items:center; gap:9px; font-size:13px;}
+  .onb-hero-feat svg{width:19px; height:19px; color:var(--amber); flex:none;}
+  .onb-hero-feat b{display:block; font-size:13px; font-weight:600; color:var(--chalk);}
+  .onb-hero-feat span{color:rgba(246,244,238,.58); font-size:11.5px;}
+  .onb-hero-footer{position:relative; z-index:2; font-size:12px; color:rgba(246,244,238,.5); display:flex; align-items:center; gap:10px;}
+  .onb-hero-footer .bar{width:24px; height:2px; background:var(--amber); flex:none;}
+
+  .onb-panel{flex:1 1 54%; background:var(--chalk); display:flex; align-items:center; justify-content:center; padding:44px 24px; overflow-y:auto;}
+  .onb-panel-card{max-width:460px; width:100%; background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:38px 34px; box-shadow:0 20px 50px rgba(15,36,56,.07);}
+  .onb-back{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--navy-deep); text-decoration:none; margin-bottom:22px;}
+  .onb-back:hover{color:var(--teal-deep);}
+  .onb-panel-eyebrow{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--amber-deep); margin-bottom:8px;}
+  .onb-panel-card h1{font-family:'Fraunces',serif; font-size:27px; margin:0 0 6px; color:var(--navy-deep);}
+  .onb-panel-card .sub{color:var(--muted); font-size:14.5px; margin:0 0 22px;}
+  .onb-divider{display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em;}
+  .onb-divider::before, .onb-divider::after{content:''; flex:1; height:1px; background:var(--line);}
+  .onb-side-card{display:flex; align-items:center; gap:14px; padding:14px 16px; border:1.5px solid var(--line); border-radius:14px; background:var(--paper); margin-bottom:10px; text-decoration:none; transition:.15s ease;}
+  .onb-side-card:hover{border-color:var(--teal-deep); transform:translateY(-1px);}
+  .onb-side-card .ic{width:38px; height:38px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; background:rgba(20,105,86,.1); color:var(--teal-deep);}
+  .onb-side-card .ic svg{width:18px; height:18px;}
+  .onb-side-card .tx{flex:1; min-width:0;}
+  .onb-side-card .tx b{display:block; font-size:14px; color:var(--navy-deep); font-family:'Fraunces',serif; font-weight:600;}
+  .onb-side-card .tx span{display:block; font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4;}
+  .onb-side-card .go{flex:none; color:var(--muted); display:flex;}
+  @media(max-width:860px){
+    .onb-split{flex-direction:column;}
+    .onb-hero{padding:36px 24px 30px;}
+    .onb-hero h1{font-size:30px;}
+    .onb-panel{padding:30px 20px 40px;}
+    .onb-panel-card{padding:28px 22px;}
+  }
   .role-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px;}
   .role-card{
     border:2px solid var(--line); border-radius:var(--radius); padding:18px 12px; text-align:center;
@@ -188,8 +237,14 @@
   .tab{
     padding:10px 16px; border-radius:10px 10px 0 0; border:1px solid transparent; border-bottom:none;
     font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap;
+    position:relative; display:inline-flex; align-items:center; gap:6px;
   }
   .tab.active{background:var(--paper); border-color:var(--line); color:var(--navy-deep);}
+  .tab-badge{
+    display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px;
+    padding:0 4px; border-radius:999px; background:var(--amber-deep); color:#fff;
+    font-size:10.5px; font-weight:700; line-height:1;
+  }
 
   main{padding:34px 0 90px;}
 
@@ -258,56 +313,94 @@
 </template>
 
 <div id="onboarding">
-  <div class="onb-box">
-    <div class="onb-logo hexlogo" style="width:150px; margin:0 auto 18px; color:var(--navy-deep);"></div>
-    <h1 class="onb-title" style="font-size:30px;">IChC Outreach Program — Ghana</h1>
-    <p class="onb-sub">Chemistry Competition Prep.</p>
-
-    <div class="portal-picks" id="portalPicks">
-      <button class="portal-pick" data-role="student" type="button">
-        <span class="portal-pick-icon stud">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.6-2-6-2v13c2.4 0 4.4.7 6 2 1.6-1.3 3.6-2 6-2V4.5c-2.4 0-4.4.7-6 2z"/><line x1="12" y1="6.5" x2="12" y2="19.5"/></svg>
-        </span>
-        <span class="portal-pick-text">
-          <span class="portal-pick-title">Student</span>
-          <span class="portal-pick-sub">Your learning dashboard and materials</span>
-        </span>
-        <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
-      </button>
-
-      <button class="portal-pick" data-role="coordinator" type="button">
-        <span class="portal-pick-icon coord">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="8.5" y1="10.5" x2="15.5" y2="10.5"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18.5" x2="12.5" y2="18.5"/></svg>
-        </span>
-        <span class="portal-pick-text">
-          <span class="portal-pick-title">Coordinator</span>
-          <span class="portal-pick-sub">Manage your assigned students</span>
-        </span>
-        <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
-      </button>
-
-      <button class="portal-pick" data-role="ambassador" type="button">
-        <span class="portal-pick-icon amb">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><polygon points="12,3 20,7.5 20,16.5 12,21 4,16.5 4,7.5"/><polyline points="8.5,12 11,14.5 15.5,9.5" stroke-linecap="round"/></svg>
-        </span>
-        <span class="portal-pick-text">
-          <span class="portal-pick-title">Ambassador</span>
-          <span class="portal-pick-sub">Programme oversight &amp; administration</span>
-        </span>
-        <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
-      </button>
+  <div class="onb-split">
+    <div class="onb-hero">
+      <svg class="onb-hero-bg" viewBox="0 0 400 500" width="100%" height="100%" preserveAspectRatio="xMaxYMin slice" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="var(--chalk)" stroke-width="1.2" fill="none">
+          <circle cx="330" cy="70" r="5"/><circle cx="380" cy="110" r="5"/><circle cx="290" cy="120" r="5"/><circle cx="340" cy="165" r="5"/>
+          <line x1="330" y1="70" x2="380" y2="110"/><line x1="330" y1="70" x2="290" y2="120"/><line x1="290" y1="120" x2="340" y2="165"/><line x1="380" y1="110" x2="340" y2="165"/>
+        </g>
+      </svg>
+      <div class="onb-hero-inner">
+        <div class="onb-hero-brand">
+          <div class="hexlogo"></div>
+          <div class="name">Chemistry Competition Prep<small>Ghana Chapter</small></div>
+        </div>
+        <div class="onb-hero-eyebrow">Portal access</div>
+        <h1>Welcome back.</h1>
+        <p class="lead">Sign in to continue your chemistry journey — materials, practice, mock rounds, and everything your coordinator posts.</p>
+        <div class="onb-hero-feats">
+          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Learn</b>Build your knowledge</span></div>
+          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>Connect</b>With mentors &amp; peers</span></div>
+          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a2 2 0 0 1-2 4M7 5H4a2 2 0 0 0 2 4"/></svg><span><b>Compete</b>Reach global stages</span></div>
+        </div>
+      </div>
+      <div class="onb-hero-footer"><div class="bar"></div>Chemistry Competition Prep — Ghana Chapter</div>
     </div>
 
-    <p id="googleMsg" style="text-align:center; font-size:13px; margin:0; min-height:16px; color:#C0392B;"></p>
+    <div class="onb-panel">
+      <div class="onb-panel-card">
+        <a href="index.html" class="onb-back">← Back to website</a>
+        <div class="onb-panel-eyebrow">Portal login</div>
+        <h1>Who are you?</h1>
+        <p class="sub">Select your role to continue.</p>
 
-    <div class="onb-apply-row">
-      <span>New to the programme?</span>
-      <a href="apply.html" class="onb-apply-link">Apply here →</a>
+        <div class="portal-picks" id="portalPicks">
+          <button class="portal-pick" data-role="student" type="button">
+            <span class="portal-pick-icon stud">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.6-2-6-2v13c2.4 0 4.4.7 6 2 1.6-1.3 3.6-2 6-2V4.5c-2.4 0-4.4.7-6 2z"/><line x1="12" y1="6.5" x2="12" y2="19.5"/></svg>
+            </span>
+            <span class="portal-pick-text">
+              <span class="portal-pick-title">Student</span>
+              <span class="portal-pick-sub">Access your courses, practice, resources and progress</span>
+            </span>
+            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+          </button>
+
+          <button class="portal-pick" data-role="coordinator" type="button">
+            <span class="portal-pick-icon coord">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="8.5" y1="10.5" x2="15.5" y2="10.5"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18.5" x2="12.5" y2="18.5"/></svg>
+            </span>
+            <span class="portal-pick-text">
+              <span class="portal-pick-title">Coordinator</span>
+              <span class="portal-pick-sub">Manage students, sessions and learning activities</span>
+            </span>
+            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+          </button>
+
+          <button class="portal-pick" data-role="ambassador" type="button">
+            <span class="portal-pick-icon amb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><polygon points="12,3 20,7.5 20,16.5 12,21 4,16.5 4,7.5"/><polyline points="8.5,12 11,14.5 15.5,9.5" stroke-linecap="round"/></svg>
+            </span>
+            <span class="portal-pick-text">
+              <span class="portal-pick-title">Ambassador</span>
+              <span class="portal-pick-sub">Manage the programme and community</span>
+            </span>
+            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+          </button>
+        </div>
+
+        <p id="googleMsg" style="text-align:center; font-size:13px; margin:0; min-height:16px; color:#C0392B;"></p>
+
+        <div class="onb-divider">OR</div>
+
+        <a href="?verify" id="onboardingVerifyLink" class="onb-side-card">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></span>
+          <span class="tx"><b>Verify Your Certificate</b><span>If you've already participated and need to verify your certificate, click here.</span></span>
+          <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg></span>
+        </a>
+        <a href="mailto:eseyram@amb.intchc.org" class="onb-side-card">
+          <span class="ic" style="background:rgba(227,154,59,.16); color:var(--amber-deep);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,6 12,13 22,6"/></svg></span>
+          <span class="tx"><b>Contact Us</b><span>Have questions? We're here to help.</span></span>
+          <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg></span>
+        </a>
+
+        <div class="onb-apply-row">
+          <span>New to the programme?</span>
+          <a href="apply.html" class="onb-apply-link">Apply here →</a>
+        </div>
+      </div>
     </div>
-
-    <p class="onb-verify">
-      <a href="?verify" id="onboardingVerifyLink">Verify a certificate →</a>
-    </p>
   </div>
 </div>
 
@@ -654,6 +747,10 @@ function startRealtimeSync(){
         // can't wait on the LIVE_RERENDER_TABS gate below, which only covers #screen.
         if(prop==='alerts'){ renderAlertBanner(); renderUpdateToast(); }
         if(prop==='announcements') renderUpdateToast();
+        // Keep the nav badges live too — a coordinator posting a material, an
+        // ambassador sending an alert, etc. should light up the right tab for
+        // everyone else's already-open session, not just on their next click.
+        if(prop) renderNavBadges();
         // Same reasoning for a rename or a status change made from Settings — the
         // topbar/footer and the status banner both live outside #screen too.
         if(prop==='settings'){ applyProgramIdentity(); renderStatusBanner(); }
@@ -870,6 +967,93 @@ function renderUpdateToast(){
   const dismissBtn = document.getElementById('toastDismissBtn');
   if(viewBtn) viewBtn.onclick = ()=>{ el.classList.remove('show'); render('notifications'); };
   if(dismissBtn) dismissBtn.onclick = ()=>{ toastDismissedFor = n; el.classList.remove('show'); };
+}
+
+// ---------------------------------------------------------------------------
+// Nav badges — a small count next to a tab for "new since I last opened it,"
+// on all three dashboards. Reuses the same seenBy/views maps Announcements
+// and Alerts already carry per item, extended to materials, practice,
+// library, lounge, exams, comments and notifications. Opening the tab is
+// what clears its badge (see markTabSeen, called from buildTabs' click
+// handler) — nothing else marks an item seen.
+//
+// A tab can pull from more than one collection — students have no separate
+// Alerts tab, so their alerts render inside Notifications and need to count
+// (and clear) alongside it, even though alerts track "seen" in `views` while
+// everything else uses `seenBy`. Each source below carries its own field.
+// A source with field:null (Applications) has no seen-state at all — its
+// count is just "how many are still pending," which only drops when one is
+// actually accepted or declined, not by viewing the list.
+// ---------------------------------------------------------------------------
+function tabSources(tab){
+  if(!ME) return [];
+  switch(tab){
+    case 'applications': return ME.role==='ambassador' ? [{items:DB.applications.filter(a=>a.status!=='interested'), field:null, save:null}] : [];
+    case 'announce':
+      return (ME.role==='ambassador' || ME.role==='student') ? [{items:DB.announcements, field:'seenBy', save:'announcements'}] : [];
+    case 'alerts':
+      if(ME.role==='ambassador') return [{items:DB.alerts, field:'views', save:'alerts'}];
+      if(ME.role==='coordinator') return [{items:DB.alerts.filter(a=>a.coordinatorId===ME.id), field:'views', save:'alerts'}];
+      if(ME.role==='student') return [{items:myAlerts(), field:'views', save:'alerts'}];
+      return [];
+    case 'lounge':
+      return (ME.role==='ambassador' || ME.role==='coordinator') ? [{items:DB.loungePosts, field:'seenBy', save:'loungePosts'}] : [];
+    case 'library': return [{items:DB.library, field:'seenBy', save:'library'}];
+    case 'exams':
+      // Own posts are stamped seen at creation time (see the push sites below),
+      // so this only ever counts exams that arrived from someone else.
+      if(ME.role==='student') return [{items:DB.exams.filter(e=>e.coordinatorId===null || e.coordinatorId===myCoordinatorId()), field:'seenBy', save:'exams'}];
+      if(ME.role==='coordinator') return [{items:DB.exams.filter(e=>e.coordinatorId===null), field:'seenBy', save:'exams'}];
+      return [];
+    case 'notifications': {
+      const items = ME.role==='ambassador' ? DB.notifications
+        : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id);
+      const sources = [{items, field:'seenBy', save:'notifications'}];
+      if(ME.role==='student') sources.push({items:myAlerts(), field:'views', save:'alerts'}); // rendered inline here for students
+      return sources;
+    }
+    case 'materials':
+      return ME.role==='coordinator' ? [{items:DB.materials.filter(m=>m.coordinatorId===ME.id), field:'seenBy', save:'materials'}] : [];
+    case 'practice':
+      if(ME.role==='coordinator') return [{items:DB.practice.filter(p=>p.coordinatorId===ME.id), field:'seenBy', save:'practice'}];
+      if(ME.role==='student') return [{items:DB.practice.filter(p=>p.coordinatorId===myCoordinatorId()), field:'seenBy', save:'practice'}];
+      return [];
+    case 'messages':
+      return ME.role==='coordinator' ? [{items:DB.comments.filter(c=>c.coordinatorId===ME.id), field:'seenBy', save:'comments'}] : [];
+    case 'ask':
+      return ME.role==='student' ? [{items:DB.comments.filter(c=>c.coordinatorId===myCoordinatorId()), field:'seenBy', save:'comments'}] : [];
+    default: return [];
+  }
+}
+function itemUnseen(item, field){ return !(item && item[field] && item[field][ME.id]); }
+function tabUnreadCount(tab){
+  if(!ME) return 0;
+  return tabSources(tab).reduce((sum, src)=>
+    sum + (src.field ? src.items.filter(it=>itemUnseen(it, src.field)).length : src.items.length), 0);
+}
+async function markTabSeen(tab){
+  if(!ME) return;
+  const toSave = new Set();
+  tabSources(tab).forEach(src=>{
+    if(!src.field || !src.save) return;
+    src.items.forEach(it=>{
+      if(itemUnseen(it, src.field)){ it[src.field] = it[src.field] || {}; it[src.field][ME.id] = Date.now(); toSave.add(src.save); }
+    });
+  });
+  await Promise.all([...toSave].map(k=>saveKey(k)));
+}
+function renderNavBadges(){
+  if(!ME) return;
+  document.querySelectorAll('#tabs .tab[data-tab]').forEach(el=>{
+    const n = tabUnreadCount(el.dataset.tab);
+    let dot = el.querySelector('.tab-badge');
+    if(n>0){
+      if(!dot){ dot = document.createElement('span'); dot.className='tab-badge'; el.appendChild(dot); }
+      dot.textContent = n>99 ? '99+' : String(n);
+    }else if(dot){
+      dot.remove();
+    }
+  });
 }
 
 function alertsAdminView(scopeCoordinatorId){
@@ -1165,7 +1349,7 @@ function audienceFor(coordinatorId){
   return [...students, ...coords];
 }
 async function notifyBroadcast({title, body, coordinatorId, author, role}){
-  const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now() };
+  const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
   DB.notifications.push(entry);
   await saveKey('notifications');
 
@@ -1449,12 +1633,16 @@ function buildTabs(){
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
   el.innerHTML = tabs.map(([k,l],i)=>`<div class="tab${i===0?' active':''}" data-tab="${k}">${l}</div>`).join('');
-  el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>{
+  el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', async ()=>{
     el.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     render(t.dataset.tab);
+    await markTabSeen(t.dataset.tab);
+    renderNavBadges();
   }));
   render(tabs[0][0]);
+  markTabSeen(tabs[0][0]).then(renderNavBadges);
+  renderNavBadges();
 }
 // Identifies an input/select/textarea so its typed value can survive a re-render.
 // Prefers a plain id (used by the freeform "add coordinator/student" boxes); falls
@@ -2648,8 +2836,10 @@ function studentView(tab){
 
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
-  const sorted = [...DB.applications].sort((a,b)=>b.date.localeCompare(a.date));
-  const notJoined = DB.applications.filter(a=>a.whatsappRedirected===false).length;
+  const real = DB.applications.filter(a=>a.status!=='interested');
+  const interested = DB.applications.filter(a=>a.status==='interested');
+  const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
+  const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
   <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public website's application form — approve to add someone straight to the student roster. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
@@ -2666,6 +2856,18 @@ function applicationsView(){
           <button class="btn ghost small" data-decline-app="${a.id}">Decline</button>
         </div>
       </div>`).join('') : `<div class="empty">No applications yet — submissions from the public website's "Start your application" form will appear here.</div>`}
+  </div>
+
+  <div class="section-title" style="margin-top:34px;"><div><h2>Interest List</h2><p>People who signed up while applications were closed. Move someone to the applications queue above once the next round is open and you're ready to review them.</p></div></div>
+  <div class="list">
+    ${interested.length ? interested.map(a=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
+        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}</div>
+        <div class="item-actions">
+          <button class="btn amber small" data-convert-interest="${a.id}">Move to Applications</button>
+        </div>
+      </div>`).join('') : `<div class="empty">Nobody on the Interest List right now.</div>`}
   </div>`;
 }
 function libraryView(){
@@ -3060,7 +3262,7 @@ function wireHandlers(tab){
       target = {scope:'students', groups:[], studentIds:ids};
     }
     const coordinatorId = ME.role==='coordinator' ? ME.id : null;
-    const newAlert = { id:uid(), title, message, priority, actionLabel, actionUrl, target, coordinatorId, author:ME.name, authorRole:ME.role, date:today(), ts:Date.now(), views:{}, acks:{} };
+    const newAlert = { id:uid(), title, message, priority, actionLabel, actionUrl, target, coordinatorId, author:ME.name, authorRole:ME.role, date:today(), ts:Date.now(), views:{[ME.id]:Date.now()}, acks:{} };
     DB.alerts.push(newAlert);
     await saveKey('alerts');
     await dispatchAlertNotifications(newAlert);
@@ -3077,7 +3279,7 @@ function wireHandlers(tab){
   if(q('addLoungePostBtn')) q('addLoungePostBtn').addEventListener('click', async ()=>{
     const body = q('loungeBody').value.trim();
     if(!body) return;
-    DB.loungePosts.push({id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now(), replies:[]});
+    DB.loungePosts.push({id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now(), replies:[], seenBy:{[ME.id]:Date.now()}});
     await saveKey('loungePosts');
     render('lounge');
   });
@@ -3293,7 +3495,7 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    DB.announcements.push({id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{}});
+    DB.announcements.push({id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('announcements');
     await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
     render('announce');
@@ -3377,7 +3579,7 @@ function wireHandlers(tab){
   if(q('addMatBtn')) q('addMatBtn').addEventListener('click', async ()=>{
     const title=q('matTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('matDesc').value.trim();
-    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), date:today()});
+    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('materials'); await syncPublicDirectory(); render('materials');
     await notifyBroadcast({title:`New material: ${title}`, body:body||'A new resource was just posted.', coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -3388,7 +3590,7 @@ function wireHandlers(tab){
 
   if(q('addPracBtn')) q('addPracBtn').addEventListener('click', async ()=>{
     const question=q('pracQ').value.trim(); if(!question) return alert('Question required.');
-    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), date:today()});
+    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('practice'); render('practice');
     await notifyBroadcast({title:'New practice question posted', body:question, coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -3400,7 +3602,7 @@ function wireHandlers(tab){
   if(q('sendCommentBtn')) q('sendCommentBtn').addEventListener('click', async ()=>{
     const text=q('commentText').value.trim(); if(!text) return;
     const coordinatorId = q('sendCommentBtn').dataset.coord || null;
-    DB.comments.push({id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today()});
+    DB.comments.push({id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('comments');
     if(ME.role==='coordinator' || ME.role==='ambassador'){
       await notifyBroadcast({title:`New message from ${ME.name}`, body:text, coordinatorId, author:ME.name, role:ME.role});
@@ -3496,7 +3698,7 @@ function wireHandlers(tab){
   if(q('addLibBtn')) q('addLibBtn').addEventListener('click', async ()=>{
     const title=q('libTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('libDesc').value.trim();
-    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), date:today()});
+    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('library'); render('library');
     await notifyBroadcast({title:`New resource in the library: ${title}`, body:body||'A new resource was just added to the library.', coordinatorId:null, author:ME.name, role:ME.role});
   });
@@ -3546,6 +3748,17 @@ function wireHandlers(tab){
     DB.applications = DB.applications.filter(a=>a.id!==app.id);
     await saveKey('applications'); render('applications');
   }));
+  document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
+    const app = DB.applications.find(a=>a.id===b.dataset.convertInterest);
+    if(!app) return;
+    delete app.status;
+    // whatsappRedirected wasn't part of the Interest List entry (there's no
+    // WhatsApp step at signup time — see apply.html) — set it now so this
+    // reads exactly like a regular application once it's in the queue above.
+    if(typeof app.whatsappRedirected !== 'boolean') app.whatsappRedirected = false;
+    await saveKey('applications');
+    render('applications');
+  }));
 
   if(tab==='exams'){
     if(q('examBeginBtn')) q('examBeginBtn').addEventListener('click', async ()=>{
@@ -3577,7 +3790,7 @@ function wireHandlers(tab){
       const timeLimitMin = Math.max(1, parseInt(q('examTime').value,10)||60);
       const protocol = q('examProtocol').value.trim();
       const coordinatorId = ME.role==='ambassador' ? null : ME.id;
-      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, protocol, content, createdBy:ME.name, date:today() });
+      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
       await saveKey('exams'); render('exams');
       await notifyBroadcast({title:`New exam posted: ${title}`, body:`${timeLimitMin} minutes · one attempt · opens now.`, coordinatorId, author:ME.name, role:ME.role});
     });
