@@ -786,11 +786,25 @@ function queueEmailSend(payload){
   }));
 }
 let _smsQueue = Promise.resolve();
-function queueSmsSend(url, payload){
+async function queueSmsSend(url, payload){
+  // If the SMS webhook points at our own Supabase Edge Function (send-sms),
+  // it requires a valid signed-in session (verify_jwt is on) — attach the
+  // current access token plus the anon key the gateway itself expects. For
+  // any other webhook URL (Zapier, Make, etc.) these headers are simply
+  // ignored, so this is safe to send unconditionally.
+  let authHeaders = {};
+  if(sbReady){
+    try{
+      const { data: { session } } = await sb.auth.getSession();
+      if(session && session.access_token){
+        authHeaders = { Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_CONFIG.anonKey };
+      }
+    }catch(e){ /* fall through with no auth headers — non-Supabase webhooks don't need them anyway */ }
+  }
   _smsQueue = _smsQueue.then(()=> new Promise(resolve=>{
     const controller = new AbortController();
     const timeout = setTimeout(()=>controller.abort(), 10000);
-    fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal })
+    fetch(url, { method:'POST', headers:{'Content-Type':'application/json', ...authHeaders}, body: JSON.stringify(payload), signal: controller.signal })
       .then(res=>{ if(!res.ok) console.error('SMS webhook failed', res.status, payload.to); })
       .catch(e=>console.error('SMS webhook error', e.name==='AbortError' ? 'timed out after 10s' : e, payload.to))
       .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 800); });
