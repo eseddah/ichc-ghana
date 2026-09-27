@@ -888,13 +888,25 @@ async function loadStatsAndTeam(){
     const grid = document.getElementById('teamGrid');
     grid.querySelectorAll('[data-coord-card]').forEach(el=>el.remove());
     const ambassadorCard = grid.querySelector('.person');
+    if(dir && dir.ambassador && (dir.ambassador.name || dir.ambassador.bio || dir.ambassador.photo)){
+      const amb = dir.ambassador;
+      const initial = (amb.name||'E').trim().charAt(0).toUpperCase();
+      ambassadorCard.querySelector('h3').textContent = amb.name || 'Eddah Edmond Seyram';
+      if(amb.bio) ambassadorCard.querySelector('p').textContent = amb.bio;
+      const avatarEl = ambassadorCard.querySelector('.avatar');
+      if(amb.photo){ avatarEl.innerHTML = ''; avatarEl.style.background = `url('${amb.photo.replace(/'/g,"%27")}') center/cover`; }
+      else { avatarEl.textContent = initial; avatarEl.style.background = ''; }
+    }
     cArr.forEach(c=>{
       const card = document.createElement('div');
       card.className = 'person';
       card.setAttribute('data-coord-card','');
       const initial = (c.name||'?').trim().charAt(0).toUpperCase();
+      const avatarHtml = c.photo
+        ? `<div class="avatar" style="background:url('${c.photo.replace(/'/g,"%27")}') center/cover;"></div>`
+        : `<div class="avatar" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep));">${initial}</div>`;
       card.innerHTML = `
-        <div class="avatar" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep));">${initial}</div>
+        ${avatarHtml}
         <h3>${escapeHtml(c.name)}</h3>
         <div class="role">Coordinator</div>
         <p>${c.bio ? escapeHtml(c.bio) : escapeHtml(c.subject||'General Chemistry')+(c.region?(' · '+escapeHtml(c.region)):'')}</p>`;

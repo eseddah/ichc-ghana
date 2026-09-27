@@ -221,25 +221,39 @@
 
 
   
+  .app-shell{display:flex; align-items:stretch; min-height:100vh;}
+  .sidebar{
+    width:236px; flex:none; background:var(--paper); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; position:sticky; top:0; align-self:flex-start;
+    height:100vh; overflow-y:auto; padding:20px 14px;
+  }
+  .sidebar-brand{display:flex; align-items:center; gap:10px; text-decoration:none; padding:2px 8px 18px; margin-bottom:12px; border-bottom:1px solid var(--line);}
+  .sidebar-brand .name{font-family:'Fraunces',serif; font-weight:600; font-size:14px; line-height:1.2; color:var(--navy-deep);}
+  .sidebar-brand .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
+  .main-col{flex:1; min-width:0; display:flex; flex-direction:column;}
+
   .topbar{
     position:sticky; top:0; z-index:20; background:rgba(246,244,238,.92); backdrop-filter:blur(8px);
     border-bottom:1px solid var(--line);
   }
-  .topbar-inner{display:flex; align-items:center; justify-content:space-between; padding:14px 28px; max-width:1080px; margin:0 auto;}
+  .topbar-inner{display:flex; align-items:center; justify-content:flex-end; padding:14px 28px; margin:0 auto;}
   .brandmini{display:flex; align-items:center; gap:10px;}
   .brandmini .name{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.1;}
   .brandmini .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
-  .whoami{display:flex; align-items:center; gap:10px;}
-  .whoami .uname{font-size:13.5px; font-weight:600;}
-  .switchbtn{font-size:12px; color:var(--muted); text-decoration:underline; background:none; border:none; cursor:pointer; padding:0;}
+  .whoami{display:flex; align-items:center; gap:11px;}
+  .whoami-text{display:flex; flex-direction:column; line-height:1.35; text-align:right;}
+  .whoami .uname{font-size:13px; font-weight:600; color:var(--navy-deep);}
+  .switchbtn{font-size:11.5px; color:var(--muted); text-decoration:underline; background:none; border:none; cursor:pointer; padding:0; margin-top:1px;}
+  .avatar-circle{width:36px; height:36px; border-radius:50%; flex:none; object-fit:cover; border:1.5px solid var(--line); background:var(--navy-deep);}
+  .avatar-fallback{display:flex; align-items:center; justify-content:center; color:var(--chalk); font-family:'Fraunces',serif; font-weight:700; font-size:14px;}
 
-  .tabs{display:flex; gap:6px; overflow-x:auto; padding:10px 28px 0; max-width:1080px; margin:0 auto;}
+  .tabs{display:flex; flex-direction:column; gap:2px; overflow-x:visible; padding:0; max-width:none; margin:0; flex:1;}
   .tab{
-    padding:10px 16px; border-radius:10px 10px 0 0; border:1px solid transparent; border-bottom:none;
+    padding:10px 12px; border-radius:10px; border:1px solid transparent;
     font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer; white-space:nowrap;
-    position:relative; display:inline-flex; align-items:center; gap:6px;
+    position:relative; display:flex; align-items:center; gap:8px; justify-content:space-between;
   }
-  .tab.active{background:var(--paper); border-color:var(--line); color:var(--navy-deep);}
+  .tab.active{background:rgba(15,36,56,.07); border-color:transparent; color:var(--navy-deep);}
   .tab-badge{
     display:inline-flex; align-items:center; justify-content:center; min-width:17px; height:17px;
     padding:0 4px; border-radius:999px; background:var(--amber-deep); color:#fff;
@@ -247,6 +261,17 @@
   }
 
   main{padding:34px 0 90px;}
+
+  @media(max-width:900px){
+    .app-shell{flex-direction:column;}
+    .sidebar{
+      width:auto; height:auto; position:static; flex-direction:row; align-items:center;
+      overflow-x:auto; padding:10px 14px; border-right:none; border-bottom:1px solid var(--line);
+    }
+    .sidebar-brand{display:none;}
+    .tabs{flex-direction:row; gap:6px;}
+    .tab{padding:9px 13px; border-radius:10px 10px 0 0;}
+  }
 
   
   .hero{border-radius:22px; padding:44px 40px; margin-bottom:30px; position:relative; overflow:hidden;}
@@ -289,7 +314,6 @@
     .hero{padding:30px 22px;}
     .hero h1{font-size:26px;}
     .topbar-inner{padding:12px 16px;}
-    .tabs{padding:10px 16px 0;}
     main .wrap{padding:0 16px;}
   }
 </style>
@@ -432,27 +456,35 @@
 </div>
 
 <div id="app" class="hidden">
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brandmini">
-        <a href="index.html" style="display:flex; align-items:center; gap:10px;">
-          <div class="hexlogo" style="width:38px; color:var(--navy-deep);"></div>
-          <div class="name">IChC Outreach<small>Ghana Chapter</small></div>
-        </a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="index.html" class="sidebar-brand">
+        <div class="hexlogo" style="width:32px; color:var(--navy-deep);"></div>
+        <div class="name">IChC Outreach<small>Ghana Chapter</small></div>
+      </a>
+      <div class="tabs" id="tabs"></div>
+    </aside>
+    <div class="main-col">
+      <div class="topbar">
+        <div class="topbar-inner">
+          <div class="whoami">
+            <div class="whoami-text">
+              <span class="uname" id="unameLabel"></span>
+              <span class="badge" id="roleBadge" style="align-self:flex-end;"></span>
+            </div>
+            <img id="avatarImg" class="avatar-circle hidden" alt="">
+            <div id="avatarFallback" class="avatar-circle avatar-fallback"></div>
+            <button class="switchbtn" id="switchUser" style="margin-left:2px;">Switch user</button>
+          </div>
+        </div>
       </div>
-      <div class="whoami">
-        <span class="badge" id="roleBadge"></span>
-        <span class="uname" id="unameLabel"></span>
-        <button class="switchbtn" id="switchUser">Switch user</button>
-      </div>
+      <div class="wrap" id="statusBanner"></div>
+      <div class="wrap" id="alertBanner"></div>
+      <main><div class="wrap" id="screen"></div></main>
+      <div id="updateToast"></div>
+      <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a></footer>
     </div>
-    <div class="tabs" id="tabs"></div>
   </div>
-  <div class="wrap" id="statusBanner"></div>
-  <div class="wrap" id="alertBanner"></div>
-  <main><div class="wrap" id="screen"></div></main>
-  <div id="updateToast"></div>
-  <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a></footer>
 </div>
 
 <script>
@@ -548,7 +580,7 @@ async function loadDB(){
     coordinators, students, announcements, materials, callsheets, practice,
     comments, notifications, library, applications, applicationDecisions,
     exams, examAttempts, attendance, progressNotes, loungePosts, polls,
-    quizzes, alerts, settings, certificates, smsLog
+    quizzes, alerts, settings, certificates, smsLog, ambassadorProfiles
   ] = await Promise.all([
     sGet('roster:coordinators', true),
     sGet('roster:students', true),
@@ -571,7 +603,8 @@ async function loadDB(){
     sGet('posts:alerts', true),
     sGet('settings:notify', true),
     loadCertificates(),
-    sGet('sms:log', true)
+    sGet('sms:log', true),
+    sGet('ambassador:profiles', true)
   ]);
   DB.coordinators = coordinators || [];
   DB.students      = students || [];
@@ -595,6 +628,7 @@ async function loadDB(){
   DB.settings      = settings || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
   DB.certificates  = certificates || [];
   DB.smsLog        = smsLog || [];
+  DB.ambassadorProfiles = ambassadorProfiles || {};
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
@@ -665,11 +699,61 @@ const KEY_MAP = {
   notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
   applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
-  alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log'
+  alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log',
+  ambassadorProfiles:'ambassador:profiles'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
   return await sSet(KEY_MAP[name], DB[name], true);
+}
+
+const PROFILE_PHOTO_BUCKET = 'profile-photos';
+// Same client-side compression as the public site's activity-photo uploader —
+// keeps uploads small and fast without needing a server-side image pipeline.
+function compressImageFile(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > maxDim || height > maxDim){
+          if(width > height){ height = Math.round(height * (maxDim/width)); width = maxDim; }
+          else { width = Math.round(width * (maxDim/height)); height = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob=>{ if(blob) resolve(blob); else reject(new Error('Could not process image')); }, 'image/jpeg', quality);
+      };
+      img.onerror = ()=>reject(new Error('Could not read image'));
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+function friendlyUploadError(e){
+  const raw = (e && (e.message || e.error_description || e.statusText || e.error)) || String(e);
+  const low = raw.toLowerCase();
+  if(low.includes('bucket not found')) return `${raw} — the "${PROFILE_PHOTO_BUCKET}" storage bucket doesn't exist yet in Supabase. Create it under Storage → New bucket (name it exactly ${PROFILE_PHOTO_BUCKET}, make it Public).`;
+  if(low.includes('row-level security') || low.includes('rls') || low.includes('permission denied') || low.includes('policy')) return `${raw} — a storage policy is blocking this write. Add an INSERT/UPDATE policy for the ${PROFILE_PHOTO_BUCKET} bucket.`;
+  if(low.includes('exceeded') || low.includes('too large') || low.includes('payload')) return `${raw} — the photo is too large for the bucket's file size limit.`;
+  if(low.includes('jwt') || low.includes('api key') || low.includes('unauthorized') || low.includes('401')) return `${raw} — your session may have expired. Sign out and back in, then try again.`;
+  if(low.includes('failed to fetch') || low.includes('network')) return `${raw} — couldn't reach Supabase. Check your internet connection.`;
+  return raw;
+}
+// path is stable per-person (e.g. "coord-<id>.jpg") and upsert:true, so a
+// re-upload cleanly replaces the previous photo rather than accumulating files.
+async function uploadProfilePhoto(file, stablePath){
+  const blob = await compressImageFile(file, 640, 0.85);
+  const { error: upErr } = await sb.storage.from(PROFILE_PHOTO_BUCKET).upload(stablePath, blob, { upsert:true, contentType:'image/jpeg' });
+  if(upErr) throw upErr;
+  const { data: pub } = sb.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(stablePath);
+  // Cache-bust so the new photo shows immediately even though the URL/path is
+  // identical to the previous upload — browsers would otherwise keep the old
+  // cached image indefinitely.
+  return pub.publicUrl + '?v=' + Date.now();
 }
 
 // ---- Live sync: keep every open dashboard current the moment anyone posts an update ----
@@ -1542,6 +1626,7 @@ async function resolveGoogleSession(){
   googleUser = session.user;
   const email = session.user.email.toLowerCase();
   const name = (session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || email;
+  const avatarUrl = (session.user.user_metadata && (session.user.user_metadata.avatar_url || session.user.user_metadata.picture)) || null;
   sessionStorage.removeItem('ichc_pending_role');
 
   let actualRole = null;
@@ -1563,13 +1648,13 @@ async function resolveGoogleSession(){
   }
 
   if(actualRole==='ambassador'){
-    ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null };
+    ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null, avatarUrl };
   }else if(actualRole==='coordinator'){
     const coordMatch = DB.coordinators.find(c=>c.email && c.email.toLowerCase()===email);
-    ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null };
+    ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null, avatarUrl };
   }else{
     const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
-    ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId };
+    ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId, avatarUrl };
   }
   await sSet('me', ME, false);
   showApp();
@@ -1626,6 +1711,20 @@ function showApp(){
   const rb = document.getElementById('roleBadge');
   rb.textContent = ME.role === 'ambassador' ? 'Ambassador' : ME.role === 'coordinator' ? 'Coordinator' : 'Student';
   rb.className = 'badge ' + (ME.role==='ambassador'?'amb':ME.role==='coordinator'?'coord':'stud');
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarFallback = document.getElementById('avatarFallback');
+  if(ME.avatarUrl){
+    avatarImg.src = ME.avatarUrl;
+    avatarImg.classList.remove('hidden');
+    avatarFallback.classList.add('hidden');
+    // If the Google image URL ever fails to load, fall back gracefully instead
+    // of showing a broken-image icon in the header.
+    avatarImg.onerror = ()=>{ avatarImg.classList.add('hidden'); avatarFallback.classList.remove('hidden'); };
+  }else{
+    avatarImg.classList.add('hidden');
+    avatarFallback.classList.remove('hidden');
+    avatarFallback.textContent = (ME.name||'?').trim().charAt(0).toUpperCase();
+  }
   document.getElementById('switchUser').addEventListener('click', switchUser);
   buildTabs();
   startPresenceLoop();
@@ -2463,13 +2562,17 @@ function startPresenceLoop(){
 function myStudentStatus(){ const s = DB.students.find(s=>s.id===ME.id); return s ? s.status : 'Accepted'; }
 async function syncPublicDirectory(){
   const regions = new Set(DB.coordinators.map(c=>c.region).filter(Boolean));
+  // Prefer whichever ambassador profile has actually been filled in — in the
+  // common case of one ambassador, that's simply the only entry present.
+  const ambProfile = Object.values(DB.ambassadorProfiles||{}).find(p=>p && (p.bio||p.photo)) || null;
   const directory = {
     studentCount: DB.students.length,
     coordinatorCount: DB.coordinators.length,
     regionCount: regions.size || DB.coordinators.length,
     materialsCount: DB.materials.length,
     sessionsCount: DB.callsheets.length,
-    coordinators: DB.coordinators.map(c => ({ name: c.name, subject: c.subject||'', region: c.region||'', bio: c.bio||'' }))
+    coordinators: DB.coordinators.map(c => ({ name: c.name, subject: c.subject||'', region: c.region||'', bio: c.bio||'', photo: c.photo||'' })),
+    ambassador: ambProfile ? { name: ambProfile.name||'', bio: ambProfile.bio||'', photo: ambProfile.photo||'' } : null
   };
   await sSet('public:directory', directory, true);
 }
@@ -2510,6 +2613,28 @@ function ambassadorView(tab){
       <div class="card"><b>Competition prep.</b> Structured sessions and call sheets that map onto how the IChC is actually marked and timed.</div>
       <div class="card"><b>Mentorship.</b> Coordinators giving students someone to ask "is this normal to find hard?"</div>
       <div class="card"><b>Community.</b> A cohort of Ghanaian students who know each other's names, not just each other's scores.</div>
+    </div>
+
+    <div class="section-title" style="margin-top:30px;"><div><h2>Public profile</h2><p>Shown as the Local Ambassador on the public website's "Meet the team" section.</p></div></div>
+    <div class="card" id="ambProfileEditCard">
+      ${(()=>{ const p = DB.ambassadorProfiles[ME.email.toLowerCase()] || {}; return `
+      <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+        <div style="flex:none;">
+          <img id="ambProfilePhotoPreview" src="${escapeHtml(p.photo||'')}" class="avatar-circle ${p.photo?'':'hidden'}" style="width:84px; height:84px;" alt="">
+          <div id="ambProfilePhotoFallback" class="avatar-circle avatar-fallback ${p.photo?'hidden':''}" style="width:84px; height:84px; font-size:28px;">${escapeHtml((ME.name||'?').trim().charAt(0).toUpperCase())}</div>
+          <label class="btn ghost small" style="margin-top:8px; display:inline-block; cursor:pointer;">
+            Change photo<input type="file" accept="image/*" id="ambProfilePhotoInput" style="display:none;">
+          </label>
+        </div>
+        <div style="flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px;">
+          <div class="field"><label>Public display name</label><input id="ambProfileName" value="${escapeHtml(p.name||ME.name||'')}" placeholder="e.g. ${escapeHtml(ME.name)}"></div>
+          <div class="field"><label>Short public bio</label><textarea id="ambProfileBio" rows="3" placeholder="A sentence or two about yourself, shown on the public website.">${escapeHtml(p.bio||'')}</textarea></div>
+          <div>
+            <button class="btn teal small" id="ambProfileSaveBtn">Save profile</button>
+            <span id="ambProfileSaveStatus" style="font-size:12.5px; color:var(--muted); margin-left:10px;"></span>
+          </div>
+        </div>
+      </div>`; })()}
     </div>`;
   }
   if(tab==='people'){
@@ -2674,6 +2799,7 @@ async function refreshMeFromDB(){
 function coordinatorView(tab){
   if(tab==='space'){
     const upcoming = DB.callsheets.filter(c=>c.coordinatorId===ME.id && !c.cancelled && (sessionStatus(c)==='Upcoming' || sessionStatus(c)==='Active')).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
+    const me = DB.coordinators.find(c=>c.id===ME.id) || {};
     return `
     <div class="hero coord">
       <div class="eyebrow">Coordinator space</div>
@@ -2686,7 +2812,29 @@ function coordinatorView(tab){
       <div class="stat"><div class="n">${DB.callsheets.filter(c=>c.coordinatorId===ME.id).length}</div><div class="l">Call sheets</div></div>
       <div class="stat"><div class="n">${DB.practice.filter(p=>p.coordinatorId===ME.id).length}</div><div class="l">Practice questions</div></div>
     </div>
-    ${upcoming ? `<div class="card"><b>Next up:</b> ${escapeHtml(upcoming.title)} — ${fmtSessionTime(upcoming)} ${sessionStatusBadge(upcoming)}</div>` : `<div class="empty">No upcoming call sheet — head to <b>Call sheets</b> to set your next session.</div>`}`;
+    ${upcoming ? `<div class="card" style="margin-bottom:26px;"><b>Next up:</b> ${escapeHtml(upcoming.title)} — ${fmtSessionTime(upcoming)} ${sessionStatusBadge(upcoming)}</div>` : `<div class="empty" style="margin-bottom:26px;">No upcoming call sheet — head to <b>Call sheets</b> to set your next session.</div>`}
+
+    <div class="section-title"><div><h2>Public profile</h2><p>Shown on the "Meet the team" section of the public website — your photo and bio are optional, but help students and parents put a face to the programme.</p></div></div>
+    <div class="card" id="profileEditCard">
+      <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+        <div style="flex:none;">
+          <img id="profilePhotoPreview" src="${escapeHtml(me.photo||'')}" class="avatar-circle ${me.photo?'':'hidden'}" style="width:84px; height:84px;" alt="">
+          <div id="profilePhotoFallback" class="avatar-circle avatar-fallback ${me.photo?'hidden':''}" style="width:84px; height:84px; font-size:28px;">${escapeHtml((me.name||'?').trim().charAt(0).toUpperCase())}</div>
+          <label class="btn ghost small" style="margin-top:8px; display:inline-block; cursor:pointer;">
+            Change photo<input type="file" accept="image/*" id="profilePhotoInput" style="display:none;">
+          </label>
+        </div>
+        <div style="flex:1; min-width:240px; display:flex; flex-direction:column; gap:10px;">
+          <div class="field"><label>Subject</label><input id="profileSubject" value="${escapeHtml(me.subject||'')}" placeholder="e.g. Organic Chemistry"></div>
+          <div class="field"><label>Region</label><input id="profileRegion" value="${escapeHtml(me.region||'')}" placeholder="e.g. Greater Accra"></div>
+          <div class="field"><label>Short public bio</label><textarea id="profileBio" rows="3" placeholder="A sentence or two about yourself, shown on the public website.">${escapeHtml(me.bio||'')}</textarea></div>
+          <div>
+            <button class="btn teal small" id="profileSaveBtn">Save profile</button>
+            <span id="profileSaveStatus" style="font-size:12.5px; color:var(--muted); margin-left:10px;"></span>
+          </div>
+        </div>
+      </div>
+    </div>`;
   }
   if(tab==='students'){
     const mine = myStudents();
@@ -3580,6 +3728,62 @@ function wireHandlers(tab){
     await saveKey('progressNotes');
     render('students');
   }));
+
+  if(q('profilePhotoInput')) q('profilePhotoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const statusEl = q('profileSaveStatus');
+    if(statusEl){ statusEl.textContent = 'Uploading photo…'; statusEl.style.color = 'var(--muted)'; }
+    try{
+      const url = await uploadProfilePhoto(file, `coord-${ME.id}.jpg`);
+      const me = DB.coordinators.find(c=>c.id===ME.id);
+      if(me){ me.photo = url; await saveKey('coordinators'); await syncPublicDirectory(); }
+      render('space');
+    }catch(err){
+      console.error('Coordinator photo upload failed', err);
+      if(statusEl){ statusEl.textContent = friendlyUploadError(err); statusEl.style.color = '#C0392B'; }
+    }
+  });
+  if(q('profileSaveBtn')) q('profileSaveBtn').addEventListener('click', async ()=>{
+    const me = DB.coordinators.find(c=>c.id===ME.id);
+    if(!me) return;
+    me.subject = q('profileSubject').value.trim();
+    me.region = q('profileRegion').value.trim();
+    me.bio = q('profileBio').value.trim();
+    await saveKey('coordinators'); await syncPublicDirectory();
+    const statusEl = q('profileSaveStatus');
+    if(statusEl){
+      statusEl.textContent = '✓ Saved'; statusEl.style.color = 'var(--teal-deep)';
+      setTimeout(()=>{ if(q('profileSaveStatus')) q('profileSaveStatus').textContent=''; }, 2500);
+    }
+  });
+
+  if(q('ambProfilePhotoInput')) q('ambProfilePhotoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const statusEl = q('ambProfileSaveStatus');
+    if(statusEl){ statusEl.textContent = 'Uploading photo…'; statusEl.style.color = 'var(--muted)'; }
+    try{
+      const url = await uploadProfilePhoto(file, `amb-${ME.email.toLowerCase().replace(/[^a-z0-9]/g,'-')}.jpg`);
+      const key = ME.email.toLowerCase();
+      DB.ambassadorProfiles[key] = { ...(DB.ambassadorProfiles[key]||{}), name: ME.name, photo: url };
+      await saveKey('ambassadorProfiles'); await syncPublicDirectory();
+      render('overview');
+    }catch(err){
+      console.error('Ambassador photo upload failed', err);
+      if(statusEl){ statusEl.textContent = friendlyUploadError(err); statusEl.style.color = '#C0392B'; }
+    }
+  });
+  if(q('ambProfileSaveBtn')) q('ambProfileSaveBtn').addEventListener('click', async ()=>{
+    const key = ME.email.toLowerCase();
+    DB.ambassadorProfiles[key] = { ...(DB.ambassadorProfiles[key]||{}), name: q('ambProfileName').value.trim() || ME.name, bio: q('ambProfileBio').value.trim() };
+    await saveKey('ambassadorProfiles'); await syncPublicDirectory();
+    const statusEl = q('ambProfileSaveStatus');
+    if(statusEl){
+      statusEl.textContent = '✓ Saved'; statusEl.style.color = 'var(--teal-deep)';
+      setTimeout(()=>{ if(q('ambProfileSaveStatus')) q('ambProfileSaveStatus').textContent=''; }, 2500);
+    }
+  });
 
   if(q('addCallBtn')) q('addCallBtn').addEventListener('click', async ()=>{
     const title=q('callTitle').value.trim(), startAt=q('callStart').value, endAt=q('callEnd').value;
