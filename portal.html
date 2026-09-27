@@ -548,7 +548,7 @@ async function loadDB(){
     coordinators, students, announcements, materials, callsheets, practice,
     comments, notifications, library, applications, applicationDecisions,
     exams, examAttempts, attendance, progressNotes, loungePosts, polls,
-    quizzes, alerts, settings, certificates
+    quizzes, alerts, settings, certificates, smsLog
   ] = await Promise.all([
     sGet('roster:coordinators', true),
     sGet('roster:students', true),
@@ -570,7 +570,8 @@ async function loadDB(){
     sGet('posts:quizzes', true),
     sGet('posts:alerts', true),
     sGet('settings:notify', true),
-    loadCertificates()
+    loadCertificates(),
+    sGet('sms:log', true)
   ]);
   DB.coordinators = coordinators || [];
   DB.students      = students || [];
@@ -593,6 +594,7 @@ async function loadDB(){
   DB.alerts        = alerts || [];
   DB.settings      = settings || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
   DB.certificates  = certificates || [];
+  DB.smsLog        = smsLog || [];
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
@@ -663,7 +665,7 @@ const KEY_MAP = {
   notifications:'posts:notifications', settings:'settings:notify', library:'posts:library', applications:'applications:list',
   applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
-  alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes'
+  alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -674,7 +676,7 @@ async function saveKey(name){
 let realtimeChannel = null;
 const LIVE_RERENDER_TABS = new Set(['overview','applications','people','feed','announce','library','notifications',
   'space','students','calls','materials','practice','messages',
-  'welcome','hub','ask','alerts','lounge']);
+  'welcome','hub','ask','alerts','lounge','smslog']);
 // 'exams' is deliberately excluded: a student's in-progress exam textarea would get
 // wiped mid-typing by any unrelated background update elsewhere in the app. Exam data
 // is still fresh every time someone opens or switches into the tab.
@@ -1380,7 +1382,9 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
   }
   if(s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
-      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body });
+      const isStudent = r.coordinatorId !== undefined;
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body,
+        recipientId:r.id, recipientRole:isStudent?'student':'coordinator', studentCoordinatorId:isStudent?r.coordinatorId:null });
     });
   }
 }
@@ -1408,7 +1412,8 @@ async function dispatchAlertNotifications(alert){
   }
   if(s.webhookUrl){
     targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
-      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:body });
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:body,
+        recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId });
     });
   }
 }
@@ -1435,7 +1440,8 @@ async function notifyApplicantDecision({app, decision, reason}){
     });
   }
   if(s.webhookUrl && app.phone && wantsSms){
-    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:body });
+    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:body,
+      recipientId:app.id, recipientRole:'applicant', studentCoordinatorId:null });
   }
 }
 
@@ -1640,8 +1646,8 @@ async function switchUser(){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
@@ -1719,6 +1725,7 @@ function render(tab){
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
+  else if(tab==='smslog') html = smsLogView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
@@ -1759,6 +1766,37 @@ function whatsappBadge(flag){
   return flag
     ? `<span class="badge coord" style="font-size:11px;">✓ In WhatsApp group</span>`
     : `<span class="badge" style="font-size:11px; background:rgba(227,154,59,.18); color:var(--amber-deep);">⚠ Not in WhatsApp group yet</span>`;
+}
+
+function smsStatusBadge(status){
+  return status==='delivered'
+    ? `<span class="badge coord" style="font-size:11px;">✓ Delivered</span>`
+    : `<span class="badge" style="font-size:11px; background:rgba(192,57,43,.14); color:#C0392B;">✕ Not delivered</span>`;
+}
+// Ambassador sees every text sent across the whole programme (coordinators,
+// students, applicants alike). A Coordinator only sees texts sent to their
+// own students — not other coordinators, not applicants, not students
+// belonging to someone else's group. Scoping happens here, off the same
+// studentCoordinatorId the send-sms function stamped onto each log entry.
+function smsLogView(){
+  const isAmbassador = ME.role==='ambassador';
+  const rows = (DB.smsLog||[])
+    .filter(e => isAmbassador || e.studentCoordinatorId===ME.id)
+    .sort((a,b)=>b.ts-a.ts);
+  const delivered = rows.filter(e=>e.status==='delivered').length;
+  return `
+  <div class="section-title"><div><h2>SMS Log</h2><p>${isAmbassador ? 'Every text message sent across the programme' : 'Texts sent to your students'} — pulled directly from Africa\'s Talking\'s own delivery result, not just whether the request was made.</p></div></div>
+  ${rows.length ? `<p class="note" style="margin-bottom:14px;">${delivered} of ${rows.length} delivered.</p>` : ''}
+  <div class="list">
+    ${rows.length ? rows.map(e=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(e.name || e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+        <div class="item-body">${escapeHtml(e.to)}${e.recipientRole ? ' · '+escapeHtml(e.recipientRole) : ''} ${smsStatusBadge(e.status)}</div>
+        ${e.subject ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">${escapeHtml(e.subject)}</div>` : ''}
+        ${e.status!=='delivered' && e.detail ? `<div class="item-body" style="margin-top:6px; padding:8px 10px; background:rgba(192,57,43,.06); border-radius:8px; font-size:12.5px; color:#C0392B;">${escapeHtml(e.detail)}</div>` : ''}
+        ${e.cost ? `<div class="item-body" style="font-size:11.5px; color:var(--muted); margin-top:2px;">Cost: ${escapeHtml(e.cost)}</div>` : ''}
+      </div>`).join('') : `<div class="empty">No text messages sent ${isAmbassador ? 'yet' : 'to your students yet'}.</div>`}
+  </div>`;
 }
 
 function csvCell(v){
