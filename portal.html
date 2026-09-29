@@ -439,6 +439,22 @@
   .portal-pick-icon{transition:transform .2s ease;}
   .portal-pick:hover .portal-pick-icon{transform:scale(1.06) rotate(-3deg);}
 
+  /* fingerprint / face unlock */
+  .pk-box{border:1.5px solid rgba(31,138,112,.35); background:linear-gradient(135deg, rgba(31,138,112,.09), rgba(227,154,59,.07)); border-radius:var(--radius); padding:16px 18px; margin-bottom:18px;}
+  .pk-title{font-family:'Fraunces',serif; font-weight:600; font-size:17px; color:var(--navy-deep);}
+  .pk-sub{font-size:13px; color:var(--muted); margin:3px 0 12px; line-height:1.5;}
+  .pk-roles{display:flex; flex-wrap:wrap; gap:8px;}
+  .pk-role{gap:8px;}
+  .pk-role svg{width:17px; height:17px; flex:none;}
+  #pkMsg{font-size:12.5px; color:#C0392B; margin-top:10px; min-height:0;}
+  #pkMsg:empty{display:none;}
+  .pk-ctl{margin-top:14px; padding:12px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .pk-ctl:empty{display:none;}
+  .pk-ctl b{color:var(--navy-deep); display:block; font-size:13px; margin-bottom:2px;}
+  .pk-ctl button.pk-link{background:none; border:none; padding:0; margin:6px 12px 0 0; font-size:12.5px; font-weight:600; color:var(--teal-deep); text-decoration:underline; cursor:pointer;}
+  .pk-ctl button.pk-link.danger{color:#B3261E;}
+  .pk-ctl .btn{margin-top:8px; width:100%; justify-content:center;}
+
   /* gentle entrance when a section opens */
   @keyframes ichcRise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
   #screen > *{animation:ichcRise .35s ease both;}
@@ -501,6 +517,8 @@
         <div class="onb-panel-eyebrow">Portal login</div>
         <h1>Who are you?</h1>
         <p class="sub">Select your role to continue.</p>
+
+        <div class="pk-box hidden" id="passkeyBox"></div>
 
         <div class="portal-picks" id="portalPicks">
           <button class="portal-pick" data-role="student" type="button">
@@ -600,6 +618,7 @@
         </button>
       </a>
       <div class="tabs" id="tabs"></div>
+      <div class="pk-ctl" id="passkeyCtl"></div>
     </aside>
     <div class="main-col">
       <div class="topbar">
@@ -1879,24 +1898,178 @@ function showApp(){
     avatarFallback.classList.remove('hidden');
     avatarFallback.textContent = (ME.name||'?').trim().charAt(0).toUpperCase();
   }
-  document.getElementById('switchUser').addEventListener('click', switchUser);
+  document.getElementById('switchUser').addEventListener('click', ()=>switchUser());
+  renderPasskeyCtl();
   buildTabs();
   startPresenceLoop();
   startRealtimeSync();
 }
-async function switchUser(){
+async function switchUser(ev, forceFull){
+  const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
   if(presenceTimer) clearInterval(presenceTimer);
   stopRealtimeSync();
   if(ME && ME.email && sbReady){
     delete DB.presence[ME.email.toLowerCase()];
     await sDelete(presenceKeyFor(ME.email), true);
   }
-  if(sbReady) await sb.auth.signOut();
+  if(sbReady && !keepSession) await sb.auth.signOut();
   await sDelete('me', false);
   ME = null;
   document.getElementById('app').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
+  renderPasskeyBox();
 }
+/* ---------- Fingerprint / face / screen-lock sign-in (WebAuthn passkey) ----------
+   Works alongside Google, never instead of it. Google is still used the first time on a
+   device. Once fingerprint/face unlock is turned on, "Lock" keeps that device's session and
+   the passkey (checked locally, signature and all) reopens it. New devices use Google first. */
+const PK_STORE = 'ichc_passkeys_v1';
+const PK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11v3.5c0 2-.5 3.8-1.6 5.5"/><path d="M8.5 11a3.5 3.5 0 0 1 7 0v3c0 1.6-.3 3-.9 4.5"/><path d="M5 12.5v-1.2a7 7 0 0 1 14 0v1.4c0 1.5-.2 2.7-.5 3.8"/><path d="M5 16c0 1.3-.2 2.4-.6 3.3"/></svg>';
+function pkB64u(buf){ const b=new Uint8Array(buf); let t=''; b.forEach(x=>{ t+=String.fromCharCode(x); }); return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function pkFromB64u(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; const bin=atob(str); const out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; }
+function pkLoad(){ try{ return JSON.parse(localStorage.getItem(PK_STORE)||'[]'); }catch(e){ return []; } }
+function pkSave(list){ try{ localStorage.setItem(PK_STORE, JSON.stringify(list)); }catch(e){} }
+function pkFor(email){ const e=(email||'').toLowerCase(); return e ? (pkLoad().find(c=>c.email===e) || null) : null; }
+function pkSupported(){ return !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext && location.hostname); }
+async function pkPlatformAvailable(){ try{ return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); }catch(e){ return false; } }
+function pkDerToRaw(der){
+  const b = new Uint8Array(der);
+  let i = 2; if(b[1] & 0x80) i = 2 + (b[1] & 0x7f);
+  if(b[i]!==0x02) throw new Error('bad signature');
+  const rl = b[i+1]; let r = b.slice(i+2, i+2+rl); i = i+2+rl;
+  if(b[i]!==0x02) throw new Error('bad signature');
+  const sl = b[i+1]; let sg = b.slice(i+2, i+2+sl);
+  const fix = x=>{ while(x.length>32 && x[0]===0) x = x.slice(1); const o = new Uint8Array(32); o.set(x, 32-x.length); return o; };
+  const out = new Uint8Array(64); out.set(fix(r),0); out.set(fix(sg),32);
+  return out;
+}
+// Checks the device's answer properly: right challenge, right site, user present AND verified
+// (fingerprint/face/PIN), and a valid signature from the key saved when it was turned on.
+async function pkVerify(rec, assertion, challenge){
+  const cd = new Uint8Array(assertion.response.clientDataJSON);
+  const clientData = JSON.parse(new TextDecoder().decode(cd));
+  if(clientData.type!=='webauthn.get') return false;
+  if(clientData.challenge!==pkB64u(challenge)) return false;
+  if(clientData.origin!==location.origin) return false;
+  const ad = new Uint8Array(assertion.response.authenticatorData);
+  const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(location.hostname)));
+  for(let i=0;i<32;i++) if(ad[i]!==rpHash[i]) return false;
+  if(!(ad[32] & 0x01) || !(ad[32] & 0x04)) return false;
+  const cdHash = new Uint8Array(await crypto.subtle.digest('SHA-256', cd));
+  const signed = new Uint8Array(ad.length+32); signed.set(ad,0); signed.set(cdHash, ad.length);
+  const spki = pkFromB64u(rec.pub);
+  const sig = assertion.response.signature;
+  if(rec.alg===-7){
+    const key = await crypto.subtle.importKey('spki', spki, {name:'ECDSA', namedCurve:'P-256'}, false, ['verify']);
+    return await crypto.subtle.verify({name:'ECDSA', hash:'SHA-256'}, key, pkDerToRaw(sig), signed);
+  }
+  if(rec.alg===-257){
+    const key = await crypto.subtle.importKey('spki', spki, {name:'RSASSA-PKCS1-v1_5', hash:'SHA-256'}, false, ['verify']);
+    return await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, signed);
+  }
+  return false;
+}
+async function enablePasskey(){
+  if(!ME || !ME.email) return;
+  if(!pkSupported()){ alert('Fingerprint / face unlock needs the secure (https) portal page in a browser that supports passkeys.'); return; }
+  if(!(await pkPlatformAvailable())){ alert('This device has no fingerprint, face or screen lock set up yet. Turn one on in your device settings, then try again.'); return; }
+  const email = ME.email.toLowerCase();
+  try{
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const uid = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email)));
+    const cred = await navigator.credentials.create({ publicKey:{
+      challenge, rp:{ name:'IChC Outreach Portal', id:location.hostname },
+      user:{ id:uid, name:email, displayName:ME.name || email },
+      pubKeyCredParams:[{type:'public-key', alg:-7},{type:'public-key', alg:-257}],
+      authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required', residentKey:'preferred' },
+      timeout:60000, attestation:'none'
+    }});
+    const r = cred.response;
+    if(typeof r.getPublicKey!=='function' || typeof r.getPublicKeyAlgorithm!=='function'){
+      alert('This browser is too old to set up fingerprint / face unlock safely. Please update it and try again.'); return;
+    }
+    const pub = r.getPublicKey(), alg = r.getPublicKeyAlgorithm();
+    if(!pub || (alg!==-7 && alg!==-257)){ alert('This device\'s unlock type isn\'t supported yet.'); return; }
+    const list = pkLoad().filter(c=>c.email!==email);
+    list.push({ email, id:pkB64u(cred.rawId), pub:pkB64u(pub), alg, name:ME.name||'', created:Date.now() });
+    pkSave(list);
+    renderPasskeyCtl();
+  }catch(e){
+    if(e && (e.name==='NotAllowedError' || e.name==='AbortError')) return; // cancelled
+    if(e && e.name==='InvalidStateError'){ alert('This device already has an unlock saved for the portal.'); return; }
+    alert('Couldn\'t turn on fingerprint / face unlock on this device.');
+  }
+}
+function disablePasskey(){
+  if(!ME || !ME.email) return;
+  const email = ME.email.toLowerCase();
+  pkSave(pkLoad().filter(c=>c.email!==email));
+  renderPasskeyCtl();
+}
+async function renderPasskeyCtl(){
+  const el = document.getElementById('passkeyCtl');
+  const sw = document.getElementById('switchUser');
+  if(!el) return;
+  el.innerHTML = '';
+  const rec = ME && ME.email ? pkFor(ME.email) : null;
+  if(sw) sw.textContent = rec ? 'Lock' : 'Switch user';
+  if(!ME || !ME.email || !pkSupported()) return;
+  if(rec){
+    el.innerHTML = `<b>Fingerprint / face unlock is on</b>“Lock” keeps you signed in on this device so your fingerprint, face or screen lock reopens it.
+      <div><button class="pk-link" id="pkSignOutFull" type="button">Sign out fully</button><button class="pk-link danger" id="pkTurnOff" type="button">Turn off</button></div>`;
+    document.getElementById('pkSignOutFull').addEventListener('click', ()=>{ closeDrawer(); switchUser(null, true); });
+    document.getElementById('pkTurnOff').addEventListener('click', ()=>{ if(confirm('Turn off fingerprint / face unlock on this device?')) disablePasskey(); });
+  }else if(await pkPlatformAvailable()){
+    el.innerHTML = `<b>Faster sign-in</b>Use your fingerprint, face or screen lock instead of Google next time.
+      <button class="btn small secondary" id="pkEnable" type="button">${PK_ICON.replace('<svg','<svg width="16" height="16"')} Turn on unlock</button>`;
+    document.getElementById('pkEnable').addEventListener('click', enablePasskey);
+  }
+}
+async function renderPasskeyBox(){
+  const box = document.getElementById('passkeyBox');
+  if(!box) return;
+  box.classList.add('hidden'); box.innerHTML = '';
+  if(!sbReady || !pkSupported()) return;
+  let session = null;
+  try{ session = (await sb.auth.getSession()).data.session; }catch(e){ return; }
+  const email = session && session.user && session.user.email ? session.user.email.toLowerCase() : null;
+  if(!email || !pkFor(email)) return;
+  const roles = rolesForEmail(email);
+  if(!roles.length) return;
+  const rec = pkFor(email);
+  const first = ((rec.name || '').trim().split(/\s+/)[0]) || 'there';
+  box.innerHTML = `<div class="pk-title">Welcome back, ${escapeHtml(first)}</div>
+    <div class="pk-sub">Unlock with your fingerprint, face or screen lock — no Google sign-in needed on this device.</div>
+    <div class="pk-roles">${roles.map(r=>`<button class="btn small pk-role" type="button" data-pkrole="${r}">${PK_ICON} ${ROLE_LABEL[r]}</button>`).join('')}</div>
+    <div id="pkMsg"></div>`;
+  box.querySelectorAll('[data-pkrole]').forEach(b=>b.addEventListener('click', ()=>unlockWithPasskey(b.dataset.pkrole)));
+  box.classList.remove('hidden');
+}
+async function unlockWithPasskey(role){
+  const msg = document.getElementById('pkMsg');
+  const say = t=>{ if(msg) msg.textContent = t; };
+  say('');
+  let session = null;
+  try{ session = (await sb.auth.getSession()).data.session; }catch(e){}
+  const email = session && session.user && session.user.email ? session.user.email.toLowerCase() : null;
+  const rec = email ? pkFor(email) : null;
+  if(!rec){ say('Sign in with Google once on this device, then fingerprint / face unlock will work.'); return; }
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  let assertion;
+  try{
+    assertion = await navigator.credentials.get({ publicKey:{
+      challenge, rpId:location.hostname, userVerification:'required', timeout:60000,
+      allowCredentials:[{ type:'public-key', id:pkFromB64u(rec.id), transports:['internal'] }]
+    }});
+  }catch(e){ say('Unlock was cancelled — try again, or use Google below.'); return; }
+  let ok = false;
+  try{ ok = !!assertion && pkB64u(assertion.rawId)===rec.id && await pkVerify(rec, assertion, challenge); }catch(e){ ok = false; }
+  if(!ok){ say('That unlock didn\'t check out. Try again, or use Google below.'); return; }
+  sessionStorage.setItem('ichc_pending_role', role);
+  const handled = await resolveGoogleSession();
+  if(!handled) say('Your saved session has expired — sign in with Google once to refresh it.');
+}
+
 function openDrawer(){
   document.body.classList.add('drawer-open');
   const b = document.getElementById('menuBtn'); if(b) b.setAttribute('aria-expanded','true');
@@ -4445,6 +4618,7 @@ function wireHandlers(tab){
     banner.textContent = '⚠ Couldn\'t load the live roster — this usually means your sign-in session has expired, not that any data was lost. Try signing out and back in with Google, or refresh the page.';
     document.body.prepend(banner);
   }
+  renderPasskeyBox();
   // Nothing past this point may sign anyone in automatically — a cached "me"
   // record and a still-live Google session are both worthless on their own.
   // Only a click on one of the onboarding options this tab visit (see
