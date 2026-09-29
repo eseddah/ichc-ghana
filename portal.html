@@ -448,7 +448,7 @@
   .pk-role svg{width:17px; height:17px; flex:none;}
   #pkMsg{font-size:12.5px; color:#C0392B; margin-top:10px; min-height:0;}
   #pkMsg:empty{display:none;}
-  .pk-ctl{margin-top:14px; padding:12px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .pk-ctl{margin:0 0 12px; padding:12px; border:1px dashed var(--line); border-radius:12px; font-size:12.5px; color:var(--muted); line-height:1.5;}
   .pk-ctl:empty{display:none;}
   .pk-ctl b{color:var(--navy-deep); display:block; font-size:13px; margin-bottom:2px;}
   .pk-ctl button.pk-link{background:none; border:none; padding:0; margin:6px 12px 0 0; font-size:12.5px; font-weight:600; color:var(--teal-deep); text-decoration:underline; cursor:pointer;}
@@ -617,8 +617,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
         </button>
       </a>
-      <div class="tabs" id="tabs"></div>
       <div class="pk-ctl" id="passkeyCtl"></div>
+      <div class="tabs" id="tabs"></div>
     </aside>
     <div class="main-col">
       <div class="topbar">
@@ -2013,7 +2013,14 @@ async function renderPasskeyCtl(){
   el.innerHTML = '';
   const rec = ME && ME.email ? pkFor(ME.email) : null;
   if(sw) sw.textContent = rec ? 'Lock' : 'Switch user';
-  if(!ME || !ME.email || !pkSupported()) return;
+  if(!ME || !ME.email) return;
+  if(!pkSupported()){
+    const why = !window.isSecureContext || !location.hostname
+      ? 'Fingerprint unlock only works on the secure (https) portal address — not from a saved file or an http link.'
+      : 'This browser can\'t do fingerprint unlock. Open the portal in Chrome, Safari or Edge (not inside WhatsApp, Facebook or another app\'s built-in browser).';
+    el.innerHTML = `<b>Fingerprint unlock unavailable</b>${why}`;
+    return;
+  }
   if(rec){
     el.innerHTML = `<b>Fingerprint / face unlock is on</b>“Lock” keeps you signed in on this device so your fingerprint, face or screen lock reopens it.
       <div><button class="pk-link" id="pkSignOutFull" type="button">Sign out fully</button><button class="pk-link danger" id="pkTurnOff" type="button">Turn off</button></div>`;
@@ -2023,6 +2030,8 @@ async function renderPasskeyCtl(){
     el.innerHTML = `<b>Faster sign-in</b>Use your fingerprint, face or screen lock instead of Google next time.
       <button class="btn small secondary" id="pkEnable" type="button">${PK_ICON.replace('<svg','<svg width="16" height="16"')} Turn on unlock</button>`;
     document.getElementById('pkEnable').addEventListener('click', enablePasskey);
+  }else{
+    el.innerHTML = `<b>Fingerprint unlock unavailable</b>This device has no fingerprint, face or screen lock set up. Turn one on in the device\'s settings, then reload the portal.`;
   }
 }
 async function renderPasskeyBox(){
