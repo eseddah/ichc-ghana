@@ -8,7 +8,9 @@
 <meta property="og:title" content="Chemistry Competition Prep — Ghana">
 <meta property="og:description" content="Founded by Local Ambassador, IChC to train students toward the competition — practice, prep, mentorship, community.">
 <meta property="og:type" content="website">
+<meta name="theme-color" content="#0A1826">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
 <style>
@@ -112,8 +114,37 @@
   #impact .note{margin-top:22px; font-size:12.5px; opacity:.55;}
 
   
-  .person{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:24px; text-align:center;}
-  .person .avatar{width:76px; height:76px; border-radius:50%; margin:0 auto 14px; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:24px;}
+  .person{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:28px 20px 22px; text-align:center; position:relative; cursor:pointer; transition:transform .2s ease, box-shadow .25s ease, border-color .2s ease; display:flex; flex-direction:column; align-items:center;}
+  .person:hover{transform:translateY(-4px); box-shadow:0 18px 36px -20px rgba(15,36,56,.35); border-color:#cfc9b6;}
+  .pavatar{width:112px; height:112px; border-radius:50%; margin:0 auto 16px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:42px; box-shadow:0 0 0 4px var(--paper), 0 0 0 6px rgba(15,36,56,.10); flex:none;}
+  .pavatar img{width:100%; height:100%; object-fit:cover; display:block;}
+  .person.amb .pavatar{background:linear-gradient(135deg,var(--teal),var(--teal-deep));}
+  .person.coord .pavatar{background:linear-gradient(135deg,var(--amber),var(--amber-deep));}
+  .person .pmeta{font-size:12.5px; color:var(--muted); line-height:1.45; min-height:18px;}
+  .readmore{margin-top:16px; width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;}
+  .readmore svg{width:18px; height:18px;}
+  .person:hover .readmore, .readmore:focus-visible{background:var(--navy-deep); color:var(--chalk); border-color:var(--navy-deep); transform:scale(1.06);}
+  #teamGrid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}
+  @media(max-width:860px){ #teamGrid{grid-template-columns:repeat(2,1fr); gap:14px;} .pavatar{width:92px; height:92px; font-size:34px;} .person{padding:22px 12px 18px;} }
+  @media(max-width:360px){ #teamGrid{grid-template-columns:1fr;} }
+
+  /* team profile popup */
+  .tm-backdrop{position:fixed; inset:0; z-index:200; background:rgba(10,24,38,.6); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px; opacity:0; transition:opacity .2s ease;}
+  .tm-backdrop.open{display:flex; opacity:1;}
+  .tm-dialog{position:relative; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; background:var(--paper); border-radius:20px; padding:34px 30px 30px; box-shadow:0 30px 70px -20px rgba(0,0,0,.5); animation:tmPop .25s ease both;}
+  @keyframes tmPop{from{opacity:0; transform:translateY(14px) scale(.97);} to{opacity:1; transform:none;}}
+  .tm-close{position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .tm-close:hover{background:var(--navy-deep); color:var(--chalk);}
+  .tm-close svg{width:16px; height:16px;}
+  .tm-head{text-align:center;}
+  .tm-head .pavatar{width:132px; height:132px; font-size:50px;}
+  .tm-head h3{font-size:22px; margin:0 0 4px;}
+  .tm-role{font-size:12.5px; color:var(--teal-deep); font-weight:700; text-transform:uppercase; letter-spacing:.06em;}
+  .tm-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;}
+  .tm-chip{font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px; background:rgba(15,36,56,.07); color:var(--navy-deep);}
+  .tm-bio{margin-top:20px; padding-top:18px; border-top:1px solid var(--line); font-size:14.5px; line-height:1.75; color:#39424D; white-space:pre-line;}
+  body.tm-open{overflow:hidden;}
+
   .person h3{font-size:15.5px; margin-bottom:2px;}
   .person .role{font-size:12.5px; color:var(--teal-deep); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
   .person p{font-size:13.5px; color:var(--muted); margin:0; line-height:1.5;}
@@ -262,25 +293,6 @@
   .chemist-dots button.active{background:var(--amber); transform:scale(1.25);}
   @media(max-width:640px){ .chemist-dots{justify-content:center;} }
 
-  /* ---------- Reaction of the moment ---------- */
-  #reaction{background:var(--navy-deep); color:var(--chalk);}
-  #reaction .section-head .eyebrow{color:var(--amber);}
-  #reaction .section-head h2{color:#fff;}
-  #reaction .section-head p{color:rgba(246,244,238,.65);}
-  .reaction-card{background:rgba(246,244,238,.04); border:1px solid rgba(246,244,238,.12); border-radius:var(--radius); padding:30px 30px 26px; text-align:center;}
-  .reaction-canvas-wrap{position:relative; width:100%; max-width:560px; margin:0 auto;}
-  .reaction-canvas-wrap canvas{width:100%; height:auto; display:block;}
-  .reaction-eq{font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:var(--amber); margin-top:12px; transition:opacity .35s ease, transform .35s ease;}
-  .reaction-eq-name{font-size:14px; font-weight:700; margin-top:6px; transition:opacity .35s ease;}
-  .reaction-eq-note{font-size:13.5px; color:rgba(246,244,238,.6); max-width:460px; margin:8px auto 0; line-height:1.6; transition:opacity .35s ease;}
-  .reaction-card.is-switching .reaction-eq,
-  .reaction-card.is-switching .reaction-eq-name,
-  .reaction-card.is-switching .reaction-eq-note{opacity:0;}
-  .reaction-progress{width:100%; max-width:280px; height:3px; background:rgba(246,244,238,.15); border-radius:99px; margin:22px auto 0; overflow:hidden;}
-  .reaction-progress-bar{height:100%; width:0%; background:var(--amber); border-radius:99px;}
-  .reaction-dots{display:flex; gap:7px; justify-content:center; margin-top:16px;}
-  .reaction-dots button{width:8px; height:8px; padding:0; border-radius:50%; border:none; background:rgba(246,244,238,.25); cursor:pointer; transition:background .3s, transform .3s;}
-  .reaction-dots button.active{background:var(--amber); transform:scale(1.25);}
 
 
   /* ---------- Activity gallery ---------- */
@@ -310,9 +322,92 @@
     .molviewer-canvas-wrap{min-height:300px;}
     .chemist-card{grid-template-columns:1fr;}
   }
+
+  /* ===== Learning-platform redesign: clean, friendly, tactile ===== */
+  body{font-family:'Lato','IBM Plex Sans',sans-serif; background:#fff; color:var(--ink); font-size:16px;}
+  h1,h2,h3,.display,.brand .name{font-family:'Lato',sans-serif; font-weight:900; letter-spacing:-.02em;}
+  .hexlogo text{font-family:'Lato',sans-serif;}
+  section{padding:88px 0;}
+  section:nth-of-type(even):not(.hero):not(#impact):not(#chemist){background:#FAF9F5;}
+  header{background:rgba(255,255,255,.94); box-shadow:0 1px 0 var(--line), 0 10px 30px -24px rgba(15,36,56,.35);}
+  .navlinks{gap:4px;} .navlinks a{padding:8px 12px; border-radius:8px; font-weight:700; font-size:14px;}
+  .navlinks a:hover{background:var(--chalk); color:var(--navy-deep);}
+  .btn{border-radius:8px; font-weight:900; padding:13px 24px; box-shadow:0 3px 0 rgba(10,24,38,.28); transition:transform .12s ease, box-shadow .12s ease;}
+  .btn:hover{transform:translateY(-1px); box-shadow:0 5px 0 rgba(10,24,38,.28);}
+  .btn:active{transform:translateY(3px); box-shadow:0 0 0 rgba(0,0,0,0);}
+  .btn.outline,.btn.outline.dark{box-shadow:none;}
+  .section-head{text-align:center; max-width:740px; margin:0 auto 46px;}
+  .section-head h2{font-size:clamp(28px,3.6vw,40px); line-height:1.15; margin:12px 0 12px;}
+  .section-head p{font-size:17px; line-height:1.65; color:var(--muted);}
+  .eyebrow{display:inline-block; padding:5px 13px; border-radius:999px; background:rgba(31,138,112,.11); letter-spacing:.09em; font-size:12px; font-weight:900;}
+  #impact .eyebrow,.hero .eyebrow{background:rgba(227,154,59,.16);}
+  .card{background:#fff; border:1px solid #E7E3D6; border-radius:14px; box-shadow:0 2px 0 rgba(15,36,56,.04); transition:transform .18s ease, box-shadow .2s ease;}
+  .card:hover{transform:translateY(-4px); box-shadow:0 18px 34px -22px rgba(15,36,56,.4);}
+  .grid.cols-3 .card:nth-child(3n+1){border-top:4px solid var(--teal);}
+  .grid.cols-3 .card:nth-child(3n+2){border-top:4px solid var(--amber);}
+  .grid.cols-3 .card:nth-child(3n){border-top:4px solid var(--navy);}
+  .card .ico{border-radius:14px; font-weight:900;}
+  .faqitem{background:#fff; border:1px solid #E7E3D6; border-radius:12px; padding:4px 18px; margin-bottom:10px;}
+  .faqitem summary{font-weight:900; padding:14px 0;}
+  #impact{background:linear-gradient(160deg,var(--navy),var(--navy-deep));}
+  #impact .card{background:rgba(246,244,238,.07)!important; border:1px solid rgba(246,244,238,.16)!important; text-align:center; border-radius:16px;}
+  #impact .card b{font-family:'Lato',sans-serif; font-weight:900; font-size:38px; color:var(--amber);}
+
+  /* hero: copy left, portal preview right */
+  .hero{padding:84px 0 92px;}
+  .hero .wrap{display:grid; grid-template-columns:1.08fr .92fr; column-gap:56px; align-items:start;}
+  .hero .wrap > *:not(.hero-art){grid-column:1;}
+  .hero h1{font-weight:900; line-height:1.05;}
+  .hero-art{grid-column:2; grid-row:1 / span 6; align-self:center; position:relative; padding:18px 8px 34px;}
+  .ha-card{background:#fff; color:var(--ink); border-radius:18px; padding:22px; box-shadow:0 34px 70px -24px rgba(0,0,0,.6); transform:rotate(-1.6deg);}
+  .ha-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .ha-tag{font-size:11.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--teal-deep); background:rgba(31,138,112,.12); padding:4px 10px; border-radius:999px;}
+  .ha-skill{font-size:12.5px; font-weight:700; color:var(--muted);}
+  .ha-q{font-size:18px; font-weight:900; line-height:1.3; margin:0 0 14px; color:var(--navy-deep);}
+  .ha-opt{border:2px solid #E7E3D6; border-radius:10px; padding:11px 14px; margin-bottom:9px; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:10px;}
+  .ha-opt.ok{border-color:var(--teal); background:rgba(31,138,112,.09); color:var(--teal-deep);}
+  .ha-opt .ck{width:20px; height:20px; border-radius:50%; background:var(--teal); color:#fff; font-size:12px; display:inline-flex; align-items:center; justify-content:center;}
+  .ha-bar{height:10px; border-radius:99px; background:#EEE9DA; overflow:hidden; margin-top:16px;}
+  .ha-bar i{display:block; width:72%; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--amber),var(--teal));}
+  .ha-cap{font-size:12px; font-weight:700; color:var(--muted); margin-top:7px;}
+  .ha-chip{position:absolute; background:#fff; color:var(--ink); border-radius:12px; padding:10px 14px; box-shadow:0 18px 34px -16px rgba(0,0,0,.55); font-size:12px; line-height:1.35; border-left:4px solid var(--amber);}
+  .ha-chip b{display:block; font-size:13px; font-weight:900; color:var(--navy-deep);}
+  .ha-chip span{color:var(--muted);}
+  .ha-chip.c1{left:-18px; bottom:6px;} .ha-chip.c2{right:-6px; top:-4px; border-left-color:var(--teal);}
+  .ha-note{position:absolute; left:0; right:0; bottom:-6px; text-align:center; font-size:11.5px; color:rgba(246,244,238,.55);}
+  @media(max-width:900px){ .hero .wrap{display:block;} .hero-art{display:none;} section{padding:60px 0;} }
+
+  /* Chemists, live: keep the dark band and lift the contrast so everything reads clearly */
+  #chemist{background:radial-gradient(circle at 12% 0%, rgba(31,138,112,.22), transparent 45%), radial-gradient(circle at 92% 100%, rgba(227,154,59,.16), transparent 45%), linear-gradient(160deg,var(--navy),var(--navy-deep));}
+  #chemist .section-head h2{color:#fff;}
+  #chemist .eyebrow{background:rgba(227,154,59,.18); color:#F4B865;}
+  .chemist-card{background:rgba(246,244,238,.08); border:1px solid rgba(246,244,238,.22); box-shadow:0 24px 50px -28px rgba(0,0,0,.6);}
+  .chemist-quote{color:#fff;}
+  .chemist-name{color:#F4B865; font-size:17px; font-weight:900;}
+  .chemist-role{color:rgba(246,244,238,.82);}
+  .chemist-timer{color:rgba(246,244,238,.7);}
+  .chemist-dots button{background:rgba(246,244,238,.4);}
+  .chemist-dots button.active{background:var(--amber);}
+
+  /* ===== Finishing touches ===== */
+  section[id]{scroll-margin-top:76px;}
+  :focus-visible{outline:3px solid var(--amber); outline-offset:3px; border-radius:6px;}
+  .skip-link{position:fixed; left:12px; top:-60px; z-index:300; background:var(--navy-deep); color:#fff; padding:10px 16px; border-radius:8px; font-weight:900; transition:top .2s;}
+  .skip-link:focus{top:12px;}
+  #scrollBar{position:fixed; top:0; left:0; height:3px; width:0; z-index:250; background:linear-gradient(90deg,var(--amber),var(--teal)); pointer-events:none;}
+  .navlinks a.active{background:rgba(31,138,112,.12); color:var(--teal-deep);}
+  #toTop{position:fixed; right:18px; bottom:18px; z-index:90; width:46px; height:46px; border-radius:50%; border:none; cursor:pointer; background:var(--navy-deep); color:#fff; box-shadow:0 10px 24px -8px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .25s, transform .25s;}
+  #toTop.show{opacity:1; transform:none; pointer-events:auto;}
+  #toTop svg{width:20px; height:20px;}
+  .js-rv .rv{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+  .js-rv .rv.in{opacity:1; transform:none;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .js-rv .rv{opacity:1; transform:none; transition:none;} *{animation-duration:.01ms!important; animation-iteration-count:1!important;} }
 </style>
 </head>
 <body>
+<a class="skip-link" href="#about">Skip to content</a>
+<div id="scrollBar"></div>
+<button id="toTop" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,15 12,9 18,15"/></svg></button>
 
 <!-- Announcement popup: shown on top of everything (including the hero) as
      soon as the page loads, until the visitor dismisses it with OK. The
@@ -381,7 +476,6 @@
       <a href="#team">Team</a>
       <a href="#faq">FAQ</a>
       <a href="#contact">Contact</a>
-      <a href="lab-photos.html" style="color:var(--teal-deep);">Share Your Lab Moment</a>
     </nav>
     <div class="navcta">
       <a href="apply.html" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Apply</a>
@@ -424,6 +518,20 @@
       </div>
       <div class="stats">
         <a href="#team" class="stat" style="text-decoration:none; color:inherit; cursor:pointer;"><b>Meet the team →</b><span>See coordinator profiles</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="ha-card">
+          <div class="ha-head"><span class="ha-tag">Practice question</span><span class="ha-skill">Acids &amp; bases</span></div>
+          <p class="ha-q">Which solution has the lowest pH?</p>
+          <div class="ha-opt">0.1 M NaOH</div>
+          <div class="ha-opt">Pure water</div>
+          <div class="ha-opt ok"><span class="ck">&#10003;</span>0.1 M HCl</div>
+          <div class="ha-opt">0.1 M NaCl</div>
+          <div class="ha-bar"><i></i></div><div class="ha-cap">Skill progress</div>
+        </div>
+        <div class="ha-chip c1"><b>Call session</b><span>This week, with your coordinator</span></div>
+        <div class="ha-chip c2"><b>New resource</b><span>Added to the library</span></div>
+        <div class="ha-note">A preview of the student portal</div>
       </div>
     </div>
   </section>
@@ -570,25 +678,6 @@
     </div>
   </section>
 
-  <section id="reaction">
-    <div class="wrap">
-      <div class="section-head" style="margin-bottom:34px;">
-        <div class="eyebrow">Reactions, live</div>
-        <h2>Chemistry, actually happening.</h2>
-        <p>A different reaction plays out every few seconds — watch the atoms find each other and rearrange.</p>
-      </div>
-      <div class="reaction-card">
-        <div class="reaction-canvas-wrap">
-          <canvas id="reactionCanvas" width="560" height="240" aria-label="Animated chemical reaction"></canvas>
-        </div>
-        <div class="reaction-eq" id="reactionEq">&hellip;</div>
-        <div class="reaction-eq-name" id="reactionName"></div>
-        <p class="reaction-eq-note" id="reactionNote"></p>
-        <div class="reaction-progress"><div class="reaction-progress-bar" id="reactionProgress"></div></div>
-        <div class="reaction-dots" id="reactionDots"></div>
-      </div>
-    </div>
-  </section>
 
   <section id="why">
     <div class="wrap">
@@ -680,15 +769,14 @@
       <div class="section-head">
         <div class="eyebrow">Our impact so far</div>
         <h2 style="color:var(--chalk);">Growing, one cohort at a time.</h2>
-        <p>Live figures, pulled directly from the programme roster.</p>
+        <p>A snapshot of the programme today.</p>
       </div>
       <div class="grid cols-4">
-        <div class="card"><b id="impactStudents">—</b><span>Students in the programme</span></div>
-        <div class="card"><b id="impactCoords">—</b><span>Volunteer coordinators</span></div>
-        <div class="card"><b id="impactMaterials">—</b><span>Resources shared</span></div>
-        <div class="card"><b id="impactSessions">—</b><span>Call sessions scheduled</span></div>
+        <div class="card"><b>Over 500</b><span>Students in the programme</span></div>
+        <div class="card"><b>A team</b><span>Of volunteer coordinators</span></div>
+        <div class="card"><b>Growing</b><span>Library of shared resources</span></div>
+        <div class="card"><b>Weekly</b><span>Call sessions &amp; practice</span></div>
       </div>
-      <p class="note">Figures reflect activity recorded in the student portal.</p>
     </div>
   </section>
 
@@ -721,30 +809,15 @@
     </div>
   </section>
 
-  <section style="background:var(--navy-deep); color:var(--chalk); text-align:center;">
-    <div class="wrap" style="max-width:600px;">
-      <div class="eyebrow" style="color:var(--amber);">Your turn</div>
-      <h2 style="color:var(--chalk); font-size:26px; margin:10px 0 14px;">Got a lab photo of your own?</h2>
-      <p style="opacity:.85; font-size:15px; line-height:1.7; margin-bottom:26px;">Working through a titration, a synthesis, or any hands-on chemistry — share a photo of yourself or your group and a short note on what you're doing. It could show up right here.</p>
-      <a href="lab-photos.html" class="btn amber">Share Your Lab Moment</a>
-    </div>
-  </section>
 
   <section id="team">
     <div class="wrap">
       <div class="section-head">
         <div class="eyebrow">Who runs it</div>
         <h2>The people behind the programme.</h2>
-        <p>Founded and led by Local Ambassador, IChC, and powered by a growing team of volunteer coordinators — this list updates automatically as coordinators are added in the portal.</p>
+        <p>Founded and led by Local Ambassador, IChC, and powered by a growing team of volunteer coordinators. Tap a profile to read more.</p>
       </div>
-      <div class="grid cols-4" id="teamGrid">
-        <div class="person">
-          <div class="avatar">E</div>
-          <h3>Eddah Edmond Seyram</h3>
-          <div class="role">Local Ambassador, IChC</div>
-          <p>Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.</p>
-        </div>
-      </div>
+      <div class="grid cols-4" id="teamGrid"></div>
     </div>
   </section>
 
@@ -800,7 +873,7 @@
       <p style="font-size:13px; line-height:1.6; opacity:.7; max-width:280px;">Founded by Local Ambassador, IChC — practice, mentorship, and a community built to train students toward the international stage.</p>
     </div>
     <div><h4>Programme</h4><ul><li><a href="#about">About</a></li><li><a href="#how">How it works</a></li><li><a href="#impact">Impact</a></li><li><a href="#faq">FAQ</a></li></ul></div>
-    <div><h4>Get involved</h4><ul><li><a href="apply.html">Apply as a student</a></li><li><a href="lab-photos.html">Share your lab moment</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Become a coordinator</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Partner with us</a></li></ul></div>
+    <div><h4>Get involved</h4><ul><li><a href="apply.html">Apply as a student</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Become a coordinator</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Partner with us</a></li></ul></div>
     <div><h4>Legal</h4><ul><li><a href="#" id="openPrivacy">Privacy policy</a></li><li><a href="mailto:eseyram@amb.intchc.org" class="mailto-link">Contact</a></li></ul></div>
   </div>
   <div class="fbottom">
@@ -866,6 +939,99 @@ function escapeHtml(str){
   return (str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+// ---------- Team cards + profile popup ----------
+const TEAM_AMBASSADOR_DEFAULT = {
+  name:'Eddah Edmond Seyram', role:'Local Ambassador, IChC', kind:'amb', photo:'',
+  bio:'Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.'
+};
+let TEAM_MEMBERS = [];
+let teamLastFocus = null;
+const TEAM_ICON_MORE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>';
+function safePhotoUrl(u){ return (typeof u==='string' && /^(https?:\/\/|data:image\/)/i.test(u.trim())) ? u.trim() : ''; }
+function teamAvatarHtml(m){
+  const letter = (m.name||'?').trim().charAt(0).toUpperCase() || '?';
+  const photo = safePhotoUrl(m.photo);
+  return `<div class="pavatar" data-letter="${escapeHtml(letter)}">${photo ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">` : escapeHtml(letter)}</div>`;
+}
+function wirePhotoFallbacks(root){
+  root.querySelectorAll('.pavatar img').forEach(img=>{
+    img.addEventListener('error', ()=>{ const box = img.parentNode; box.textContent = box.getAttribute('data-letter') || '?'; }, { once:true });
+  });
+}
+function renderTeam(dir){
+  const grid = document.getElementById('teamGrid');
+  if(!grid) return;
+  const amb = Object.assign({}, TEAM_AMBASSADOR_DEFAULT);
+  const a = dir && dir.ambassador;
+  if(a){ if(a.name) amb.name = a.name; if(a.bio) amb.bio = a.bio; if(a.photo) amb.photo = a.photo; }
+  const coords = ((dir && dir.coordinators) || []).map(c=>({
+    name: c.name || 'Coordinator', role:'Coordinator', kind:'coord', photo: c.photo || '',
+    subject: c.subject || '', region: c.region || '', bio: c.bio || ''
+  }));
+  TEAM_MEMBERS = [amb, ...coords];
+  grid.innerHTML = TEAM_MEMBERS.map((m,i)=>{
+    const meta = m.kind==='coord' ? [m.subject, m.region].filter(Boolean).map(escapeHtml).join(' · ') : '';
+    return `<div class="person ${m.kind}" data-team-idx="${i}">
+      ${teamAvatarHtml(m)}
+      <h3>${escapeHtml(m.name)}</h3>
+      <div class="role">${escapeHtml(m.role)}</div>
+      <div class="pmeta">${meta || '&nbsp;'}</div>
+      <button class="readmore" type="button" aria-label="Read more about ${escapeHtml(m.name)}" title="Read more">${TEAM_ICON_MORE}</button>
+    </div>`;
+  }).join('');
+  wirePhotoFallbacks(grid);
+}
+function ensureTeamModal(){
+  let el = document.getElementById('teamModal');
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'teamModal'; el.className = 'tm-backdrop'; el.setAttribute('aria-hidden','true');
+  el.innerHTML = `<div class="tm-dialog" role="dialog" aria-modal="true" aria-labelledby="tmName">
+    <button class="tm-close" type="button" aria-label="Close profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <div class="tm-head"><div id="tmAvatarSlot"></div><h3 id="tmName"></h3><div class="tm-role" id="tmRole"></div><div class="tm-chips" id="tmChips"></div></div>
+    <div class="tm-bio" id="tmBio"></div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e=>{ if(e.target===el) closeTeamModal(); });
+  el.querySelector('.tm-close').addEventListener('click', closeTeamModal);
+  return el;
+}
+function openTeamModal(i, trigger){
+  const m = TEAM_MEMBERS[i]; if(!m) return;
+  const el = ensureTeamModal();
+  teamLastFocus = trigger || document.activeElement;
+  const slot = el.querySelector('#tmAvatarSlot');
+  slot.innerHTML = teamAvatarHtml(m);
+  const av = slot.firstElementChild; av.classList.add(m.kind==='coord' ? 'coord' : 'amb');
+  av.style.background = m.kind==='coord' ? 'linear-gradient(135deg,var(--amber),var(--amber-deep))' : 'linear-gradient(135deg,var(--teal),var(--teal-deep))';
+  wirePhotoFallbacks(slot);
+  el.querySelector('#tmName').textContent = m.name;
+  el.querySelector('#tmRole').textContent = m.role;
+  el.querySelector('#tmChips').innerHTML = [m.subject, m.region].filter(Boolean).map(t=>`<span class="tm-chip">${escapeHtml(t)}</span>`).join('');
+  el.querySelector('#tmBio').textContent = m.bio || (m.kind==='coord'
+    ? 'A volunteer coordinator with Chemistry Competition Prep, running sessions and guiding students toward the International Chemistry Competition.'
+    : '');
+  el.querySelector('#tmBio').style.display = el.querySelector('#tmBio').textContent ? '' : 'none';
+  el.classList.add('open'); el.setAttribute('aria-hidden','false');
+  document.body.classList.add('tm-open');
+  el.querySelector('.tm-close').focus();
+}
+function closeTeamModal(){
+  const el = document.getElementById('teamModal');
+  if(!el || !el.classList.contains('open')) return;
+  el.classList.remove('open'); el.setAttribute('aria-hidden','true');
+  document.body.classList.remove('tm-open');
+  if(teamLastFocus && teamLastFocus.focus) teamLastFocus.focus();
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTeamModal(); });
+document.addEventListener('click', e=>{
+  const card = e.target.closest && e.target.closest('#teamGrid .person');
+  if(!card) return;
+  const btn = card.querySelector('.readmore');
+  openTeamModal(parseInt(card.getAttribute('data-team-idx'),10), btn);
+});
+renderTeam(null); // show the ambassador immediately; live coordinators fill in once loaded
+
 async function loadStatsAndTeam(){
   if(!sbReady){
     const banner = document.createElement('div');
@@ -880,46 +1046,7 @@ async function loadStatsAndTeam(){
     const dir = data ? data.value : null;
     const cArr = (dir && dir.coordinators) ? dir.coordinators : [];
 
-    document.getElementById('impactStudents').textContent = dir ? dir.studentCount : 0;
-    document.getElementById('impactCoords').textContent = dir ? dir.coordinatorCount : 0;
-    document.getElementById('impactMaterials').textContent = dir ? dir.materialsCount : 0;
-    document.getElementById('impactSessions').textContent = dir ? dir.sessionsCount : 0;
-
-    const grid = document.getElementById('teamGrid');
-    grid.querySelectorAll('[data-coord-card]').forEach(el=>el.remove());
-    const ambassadorCard = grid.querySelector('.person');
-    if(dir && dir.ambassador && (dir.ambassador.name || dir.ambassador.bio || dir.ambassador.photo)){
-      const amb = dir.ambassador;
-      const initial = (amb.name||'E').trim().charAt(0).toUpperCase();
-      ambassadorCard.querySelector('h3').textContent = amb.name || 'Eddah Edmond Seyram';
-      if(amb.bio) ambassadorCard.querySelector('p').textContent = amb.bio;
-      const avatarEl = ambassadorCard.querySelector('.avatar');
-      if(amb.photo){ avatarEl.innerHTML = ''; avatarEl.style.background = `url('${amb.photo.replace(/'/g,"%27")}') center/cover`; }
-      else { avatarEl.textContent = initial; avatarEl.style.background = ''; }
-    }
-    cArr.forEach(c=>{
-      const card = document.createElement('div');
-      card.className = 'person';
-      card.setAttribute('data-coord-card','');
-      const initial = (c.name||'?').trim().charAt(0).toUpperCase();
-      const avatarHtml = c.photo
-        ? `<div class="avatar" style="background:url('${c.photo.replace(/'/g,"%27")}') center/cover;"></div>`
-        : `<div class="avatar" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep));">${initial}</div>`;
-      card.innerHTML = `
-        ${avatarHtml}
-        <h3>${escapeHtml(c.name)}</h3>
-        <div class="role">Coordinator</div>
-        <p>${c.bio ? escapeHtml(c.bio) : escapeHtml(c.subject||'General Chemistry')+(c.region?(' · '+escapeHtml(c.region)):'')}</p>`;
-      ambassadorCard.insertAdjacentElement('afterend', card);
-    });
-    if(!cArr.length){
-      const empty = document.createElement('div');
-      empty.className = 'person';
-      empty.setAttribute('data-coord-card','');
-      empty.style.cssText = 'border-style:dashed; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center;';
-      empty.innerHTML = `<div class="avatar" style="background:rgba(0,0,0,.06); color:var(--muted);">⚗</div><h3 style="color:var(--muted);">More mentors joining soon</h3><p>Our coordinator team is growing with the programme.</p>`;
-      ambassadorCard.insertAdjacentElement('afterend', empty);
-    }
+    renderTeam(dir);
   }catch(e){
     console.error('Failed to load live programme data', e);
   }
@@ -2203,226 +2330,33 @@ loadDeadlineFromPortal();
     nsInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); render(); } });
   })();
 
-  /* ---------- Reaction of the moment ---------- */
-  (function(){
-    const canvas = document.getElementById('reactionCanvas');
-    if(!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const cardEl = document.querySelector('.reaction-card');
-    const eqEl = document.getElementById('reactionEq');
-    const nameEl = document.getElementById('reactionName');
-    const noteEl = document.getElementById('reactionNote');
-    const progressEl = document.getElementById('reactionProgress');
-    const dotsEl = document.getElementById('reactionDots');
-
-    const W = canvas.width, H = canvas.height;
-    const CENTER = { x: W/2, y: H/2 };
-    const H_C = '#bcdcff', O_C = '#ff8a75', NA_C = '#c9a6ff', CL_C = '#8bd17c', ZN_C = '#9fb3c8', C_C = '#e8dfce';
-
-    const REACTIONS = [
-      {
-        eq: '2H\u2082 + O\u2082 \u2192 2H\u2082O',
-        name: 'Water synthesis',
-        note: 'Hydrogen and oxygen combine and release a burst of energy \u2014 the same reaction used in rocket fuel cells.',
-        atoms: [
-          { sym:'H', color:H_C, start:{x:90,y:80},  end:{x:205,y:98} },
-          { sym:'H', color:H_C, start:{x:120,y:80}, end:{x:255,y:98} },
-          { sym:'O', color:O_C, start:{x:480,y:90}, end:{x:230,y:120} },
-          { sym:'H', color:H_C, start:{x:90,y:170}, end:{x:305,y:145} },
-          { sym:'H', color:H_C, start:{x:120,y:170},end:{x:355,y:145} },
-          { sym:'O', color:O_C, start:{x:480,y:150},end:{x:330,y:120} }
-        ],
-        bonds: [[0,2],[1,2],[3,5],[4,5]]
-      },
-      {
-        eq: '2Na + Cl\u2082 \u2192 2NaCl',
-        name: 'Table salt formation',
-        note: 'Sodium gives up an electron to chlorine, forming the ionic bond behind ordinary table salt.',
-        atoms: [
-          { sym:'Na', color:NA_C, start:{x:90,y:90},  end:{x:210,y:120} },
-          { sym:'Cl', color:CL_C, start:{x:470,y:90}, end:{x:250,y:120} },
-          { sym:'Na', color:NA_C, start:{x:90,y:160}, end:{x:310,y:120} },
-          { sym:'Cl', color:CL_C, start:{x:500,y:90}, end:{x:350,y:120} }
-        ],
-        bonds: [[0,1],[2,3]]
-      },
-      {
-        eq: 'Zn + 2HCl \u2192 ZnCl\u2082 + H\u2082',
-        name: 'Metal-acid reaction',
-        note: 'Zinc displaces hydrogen from hydrochloric acid \u2014 the fizzing bubbles are hydrogen gas escaping.',
-        atoms: [
-          { sym:'Zn', color:ZN_C, start:{x:90,y:120}, end:{x:280,y:150} },
-          { sym:'H',  color:H_C,  start:{x:450,y:90}, end:{x:260,y:60} },
-          { sym:'Cl', color:CL_C, start:{x:480,y:90}, end:{x:240,y:110} },
-          { sym:'H',  color:H_C,  start:{x:450,y:160},end:{x:300,y:60} },
-          { sym:'Cl', color:CL_C, start:{x:480,y:160},end:{x:320,y:110} }
-        ],
-        bonds: [[0,2],[0,4],[1,3]]
-      },
-      {
-        eq: 'C + O\u2082 \u2192 CO\u2082',
-        name: 'Combustion',
-        note: 'Carbon binds two oxygen atoms to form carbon dioxide \u2014 the basic chemistry behind every flame.',
-        atoms: [
-          { sym:'C', color:C_C, start:{x:90,y:120},  end:{x:280,y:120} },
-          { sym:'O', color:O_C, start:{x:480,y:90},  end:{x:230,y:120} },
-          { sym:'O', color:O_C, start:{x:480,y:150}, end:{x:330,y:120} }
-        ],
-        bonds: [[0,1],[0,2]]
-      }
-    ];
-
-    const HOLD_MS = 3600;
-    const SETTLE_END = 0.8;
-    const FLASH_AT = 0.42;
-    let idx = 0, cycleStart = performance.now(), lastElapsed = 0, hovering = false, switching = false, offscreen = false, rafPending = false;
-
-    function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
-    function lerpPoint(a,b,t){ return { x: a.x + (b.x-a.x)*t, y: a.y + (b.y-a.y)*t }; }
-
-    function updateText(){
-      const r = REACTIONS[idx];
-      eqEl.textContent = r.eq;
-      nameEl.textContent = r.name;
-      noteEl.textContent = r.note;
-      if(dotsEl) dotsEl.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active', i===idx));
-    }
-
-    function drawFrame(t){
-      ctx.clearRect(0,0,W,H);
-      const r = REACTIONS[idx];
-      const posT = t >= SETTLE_END ? 1 : easeInOutCubic(t/SETTLE_END);
-
-      if(posT > 0.75 && r.bonds){
-        const bondAlpha = Math.min(1, (posT-0.75)/0.25);
-        ctx.strokeStyle = `rgba(227,154,59,${0.6*bondAlpha})`;
-        ctx.lineWidth = 2;
-        r.bonds.forEach(([a,b]) => {
-          const pa = lerpPoint(r.atoms[a].start, r.atoms[a].end, posT);
-          const pb = lerpPoint(r.atoms[b].start, r.atoms[b].end, posT);
-          ctx.beginPath();
-          ctx.moveTo(pa.x, pa.y);
-          ctx.lineTo(pb.x, pb.y);
-          ctx.stroke();
-        });
-      }
-
-      if(t > FLASH_AT - 0.02 && t < FLASH_AT + 0.14){
-        const ft = (t - (FLASH_AT-0.02)) / 0.16;
-        const radius = 20 + ft*70;
-        const alpha = Math.max(0, 1 - ft) * 0.7;
-        const grad = ctx.createRadialGradient(CENTER.x,CENTER.y,0,CENTER.x,CENTER.y,radius);
-        grad.addColorStop(0, `rgba(255,236,196,${alpha})`);
-        grad.addColorStop(1, 'rgba(255,236,196,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(CENTER.x, CENTER.y, radius, 0, Math.PI*2);
-        ctx.fill();
-      }
-
-      r.atoms.forEach(atom => {
-        const p = lerpPoint(atom.start, atom.end, posT);
-        let jx=0, jy=0;
-        if(t > FLASH_AT-0.05 && t < FLASH_AT+0.05){
-          jx = (Math.random()-0.5) * 4;
-          jy = (Math.random()-0.5) * 4;
-        }
-        ctx.beginPath();
-        ctx.fillStyle = atom.color;
-        ctx.arc(p.x+jx, p.y+jy, 15, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(10,24,38,0.85)';
-        ctx.font = '700 12px IBM Plex Sans, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(atom.sym, p.x+jx, p.y+jy+1);
-      });
-    }
-
-    function goTo(next){
-      if(switching) return;
-      switching = true;
-      if(cardEl) cardEl.classList.add('is-switching');
-      setTimeout(() => {
-        idx = next;
-        updateText();
-        cycleStart = performance.now();
-        lastElapsed = 0;
-        if(cardEl) cardEl.classList.remove('is-switching');
-        switching = false;
-      }, 300);
-    }
-
-    function loop(now){
-      if(!hovering && !switching && !offscreen){ lastElapsed = now - cycleStart; }
-      const t = Math.min(lastElapsed / HOLD_MS, 1);
-      if(t >= 1 && !hovering && !switching && !offscreen){
-        goTo((idx+1) % REACTIONS.length);
-      }
-      drawFrame(t);
-      if(progressEl) progressEl.style.width = (t*100) + '%';
-      rafPending = false;
-      if(!offscreen){ rafPending = true; requestAnimationFrame(loop); }
-    }
-
-    if(dotsEl){
-      REACTIONS.forEach((r,i) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.setAttribute('aria-label', `Show ${r.name}`);
-        b.addEventListener('click', () => goTo(i));
-        dotsEl.appendChild(b);
-      });
-    }
-
-    if(cardEl){
-      cardEl.addEventListener('mouseenter', () => hovering = true);
-      cardEl.addEventListener('mouseleave', () => { hovering = false; cycleStart = performance.now() - lastElapsed; });
-    }
-
-    // swipe support — swipe left for next, right for previous; autoplay keeps running
-    if(cardEl){
-      let touchStartX = 0, touchStartY = 0, touching = false;
-      cardEl.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touching = true;
-      }, { passive: true });
-      cardEl.addEventListener('touchend', (e) => {
-        if(!touching) return;
-        touching = false;
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
-          const dir = dx < 0 ? 1 : -1;
-          goTo((idx + dir + REACTIONS.length) % REACTIONS.length);
-        }
-      }, { passive: true });
-    }
-
-    updateText();
-    // Same idea as the molecule viewer above — pause this continuous canvas
-    // loop while the reaction section is scrolled out of view.
-    const reactionSection = document.getElementById('reaction');
-    if(reactionSection && 'IntersectionObserver' in window){
-      new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          const wasOffscreen = offscreen;
-          offscreen = !entry.isIntersecting;
-          if(offscreen && !wasOffscreen){
-            lastElapsed = performance.now() - cycleStart; // freeze progress
-          } else if(!offscreen && wasOffscreen){
-            cycleStart = performance.now() - lastElapsed; // resume without a jump
-          }
-          if(!offscreen && !rafPending){ rafPending = true; requestAnimationFrame(loop); }
-        });
-      }, { threshold: 0.01 }).observe(reactionSection);
-    } else {
-      rafPending = true;
-      requestAnimationFrame(loop);
-    }
-  })();
-
+})();
+</script>
+<script>
+(function(){
+  var bar=document.getElementById('scrollBar'), top=document.getElementById('toTop');
+  var links=[].slice.call(document.querySelectorAll('.navlinks a[href^="#"]'));
+  var targets=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function onScroll(){
+    var h=document.documentElement, max=h.scrollHeight-h.clientHeight;
+    if(bar) bar.style.width=(max>0?(h.scrollTop/max*100):0)+'%';
+    if(top) top.classList.toggle('show', h.scrollTop>700);
+    var cur=-1, y=h.scrollTop+120;
+    targets.forEach(function(t,i){ if(t && t.offsetTop<=y) cur=i; });
+    links.forEach(function(a,i){ a.classList.toggle('active', i===cur); });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+  if(top) top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+  // gentle reveal as sections scroll into view (skipped entirely if the browser can't observe)
+  if('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    var els=[].slice.call(document.querySelectorAll('.section-head, .card, .tstep, .faqitem, .chemist-card, .molviewer, .ha-card'));
+    document.documentElement.classList.add('js-rv');
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ var el=e.target; el.classList.add('in'); io.unobserve(el);
+        setTimeout(function(){ el.classList.remove('rv','in'); }, 900); } });
+    }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
+    els.forEach(function(el){ el.classList.add('rv'); io.observe(el); });
+  }
 })();
 </script>
 </body>
