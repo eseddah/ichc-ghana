@@ -262,15 +262,44 @@
 
   main{padding:34px 0 90px;}
 
+  /* Home button + slide-in menu (phones and small screens) */
+  .menu-btn{
+    display:none; align-items:center; gap:8px; margin-right:auto; padding:8px 14px 8px 11px;
+    border-radius:999px; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep);
+    font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 1px 3px rgba(15,36,56,.06);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .menu-btn:hover{border-color:var(--amber); box-shadow:0 4px 12px rgba(15,36,56,.12);}
+  .menu-btn:active{transform:scale(.96);}
+  .menu-btn svg{width:19px; height:19px; flex:none;}
+  .drawer-close{
+    display:none; margin-left:auto; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line);
+    background:var(--paper); color:var(--navy-deep); cursor:pointer; align-items:center; justify-content:center; flex:none;
+  }
+  .drawer-close svg{width:16px; height:16px;}
+  #drawerScrim{
+    position:fixed; inset:0; z-index:35; background:rgba(10,24,38,.5); backdrop-filter:blur(2px);
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
   @media(max-width:900px){
+    .menu-btn{display:inline-flex;}
+    .drawer-close{display:inline-flex;}
     .sidebar{
-      width:auto; position:static; bottom:auto; flex-direction:row; align-items:center;
-      overflow-x:auto; overflow-y:visible; padding:10px 14px; border-right:none; border-bottom:1px solid var(--line);
+      width:min(288px, 84vw); z-index:40; transform:translateX(-102%);
+      transition:transform .28s cubic-bezier(.22,.8,.3,1); box-shadow:none; padding:18px 14px;
     }
-    .sidebar-brand{display:none;}
+    body.drawer-open .sidebar{transform:translateX(0); box-shadow:12px 0 40px rgba(10,24,38,.28);}
+    body.drawer-open #drawerScrim{opacity:1; pointer-events:auto;}
+    body.drawer-open{overflow:hidden;}
     .main-col{margin-left:0;}
-    .tabs{flex-direction:row; gap:6px;}
-    .tab{padding:9px 13px; border-radius:10px 10px 0 0;}
+    .tab{padding:12px 14px;}
+    .whoami-text{min-width:0;}
+    .whoami .uname{max-width:40vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  }
+  @media(max-width:520px){
+    .menu-btn span{display:none;}
+    .menu-btn{padding:9px 11px;}
+    .whoami .uname{max-width:34vw;}
   }
 
   
@@ -315,6 +344,110 @@
     .hero h1{font-size:26px;}
     .topbar-inner{padding:12px 16px;}
     main .wrap{padding:0 16px;}
+  }
+
+  /* ===== Polish layer: same layout & concept, warmer and more finished ===== */
+  body{
+    background:
+      radial-gradient(1100px 500px at 100% -10%, rgba(227,154,59,.09), transparent 60%),
+      radial-gradient(900px 480px at -10% 0%, rgba(31,138,112,.07), transparent 55%),
+      var(--chalk);
+    background-attachment:fixed;
+  }
+  h1,h2,h3,.display{letter-spacing:-0.015em;}
+  /* softer, friendlier labels (were harsh all-caps) */
+  label{text-transform:none; letter-spacing:.01em; font-size:13px; font-weight:600; color:#4b5563;}
+  .stat .l{text-transform:none; letter-spacing:.01em; font-size:12.5px; font-weight:500;}
+  input, textarea, select{transition:border-color .15s ease, box-shadow .15s ease;}
+  input:focus, textarea:focus, select:focus{box-shadow:0 0 0 4px rgba(227,154,59,.18); outline:none;}
+
+  /* buttons: soft sheen + press */
+  .btn{box-shadow:0 1px 2px rgba(15,36,56,.12); transition:transform .15s ease, box-shadow .2s ease, filter .15s ease;}
+  .btn:not(.ghost):not(.secondary){background-image:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0));}
+  .btn:hover{filter:brightness(1.04);}
+  .btn:active{transform:translateY(0) scale(.98); box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--amber); color:var(--navy-deep);}
+
+  /* sidebar */
+  .sidebar{background:linear-gradient(180deg, #ffffff 0%, #fbfaf6 100%);}
+  .sidebar-brand .name{font-size:15px;}
+  .tab{transition:background .15s ease, color .15s ease, transform .15s ease;}
+  .tab-label{display:flex; align-items:center; gap:11px; min-width:0;}
+  .tab-ic{width:18px; height:18px; flex:none; opacity:.75; transition:opacity .15s ease, color .15s ease;}
+  .tab:hover{background:rgba(15,36,56,.045); color:var(--navy-deep);}
+  .tab:hover .tab-ic{opacity:1;}
+  .tab.active{
+    background:linear-gradient(90deg, rgba(227,154,59,.18), rgba(227,154,59,.04));
+    color:var(--navy-deep); box-shadow:inset 3px 0 0 var(--amber);
+  }
+  .tab.active .tab-ic{opacity:1; color:var(--amber-deep);}
+  .tab-badge{box-shadow:0 2px 6px rgba(201,127,34,.35);}
+
+  /* topbar */
+  .topbar{box-shadow:0 1px 0 rgba(15,36,56,.03), 0 8px 24px -18px rgba(15,36,56,.25);}
+  .avatar-circle{box-shadow:0 0 0 3px rgba(227,154,59,.22);}
+
+  /* hero banners: glow + decorative rings */
+  .hero{box-shadow:0 18px 40px -22px rgba(10,24,38,.45);}
+  .hero::before{
+    content:''; position:absolute; width:340px; height:340px; right:-90px; top:-140px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,255,255,.22), transparent 66%); pointer-events:none;
+  }
+  .hero::after{
+    content:''; position:absolute; width:220px; height:220px; left:-70px; bottom:-110px; border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.14); box-shadow:0 0 0 26px rgba(255,255,255,.04); pointer-events:none;
+  }
+  .hero .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px;
+    background:rgba(255,255,255,.14); letter-spacing:.1em; font-size:11.5px; opacity:1; position:relative; z-index:1;
+  }
+  .hero.stud .eyebrow{background:rgba(42,28,7,.1);}
+  .hero h1{position:relative; z-index:1; font-size:34px; letter-spacing:-0.02em;}
+  .hero p{position:relative; z-index:1;}
+
+  /* cards, stats, list items */
+  .card, .item, .stat, .lounge-post{transition:transform .18s ease, box-shadow .2s ease, border-color .2s ease;}
+  .card{box-shadow:0 1px 2px rgba(15,36,56,.04), 0 10px 26px -20px rgba(15,36,56,.25);}
+  .item{position:relative; box-shadow:0 1px 2px rgba(15,36,56,.03);}
+  .item::before{
+    content:''; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:0 3px 3px 0;
+    background:linear-gradient(180deg, var(--amber), var(--teal)); opacity:0; transition:opacity .2s ease;
+  }
+  .item:hover{transform:translateY(-1px); border-color:#cfc9b6; box-shadow:0 10px 24px -14px rgba(15,36,56,.28);}
+  .item:hover::before{opacity:1;}
+  .stat{position:relative; overflow:hidden;}
+  .stat::after{content:''; position:absolute; left:0; top:0; right:0; height:3px; background:linear-gradient(90deg, var(--amber), var(--teal)); opacity:.85;}
+  .stat:hover{transform:translateY(-2px); box-shadow:0 12px 26px -16px rgba(15,36,56,.35);}
+  .stat .n{background:linear-gradient(135deg, var(--navy-deep), var(--teal-deep)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+
+  /* section headings get an accent */
+  .section-title h2{position:relative; padding-bottom:8px;}
+  .section-title h2::after{content:''; position:absolute; left:0; bottom:0; width:34px; height:3px; border-radius:3px; background:linear-gradient(90deg, var(--amber), var(--amber-deep));}
+  .empty{background:repeating-linear-gradient(135deg, rgba(15,36,56,.02) 0 12px, transparent 12px 24px);}
+
+  /* login screen */
+  .onb-hero::after{
+    content:''; position:absolute; width:420px; height:420px; right:-140px; bottom:-160px; border-radius:50%;
+    background:radial-gradient(circle, rgba(227,154,59,.28), transparent 65%); pointer-events:none;
+  }
+  .onb-hero h1{letter-spacing:-0.02em;}
+  .onb-panel-card{box-shadow:0 30px 60px -28px rgba(15,36,56,.28);}
+  .portal-pick{transition:transform .18s ease, box-shadow .2s ease, border-color .2s ease;}
+  .portal-pick:hover{transform:translateY(-2px);}
+  .portal-pick:hover .portal-pick-chev{color:var(--amber-deep); transform:translateX(2px);}
+  .portal-pick-chev{transition:transform .18s ease, color .18s ease;}
+  .portal-pick-icon{transition:transform .2s ease;}
+  .portal-pick:hover .portal-pick-icon{transform:scale(1.06) rotate(-3deg);}
+
+  /* gentle entrance when a section opens */
+  @keyframes ichcRise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  #screen > *{animation:ichcRise .35s ease both;}
+  #screen > *:nth-child(2){animation-delay:.04s;}
+  #screen > *:nth-child(3){animation-delay:.08s;}
+  #screen > *:nth-child(n+4){animation-delay:.12s;}
+  @media (prefers-reduced-motion: reduce){
+    #screen > *{animation:none;}
+    .sidebar, #drawerScrim, .btn, .item, .stat, .card{transition:none;}
   }
 </style>
 </head>
@@ -457,16 +590,24 @@
 
 <div id="app" class="hidden">
   <div class="app-shell">
-    <aside class="sidebar">
+    <div id="drawerScrim"></div>
+    <aside class="sidebar" id="sidebarNav">
       <a href="index.html" class="sidebar-brand">
         <div class="hexlogo" style="width:32px; color:var(--navy-deep);"></div>
         <div class="name">IChC Outreach<small>Ghana Chapter</small></div>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="Close menu" onclick="event.preventDefault(); event.stopPropagation(); closeDrawer();">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
       </a>
       <div class="tabs" id="tabs"></div>
     </aside>
     <div class="main-col">
       <div class="topbar">
         <div class="topbar-inner">
+          <button class="menu-btn" id="menuBtn" type="button" aria-label="Open sections menu" aria-expanded="false" aria-controls="sidebarNav">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1H10v-5.5h4v5.5h3.5a1 1 0 0 0 1-1V10"/></svg>
+            <span>Home</span>
+          </button>
           <div class="whoami">
             <div class="whoami-text">
               <span class="uname" id="unameLabel"></span>
@@ -1572,6 +1713,18 @@ function isAmbassadorEmail(email){
 function ambassadorName(email){
   return AMBASSADORS[(email||'').toLowerCase()] || 'Ambassador';
 }
+// Every role a single email holds. One person can be an Ambassador AND a
+// Coordinator (e.g. Djarbeng) — the door they click on the onboarding screen
+// decides which dashboard they land in.
+function rolesForEmail(email){
+  const e = (email||'').toLowerCase();
+  const roles = [];
+  if(!e) return roles;
+  if(isAmbassadorEmail(e)) roles.push('ambassador');
+  if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===e)) roles.push('coordinator');
+  if(DB.students.some(s=>s.email && s.email.toLowerCase()===e)) roles.push('student');
+  return roles;
+}
 
 function initOnboarding(){
   paintLogos();
@@ -1629,12 +1782,9 @@ async function resolveGoogleSession(){
   const avatarUrl = (session.user.user_metadata && (session.user.user_metadata.avatar_url || session.user.user_metadata.picture)) || null;
   sessionStorage.removeItem('ichc_pending_role');
 
-  let actualRole = null;
-  if(isAmbassadorEmail(email)) actualRole = 'ambassador';
-  else if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===email)) actualRole = 'coordinator';
-  else if(DB.students.some(s=>s.email && s.email.toLowerCase()===email)) actualRole = 'student';
+  const heldRoles = rolesForEmail(email);
 
-  if(actualRole===null){
+  if(heldRoles.length===0){
     showEmailNotFoundScreen(email);
     notifyEmailNotFound(email, name); // fire-and-forget — doesn't block the screen from showing
     return true;
@@ -1642,10 +1792,12 @@ async function resolveGoogleSession(){
 
   // The account is real, but not for the door that was clicked — refuse the
   // login instead of quietly signing them in under their real role.
-  if(actualRole !== pendingRole){
-    showRoleMismatchScreen(actualRole, pendingRole);
+  if(!heldRoles.includes(pendingRole)){
+    showRoleMismatchScreen(heldRoles, pendingRole);
     return true;
   }
+  // The email holds the role that was clicked — sign in as exactly that one.
+  const actualRole = pendingRole;
 
   if(actualRole==='ambassador'){
     ME = { id:'amb-'+email, name: ambassadorName(email), email: email, role:'ambassador', coordinatorId:null, avatarUrl };
@@ -1675,10 +1827,12 @@ function showAuthPopup(title, message, opts={}){
   });
 }
 
-function showRoleMismatchScreen(actualRole, pendingRole){
+function showRoleMismatchScreen(actualRoles, pendingRole){
+  const list = [].concat(actualRoles).map(r=>ROLE_LABEL[r]);
+  const opts = list.length>1 ? list.slice(0,-1).join(', ')+' or '+list[list.length-1] : list[0];
   showAuthPopup(
     `You're not registered as ${ROLE_LABEL[pendingRole]}`,
-    `You've been registered as ${ROLE_LABEL[actualRole]}. Select the ${ROLE_LABEL[actualRole]} option to sign in.`
+    `You've been registered as ${list.join(' and ')}. Select the ${opts} option to sign in.`
   );
 }
 
@@ -1743,6 +1897,51 @@ async function switchUser(){
   document.getElementById('app').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
 }
+function openDrawer(){
+  document.body.classList.add('drawer-open');
+  const b = document.getElementById('menuBtn'); if(b) b.setAttribute('aria-expanded','true');
+}
+function closeDrawer(){
+  document.body.classList.remove('drawer-open');
+  const b = document.getElementById('menuBtn'); if(b) b.setAttribute('aria-expanded','false');
+}
+(function wireDrawer(){
+  const btn = document.getElementById('menuBtn');
+  const scrim = document.getElementById('drawerScrim');
+  if(btn) btn.addEventListener('click', ()=>{ document.body.classList.contains('drawer-open') ? closeDrawer() : openDrawer(); });
+  if(scrim) scrim.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDrawer(); });
+  window.addEventListener('resize', ()=>{ if(window.innerWidth>900) closeDrawer(); });
+})();
+// Small line icons for the section list — purely visual.
+const TAB_ICONS = {
+  overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  applications:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
+  people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.5 0 4 1.7 4 4.5"/>',
+  feed:'<path d="M4 5h16M4 12h16M4 19h10"/>',
+  announce:'<path d="M4 10v4h3l7 4V6L7 10z"/><path d="M17.5 9.5a4 4 0 0 1 0 5"/>',
+  alerts:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  lounge:'<path d="M4 5h16v11H9l-5 4z"/>',
+  library:'<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/>',
+  exams:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12l2 2 4-4"/>',
+  certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+  smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
+  notifications:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+  space:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13"/>',
+  students:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/>',
+  calls:'<rect x="4" y="5" width="16" height="15" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="9" y1="3" x2="9" y2="7"/><line x1="15" y1="3" x2="15" y2="7"/>',
+  materials:'<path d="M4 7l8-4 8 4-8 4z"/><path d="M4 12l8 4 8-4"/><path d="M4 17l8 4 8-4"/>',
+  practice:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1.9-1.1 1.7"/><circle cx="12" cy="17" r=".6"/>',
+  messages:'<rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3,7 12,13 21,7"/>',
+  welcome:'<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.7 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/>',
+  hub:'<circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/>',
+  ask:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1.9-1.1 1.7"/><circle cx="12" cy="17" r=".6"/>'
+};
+function tabIconSvg(k){
+  const d = TAB_ICONS[k] || '<circle cx="12" cy="12" r="3"/>';
+  return `<svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+}
 function buildTabs(){
   const tabsFor = {
     ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
@@ -1751,10 +1950,12 @@ function buildTabs(){
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
-  el.innerHTML = tabs.map(([k,l],i)=>`<div class="tab${i===0?' active':''}" data-tab="${k}">${l}</div>`).join('');
+  el.innerHTML = tabs.map(([k,l],i)=>`<div class="tab${i===0?' active':''}" data-tab="${k}"><span class="tab-label">${tabIconSvg(k)}<span>${l}</span></span></div>`).join('');
   el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', async ()=>{
     el.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
+    closeDrawer();
+    window.scrollTo({top:0, behavior:'smooth'});
     render(t.dataset.tab);
     await markTabSeen(t.dataset.tab);
     renderNavBadges();
@@ -2663,6 +2864,13 @@ function ambassadorView(tab){
       </div>
       <button class="btn amber small" id="addCoordBtn" style="margin-top:10px;">Add coordinator</button>
     </div>
+    <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
+      <span style="font-size:13px; font-weight:600;">Text updates</span>
+      <button class="btn ghost small" id="smsAllCoords">Select all shown</button>
+      <button class="btn ghost small" id="smsNoneCoords">Deselect all shown</button>
+      <span id="smsCountCoords" style="font-size:12.5px; color:var(--muted);">${smsCountLabel('coord')}</span>
+      <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Ticking or unticking a box saves straight away. Only people with a phone number can be switched on. Use the search box first to act on just a group.</span>
+    </div>
     <div class="list" style="margin-bottom:30px;">
       ${shownCoords.length ? shownCoords.map(c=>`
         <div class="item">
@@ -2699,6 +2907,13 @@ function ambassadorView(tab){
       </div>
       <button class="btn amber small" id="addStudentBtn" style="margin-top:10px;">Add student</button>
     </div>
+    <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
+      <span style="font-size:13px; font-weight:600;">Text updates</span>
+      <button class="btn ghost small" id="smsAllStudents">Select all shown</button>
+      <button class="btn ghost small" id="smsNoneStudents">Deselect all shown</button>
+      <span id="smsCountStudents" style="font-size:12.5px; color:var(--muted);">${smsCountLabel('student')}</span>
+      <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Ticking or unticking a box saves straight away. Only people with a phone number can be switched on. Use the search box first to act on just a group.</span>
+    </div>
     <div class="list">
       ${shownStudents.length ? shownStudents.map(s=>`
         <div class="item">
@@ -2719,6 +2934,7 @@ function ambassadorView(tab){
           <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
             <span>${presenceBadge(s.email)}</span>
             <span>${whatsappBadge(s.whatsappRedirected)}</span>
+            <input data-name-for-amb="${s.id}" value="${escapeHtml(s.name||'')}" placeholder="Student name" style="min-width:170px; padding:6px 10px; font-size:12.5px; font-weight:600;">
             <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
               ${['Accepted','Applied','Waitlisted'].map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('')}
             </select>
@@ -2750,6 +2966,32 @@ function ambassadorView(tab){
   if(tab==='announce'){
     return announceView(true);
   }
+}
+
+function smsCountLabel(scope){
+  const list = scope==='coord' ? DB.coordinators : DB.students;
+  const on = list.filter(p=>p.notifySms && (p.phone||'').trim()).length;
+  return `${on} of ${list.length} will receive texts`;
+}
+function refreshSmsCounters(){
+  const a = document.getElementById('smsCountCoords'); if(a) a.textContent = smsCountLabel('coord');
+  const b = document.getElementById('smsCountStudents'); if(b) b.textContent = smsCountLabel('student');
+}
+// Switches text updates on/off for everyone currently shown in the People tab
+// (so the search box narrows who's affected). People without a phone are skipped
+// when switching on, since there's nothing to text.
+async function bulkSetSms(scope, on){
+  const list = scope==='coord' ? DB.coordinators : DB.students;
+  let skipped = 0;
+  document.querySelectorAll(`[data-sms-for][data-sms-scope="${scope}"]`).forEach(chk=>{
+    const p = list.find(x=>x.id===chk.dataset.smsFor);
+    if(!p) return;
+    if(on && !(p.phone||'').trim()){ skipped++; return; }
+    p.notifySms = on;
+  });
+  await saveKey(scope==='coord' ? 'coordinators' : 'students');
+  render('people');
+  if(skipped) setTimeout(()=>alert(`${skipped} ${skipped===1?'person was':'people were'} skipped because there's no phone number on file.`), 50);
 }
 
 function myStudents(){ return DB.students.filter(s=>s.coordinatorId===ME.id); }
@@ -3633,7 +3875,6 @@ function wireHandlers(tab){
     if(!name) return alert('Name required.');
     if(!email || !validEmail(email)) return alert('A valid email is required — it\'s what lets this coordinator sign in.');
     if(DB.coordinators.some(c=>c.email && c.email.toLowerCase()===email)) return alert('A coordinator with that email already exists.');
-    if(isAmbassadorEmail(email)) return alert('That email is reserved for an Ambassador account.');
     DB.coordinators.push({id:uid(), name, email, subject:q('cSubject').value.trim(), region:q('cRegion').value.trim(), bio:'', phone:q('cPhone').value.trim(), notifyEmail:true, notifySms:!!q('cPhone').value.trim(), joined:today()});
     await saveKey('coordinators'); await syncPublicDirectory(); render('people');
   });
@@ -3677,6 +3918,12 @@ function wireHandlers(tab){
     const startedChk = document.querySelector(`[data-started-for="${id}"]`);
     const phoneInp = document.querySelector(`[data-phone-for-amb="${id}"]`);
     const smsChk = document.querySelector(`[data-sms-for="${id}"][data-sms-scope="student"]`);
+    const nameInp = document.querySelector(`[data-name-for-amb="${id}"]`);
+    if(nameInp){
+      const newName = nameInp.value.trim().replace(/\s+/g,' ');
+      if(!newName){ alert('A student needs a name — it can\'t be left blank.'); nameInp.value = s.name || ''; return; }
+      s.name = newName;
+    }
     if(coordSel) s.coordinatorId = coordSel.value || null;
     if(groupInp) s.group = groupInp.value.trim();
     if(startedChk) s.started = startedChk.checked;
@@ -3687,6 +3934,27 @@ function wireHandlers(tab){
     }
     await saveKey('students'); await syncPublicDirectory(); render('people');
   }));
+  // Text updates checkbox saves the moment it's ticked/unticked (no Save button needed).
+  document.querySelectorAll('[data-sms-for]').forEach(chk=>chk.addEventListener('change', async ()=>{
+    const id = chk.dataset.smsFor, scope = chk.dataset.smsScope;
+    const list = scope==='coord' ? DB.coordinators : DB.students;
+    const person = list.find(x=>x.id===id);
+    if(!person) return;
+    const phoneInp = document.querySelector(scope==='coord' ? `[data-coord-id="${id}"][data-cfield="phone"]` : `[data-phone-for-amb="${id}"]`);
+    const phone = phoneInp ? phoneInp.value.trim() : (person.phone||'');
+    if(chk.checked && !phone){
+      alert('Add a phone number before enabling text updates for this person.');
+      chk.checked = false;
+      return;
+    }
+    person.phone = phone;
+    person.notifySms = chk.checked;
+    await saveKey(scope==='coord' ? 'coordinators' : 'students');
+    refreshSmsCounters();
+  }));
+  [['smsAllCoords','coord',true],['smsNoneCoords','coord',false],['smsAllStudents','student',true],['smsNoneStudents','student',false]].forEach(([elId,scope,on])=>{
+    if(q(elId)) q(elId).addEventListener('click', ()=>bulkSetSms(scope,on));
+  });
   document.querySelectorAll('[data-remove-student]').forEach(b=>b.addEventListener('click', async ()=>{
     DB.students = DB.students.filter(s=>s.id!==b.dataset.removeStudent);
     await saveKey('students'); await syncPublicDirectory(); render('people');
@@ -4190,13 +4458,21 @@ function wireHandlers(tab){
     if(savedMe.role==='coordinator' && DB.coordinators.some(c=>c.id===savedMe.id)) stillValid = true;
     if(savedMe.role==='student' && DB.students.some(s=>s.id===savedMe.id)) stillValid = true;
     if(stillValid){
-      sessionStorage.removeItem('ichc_pending_role');
-      // The click has to match this account's real, cached role too — picking
-      // the wrong door doesn't quietly log you in under your actual one.
+      // The click has to match a role this account really holds — picking the
+      // wrong door doesn't quietly log you in under a different one. If the
+      // email holds several roles (Ambassador + Coordinator) and the click is
+      // for a different one than the cached session, sign in fresh as that role.
       if(savedMe.role !== pendingRole){
-        showRoleMismatchScreen(savedMe.role, pendingRole);
+        const held = rolesForEmail(savedMe.email);
+        if(held.includes(pendingRole)){
+          await resolveGoogleSession();
+          return;
+        }
+        sessionStorage.removeItem('ichc_pending_role');
+        showRoleMismatchScreen(held.length ? held : [savedMe.role], pendingRole);
         return;
       }
+      sessionStorage.removeItem('ichc_pending_role');
       ME = savedMe;
       // The cached session is only a snapshot from whenever the person last signed
       // in. Bring it up to date with the live roster (coordinator assignment, name,
