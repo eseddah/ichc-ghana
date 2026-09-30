@@ -427,6 +427,21 @@
   #menuScrim{position:fixed; inset:0; z-index:55; background:rgba(10,24,38,.5); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s;}
   body.menu-open #menuScrim{opacity:1; pointer-events:auto;} body.menu-open{overflow:hidden;}
   @media(max-width:560px){ .brand .name small{display:none;} }
+
+  /* interest-list bell + pop-up */
+  .notify-wrap{margin-top:30px;}
+  .notify-bell{display:inline-flex; align-items:center; gap:12px; padding:8px 22px 8px 8px; border-radius:999px; background:rgba(246,244,238,.1); border:1.5px solid rgba(246,244,238,.3); color:#fff; font:900 14.5px 'Lato',sans-serif; cursor:pointer; transition:background .2s, transform .2s;}
+  .notify-bell:hover{background:rgba(246,244,238,.18); transform:translateY(-2px);}
+  .nb-ico{position:relative; width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--amber-deep)); display:flex; align-items:center; justify-content:center; flex:none;}
+  .nb-ico svg{width:22px; height:22px;}
+  .nb-dot{position:absolute; top:6px; right:7px; width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:0 0 0 0 rgba(255,255,255,.7); animation:nbPulse 2s infinite;}
+  @keyframes nbPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.65);} 70%{box-shadow:0 0 0 10px rgba(255,255,255,0);} 100%{box-shadow:0 0 0 0 rgba(255,255,255,0);}}
+  .np-backdrop{position:fixed; inset:0; z-index:210; background:rgba(10,24,38,.6); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px;} .np-backdrop.open{display:flex;}
+  .np-card{position:relative; width:100%; max-width:360px; background:#fff; border-radius:28px; padding:34px 28px 26px; text-align:center; box-shadow:0 30px 70px -20px rgba(0,0,0,.55); animation:tmPop .25s ease both;}
+  .np-bell{width:64px; height:64px; border-radius:50%; margin:0 auto 14px; background:rgba(227,154,59,.16); color:var(--amber-deep); display:flex; align-items:center; justify-content:center;} .np-bell svg{width:30px; height:30px;}
+  .np-card h3{font-size:22px; margin:0 0 8px; color:var(--navy-deep);} .np-card p{font-size:15px; line-height:1.6; color:var(--muted); margin:0 0 20px;}
+  .np-go{width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); color:#fff; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 10px 22px -8px rgba(20,105,86,.7); transition:transform .15s;} .np-go:hover{transform:scale(1.08) rotate(-6deg);} .np-go svg{width:26px; height:26px;}
+  .np-card small{display:block; margin-top:8px; font-size:12px; font-weight:700; color:var(--muted);}
 </style>
 </head>
 <body>
@@ -498,6 +513,16 @@
     </div>
   </div>
 </header>
+<div id="notifyPop" class="np-backdrop" aria-hidden="true">
+  <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="npTitle">
+    <button class="tm-close" id="npClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <div class="np-bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></div>
+    <h3 id="npTitle">Applications closed for now</h3>
+    <p>Join the interest list and be first in line when applications reopen.</p>
+    <a class="np-go" href="apply.html#interestCard" aria-label="Go to the interest form" title="Go to the interest form"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><line x1="14" y1="7" x2="17" y2="10"/></svg></a>
+    <small>Interest form</small>
+  </div>
+</div>
 <div id="menuScrim"></div>
 <nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span>Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#about">About</a><a href="#tools">Interactive tools</a><a href="#ichc">The competition</a><a href="#chemist">Chemists, live</a><a href="#why">Why it matters</a><a href="#gain">What you gain</a><a href="#how">Programme</a><a href="#why-chem">A note to students</a><a href="#impact">Impact</a><a href="#activities">Activities</a><a href="#team">Meet the team</a><a href="#faq">FAQ</a><a href="#parents">For parents</a><a href="#contact">Contact</a></nav>
 
@@ -519,18 +544,8 @@
       <h1 style="color:var(--chalk);" id="edit-heroTitle" data-edit="heroTitle">Your chemistry talent deserves a stage this big.</h1>
       <p class="lead" id="edit-heroLead" data-edit="heroLead">Wherever you're starting from, there's a place for you here. We'll pair you with a mentor, hand you real competition practice, and walk with you every step toward the International Chemistry Competition — because talent should never need a head start to be seen.</p>
       <div class="ctas">
-        <a href="apply.html" class="btn amber" id="heroApplyBtn">Join Programme Now</a>
+        <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">Interest form</button>
         <a href="#about" class="btn outline">Learn how it works</a>
-      </div>
-      <div class="countdown-box">
-        <div class="cd-label">Applications close in</div>
-        <div class="cd-numbers" id="countdown">
-          <div class="cd-cell"><b id="cdDays">--</b><span>Days</span></div>
-          <div class="cd-cell"><b id="cdHours">--</b><span>Hrs</span></div>
-          <div class="cd-cell"><b id="cdMins">--</b><span>Min</span></div>
-          <div class="cd-cell"><b id="cdSecs">--</b><span>Sec</span></div>
-        </div>
-        <div class="cd-deadline">Deadline: <span id="cdDeadlineText">30 September 2026</span></div>
       </div>
       <div class="stats">
         <a href="#team" class="stat team-pill" style="text-decoration:none; color:inherit; cursor:pointer;"><span class="tp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17.2" cy="9" r="2.5"/><path d="M17.2 14.5c2.5 0 4 1.7 4 4.5"/></svg></span><span><b>Meet the coordinators</b><span>See their profiles</span></span></a>
@@ -1595,13 +1610,6 @@ function closeApplicationPortal(){
   applicationsClosed = true;
 
   // Hero + nav CTAs: stop linking to the closed form, relabel, and grey out.
-  const heroBtn = document.getElementById('heroApplyBtn');
-  if(heroBtn){
-    heroBtn.textContent = 'Applications closed';
-    heroBtn.removeAttribute('href');
-    heroBtn.style.pointerEvents = 'none';
-    heroBtn.style.opacity = '.55';
-  }
   const navBtn = document.getElementById('navApplyBtn');
   if(navBtn){
     navBtn.textContent = 'Applications closed';
@@ -1612,24 +1620,10 @@ function closeApplicationPortal(){
 }
 
 function tickCountdown(){
-  const diff = APPLICATION_DEADLINE - new Date();
-  const box = document.getElementById('countdown');
-  if(diff <= 0){
-    box.innerHTML = '<div class="cd-cell" style="min-width:auto; padding:8px 16px;"><b style="font-size:15px;">Applications closed</b></div>';
-    closeApplicationPortal();
-    return;
-  }
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const mins = Math.floor((diff % 3600000) / 60000);
-  const secs = Math.floor((diff % 60000) / 1000);
-  document.getElementById('cdDays').textContent = String(days).padStart(2,'0');
-  document.getElementById('cdHours').textContent = String(hours).padStart(2,'0');
-  document.getElementById('cdMins').textContent = String(mins).padStart(2,'0');
-  document.getElementById('cdSecs').textContent = String(secs).padStart(2,'0');
+  if((APPLICATION_DEADLINE - new Date()) <= 0) closeApplicationPortal();
 }
 tickCountdown();
-setInterval(tickCountdown, 1000);
+setInterval(tickCountdown, 30000);
 loadDeadlineFromPortal();
 </script>
 
@@ -2430,6 +2424,17 @@ loadDeadlineFromPortal();
     $('specTab').innerHTML=d[1].map(function(w){ return '<div style="--c:'+wl2rgb(w)+'"><b>'+w.toFixed(1)+' nm</b>'+(1239.84/w).toFixed(2)+' eV per photon</div>'; }).join(''); }
   Object.keys(SPEC).forEach(function(k){ var b=document.createElement('button'); b.type='button'; b.setAttribute('data-k',k); b.textContent=k+' \u00b7 '+SPEC[k][0]; b.onclick=function(){ showSpec(k); }; $('specBtns').appendChild(b); });
   showSpec('H');
+})();
+</script>
+<script>
+(function(){
+  var pop=document.getElementById('notifyPop'), heroBtn=document.getElementById('heroInterestBtn');
+  if(!pop||!heroBtn) return;
+  function set(o){ pop.classList.toggle('open',o); pop.setAttribute('aria-hidden',o?'false':'true'); document.body.classList.toggle('tm-open',o); if(o) document.getElementById('npClose').focus(); else heroBtn.focus(); }
+  heroBtn.addEventListener('click',function(){ set(true); });
+  document.getElementById('npClose').addEventListener('click',function(){ set(false); });
+  pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
 })();
 </script>
 </body>
