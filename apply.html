@@ -184,8 +184,7 @@
   <div class="card done">
     <div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">⏱</div>
     <h2 style="font-size:24px; margin:0 0 10px;">Applications are closed</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b id="deadlineDateText">30 September 2026</b>. We're no longer accepting new applications through this form, but you're welcome to email the Ambassador with any questions or to ask about the next intake.</p>
-    <a class="btn" href="mailto:eseyram@amb.intchc.org" style="margin-top:18px; text-decoration:none;">Email the Ambassador →</a>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b id="deadlineDateText">30 September 2026</b>. We're no longer accepting new applications, but you can join the interest list below to hear first when the next round opens.</p>
   </div>
   <div class="card" id="interestCard" style="margin-top:18px;">
     <h2 style="font-size:20px; margin:0 0 6px;">Get first notice of the next round</h2>
@@ -568,6 +567,7 @@ renderApplicationStatusBanner();
 
 // ---- Interest list (shown once applications are closed) ----
 (function(){
+  if(location.hash==='#interestCard') setTimeout(function(){ var c=document.getElementById('interestCard'); if(c && !c.closest('.hidden')) c.scrollIntoView({behavior:'smooth',block:'center'}); },500);
   const btn = document.getElementById('iBtn'); if(!btn) return;
   btn.addEventListener('click', async ()=>{
     const err = document.getElementById('iErr'); err.textContent = '';
