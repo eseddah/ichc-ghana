@@ -409,6 +409,24 @@
   .team-pill .tp-ico{width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--amber-deep)); display:flex; align-items:center; justify-content:center; flex:none; color:#fff;} .team-pill .tp-ico svg{width:24px; height:24px;}
   .hero .stat.team-pill b{font-family:'Lato',sans-serif; font-size:16px; font-weight:900; display:block; line-height:1.2;} .hero .stat.team-pill span{text-transform:none; letter-spacing:0; font-size:12.5px; opacity:.75;}
   .tm-link{display:inline-flex; align-items:center; gap:8px; margin-top:20px; padding:11px 22px; border-radius:999px; background:var(--navy-deep); color:#fff; font-weight:900; font-size:13.5px; text-decoration:none; transition:transform .15s, background .2s;} .tm-link:hover{background:var(--teal-deep); transform:translateY(-2px);}
+
+  /* three-dash menu: all sections in a slide-in panel, on every screen size */
+  .navbar{justify-content:flex-start; gap:14px;} .brand{margin-right:auto;}
+  .navToggle{display:inline-flex!important; flex-direction:column; justify-content:center; gap:5px; width:46px; height:46px; padding:0 12px; border-radius:14px; border:1.5px solid var(--line); background:#fff; cursor:pointer; flex:none; transition:border-color .2s, box-shadow .2s;}
+  .navToggle:hover{border-color:var(--amber); box-shadow:0 6px 16px -8px rgba(15,36,56,.35);}
+  .navToggle i{display:block; height:3px; border-radius:3px; background:var(--navy-deep); transition:transform .25s, opacity .2s, width .2s;} .navToggle i:nth-child(2){width:70%;}
+  body.menu-open .navToggle i:nth-child(1){transform:translateY(8px) rotate(45deg);} body.menu-open .navToggle i:nth-child(2){opacity:0;} body.menu-open .navToggle i:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+  .navlinks{position:fixed!important; top:0; left:0; bottom:0; width:min(330px,86vw); z-index:60; display:flex!important; flex-direction:column; align-items:stretch!important; gap:2px!important; padding:0 14px 28px!important; background:#fff!important; overflow-y:auto; transform:translateX(-104%); transition:transform .3s cubic-bezier(.22,.8,.3,1); box-shadow:none; border:0!important; right:auto!important;}
+  body.menu-open .navlinks{transform:none; box-shadow:14px 0 48px rgba(10,24,38,.3);}
+  .menu-head{display:flex; align-items:center; justify-content:space-between; padding:22px 8px 14px; margin-bottom:6px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff;}
+  .menu-head span{font-family:'Lato',sans-serif; font-weight:900; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--teal-deep);}
+  .menu-head button{width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); background:#fff; font-size:22px; line-height:1; cursor:pointer; color:var(--navy-deep);} .menu-head button:hover{background:var(--navy-deep); color:#fff;}
+  .navlinks a{padding:13px 14px!important; border-radius:12px!important; font-size:15.5px!important; font-weight:700; color:var(--navy-deep); border-left:4px solid transparent;}
+  .navlinks a:hover{background:var(--chalk)!important; color:var(--navy-deep)!important;}
+  .navlinks a.active{background:rgba(31,138,112,.12)!important; color:var(--teal-deep)!important; border-left-color:var(--amber);}
+  #menuScrim{position:fixed; inset:0; z-index:55; background:rgba(10,24,38,.5); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .25s;}
+  body.menu-open #menuScrim{opacity:1; pointer-events:auto;} body.menu-open{overflow:hidden;}
+  @media(max-width:560px){ .brand .name small{display:none;} }
 </style>
 </head>
 <body>
@@ -469,27 +487,19 @@
 
 <header>
   <div class="navbar">
+    <button class="navToggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteMenu"><i></i><i></i><i></i></button>
     <a href="#top" class="brand">
       <div class="hexlogo" style="width:34px; color:var(--navy-deep);"></div>
       <div class="name">Chemistry Competition Prep<small>Ghana Chapter</small></div>
     </a>
-    <nav class="navlinks">
-      <a href="#about">About</a>
-      <a href="#tools">Interactive tools</a>
-      <a href="#why">Why</a>
-      <a href="#how">Programme</a>
-      <a href="#impact">Impact</a>
-      <a href="#team">Team</a>
-      <a href="#faq">FAQ</a>
-      <a href="#contact">Contact</a>
-    </nav>
     <div class="navcta">
       <a href="apply.html" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Apply</a>
       <a href="portal.html" class="btn amber" style="padding:9px 18px; font-size:13.5px;">Portal login</a>
     </div>
-    <button class="navToggle" id="navToggle">☰</button>
   </div>
 </header>
+<div id="menuScrim"></div>
+<nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span>Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#about">About</a><a href="#tools">Interactive tools</a><a href="#ichc">The competition</a><a href="#chemist">Chemists, live</a><a href="#why">Why it matters</a><a href="#gain">What you gain</a><a href="#how">Programme</a><a href="#why-chem">A note to students</a><a href="#impact">Impact</a><a href="#activities">Activities</a><a href="#team">Meet the team</a><a href="#faq">FAQ</a><a href="#parents">For parents</a><a href="#contact">Contact</a></nav>
 
 <main id="top">
 
@@ -802,7 +812,6 @@
       <p style="font-family:'Fraunces',serif; font-size:clamp(18px,2.2vw,22px); line-height:1.75; color:rgba(246,244,238,.92); margin:0 0 18px;">The bread on your table, the medicine that once healed you, the clean water in your glass and the phone in your hand all began with a person in a room who was curious and refused to stop. Chemistry is not reserved for the gifted. It is patience, honest mistakes, and the courage to try again until the result finally makes sense.</p>
       <p style="font-size:17px; line-height:1.8; color:rgba(246,244,238,.8); margin:0 0 30px;">You do not need to have started early, to come from a famous school, or to be the fastest in the room. If you are afraid of getting it wrong, you are in good company: every chemist whose name you know began exactly there. Here, your questions are welcome, your progress is seen, and you are never learning alone.</p>
       <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:30px;"><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Curiosity</span><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Courage</span><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Community</span></div>
-      <a class="btn amber" href="#contact">Start your journey</a>
     </div>
   </section>
 
@@ -958,12 +967,15 @@ document.querySelectorAll('.hexlogo').forEach(el=>{
 document.getElementById('openPrivacy').addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('privacy').classList.add('open'); });
 document.getElementById('closePrivacy').addEventListener('click', ()=> document.getElementById('privacy').classList.remove('open'));
 
-const navToggle = document.getElementById('navToggle');
-if(navToggle) navToggle.addEventListener('click', ()=>{
-  const links = document.querySelector('.navlinks');
-  links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
-  links.style.cssText += 'position:absolute; top:60px; left:0; right:0; background:var(--paper); flex-direction:column; padding:20px 28px; border-bottom:1px solid var(--line); gap:16px;';
-});
+(function(){
+  var t=document.getElementById('navToggle'), menu=document.getElementById('siteMenu');
+  function set(o){ document.body.classList.toggle('menu-open',o); if(t){ t.setAttribute('aria-expanded',o?'true':'false'); t.setAttribute('aria-label',o?'Close menu':'Open menu'); } }
+  if(t) t.addEventListener('click',function(){ set(!document.body.classList.contains('menu-open')); });
+  var sc=document.getElementById('menuScrim'); if(sc) sc.addEventListener('click',function(){ set(false); });
+  var cl=document.getElementById('menuClose'); if(cl) cl.addEventListener('click',function(){ set(false); });
+  if(menu) menu.addEventListener('click',function(e){ if(e.target.closest('a')) set(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') set(false); });
+})();
 
 const SUPABASE_CONFIG = {
   url: "https://ggbfzfzbquywzuxkoufp.supabase.co",
