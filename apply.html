@@ -187,6 +187,18 @@
     <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b id="deadlineDateText">30 September 2026</b>. We're no longer accepting new applications through this form, but you're welcome to email the Ambassador with any questions or to ask about the next intake.</p>
     <a class="btn" href="mailto:eseyram@amb.intchc.org" style="margin-top:18px; text-decoration:none;">Email the Ambassador →</a>
   </div>
+  <div class="card" id="interestCard" style="margin-top:18px;">
+    <h2 style="font-size:20px; margin:0 0 6px;">Get first notice of the next round</h2>
+    <p style="color:var(--muted); font-size:14.5px; line-height:1.6; margin:0 0 16px;">Leave your details and we'll contact you when applications reopen. This is not an application.</p>
+    <div id="interestFormBox">
+      <div class="field"><label>Full name</label><input id="iName" placeholder="e.g. Ama Owusu"></div>
+      <div class="field"><label>Email</label><input id="iEmail" type="email" placeholder="e.g. ama.owusu@email.com"></div>
+      <div class="field"><label>Phone number <span class="req">(optional)</span></label><input id="iPhone" type="tel" placeholder="e.g. +233 24 000 0000"></div>
+      <div class="err" id="iErr"></div>
+      <button class="btn" id="iBtn" type="button">Notify me</button>
+    </div>
+    <div id="interestDone" class="hidden" style="text-align:center; padding:8px 0;"><div class="tick" style="margin:0 auto 10px;">✓</div><b>You're on the list.</b><p style="color:var(--muted); font-size:14.5px; margin:6px 0 0;">We'll reach out when the next round opens.</p></div>
+  </div>
   <p class="foot-link">Already applied? <a href="index.html">← Back to the programme page</a> to check your status.</p>
 </div>
 
@@ -553,6 +565,40 @@ async function renderApplicationStatusBanner(){
   });
 }
 renderApplicationStatusBanner();
+
+// ---- Interest list (shown once applications are closed) ----
+(function(){
+  const btn = document.getElementById('iBtn'); if(!btn) return;
+  btn.addEventListener('click', async ()=>{
+    const err = document.getElementById('iErr'); err.textContent = '';
+    const name = document.getElementById('iName').value.trim();
+    const email = document.getElementById('iEmail').value.trim().toLowerCase();
+    const phone = document.getElementById('iPhone').value.trim();
+    if(!name) return err.textContent = 'Please enter your name.';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err.textContent = 'Please enter a valid email address.';
+    if(!sbReady) return err.textContent = 'Not connected right now — please try again shortly.';
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try{
+      // Already on the list (or already applied)? Treat it as success without adding a copy.
+      let exists = false;
+      try{
+        const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
+        exists = Array.isArray(data && data.value) && data.value.some(x => String(x.email||'').toLowerCase() === email);
+      }catch(e){}
+      if(!exists){
+        const item = { id: uid(), status: 'interested', name, email, phone, date: today() };
+        const { error } = await sb.rpc('append_kv_item', { p_key:'applications:list', p_item:item });
+        if(error) throw error;
+      }
+      document.getElementById('interestFormBox').classList.add('hidden');
+      document.getElementById('interestDone').classList.remove('hidden');
+    }catch(e){
+      console.error(e);
+      err.textContent = 'Something went wrong — please check your connection and try again.';
+      btn.disabled = false; btn.textContent = 'Notify me';
+    }
+  });
+})();
 </script>
 </body>
 </html>

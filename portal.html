@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/favicon.ico" sizes="any">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IChC Outreach Program — Ghana</title>
@@ -467,6 +465,12 @@
     #screen > *{animation:none;}
     .sidebar, #drawerScrim, .btn, .item, .stat, .card{transition:none;}
   }
+
+  .lp-card{display:flex; align-items:center; gap:12px; margin-top:10px; padding:10px 14px; border:1.5px solid var(--line); border-radius:14px; background:#fff; text-decoration:none; color:inherit; transition:border-color .2s, box-shadow .2s;}
+  .lp-card:hover{border-color:var(--amber); box-shadow:0 8px 20px -14px rgba(15,36,56,.5);}
+  .lp-ico{width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none;}
+  .lp-txt{flex:1; min-width:0; line-height:1.3;} .lp-txt b{display:block; font-size:13.5px; color:var(--navy-deep); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .lp-txt small{display:block; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .lp-go{font-size:18px; color:var(--teal-deep); font-weight:900;}
 </style>
 </head>
 <body>
@@ -866,7 +870,24 @@ const KEY_MAP = {
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
-  return await sSet(KEY_MAP[name], DB[name], true);
+  lastLocalWriteAt = Date.now();
+  const ok = await sSet(KEY_MAP[name], DB[name], true);
+  lastLocalWriteAt = Date.now();
+  return ok;
+}
+// Adds ONE item to a shared list without clobbering anyone else's. The old way wrote back this
+// device's whole copy of the list — if that copy was even slightly stale (a phone that slept, a
+// missed live update), it silently erased messages other people had just sent. This re-reads
+// the latest list from the database first, adds the item, and saves that.
+async function appendShared(prop, item){
+  lastLocalWriteAt = Date.now();
+  const fresh = await sharedRead(prop);
+  const base = Array.isArray(fresh) ? fresh : (DB[prop] || []);
+  const merged = base.filter(x=>!x || x.id!==item.id).concat([item]);
+  DB[prop] = merged;
+  const ok = await sSet(KEY_MAP[prop], merged, true);
+  lastLocalWriteAt = Date.now();
+  return ok;
 }
 
 const PROFILE_PHOTO_BUCKET = 'profile-photos';
@@ -960,13 +981,13 @@ function renderOrDefer(tab){
   }
   render(tab);
 }
-function startRealtimeSync(){
-  if(!sbReady || realtimeChannel) return;
-  try{
-    realtimeChannel = sb.channel('ichc-live-sync')
-      .on('postgres_changes', { event:'*', schema:'public', table:'ichc_kv' }, async (payload)=>{
+const PRESENCE_TABS = ['people','students','welcome','calls','hub','space','overview'];
+let realtimeWanted = false, realtimeState = 'idle', realtimeRetry = 0, realtimeRetryTimer = null;
+let realtimeCertChannel = null, pollTimer = null, pollBusy = false, pollTick = 0, lastLocalWriteAt = 0;
+
+async function handleKvChange(payload){
         const row = payload.new || payload.old;
-        if(!row || !row.key) return;
+        if(!row || !row.key){ pollLive(true); return; } // DELETE events carry no key — just resync
 
         // Presence rows are per-person (presence:<email>) so a change to one person's
         // status only ever patches that one entry — it can never clobber anyone else's.
@@ -979,7 +1000,7 @@ function startRealtimeSync(){
           } else {
             DB.presence[email] = row.value;
           }
-          if(currentTab) renderOrDefer(currentTab);
+          if(currentTab && PRESENCE_TABS.includes(currentTab)) renderOrDefer(currentTab);
           return;
         }
         if(row.key === PRESENCE_PREFIX+'map') return;
@@ -1005,17 +1026,131 @@ function startRealtimeSync(){
         if(prop && currentTab && LIVE_RERENDER_TABS.has(currentTab)){
           renderOrDefer(currentTab);
         }
-      })
+}
+
+function connectRealtime(){
+  if(!realtimeWanted || !sbReady) return;
+  let ch;
+  try{
+    ch = sb.channel('ichc-kv-live-' + Math.random().toString(36).slice(2,8));
+    realtimeChannel = ch;
+    ch.on('postgres_changes', { event:'*', schema:'public', table:'ichc_kv' }, handleKvChange)
+      .subscribe((status)=>{
+        if(ch !== realtimeChannel) return; // an old channel we already replaced
+        realtimeState = status;
+        if(status==='SUBSCRIBED'){
+          realtimeRetry = 0;
+          pollLive(true); // catch up on anything that happened while we were disconnected
+        }else if(status==='CHANNEL_ERROR' || status==='TIMED_OUT' || status==='CLOSED'){
+          scheduleRealtimeRetry();
+        }
+      });
+  }catch(e){ console.error('Realtime sync failed to start', e); scheduleRealtimeRetry(); }
+}
+function scheduleRealtimeRetry(now){
+  if(!realtimeWanted || realtimeRetryTimer) return;
+  const delay = now ? 0 : Math.min(30000, 2000 * Math.pow(2, realtimeRetry++));
+  realtimeRetryTimer = setTimeout(()=>{
+    realtimeRetryTimer = null;
+    if(!realtimeWanted) return;
+    if(realtimeChannel){ const old = realtimeChannel; realtimeChannel = null; try{ sb.removeChannel(old); }catch(e){} }
+    connectRealtime();
+  }, delay);
+}
+function startRealtimeSync(){
+  if(!sbReady || realtimeWanted) return;
+  realtimeWanted = true;
+  connectRealtime();
+  // Certificates live on their own channel so a problem there can never take the
+  // main live-sync channel down with it.
+  try{
+    realtimeCertChannel = sb.channel('ichc-cert-live-' + Math.random().toString(36).slice(2,8))
       .on('postgres_changes', { event:'*', schema:'public', table:'ichc_certificates' }, async ()=>{
         DB.certificates = await loadCertificates();
         if(currentTab==='certificates') renderOrDefer('certificates');
       })
       .subscribe();
-  }catch(e){ console.error('Realtime sync failed to start', e); }
+  }catch(e){ console.error('Certificate sync failed to start', e); }
+  // Safety net: live updates can silently stop (phone sleeping, network change, a
+  // dropped connection). A light poll keeps everyone current regardless.
+  if(pollTimer) clearInterval(pollTimer);
+  pollTick = 0;
+  pollTimer = setInterval(()=>{
+    pollTick++;
+    if(realtimeState==='SUBSCRIBED' && pollTick % 3 !== 0) return; // realtime healthy: check less often
+    pollLive();
+  }, 15000);
 }
 function stopRealtimeSync(){
-  if(realtimeChannel && sbReady){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  realtimeWanted = false;
+  if(realtimeRetryTimer){ clearTimeout(realtimeRetryTimer); realtimeRetryTimer = null; }
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+  if(sbReady){
+    if(realtimeChannel){ const c = realtimeChannel; realtimeChannel = null; try{ sb.removeChannel(c); }catch(e){} }
+    if(realtimeCertChannel){ const c = realtimeCertChannel; realtimeCertChannel = null; try{ sb.removeChannel(c); }catch(e){} }
+  }
+  realtimeState = 'idle';
 }
+
+// Which shared records each screen depends on, besides the always-fresh "hot" ones.
+const HOT_POLL_PROPS = ['comments','notifications','alerts','announcements'];
+const TAB_POLL_PROPS = {
+  people:['students','coordinators','applications'], students:['students'], space:['students','callsheets','materials','practice'],
+  calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
+  overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
+  hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
+  library:['library'], smslog:['smsLog']
+};
+// Reads one shared record straight from the database. Returns null if the read failed
+// (without tripping the "couldn't load roster" banner that boot() uses).
+async function sharedRead(prop){
+  const prev = dbLoadError, prevMsg = dbLoadErrorMsg;
+  dbLoadError = false;
+  const v = await sGet(KEY_MAP[prop], true);
+  const failed = dbLoadError;
+  dbLoadError = prev; dbLoadErrorMsg = prevMsg;
+  return failed ? null : (v || (prop==='settings' ? {} : []));
+}
+async function pollLive(force){
+  if(!ME || !sbReady || pollBusy) return;
+  if(document.hidden && !force) return;
+  pollBusy = true;
+  try{
+    const props = [...new Set([...HOT_POLL_PROPS, ...(TAB_POLL_PROPS[currentTab]||[])])];
+    const [reads, pres] = await Promise.all([
+      Promise.all(props.map(async p=>({p, v: await sharedRead(p)}))),
+      loadAllPresence()
+    ]);
+    // Don't overwrite what this very device is in the middle of saving.
+    const justWrote = Date.now() - lastLocalWriteAt < 4000;
+    const changed = [];
+    if(!justWrote){
+      reads.forEach(({p,v})=>{
+        if(v===null) return;
+        if(JSON.stringify(v) !== JSON.stringify(DB[p])){ DB[p] = v; changed.push(p); }
+      });
+    }
+    let presChanged = false;
+    if(pres && Object.keys(pres).length && JSON.stringify(pres) !== JSON.stringify(DB.presence)){ DB.presence = pres; presChanged = true; }
+    if(!changed.length && !presChanged) return;
+    if(changed.includes('students') || changed.includes('coordinators')) await refreshMeFromDB();
+    if(changed.includes('alerts')){ renderAlertBanner(); renderUpdateToast(); }
+    if(changed.includes('announcements')) renderUpdateToast();
+    if(changed.length) renderNavBadges();
+    const needsRender = (changed.length && LIVE_RERENDER_TABS.has(currentTab)) || (presChanged && PRESENCE_TABS.includes(currentTab));
+    if(currentTab && needsRender) renderOrDefer(currentTab);
+  }catch(e){ console.error('Live poll failed', e); }
+  finally{ pollBusy = false; }
+}
+// Coming back to the page (or the network returning) is exactly when updates get missed.
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden || !ME) return;
+  touchPresence();
+  if(realtimeState!=='SUBSCRIBED') scheduleRealtimeRetry(true);
+  pollLive(true);
+});
+window.addEventListener('online', ()=>{ if(!ME) return; touchPresence(); scheduleRealtimeRetry(true); pollLive(true); });
+window.addEventListener('focus', ()=>{ if(ME) pollLive(true); });
 
 // EmailJS (and most webhook/SMS relays) throttle or reject bursts of near-simultaneous
 // requests with a 429. These queues send one request at a time with a short gap between
@@ -1160,7 +1295,7 @@ function renderAlertBanner(){
         <span class="alert-banner-title">${escapeHtml(a.title)}</span>
         <span class="alert-banner-date">${fmtDateTime(a.ts)}</span>
       </div>
-      <div class="alert-banner-body">${linkify(a.message)}</div>
+      <div class="alert-banner-body">${linkify(a.message)}</div>${linkPreviewCard(a.actionUrl)}
       <div class="alert-banner-actions">
         ${a.actionUrl ? `<a class="btn amber small" href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener">${escapeHtml(a.actionLabel||'Open link')}</a>` : ''}
         <button class="btn small" style="background:#fff; border-color:#B3261E; color:#B3261E;" data-ack-alert="${a.id}">Acknowledge</button>
@@ -1179,7 +1314,7 @@ function alertsSectionForStudentHtml(){
       return `
       <div class="item"${a.priority==='critical' && !acked ? ' style="border-color:#B3261E;"' : ''}>
         <div class="item-head"><span class="item-title">${alertPriorityBadge(a.priority)} ${escapeHtml(a.title)}</span><span class="item-meta">${fmtDateTime(a.ts)}</span></div>
-        <div class="item-body">${linkify(a.message)}</div>
+        <div class="item-body">${linkify(a.message)}</div>${linkPreviewCard(a.actionUrl)}
         ${a.actionUrl ? `<div class="item-body" style="margin-top:4px;"><a href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline;">${escapeHtml(a.actionLabel||'Open link')}</a></div>` : ''}
         ${a.priority==='critical' ? `<div class="item-actions">${acked ? `<span class="badge coord">Acknowledged</span>` : `<button class="btn small" style="background:#fff;border-color:#B3261E;color:#B3261E;" data-ack-alert="${a.id}">Acknowledge</button>`}</div>` : ''}
       </div>`;
@@ -1295,14 +1430,31 @@ function tabUnreadCount(tab){
 }
 async function markTabSeen(tab){
   if(!ME) return;
-  const toSave = new Set();
+  const marks = {}; // prop -> { field, ids:Set }
+  const legacy = new Set();
   tabSources(tab).forEach(src=>{
     if(!src.field || !src.save) return;
     src.items.forEach(it=>{
-      if(itemUnseen(it, src.field)){ it[src.field] = it[src.field] || {}; it[src.field][ME.id] = Date.now(); toSave.add(src.save); }
+      if(itemUnseen(it, src.field)){
+        it[src.field] = it[src.field] || {}; it[src.field][ME.id] = Date.now();
+        if(it.id){ (marks[src.save] = marks[src.save] || {field:src.field, ids:new Set()}).ids.add(it.id); }
+        else legacy.add(src.save);
+      }
     });
   });
-  await Promise.all([...toSave].map(k=>saveKey(k)));
+  // Apply the "seen" marks onto the LATEST copy from the database and save that, instead of
+  // writing back this device's possibly-stale list (which could erase new messages).
+  await Promise.all(Object.entries(marks).map(async ([prop, m])=>{
+    lastLocalWriteAt = Date.now();
+    const fresh = await sharedRead(prop);
+    if(!Array.isArray(fresh)){ await saveKey(prop); return; }
+    const ts = Date.now();
+    fresh.forEach(it=>{ if(it && m.ids.has(it.id)){ it[m.field] = it[m.field] || {}; if(!it[m.field][ME.id]) it[m.field][ME.id] = ts; } });
+    DB[prop] = fresh;
+    await sSet(KEY_MAP[prop], fresh, true);
+    lastLocalWriteAt = Date.now();
+  }));
+  await Promise.all([...legacy].map(k=>saveKey(k)));
 }
 function renderNavBadges(){
   if(!ME) return;
@@ -1372,7 +1524,7 @@ function alertsAdminView(scopeCoordinatorId){
       return `
       <div class="item">
         <div class="item-head"><span class="item-title">${alertPriorityBadge(a.priority)} ${escapeHtml(a.title)}</span><span class="item-meta">${fmtDateTime(a.ts)}</span></div>
-        <div class="item-body">${linkify(a.message)}</div>
+        <div class="item-body">${linkify(a.message)}</div>${linkPreviewCard(a.actionUrl)}
         ${a.actionUrl ? `<div class="item-body" style="margin-top:4px;"><a href="${escapeHtml(normalizeUrl(a.actionUrl))}" target="_blank" rel="noopener" style="color:var(--teal-deep); text-decoration:underline;">${escapeHtml(a.actionLabel||'Open link')}</a></div>` : ''}
         <div class="item-body" style="margin-top:8px; font-size:12.5px; color:var(--muted);">Sent to: ${targetLabel}${(!scopeCoordinatorId && a.coordinatorId) ? ' · posted by '+escapeHtml(coordName(a.coordinatorId)) : ''}</div>
         <div class="item-body" style="margin-top:10px; display:flex; gap:16px; flex-wrap:wrap; font-size:13px;">
@@ -1612,8 +1764,7 @@ function audienceFor(coordinatorId){
 }
 async function notifyBroadcast({title, body, coordinatorId, author, role}){
   const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
-  DB.notifications.push(entry);
-  await saveKey('notifications');
+  await appendShared('notifications', entry);
 
   const recipients = audienceFor(coordinatorId);
   const s = DB.settings || {};
@@ -1622,14 +1773,14 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
     recipients.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
       queueEmailSend({
         service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-        template_params: { to_email:r.email, to_name:r.name, from_name:author, subject:title, message:body }
+        template_params: { to_email:r.email, to_name:r.name, from_name:author, subject:title, message:withPortalLink(body) }
       });
     });
   }
   if(s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       const isStudent = r.coordinatorId !== undefined;
-      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:body,
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:withPortalLink(body),
         recipientId:r.id, recipientRole:isStudent?'student':'coordinator', studentCoordinatorId:isStudent?r.coordinatorId:null });
     });
   }
@@ -1652,13 +1803,13 @@ async function dispatchAlertNotifications(alert){
     targets.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
       queueEmailSend({
         service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-        template_params: { to_email:r.email, to_name:r.name, from_name:alert.author, subject:title, message:body }
+        template_params: { to_email:r.email, to_name:r.name, from_name:alert.author, subject:title, message:withPortalLink(body) }
       });
     });
   }
   if(s.webhookUrl){
     targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
-      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:body,
+      queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:withPortalLink(body),
         recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId });
     });
   }
@@ -1682,11 +1833,11 @@ async function notifyApplicantDecision({app, decision, reason}){
   if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId && app.email){
     queueEmailSend({
       service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-      template_params: { to_email:app.email, to_name:app.name, from_name:ME.name, subject:title, message:body }
+      template_params: { to_email:app.email, to_name:app.name, from_name:ME.name, subject:title, message:withPortalLink(body) }
     });
   }
   if(s.webhookUrl && app.phone && wantsSms){
-    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:body,
+    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:withPortalLink(body),
       recipientId:app.id, recipientRole:'applicant', studentCoordinatorId:null });
   }
 }
@@ -2225,6 +2376,27 @@ function render(tab){
 function escapeHtml(str){
   return (str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
+// The portal's own address, attached to every alert, announcement and message so a
+// text or email always leads straight back here (phones turn the link into a preview).
+function portalUrl(){
+  const fromSettings = DB.settings && DB.settings.portalUrl ? String(DB.settings.portalUrl).trim() : '';
+  if(fromSettings) return fromSettings;
+  if(/^https?:$/.test(location.protocol)) return location.origin + location.pathname.replace(/index\.html$/,'');
+  return '';
+}
+function withPortalLink(text){
+  const u = portalUrl();
+  if(!u || String(text||'').includes(u)) return text;
+  return `${text}\n\nOpen the portal: ${u}`;
+}
+// Rich preview card shown under messages: the portal link, plus the alert's own link if it has one.
+function linkPreviewCard(extraUrl){
+  const items = [];
+  const u = portalUrl();
+  if(u) items.push({url:u, title:programName()+' · Student & Coordinator Portal', sub:'Open the portal'});
+  if(extraUrl){ const x = normalizeUrl(extraUrl); let host=x; try{ host=new URL(x).hostname.replace(/^www\./,''); }catch(e){} if(x && x!==u) items.push({url:x, title:host, sub:'Linked page'}); }
+  return items.map(i=>`<a class="lp-card" href="${escapeHtml(i.url)}" target="_blank" rel="noopener"><span class="lp-ico">&#127760;</span><span class="lp-txt"><b>${escapeHtml(i.title)}</b><small>${escapeHtml(i.sub)} &middot; ${escapeHtml(i.url.replace(/^https?:\/\//,'').slice(0,60))}</small></span><span class="lp-go">&#8599;</span></a>`).join('');
+}
 function linkify(str){
   const escaped = escapeHtml(str);
   const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
@@ -2487,7 +2659,7 @@ function currentStageLabel(student){
   return done.length ? done[done.length-1].label : stages[0].label;
 }
 
-const ACTIVE_WINDOW_MS = 2 * 60 * 1000;
+const ACTIVE_WINDOW_MS = 3 * 60 * 1000; // a bit longer than two heartbeats, so a slow phone timer doesn't flicker to "offline"
 function formatLastSeen(iso){
   if(!iso) return 'Never signed in';
   const then = new Date(iso).getTime();
@@ -2938,11 +3110,10 @@ function startPresenceLoop(){
   presenceTimer = setInterval(async ()=>{
     await touchPresence();
     await refreshPresence();
-    const presenceTabs = ['people','students','welcome','calls','hub','space'];
-    if(presenceTabs.includes(currentTab)) {
-      renderOrDefer(currentTab);
+    if(PRESENCE_TABS.includes(currentTab)) {
+      renderOrDefer(currentTab); // also ages "Active now" into "Last seen…" for people who left
     }
-  }, 45000);
+  }, 30000);
 }
 function myStudentStatus(){ const s = DB.students.find(s=>s.id===ME.id); return s ? s.status : 'Accepted'; }
 async function syncPublicDirectory(){
@@ -3460,6 +3631,21 @@ function studentView(tab){
   }
 }
 
+function interestDup(a){
+  const e=(a.email||'').toLowerCase(); if(!e) return false;
+  return DB.students.some(s=>(s.email||'').toLowerCase()===e) || DB.applications.some(x=>x.id!==a.id && x.status!=='interested' && (x.email||'').toLowerCase()===e);
+}
+// Changes the applications list on top of the LATEST copy in the database, so a form
+// submission that arrived while this screen was open is never wiped out by a stale save.
+async function mutateApplications(fn){
+  const fresh = await sharedRead('applications');
+  const list = Array.isArray(fresh) ? fresh : DB.applications;
+  const next = fn(list) || list;
+  DB.applications = next;
+  lastLocalWriteAt = Date.now();
+  await sSet(KEY_MAP.applications, next, true);
+  lastLocalWriteAt = Date.now();
+}
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
   const real = DB.applications.filter(a=>a.status!=='interested');
@@ -3489,9 +3675,10 @@ function applicationsView(){
     ${interested.length ? interested.map(a=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
-        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}</div>
+        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${interestDup(a)?' <span class="badge" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">Already applied or enrolled</span>':''}</div>
         <div class="item-actions">
           <button class="btn amber small" data-convert-interest="${a.id}">Move to Applications</button>
+          <button class="btn ghost small" data-remove-interest="${a.id}">Remove</button>
         </div>
       </div>`).join('') : `<div class="empty">Nobody on the Interest List right now.</div>`}
   </div>`;
@@ -3551,7 +3738,7 @@ function notificationsView(){
     ${sorted.length ? sorted.map(n=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(n.title)}</span><span class="item-meta">${fmtDate(n.date)}</span></div>
-        <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>
+        <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>${linkPreviewCard()}
       </div>`).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
   </div>`;
 }
@@ -3618,7 +3805,7 @@ function announceView(canPost){
     ${list.length ? list.map(a=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
-        <div class="item-body">${linkify(a.body)}</div>
+        <div class="item-body">${linkify(a.body)}</div>${linkPreviewCard()}
         ${canPost ? `
         <div class="item-body" style="margin-top:8px;">
           <input data-annfield="title" data-ann-id="${a.id}" value="${escapeHtml(a.title)}" placeholder="Title" style="margin-bottom:6px;">
@@ -3632,7 +3819,7 @@ function announceView(canPost){
   </div>`;
 }
 function commentThread(items, coordinatorId){
-  const sorted = [...items].sort((a,b)=>a.date.localeCompare(b.date));
+  const sorted = [...items].sort((a,b)=> (a.ts && b.ts) ? a.ts-b.ts : a.date.localeCompare(b.date));
   return `
   <div class="list" style="margin-bottom:16px;">
     ${sorted.length ? sorted.map(c=>`
@@ -3905,8 +4092,7 @@ function wireHandlers(tab){
   if(q('addLoungePostBtn')) q('addLoungePostBtn').addEventListener('click', async ()=>{
     const body = q('loungeBody').value.trim();
     if(!body) return;
-    DB.loungePosts.push({id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now(), replies:[], seenBy:{[ME.id]:Date.now()}});
-    await saveKey('loungePosts');
+    await appendShared('loungePosts', {id:uid(), authorId:ME.id, author:ME.name, role:ME.role, body, date:today(), ts:Date.now(), replies:[], seenBy:{[ME.id]:Date.now()}});
     render('lounge');
   });
   document.querySelectorAll('[data-remove-lounge-post]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -4147,8 +4333,7 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    DB.announcements.push({id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
-    await saveKey('announcements');
+    await appendShared('announcements', {id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
     await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
     render('announce');
   });
@@ -4310,8 +4495,10 @@ function wireHandlers(tab){
   if(q('sendCommentBtn')) q('sendCommentBtn').addEventListener('click', async ()=>{
     const text=q('commentText').value.trim(); if(!text) return;
     const coordinatorId = q('sendCommentBtn').dataset.coord || null;
-    DB.comments.push({id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today(), seenBy:{[ME.id]:Date.now()}});
-    await saveKey('comments');
+    const sendBtn = q('sendCommentBtn'); sendBtn.disabled = true;
+    const okSend = await appendShared('comments', {id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
+    sendBtn.disabled = false;
+    if(!okSend){ alert('Your message couldn\'t be sent — check your connection and try again.'); return; }
     if(ME.role==='coordinator' || ME.role==='ambassador'){
       await notifyBroadcast({title:`New message from ${ME.name}`, body:text, coordinatorId, author:ME.name, role:ME.role});
     }
@@ -4441,8 +4628,7 @@ function wireHandlers(tab){
     // relying on email alone — see apply.html for why that matters.
     DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
     await saveKey('applicationDecisions');
-    DB.applications = DB.applications.filter(a=>a.id!==app.id);
-    await saveKey('applications');
+    await mutateApplications(list=>list.filter(a=>a.id!==app.id));
     render('applications');
   }));
   document.querySelectorAll('[data-decline-app]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -4453,18 +4639,19 @@ function wireHandlers(tab){
     await notifyApplicantDecision({app, decision:'declined', reason});
     DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
     await saveKey('applicationDecisions');
-    DB.applications = DB.applications.filter(a=>a.id!==app.id);
-    await saveKey('applications'); render('applications');
+    await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+    render('applications');
   }));
   document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.convertInterest);
     if(!app) return;
-    delete app.status;
-    // whatsappRedirected wasn't part of the Interest List entry (there's no
-    // WhatsApp step at signup time — see apply.html) — set it now so this
-    // reads exactly like a regular application once it's in the queue above.
-    if(typeof app.whatsappRedirected !== 'boolean') app.whatsappRedirected = false;
-    await saveKey('applications');
+    await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; if(typeof y.whatsappRedirected!=='boolean') y.whatsappRedirected=false; if(!y.date) y.date=today(); return y; }));
+    render('applications');
+  }));
+  document.querySelectorAll('[data-remove-interest]').forEach(b=>b.addEventListener('click', async ()=>{
+    const app = DB.applications.find(a=>a.id===b.dataset.removeInterest); if(!app) return;
+    if(!confirm('Remove '+app.name+' from the Interest List?')) return;
+    await mutateApplications(list=>list.filter(x=>x.id!==app.id));
     render('applications');
   }));
 
