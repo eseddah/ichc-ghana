@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/favicon.ico" sizes="any">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chemistry Competition Prep — Ghana | Ghana's Pathway to the International Chemistry Competition</title>
@@ -120,32 +118,20 @@
   .person:hover{transform:translateY(-4px); box-shadow:0 18px 36px -20px rgba(15,36,56,.35); border-color:#cfc9b6;}
   .pavatar{width:112px; height:112px; border-radius:50%; margin:0 auto 16px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Fraunces',serif; font-weight:700; font-size:42px; box-shadow:0 0 0 4px var(--paper), 0 0 0 6px rgba(15,36,56,.10); flex:none;}
   .pavatar img{width:100%; height:100%; object-fit:cover; display:block;}
-  .person.amb .pavatar{background:linear-gradient(135deg,var(--teal),var(--teal-deep));}
-  .person.coord .pavatar{background:linear-gradient(135deg,var(--amber),var(--amber-deep));}
+  .person.amb .pavatar{background:linear-gradient(135deg,var(--teal),var(--teal-deep));} .person.coord .pavatar{background:linear-gradient(135deg,var(--amber),var(--amber-deep));}
   .person .pmeta{font-size:12.5px; color:var(--muted); line-height:1.45; min-height:18px;}
-  .readmore{margin-top:16px; width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;}
-  .readmore svg{width:18px; height:18px;}
+  .readmore{margin-top:16px; width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;} .readmore svg{width:18px; height:18px;}
   .person:hover .readmore, .readmore:focus-visible{background:var(--navy-deep); color:var(--chalk); border-color:var(--navy-deep); transform:scale(1.06);}
   #teamGrid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));}
-  @media(max-width:860px){ #teamGrid{grid-template-columns:repeat(2,1fr); gap:14px;} .pavatar{width:92px; height:92px; font-size:34px;} .person{padding:22px 12px 18px;} }
-  @media(max-width:360px){ #teamGrid{grid-template-columns:1fr;} }
-
-  /* team profile popup */
-  .tm-backdrop{position:fixed; inset:0; z-index:200; background:rgba(10,24,38,.6); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px; opacity:0; transition:opacity .2s ease;}
-  .tm-backdrop.open{display:flex; opacity:1;}
+  @media(max-width:860px){ #teamGrid{grid-template-columns:repeat(2,1fr); gap:14px;} .pavatar{width:92px; height:92px; font-size:34px;} .person{padding:22px 12px 18px;} } @media(max-width:360px){ #teamGrid{grid-template-columns:1fr;} }
+  .tm-backdrop{position:fixed; inset:0; z-index:200; background:rgba(10,24,38,.6); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px;} .tm-backdrop.open{display:flex;}
   .tm-dialog{position:relative; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; background:var(--paper); border-radius:20px; padding:34px 30px 30px; box-shadow:0 30px 70px -20px rgba(0,0,0,.5); animation:tmPop .25s ease both;}
   @keyframes tmPop{from{opacity:0; transform:translateY(14px) scale(.97);} to{opacity:1; transform:none;}}
-  .tm-close{position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:flex; align-items:center; justify-content:center;}
-  .tm-close:hover{background:var(--navy-deep); color:var(--chalk);}
-  .tm-close svg{width:16px; height:16px;}
-  .tm-head{text-align:center;}
-  .tm-head .pavatar{width:132px; height:132px; font-size:50px;}
-  .tm-head h3{font-size:22px; margin:0 0 4px;}
+  .tm-close{position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:50%; border:1.5px solid var(--line); background:var(--paper); color:var(--navy-deep); cursor:pointer; display:flex; align-items:center; justify-content:center;} .tm-close:hover{background:var(--navy-deep); color:var(--chalk);} .tm-close svg{width:16px; height:16px;}
+  .tm-head{text-align:center;} .tm-head .pavatar{width:132px; height:132px; font-size:50px;} .tm-head h3{font-size:22px; margin:0 0 4px;}
   .tm-role{font-size:12.5px; color:var(--teal-deep); font-weight:700; text-transform:uppercase; letter-spacing:.06em;}
-  .tm-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;}
-  .tm-chip{font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px; background:rgba(15,36,56,.07); color:var(--navy-deep);}
-  .tm-bio{margin-top:20px; padding-top:18px; border-top:1px solid var(--line); font-size:14.5px; line-height:1.75; color:#39424D; white-space:pre-line;}
-  body.tm-open{overflow:hidden;}
+  .tm-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;} .tm-chip{font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:999px; background:rgba(15,36,56,.07); color:var(--navy-deep);}
+  .tm-bio{margin-top:20px; padding-top:18px; border-top:1px solid var(--line); font-size:14.5px; line-height:1.75; color:#39424D; white-space:pre-line;} body.tm-open{overflow:hidden;}
 
   .person h3{font-size:15.5px; margin-bottom:2px;}
   .person .role{font-size:12.5px; color:var(--teal-deep); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
@@ -325,85 +311,104 @@
     .chemist-card{grid-template-columns:1fr;}
   }
 
-  /* ===== Learning-platform redesign: clean, friendly, tactile ===== */
+  /* ===== Learning-platform redesign ===== */
   body{font-family:'Lato','IBM Plex Sans',sans-serif; background:#fff; color:var(--ink); font-size:16px;}
   h1,h2,h3,.display,.brand .name{font-family:'Lato',sans-serif; font-weight:900; letter-spacing:-.02em;}
-  .hexlogo text{font-family:'Lato',sans-serif;}
-  section{padding:88px 0;}
-  section:nth-of-type(even):not(.hero):not(#impact):not(#chemist){background:#FAF9F5;}
+  section{padding:88px 0;} section[id]{scroll-margin-top:76px;}
+  section:nth-of-type(even):not(.hero):not(#impact):not(#chemist):not(#why-chem){background:#FAF9F5;}
   header{background:rgba(255,255,255,.94); box-shadow:0 1px 0 var(--line), 0 10px 30px -24px rgba(15,36,56,.35);}
-  .navlinks{gap:4px;} .navlinks a{padding:8px 12px; border-radius:8px; font-weight:700; font-size:14px;}
-  .navlinks a:hover{background:var(--chalk); color:var(--navy-deep);}
+  .navlinks{gap:4px;} .navlinks a{padding:8px 12px; border-radius:8px; font-weight:700; font-size:14px;} .navlinks a:hover{background:var(--chalk); color:var(--navy-deep);} .navlinks a.active{background:rgba(31,138,112,.12); color:var(--teal-deep);}
   .btn{border-radius:8px; font-weight:900; padding:13px 24px; box-shadow:0 3px 0 rgba(10,24,38,.28); transition:transform .12s ease, box-shadow .12s ease;}
-  .btn:hover{transform:translateY(-1px); box-shadow:0 5px 0 rgba(10,24,38,.28);}
-  .btn:active{transform:translateY(3px); box-shadow:0 0 0 rgba(0,0,0,0);}
-  .btn.outline,.btn.outline.dark{box-shadow:none;}
-  .section-head{text-align:center; max-width:740px; margin:0 auto 46px;}
-  .section-head h2{font-size:clamp(28px,3.6vw,40px); line-height:1.15; margin:12px 0 12px;}
-  .section-head p{font-size:17px; line-height:1.65; color:var(--muted);}
+  .btn:hover{transform:translateY(-1px); box-shadow:0 5px 0 rgba(10,24,38,.28);} .btn:active{transform:translateY(3px); box-shadow:none;} .btn.outline,.btn.outline.dark{box-shadow:none;}
+  .section-head{text-align:center; max-width:740px; margin:0 auto 46px;} .section-head h2{font-size:clamp(28px,3.6vw,40px); line-height:1.15; margin:12px 0;} .section-head p{font-size:17px; line-height:1.65; color:var(--muted);}
   .eyebrow{display:inline-block; padding:5px 13px; border-radius:999px; background:rgba(31,138,112,.11); letter-spacing:.09em; font-size:12px; font-weight:900;}
-  #impact .eyebrow,.hero .eyebrow{background:rgba(227,154,59,.16);}
+  #impact .eyebrow,.hero .eyebrow,#why-chem .eyebrow,#chemist .eyebrow{background:rgba(227,154,59,.18); color:#F4B865;}
   .card{background:#fff; border:1px solid #E7E3D6; border-radius:14px; box-shadow:0 2px 0 rgba(15,36,56,.04); transition:transform .18s ease, box-shadow .2s ease;}
   .card:hover{transform:translateY(-4px); box-shadow:0 18px 34px -22px rgba(15,36,56,.4);}
-  .grid.cols-3 .card:nth-child(3n+1){border-top:4px solid var(--teal);}
-  .grid.cols-3 .card:nth-child(3n+2){border-top:4px solid var(--amber);}
-  .grid.cols-3 .card:nth-child(3n){border-top:4px solid var(--navy);}
-  .card .ico{border-radius:14px; font-weight:900;}
-  .faqitem{background:#fff; border:1px solid #E7E3D6; border-radius:12px; padding:4px 18px; margin-bottom:10px;}
-  .faqitem summary{font-weight:900; padding:14px 0;}
+  .grid.cols-3 .card:nth-child(3n+1){border-top:4px solid var(--teal);} .grid.cols-3 .card:nth-child(3n+2){border-top:4px solid var(--amber);} .grid.cols-3 .card:nth-child(3n){border-top:4px solid var(--navy);}
+  .faqitem{background:#fff; border:1px solid #E7E3D6; border-radius:12px; padding:4px 18px; margin-bottom:10px;} .faqitem summary{font-weight:900; padding:14px 0;}
   #impact{background:linear-gradient(160deg,var(--navy),var(--navy-deep));}
   #impact .card{background:rgba(246,244,238,.07)!important; border:1px solid rgba(246,244,238,.16)!important; text-align:center; border-radius:16px;}
   #impact .card b{font-family:'Lato',sans-serif; font-weight:900; font-size:38px; color:var(--amber);}
-
-  /* hero: copy left, portal preview right */
-  .hero{padding:84px 0 92px;}
-  .hero .wrap{display:grid; grid-template-columns:1.08fr .92fr; column-gap:56px; align-items:start;}
-  .hero .wrap > *:not(.hero-art){grid-column:1;}
-  .hero h1{font-weight:900; line-height:1.05;}
+  .hero{padding:84px 0 92px;} .hero .wrap{display:grid; grid-template-columns:1.08fr .92fr; column-gap:56px; align-items:start;} .hero .wrap > *:not(.hero-art){grid-column:1;} .hero h1{font-weight:900; line-height:1.05;}
   .hero-art{grid-column:2; grid-row:1 / span 6; align-self:center; position:relative; padding:18px 8px 34px;}
-  .ha-card{background:#fff; color:var(--ink); border-radius:18px; padding:22px; box-shadow:0 34px 70px -24px rgba(0,0,0,.6); transform:rotate(-1.6deg);}
   .ha-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
-  .ha-tag{font-size:11.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--teal-deep); background:rgba(31,138,112,.12); padding:4px 10px; border-radius:999px;}
-  .ha-skill{font-size:12.5px; font-weight:700; color:var(--muted);}
+  .ha-tag{font-size:11.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--teal-deep); background:rgba(31,138,112,.12); padding:4px 10px; border-radius:999px;} .ha-skill{font-size:12.5px; font-weight:700; color:var(--muted);}
   .ha-q{font-size:18px; font-weight:900; line-height:1.3; margin:0 0 14px; color:var(--navy-deep);}
-  .ha-opt{border:2px solid #E7E3D6; border-radius:10px; padding:11px 14px; margin-bottom:9px; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:10px;}
-  .ha-opt.ok{border-color:var(--teal); background:rgba(31,138,112,.09); color:var(--teal-deep);}
+  .ha-opt{border:2px solid #E7E3D6; border-radius:10px; padding:11px 14px; margin-bottom:9px; font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:10px;} .ha-opt.ok{border-color:var(--teal); background:rgba(31,138,112,.09); color:var(--teal-deep);}
   .ha-opt .ck{width:20px; height:20px; border-radius:50%; background:var(--teal); color:#fff; font-size:12px; display:inline-flex; align-items:center; justify-content:center;}
-  .ha-bar{height:10px; border-radius:99px; background:#EEE9DA; overflow:hidden; margin-top:16px;}
-  .ha-bar i{display:block; width:72%; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--amber),var(--teal));}
-  .ha-cap{font-size:12px; font-weight:700; color:var(--muted); margin-top:7px;}
-  .ha-chip{position:absolute; background:#fff; color:var(--ink); border-radius:12px; padding:10px 14px; box-shadow:0 18px 34px -16px rgba(0,0,0,.55); font-size:12px; line-height:1.35; border-left:4px solid var(--amber);}
-  .ha-chip b{display:block; font-size:13px; font-weight:900; color:var(--navy-deep);}
-  .ha-chip span{color:var(--muted);}
-  .ha-chip.c1{left:-18px; bottom:6px;} .ha-chip.c2{right:-6px; top:-4px; border-left-color:var(--teal);}
-  .ha-note{position:absolute; left:0; right:0; bottom:-6px; text-align:center; font-size:11.5px; color:rgba(246,244,238,.55);}
+  .ha-bar{height:10px; border-radius:99px; background:#EEE9DA; overflow:hidden; margin-top:16px;} .ha-bar i{display:block; width:72%; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--amber),var(--teal));} .ha-cap{font-size:12px; font-weight:700; color:var(--muted); margin-top:7px;}
+  .ha-chip{position:absolute; background:#fff; color:var(--ink); border-radius:12px; padding:10px 14px; box-shadow:0 18px 34px -16px rgba(0,0,0,.55); font-size:12px; line-height:1.35; border-left:4px solid var(--amber);} .ha-chip b{display:block; font-size:13px; font-weight:900; color:var(--navy-deep);} .ha-chip span{color:var(--muted);}
+  .ha-chip.c1{left:-18px; bottom:6px;} .ha-chip.c2{right:-6px; top:-4px; border-left-color:var(--teal);} .ha-note{position:absolute; left:0; right:0; bottom:-6px; text-align:center; font-size:11.5px; color:rgba(246,244,238,.55);}
   @media(max-width:900px){ .hero .wrap{display:block;} .hero-art{display:none;} section{padding:60px 0;} }
-
-  /* Chemists, live: keep the dark band and lift the contrast so everything reads clearly */
   #chemist{background:radial-gradient(circle at 12% 0%, rgba(31,138,112,.22), transparent 45%), radial-gradient(circle at 92% 100%, rgba(227,154,59,.16), transparent 45%), linear-gradient(160deg,var(--navy),var(--navy-deep));}
-  #chemist .section-head h2{color:#fff;}
-  #chemist .eyebrow{background:rgba(227,154,59,.18); color:#F4B865;}
-  .chemist-card{background:rgba(246,244,238,.08); border:1px solid rgba(246,244,238,.22); box-shadow:0 24px 50px -28px rgba(0,0,0,.6);}
-  .chemist-quote{color:#fff;}
-  .chemist-name{color:#F4B865; font-size:17px; font-weight:900;}
-  .chemist-role{color:rgba(246,244,238,.82);}
-  .chemist-timer{color:rgba(246,244,238,.7);}
-  .chemist-dots button{background:rgba(246,244,238,.4);}
-  .chemist-dots button.active{background:var(--amber);}
-
-  /* ===== Finishing touches ===== */
-  section[id]{scroll-margin-top:76px;}
+  #chemist .section-head h2{color:#fff;} .chemist-card{background:rgba(246,244,238,.08); border:1px solid rgba(246,244,238,.22); box-shadow:0 24px 50px -28px rgba(0,0,0,.6);}
+  .chemist-quote{color:#fff;} .chemist-name{color:#F4B865; font-size:17px; font-weight:900;} .chemist-role{color:rgba(246,244,238,.82);} .chemist-timer{color:rgba(246,244,238,.7);}
+  .chemist-dots button{background:rgba(246,244,238,.4);} .chemist-dots button.active{background:var(--amber);}
+  .chemist-quote.is-fact{font-style:normal; font-size:clamp(17px,2vw,20px); line-height:1.6;} .chemist-quote.is-fact::before,.chemist-quote.is-fact::after{content:none!important;}
   :focus-visible{outline:3px solid var(--amber); outline-offset:3px; border-radius:6px;}
-  .skip-link{position:fixed; left:12px; top:-60px; z-index:300; background:var(--navy-deep); color:#fff; padding:10px 16px; border-radius:8px; font-weight:900; transition:top .2s;}
-  .skip-link:focus{top:12px;}
+  .skip-link{position:fixed; left:12px; top:-60px; z-index:300; background:var(--navy-deep); color:#fff; padding:10px 16px; border-radius:8px; font-weight:900; transition:top .2s;} .skip-link:focus{top:12px;}
   #scrollBar{position:fixed; top:0; left:0; height:3px; width:0; z-index:250; background:linear-gradient(90deg,var(--amber),var(--teal)); pointer-events:none;}
-  .navlinks a.active{background:rgba(31,138,112,.12); color:var(--teal-deep);}
-  #toTop{position:fixed; right:18px; bottom:18px; z-index:90; width:46px; height:46px; border-radius:50%; border:none; cursor:pointer; background:var(--navy-deep); color:#fff; box-shadow:0 10px 24px -8px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .25s, transform .25s;}
-  #toTop.show{opacity:1; transform:none; pointer-events:auto;}
-  #toTop svg{width:20px; height:20px;}
-  .js-rv .rv{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
-  .js-rv .rv.in{opacity:1; transform:none;}
+  #toTop{position:fixed; right:18px; bottom:18px; z-index:90; width:46px; height:46px; border-radius:50%; border:none; cursor:pointer; background:var(--navy-deep); color:#fff; box-shadow:0 10px 24px -8px rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .25s, transform .25s;} #toTop.show{opacity:1; transform:none; pointer-events:auto;} #toTop svg{width:20px; height:20px;}
+  .js-rv .rv{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;} .js-rv .rv.in{opacity:1; transform:none;}
   @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .js-rv .rv{opacity:1; transform:none; transition:none;} *{animation-duration:.01ms!important; animation-iteration-count:1!important;} }
+  #tools{background:#FAF9F5;}
+  .tl-track{display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:6px 2px 20px;} .tl-track::-webkit-scrollbar{display:none;}
+  .tl-card{flex:0 0 calc((100% - 40px)/3); scroll-snap-align:start; background:#fff; border:1px solid #E7E3D6; border-radius:16px; overflow:hidden; cursor:pointer; transition:transform .2s ease, box-shadow .25s ease, border-color .2s ease; display:flex; flex-direction:column;}
+  .tl-card:hover{transform:translateY(-5px); box-shadow:0 22px 40px -24px rgba(15,36,56,.5);}
+  .tl-vis{height:180px; display:flex; align-items:center; justify-content:center; padding:14px; overflow:hidden;} .tl-vis svg{width:100%; height:100%; position:relative;}
+  .tl-body{padding:20px 22px 22px; display:flex; flex-direction:column; align-items:flex-start; flex:1;} .tl-body h3{font-size:19px; margin:0 0 6px;} .tl-body p{font-size:14.5px; color:var(--muted); line-height:1.6; margin:0;}
+  .tl-body h3.clamp{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:16.5px; line-height:1.35;}
+  .tl-card:hover .readmore{background:var(--navy-deep); color:var(--chalk); border-color:var(--navy-deep);}
+  .tl-tag{position:absolute; left:12px; top:12px; z-index:2; font-size:11px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; padding:4px 10px; border-radius:99px; background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.28);}
+  .tl-photo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.85; mix-blend-mode:luminosity;}
+  .tl-eq{font-family:'Lato',sans-serif; font-weight:900; font-size:24px; color:#fff; text-align:center; line-height:1.5; position:relative;}
+  .tl-lines{position:absolute; inset:24px 18px; border-radius:10px; background:#05070b; overflow:hidden;} .tl-lines i{position:absolute; top:0; bottom:0; width:3px; box-shadow:0 0 10px currentColor;}
+  .tl-ctrl{display:flex; align-items:center; justify-content:center; gap:16px;}
+  .tl-arrow{width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:#fff; font-size:22px; line-height:1; cursor:pointer; color:var(--navy-deep);} .tl-arrow:hover{background:var(--navy-deep); color:#fff;}
+  .tl-dots{display:flex; gap:8px;} .tl-dots i{width:9px; height:9px; border-radius:99px; background:#d8d3c2; transition:width .25s, background .25s; cursor:pointer;} .tl-dots i.on{width:26px; background:var(--amber);}
+  .tl-stage{position:fixed; inset:0; z-index:200; background:rgba(10,24,38,.62); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:20px;} .tl-stage.open{display:flex;}
+  .tl-dialog{background:#fff; border-radius:20px; width:100%; max-width:1040px; max-height:90vh; overflow-y:auto; padding:26px 28px 30px; box-shadow:0 30px 70px -20px rgba(0,0,0,.55); animation:tmPop .25s ease both;} .tl-dialog.narrow{max-width:740px;}
+  .tl-stage-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;} .tl-stage-head h3{font-size:22px; margin:0;}
+  .tl-pane[hidden]{display:none;} .tl-pane#molecule{background:none; border:0; padding:0;} .tl-lead{font-size:15px; color:var(--muted); line-height:1.7; margin:0 0 16px;}
+  .pp-meta{font-size:12px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; color:var(--teal-deep); margin-bottom:10px;}
+  .pp-title{font-family:'Fraunces',serif; font-size:24px; line-height:1.3; color:var(--navy-deep); margin:0 0 8px; font-weight:600;} .pp-auth{font-size:13.5px; color:var(--muted); margin:0 0 18px;}
+  .pp-body h4{font-size:12.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--amber-deep); margin:20px 0 6px; font-weight:900;} .pp-body p{font-size:15.5px; line-height:1.85; color:#2f3843; margin:0;}
+  .pp-src{margin-top:24px; padding-top:16px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; font-size:12.5px; color:var(--muted);}
+  .rs-note{font-size:12.5px; color:var(--muted); margin-top:16px; text-align:center;}
+  .bal-row{display:flex; gap:10px; flex-wrap:wrap;} .bal-row input{flex:1; min-width:220px; font-size:17px; font-family:'IBM Plex Mono',ui-monospace,monospace; padding:12px 14px; border:2px solid var(--line); border-radius:10px;}
+  .bal-ex{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;} .bal-ex button{border:1px solid var(--line); background:#fff; border-radius:99px; padding:6px 12px; font-size:12.5px; cursor:pointer; font-family:'IBM Plex Mono',monospace;} .bal-ex button:hover{border-color:var(--amber);}
+  .bal-out{margin-top:14px; padding:22px; border-radius:14px; background:var(--navy-deep); color:#fff; font-size:clamp(20px,3vw,30px); font-weight:900; text-align:center; line-height:1.6; min-height:70px;}
+  .bal-out.err{background:#fdecea; color:#b3261e; font-size:15px; font-weight:700;} .bal-out .cf{color:var(--amber);} .bal-out small{display:block; font-size:12.5px; color:rgba(246,244,238,.6); font-weight:400; margin-top:6px;}
+  .spec-btns{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;} .spec-btns button{border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:9px 16px; font-weight:900; cursor:pointer;} .spec-btns button.on{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep);}
+  .spec-bar{position:relative; height:110px; border-radius:12px; background:#05070b; overflow:hidden; box-shadow:inset 0 0 30px rgba(0,0,0,.7);} .spec-bar i{position:absolute; top:0; bottom:0; width:3px; margin-left:-1.5px; box-shadow:0 0 14px 2px currentColor;}
+  .spec-axis{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin:6px 2px 14px;}
+  .spec-tab{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;} .spec-tab div{border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:13px; border-left:5px solid var(--c);} .spec-tab b{display:block; font-size:16px;}
+  @media(max-width:900px){ .tl-card{flex-basis:78%;} } @media(max-width:860px){ #ichc .grid{grid-template-columns:1fr!important;} }
+
+  /* hero preview + team pill (rounded rectangles with semicircle ends) */
+  .hero-art .ha-win{background:#fff; color:var(--ink); border-radius:26px; overflow:hidden; box-shadow:0 40px 80px -28px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.08); transform:rotate(-1.4deg);}
+  .ha-bar-top{display:flex; align-items:center; gap:12px; padding:12px 16px; background:#F1EEE4; border-bottom:1px solid #E4DFCF;}
+  .ha-dots{display:flex; gap:6px;} .ha-dots i{width:10px; height:10px; border-radius:50%; background:#D8D2BF;} .ha-dots i:first-child{background:#E39A3B;} .ha-dots i:nth-child(2){background:#1F8A70;}
+  .ha-url{flex:1; text-align:center; background:#fff; border-radius:999px; padding:5px 14px; font-size:11.5px; font-weight:700; color:var(--muted);}
+  .ha-inner{padding:20px 20px 22px;}
+  .ha-who{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .ha-ava{width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--amber-deep)); color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; flex:none;}
+  .ha-who-t{flex:1; line-height:1.25;} .ha-who-t b{display:block; font-size:14px; color:var(--navy-deep);} .ha-who-t small{font-size:12px; color:var(--muted);}
+  .ha-pill{font-size:11px; font-weight:900; letter-spacing:.04em; padding:6px 13px; border-radius:999px; white-space:nowrap;} .ha-pill-teal{background:rgba(31,138,112,.13); color:var(--teal-deep);}
+  .ha-q{font-size:17px; font-weight:900; line-height:1.35; color:var(--navy-deep); margin:0 0 14px;}
+  .ha-opt{display:flex; align-items:center; gap:12px; border:2px solid #E7E3D6; border-radius:999px; padding:8px 16px 8px 8px; margin-bottom:9px; font-weight:700; font-size:14.5px;}
+  .ha-key{width:30px; height:30px; border-radius:50%; background:#F1EEE4; color:var(--navy-deep); font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; flex:none;}
+  .ha-opt.ok{border-color:var(--teal); background:rgba(31,138,112,.1); color:var(--teal-deep);} .ha-opt.ok .ha-key{background:var(--teal); color:#fff;}
+  .ha-tick{margin-left:auto; color:var(--teal); font-weight:900;}
+  .ha-prog{display:flex; align-items:center; gap:12px; margin-top:16px;} .ha-track{flex:1; height:12px; border-radius:999px; background:#EEE9DA; overflow:hidden;} .ha-track i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--amber),var(--teal));} .ha-prog small{font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap;}
+  .hero-art .ha-chip{position:absolute; left:-22px; bottom:12px; display:flex; align-items:center; gap:10px; background:#fff; color:var(--ink); border-radius:999px; padding:9px 20px 9px 10px; box-shadow:0 18px 34px -16px rgba(0,0,0,.6); border:0; font-size:12px; line-height:1.3;}
+  .ha-cico{width:34px; height:34px; border-radius:50%; background:rgba(227,154,59,.18); display:flex; align-items:center; justify-content:center; font-size:16px;} .ha-chip b{display:block; font-size:13px; color:var(--navy-deep);} .ha-chip em{font-style:normal; color:var(--muted);}
+  .hero .stat.team-pill{display:inline-flex; align-items:center; gap:14px; padding:10px 26px 10px 10px; border-radius:999px; background:rgba(246,244,238,.1); border:1.5px solid rgba(246,244,238,.28); backdrop-filter:blur(4px); transition:background .2s, transform .2s;}
+  .hero .stat.team-pill:hover{background:rgba(246,244,238,.18); transform:translateY(-2px);}
+  .team-pill .tp-ico{width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,var(--amber),var(--amber-deep)); display:flex; align-items:center; justify-content:center; flex:none; color:#fff;} .team-pill .tp-ico svg{width:24px; height:24px;}
+  .hero .stat.team-pill b{font-family:'Lato',sans-serif; font-size:16px; font-weight:900; display:block; line-height:1.2;} .hero .stat.team-pill span{text-transform:none; letter-spacing:0; font-size:12.5px; opacity:.75;}
+  .tm-link{display:inline-flex; align-items:center; gap:8px; margin-top:20px; padding:11px 22px; border-radius:999px; background:var(--navy-deep); color:#fff; font-weight:900; font-size:13.5px; text-decoration:none; transition:transform .15s, background .2s;} .tm-link:hover{background:var(--teal-deep); transform:translateY(-2px);}
 </style>
 </head>
 <body>
@@ -470,8 +475,7 @@
     </a>
     <nav class="navlinks">
       <a href="#about">About</a>
-      <a href="#molecule">Explore</a>
-      <a href="#periodic">Elements</a>
+      <a href="#tools">Interactive tools</a>
       <a href="#why">Why</a>
       <a href="#how">Programme</a>
       <a href="#impact">Impact</a>
@@ -519,20 +523,22 @@
         <div class="cd-deadline">Deadline: <span id="cdDeadlineText">30 September 2026</span></div>
       </div>
       <div class="stats">
-        <a href="#team" class="stat" style="text-decoration:none; color:inherit; cursor:pointer;"><b>Meet the team →</b><span>See coordinator profiles</span></a>
+        <a href="#team" class="stat team-pill" style="text-decoration:none; color:inherit; cursor:pointer;"><span class="tp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17.2" cy="9" r="2.5"/><path d="M17.2 14.5c2.5 0 4 1.7 4 4.5"/></svg></span><span><b>Meet the coordinators</b><span>See their profiles</span></span></a>
       </div>
       <div class="hero-art" aria-hidden="true">
-        <div class="ha-card">
-          <div class="ha-head"><span class="ha-tag">Practice question</span><span class="ha-skill">Acids &amp; bases</span></div>
-          <p class="ha-q">Which solution has the lowest pH?</p>
-          <div class="ha-opt">0.1 M NaOH</div>
-          <div class="ha-opt">Pure water</div>
-          <div class="ha-opt ok"><span class="ck">&#10003;</span>0.1 M HCl</div>
-          <div class="ha-opt">0.1 M NaCl</div>
-          <div class="ha-bar"><i></i></div><div class="ha-cap">Skill progress</div>
+        <div class="ha-win">
+          <div class="ha-bar-top"><span class="ha-dots"><i></i><i></i><i></i></span><span class="ha-url">portal &middot; practice</span></div>
+          <div class="ha-inner">
+            <div class="ha-who"><span class="ha-ava">S</span><span class="ha-who-t"><b>Weekly practice</b><small>Question 3 of 5</small></span><span class="ha-pill ha-pill-teal">Acids &amp; bases</span></div>
+            <p class="ha-q">Which 0.1 M solution has the lowest pH?</p>
+            <div class="ha-opt"><span class="ha-key">A</span>NaOH</div>
+            <div class="ha-opt"><span class="ha-key">B</span>Pure water</div>
+            <div class="ha-opt ok"><span class="ha-key">C</span>HCl<span class="ha-tick">&#10003;</span></div>
+            <div class="ha-opt"><span class="ha-key">D</span>NaCl</div>
+            <div class="ha-prog"><span class="ha-track"><i style="width:60%"></i></span><small>3 / 5 done</small></div>
+          </div>
         </div>
-        <div class="ha-chip c1"><b>Call session</b><span>This week, with your coordinator</span></div>
-        <div class="ha-chip c2"><b>New resource</b><span>Added to the library</span></div>
+        <div class="ha-chip c1"><span class="ha-cico">&#128222;</span><span><b>Call session</b><em>This week, with your coordinator</em></span></div>
         <div class="ha-note">A preview of the student portal</div>
       </div>
     </div>
@@ -541,21 +547,43 @@
   <section id="about">
     <div class="wrap">
       <div class="section-graphic">
-        <svg width="220" height="90" viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
-          <g fill="none" stroke="var(--navy-deep)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M40 10 L40 35 L18 78 Q16 84 24 84 L64 84 Q72 84 68 78 L46 35 L46 10"/>
-            <path d="M30 10 L56 10"/>
-          </g>
-          <g fill="var(--teal)" opacity=".8"><circle cx="35" cy="60" r="4"/><circle cx="48" cy="68" r="3"/><circle cx="42" cy="76" r="3.5"/></g>
-          <g fill="none" stroke="var(--amber-deep)" stroke-width="3" stroke-linecap="round">
-            <circle cx="130" cy="45" r="34"/>
-            <line x1="130" y1="45" x2="130" y2="14"/><line x1="130" y1="45" x2="157" y2="60"/><line x1="130" y1="45" x2="103" y2="60"/>
-          </g>
-          <g fill="var(--navy-deep)"><circle cx="130" cy="14" r="6"/><circle cx="157" cy="60" r="6"/><circle cx="103" cy="60" r="6"/><circle cx="130" cy="45" r="7"/></g>
-          <g fill="none" stroke="var(--teal-deep)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M188 20 L188 40 L176 70 Q174 76 182 76 L204 76 Q212 76 210 70 L198 40 L198 20"/>
-            <path d="M182 20 L204 20"/>
-          </g>
+        <svg width="420" height="170" viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three-dimensional model of a benzene molecule">
+          <defs>
+            <radialGradient id="mC" cx="34%" cy="30%" r="75%"><stop offset="0" stop-color="#8b97a6"/><stop offset=".55" stop-color="#2b3644"/><stop offset="1" stop-color="#0A1826"/></radialGradient>
+            <radialGradient id="mH" cx="34%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#dfe6ee"/><stop offset="1" stop-color="#9fb0c3"/></radialGradient>
+            <linearGradient id="mBond" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8edf3"/><stop offset="1" stop-color="#8d9bad"/></linearGradient>
+            <radialGradient id="mGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#1F8A70" stop-opacity=".28"/><stop offset="1" stop-color="#1F8A70" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="210" cy="150" rx="150" ry="13" fill="url(#mGlow)"/>
+          <ellipse cx="210" cy="148" rx="96" ry="7" fill="#0A1826" opacity=".16"/>
+          <g fill="none" stroke="#0F2438" stroke-opacity=".12" stroke-width="1.2"><ellipse cx="210" cy="78" rx="196" ry="52" stroke-dasharray="2 6"/><ellipse cx="210" cy="78" rx="150" ry="40" stroke-dasharray="2 6"/></g>
+          <line x1="210.0" y1="48.0" x2="210.0" y2="29.4" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="210.0" cy="48.0" r="10.8" fill="url(#mC)"/>
+          <circle cx="210.0" cy="29.4" r="6.5" fill="url(#mH)"/>
+          <line x1="210.0" y1="48.0" x2="282.7" y2="63.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="137.3" y1="63.0" x2="210.0" y2="48.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="210.0" y1="54.6" x2="266.7" y2="66.3" stroke="#E39A3B" stroke-opacity=".85" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="282.7" y1="63.0" x2="327.8" y2="53.7" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="137.3" y1="63.0" x2="92.2" y2="53.7" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="282.7" cy="63.0" r="12.4" fill="url(#mC)"/>
+          <circle cx="327.8" cy="53.7" r="7.5" fill="url(#mH)"/>
+          <circle cx="137.3" cy="63.0" r="12.4" fill="url(#mC)"/>
+          <circle cx="92.2" cy="53.7" r="7.5" fill="url(#mH)"/>
+          <line x1="282.7" y1="63.0" x2="282.7" y2="93.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="137.3" y1="93.0" x2="137.3" y2="63.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="153.3" y1="89.7" x2="153.3" y2="66.3" stroke="#E39A3B" stroke-opacity=".85" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="282.7" y1="93.0" x2="327.8" y2="102.3" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="137.3" y1="93.0" x2="92.2" y2="102.3" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="282.7" cy="93.0" r="15.6" fill="url(#mC)"/>
+          <circle cx="327.8" cy="102.3" r="9.5" fill="url(#mH)"/>
+          <circle cx="137.3" cy="93.0" r="15.6" fill="url(#mC)"/>
+          <circle cx="92.2" cy="102.3" r="9.5" fill="url(#mH)"/>
+          <line x1="282.7" y1="93.0" x2="210.0" y2="108.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="210.0" y1="108.0" x2="137.3" y2="93.0" stroke="url(#mBond)" stroke-width="7.5" stroke-linecap="round"/>
+          <line x1="266.7" y1="89.7" x2="210.0" y2="101.4" stroke="#E39A3B" stroke-opacity=".85" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="210.0" y1="108.0" x2="210.0" y2="126.6" stroke="url(#mBond)" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="210.0" cy="108.0" r="17.2" fill="url(#mC)"/>
+          <circle cx="210.0" cy="126.6" r="10.5" fill="url(#mH)"/>
         </svg>
       </div>
       <div class="section-head">
@@ -563,34 +591,24 @@
         <h2 id="edit-aboutTitle" data-edit="aboutTitle">A mentorship pipeline built around one exam.</h2>
         <p id="edit-aboutText" data-edit="aboutText">Chemistry Competition Prep was established by Local Ambassador, IChC to identify chemistry-talented students, pair them with dedicated coordinators, and take them through structured, ambassador-led preparation for the International Chemistry Competition — an event where students from around the world are tested on the same field.</p>
       </div>
-      <div class="grid cols-3">
-        <div class="card">
-          <div class="ico" style="background:rgba(31,138,112,.12); color:var(--teal-deep);">1</div>
-          <h3>Identify talent</h3>
-          <p>We look for students with strong chemistry fundamentals and real curiosity — regardless of what school or resources they have access to.</p>
-        </div>
-        <div class="card">
-          <div class="ico" style="background:rgba(227,154,59,.16); color:var(--amber-deep);">2</div>
-          <h3>Pair with a mentor</h3>
-          <p>Every student is matched with a coordinator who runs their group's sessions, sets practice work, and is genuinely reachable.</p>
-        </div>
-        <div class="card">
-          <div class="ico" style="background:rgba(15,36,56,.08); color:var(--navy-deep);">3</div>
-          <h3>Prepare with purpose</h3>
-          <p>Weekly practice questions, timed mock rounds, and call sessions built around how the actual competition is timed and marked.</p>
-        </div>
-      </div>
     </div>
   </section>
 
-  <section id="molecule">
+  <section id="tools">
     <div class="wrap">
-      <div class="section-head" style="margin-bottom:34px;">
-        <div class="eyebrow">See chemistry in motion</div>
-        <h2>Eight real molecules, not one textbook diagram.</h2>
-        <p>Drag to rotate, switch molecules — live 3D models covering the full range of shapes you'll meet in VSEPR theory, from a simple linear molecule to expanded-octet geometries.</p>
+      <div class="section-head">
+        <div class="eyebrow">Explore</div>
+        <h2>Interactive tools</h2>
+        <p>Working tools and current research from Nature Chemistry. Slide through the cards and open any of them.</p>
       </div>
-      <div class="molviewer">
+      <div class="tl-slider" id="tlSlider">
+        <div class="tl-track" id="tlTrack"></div>
+        <div class="tl-ctrl"><button type="button" class="tl-arrow" id="tlPrev" aria-label="Previous">&#8249;</button><div class="tl-dots" id="tlDots"></div><button type="button" class="tl-arrow" id="tlNext" aria-label="Next">&#8250;</button></div>
+      </div>
+      <div class="tl-stage" id="tlStage" aria-hidden="true">
+        <div class="tl-dialog" role="dialog" aria-modal="true" aria-labelledby="tlStageTitle">
+        <div class="tl-stage-head"><h3 id="tlStageTitle"></h3><button type="button" class="tm-close" id="tlClose" aria-label="Close" style="position:static;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button></div>
+        <div class="tl-pane" data-pane="mol" id="molecule" hidden>      <div class="molviewer">
         <div class="molviewer-canvas-wrap" id="molCanvasWrap">
           <canvas id="molCanvas" aria-label="Interactive 3D molecule viewer — drag to rotate"></canvas>
           <button type="button" class="molviewer-reset" id="molReset" title="Reset view" aria-label="Reset view">&#8635;</button>
@@ -616,17 +634,8 @@
           </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section id="periodic">
-    <div class="wrap">
-      <div class="section-head" style="margin-bottom:34px;">
-        <div class="eyebrow">The full picture</div>
-        <h2>An actual periodic table.</h2>
-        <p>All 118 elements, colour-coded and clickable — search by name, filter by category, and see real data for each one.</p>
-      </div>
-      <div class="pt-toolbar">
+</div>
+        <div class="tl-pane" data-pane="pt" hidden>      <div class="pt-toolbar">
         <div class="pt-legend" id="ptLegend"></div>
         <div class="pt-search">
           <input type="text" id="ptSearch" placeholder="Search element or symbol&hellip;" autocomplete="off">
@@ -640,23 +649,43 @@
           <p class="pt-detail-empty">Click any element to see its details — atomic number, mass, category, and state at room temperature.</p>
         </div>
       </div>
+</div>
+        <div class="tl-pane" data-pane="bal" hidden>
+          <p class="tl-lead">Type an unbalanced equation. The tool solves the atom balance and returns the smallest whole-number coefficients.</p>
+          <div class="bal-row"><input id="balIn" type="text" value="C3H8 + O2 -> CO2 + H2O" spellcheck="false" aria-label="Unbalanced equation"><button class="btn small" id="balGo" type="button">Balance</button></div>
+          <div class="bal-ex" id="balEx"></div><div class="bal-out" id="balOut"></div>
+        </div>
+        <div class="tl-pane" data-pane="spec" hidden>
+          <p class="tl-lead">Atoms emit light only at wavelengths set by their electron energy levels, so every element has its own line pattern. Choose an element.</p>
+          <div class="spec-btns" id="specBtns"></div><div class="spec-bar" id="specBar"></div>
+          <div class="spec-axis"><span>380 nm</span><span>450</span><span>520</span><span>590</span><span>660</span><span>720 nm</span></div>
+          <div class="spec-tab" id="specTab"></div>
+          <p class="rs-note" style="text-align:left;">Photon energy is E = hc/&lambda; &asymp; 1239.84 eV&middot;nm &divide; &lambda;. Line positions are standard tabulated visible lines.</p>
+        </div>
+        <div class="tl-pane" data-pane="paper" hidden><div id="paperBody"></div></div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section id="namespell" style="background:var(--paper);">
+
+
+  <section id="ichc" style="background:var(--paper);">
     <div class="wrap">
-      <div class="section-head" style="margin-bottom:28px;">
-        <div class="eyebrow">Try it yourself</div>
-        <h2>Spell your name in elements.</h2>
-        <p>Type any name and we'll try to build it out of periodic table symbols — Na for sodium, Th for thorium, and so on.</p>
-      </div>
-      <div class="namespell-box">
-        <div class="namespell-input-row">
-          <input type="text" id="nsInput" placeholder="e.g. Nathan, Chidinma, Yaw&hellip;" autocomplete="off" maxlength="24">
-          <button type="button" class="btn amber" id="nsBtn">Spell it</button>
+      <div class="grid" style="grid-template-columns:1.1fr .9fr; gap:40px; align-items:center;">
+        <div>
+          <div class="eyebrow">About the competition</div>
+          <h2 style="font-size:clamp(28px,3.6vw,40px); line-height:1.15; margin:12px 0 16px;">The International Chemistry Competition</h2>
+          <p style="font-size:17px; line-height:1.75; color:var(--muted); margin:0 0 14px;">The International Chemistry Competition (IChC) is an independent online competition for middle school, high school and university students from any country. Everyone solves the same problems across three rounds, and all you need is a pen, paper and an internet connection.</p>
+          <p style="font-size:17px; line-height:1.75; color:var(--muted); margin:0 0 24px;">Its problems draw on recently published research, cover the main fields of chemistry, and scale in difficulty, so it works as a first step into real chemistry beyond the school curriculum.</p>
+          <a class="btn amber" href="https://intchc.org/en/about" target="_blank" rel="noopener">Read more on intchc.org &#8599;</a>
         </div>
-        <div class="namespell-output" id="nsOutput"></div>
-        <p class="namespell-note" id="nsNote"></p>
+        <div class="card" style="padding:28px;"><div style="display:grid; gap:18px;">
+          <div><b style="color:var(--navy-deep);">Open to everyone</b><br><span style="color:var(--muted); font-size:14.5px;">International and fully online, whatever your school or background.</span></div>
+          <div><b style="color:var(--navy-deep);">Three rounds</b><br><span style="color:var(--muted); font-size:14.5px;">Qualification, semi-final and final, with prizes and certificates.</span></div>
+          <div><b style="color:var(--navy-deep);">Real research problems</b><br><span style="color:var(--muted); font-size:14.5px;">Questions built from concepts in recent scientific papers.</span></div>
+          <div><b style="color:var(--navy-deep);">Ambassador programme</b><br><span style="color:var(--muted); font-size:14.5px;">Local ambassadors, like ours in Ghana, support students in each country.</span></div>
+        </div></div>
       </div>
     </div>
   </section>
@@ -763,6 +792,17 @@
         <div class="tstep"><div class="num">4</div><div><h3>Sit mock rounds</h3><p>Timed practice competitions that build exam stamina and reveal exactly where to focus next.</p></div></div>
         <div class="tstep"><div class="num">5</div><div><h3>Compete</h3><p>The strongest-prepared students go forward to represent Ghana at the International Chemistry Competition.</p></div></div>
       </div>
+    </div>
+  </section>
+
+  <section id="why-chem" style="background:linear-gradient(160deg,var(--navy-deep),#123a4a); color:var(--chalk);">
+    <div class="wrap" style="max-width:860px; text-align:center;">
+      <div class="eyebrow">A note to every student</div>
+      <h2 style="font-size:clamp(30px,4.4vw,46px); line-height:1.15; margin:14px 0 20px; color:#fff;">Someone had to ask the first question. It can be you.</h2>
+      <p style="font-family:'Fraunces',serif; font-size:clamp(18px,2.2vw,22px); line-height:1.75; color:rgba(246,244,238,.92); margin:0 0 18px;">The bread on your table, the medicine that once healed you, the clean water in your glass and the phone in your hand all began with a person in a room who was curious and refused to stop. Chemistry is not reserved for the gifted. It is patience, honest mistakes, and the courage to try again until the result finally makes sense.</p>
+      <p style="font-size:17px; line-height:1.8; color:rgba(246,244,238,.8); margin:0 0 30px;">You do not need to have started early, to come from a famous school, or to be the fastest in the room. If you are afraid of getting it wrong, you are in good company: every chemist whose name you know began exactly there. Here, your questions are welcome, your progress is seen, and you are never learning alone.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:30px;"><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Curiosity</span><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Courage</span><span class="tm-chip" style="background:rgba(246,244,238,.12); color:#fff;">Community</span></div>
+      <a class="btn amber" href="#contact">Start your journey</a>
     </div>
   </section>
 
@@ -942,97 +982,45 @@ function escapeHtml(str){
 }
 
 // ---------- Team cards + profile popup ----------
-const TEAM_AMBASSADOR_DEFAULT = {
-  name:'Eddah Edmond Seyram', role:'Local Ambassador, IChC', kind:'amb', photo:'',
-  bio:'Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.'
-};
-let TEAM_MEMBERS = [];
-let teamLastFocus = null;
-const TEAM_ICON_MORE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>';
+const TEAM_AMBASSADOR_DEFAULT={name:'Eddah Edmond Seyram',role:'Local Ambassador, IChC',kind:'amb',photo:'',link:'https://intchc.org/en/eseyram',bio:'Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.'};
+let TEAM_MEMBERS=[], teamLastFocus=null;
+const TEAM_ICON_MORE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>';
 function safePhotoUrl(u){ return (typeof u==='string' && /^(https?:\/\/|data:image\/)/i.test(u.trim())) ? u.trim() : ''; }
-function teamAvatarHtml(m){
-  const letter = (m.name||'?').trim().charAt(0).toUpperCase() || '?';
-  const photo = safePhotoUrl(m.photo);
-  return `<div class="pavatar" data-letter="${escapeHtml(letter)}">${photo ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">` : escapeHtml(letter)}</div>`;
-}
-function wirePhotoFallbacks(root){
-  root.querySelectorAll('.pavatar img').forEach(img=>{
-    img.addEventListener('error', ()=>{ const box = img.parentNode; box.textContent = box.getAttribute('data-letter') || '?'; }, { once:true });
-  });
-}
+function teamAvatarHtml(m){ const letter=(m.name||'?').trim().charAt(0).toUpperCase()||'?'; const photo=safePhotoUrl(m.photo);
+  return `<div class="pavatar" data-letter="${escapeHtml(letter)}">${photo?`<img src="${escapeHtml(photo)}" alt="${escapeHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">`:escapeHtml(letter)}</div>`; }
+function wirePhotoFallbacks(root){ root.querySelectorAll('.pavatar img').forEach(img=>img.addEventListener('error',()=>{ const box=img.parentNode; box.textContent=box.getAttribute('data-letter')||'?'; },{once:true})); }
 function renderTeam(dir){
-  const grid = document.getElementById('teamGrid');
-  if(!grid) return;
-  const amb = Object.assign({}, TEAM_AMBASSADOR_DEFAULT);
-  const a = dir && dir.ambassador;
-  if(a){ if(a.name) amb.name = a.name; if(a.bio) amb.bio = a.bio; if(a.photo) amb.photo = a.photo; }
-  const coords = ((dir && dir.coordinators) || []).map(c=>({
-    name: c.name || 'Coordinator', role:'Coordinator', kind:'coord', photo: c.photo || '',
-    subject: c.subject || '', region: c.region || '', bio: c.bio || ''
-  }));
-  TEAM_MEMBERS = [amb, ...coords];
-  grid.innerHTML = TEAM_MEMBERS.map((m,i)=>{
-    const meta = m.kind==='coord' ? [m.subject, m.region].filter(Boolean).map(escapeHtml).join(' · ') : '';
-    return `<div class="person ${m.kind}" data-team-idx="${i}">
-      ${teamAvatarHtml(m)}
-      <h3>${escapeHtml(m.name)}</h3>
-      <div class="role">${escapeHtml(m.role)}</div>
-      <div class="pmeta">${meta || '&nbsp;'}</div>
-      <button class="readmore" type="button" aria-label="Read more about ${escapeHtml(m.name)}" title="Read more">${TEAM_ICON_MORE}</button>
-    </div>`;
-  }).join('');
+  const grid=document.getElementById('teamGrid'); if(!grid) return;
+  const amb=Object.assign({},TEAM_AMBASSADOR_DEFAULT); const a=dir&&dir.ambassador;
+  if(a){ if(a.name) amb.name=a.name; if(a.bio) amb.bio=a.bio; if(a.photo) amb.photo=a.photo; }
+  const coords=((dir&&dir.coordinators)||[]).map(c=>({name:c.name||'Coordinator',role:'Coordinator',kind:'coord',photo:c.photo||'',subject:c.subject||'',region:c.region||'',bio:c.bio||''}));
+  TEAM_MEMBERS=[amb,...coords];
+  grid.innerHTML=TEAM_MEMBERS.map((m,i)=>{ const meta=m.kind==='coord'?[m.subject,m.region].filter(Boolean).map(escapeHtml).join(' · '):'';
+    return `<div class="person ${m.kind}" data-team-idx="${i}">${teamAvatarHtml(m)}<h3>${escapeHtml(m.name)}</h3><div class="role">${escapeHtml(m.role)}</div><div class="pmeta">${meta||'&nbsp;'}</div><button class="readmore" type="button" aria-label="Read more about ${escapeHtml(m.name)}" title="Read more">${TEAM_ICON_MORE}</button></div>`; }).join('');
   wirePhotoFallbacks(grid);
 }
 function ensureTeamModal(){
-  let el = document.getElementById('teamModal');
-  if(el) return el;
-  el = document.createElement('div');
-  el.id = 'teamModal'; el.className = 'tm-backdrop'; el.setAttribute('aria-hidden','true');
-  el.innerHTML = `<div class="tm-dialog" role="dialog" aria-modal="true" aria-labelledby="tmName">
-    <button class="tm-close" type="button" aria-label="Close profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
-    <div class="tm-head"><div id="tmAvatarSlot"></div><h3 id="tmName"></h3><div class="tm-role" id="tmRole"></div><div class="tm-chips" id="tmChips"></div></div>
-    <div class="tm-bio" id="tmBio"></div>
-  </div>`;
+  let el=document.getElementById('teamModal'); if(el) return el;
+  el=document.createElement('div'); el.id='teamModal'; el.className='tm-backdrop'; el.setAttribute('aria-hidden','true');
+  el.innerHTML=`<div class="tm-dialog" role="dialog" aria-modal="true" aria-labelledby="tmName"><button class="tm-close" type="button" aria-label="Close profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button><div class="tm-head"><div id="tmAvatarSlot"></div><h3 id="tmName"></h3><div class="tm-role" id="tmRole"></div><div class="tm-chips" id="tmChips"></div></div><div class="tm-bio" id="tmBio"></div><div style="text-align:center;"><a class="tm-link" id="tmLink" target="_blank" rel="noopener" style="display:none;">View ambassador profile on IChC <span aria-hidden="true">&#8599;</span></a></div></div>`;
   document.body.appendChild(el);
-  el.addEventListener('click', e=>{ if(e.target===el) closeTeamModal(); });
-  el.querySelector('.tm-close').addEventListener('click', closeTeamModal);
+  el.addEventListener('click',e=>{ if(e.target===el) closeTeamModal(); }); el.querySelector('.tm-close').addEventListener('click',closeTeamModal);
   return el;
 }
-function openTeamModal(i, trigger){
-  const m = TEAM_MEMBERS[i]; if(!m) return;
-  const el = ensureTeamModal();
-  teamLastFocus = trigger || document.activeElement;
-  const slot = el.querySelector('#tmAvatarSlot');
-  slot.innerHTML = teamAvatarHtml(m);
-  const av = slot.firstElementChild; av.classList.add(m.kind==='coord' ? 'coord' : 'amb');
-  av.style.background = m.kind==='coord' ? 'linear-gradient(135deg,var(--amber),var(--amber-deep))' : 'linear-gradient(135deg,var(--teal),var(--teal-deep))';
-  wirePhotoFallbacks(slot);
-  el.querySelector('#tmName').textContent = m.name;
-  el.querySelector('#tmRole').textContent = m.role;
-  el.querySelector('#tmChips').innerHTML = [m.subject, m.region].filter(Boolean).map(t=>`<span class="tm-chip">${escapeHtml(t)}</span>`).join('');
-  el.querySelector('#tmBio').textContent = m.bio || (m.kind==='coord'
-    ? 'A volunteer coordinator with Chemistry Competition Prep, running sessions and guiding students toward the International Chemistry Competition.'
-    : '');
-  el.querySelector('#tmBio').style.display = el.querySelector('#tmBio').textContent ? '' : 'none';
-  el.classList.add('open'); el.setAttribute('aria-hidden','false');
-  document.body.classList.add('tm-open');
-  el.querySelector('.tm-close').focus();
+function openTeamModal(i,trigger){
+  const m=TEAM_MEMBERS[i]; if(!m) return; const el=ensureTeamModal(); teamLastFocus=trigger||document.activeElement;
+  const slot=el.querySelector('#tmAvatarSlot'); slot.innerHTML=teamAvatarHtml(m); const av=slot.firstElementChild;
+  av.style.background=m.kind==='coord'?'linear-gradient(135deg,var(--amber),var(--amber-deep))':'linear-gradient(135deg,var(--teal),var(--teal-deep))'; wirePhotoFallbacks(slot);
+  el.querySelector('#tmName').textContent=m.name; el.querySelector('#tmRole').textContent=m.role;
+  el.querySelector('#tmChips').innerHTML=[m.subject,m.region].filter(Boolean).map(t=>`<span class="tm-chip">${escapeHtml(t)}</span>`).join('');
+  const bio=el.querySelector('#tmBio'); bio.textContent=m.bio||(m.kind==='coord'?'A volunteer coordinator with Chemistry Competition Prep, running sessions and guiding students toward the International Chemistry Competition.':''); bio.style.display=bio.textContent?'':'none';
+  const lk=el.querySelector('#tmLink'); if(m.link){ lk.href=m.link; lk.style.display='inline-flex'; } else { lk.style.display='none'; }
+  el.classList.add('open'); el.setAttribute('aria-hidden','false'); document.body.classList.add('tm-open'); el.querySelector('.tm-close').focus();
 }
-function closeTeamModal(){
-  const el = document.getElementById('teamModal');
-  if(!el || !el.classList.contains('open')) return;
-  el.classList.remove('open'); el.setAttribute('aria-hidden','true');
-  document.body.classList.remove('tm-open');
-  if(teamLastFocus && teamLastFocus.focus) teamLastFocus.focus();
-}
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTeamModal(); });
-document.addEventListener('click', e=>{
-  const card = e.target.closest && e.target.closest('#teamGrid .person');
-  if(!card) return;
-  const btn = card.querySelector('.readmore');
-  openTeamModal(parseInt(card.getAttribute('data-team-idx'),10), btn);
-});
-renderTeam(null); // show the ambassador immediately; live coordinators fill in once loaded
+function closeTeamModal(){ const el=document.getElementById('teamModal'); if(!el||!el.classList.contains('open')) return; el.classList.remove('open'); el.setAttribute('aria-hidden','true'); document.body.classList.remove('tm-open'); if(teamLastFocus&&teamLastFocus.focus) teamLastFocus.focus(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeTeamModal(); });
+document.addEventListener('click',e=>{ const card=e.target.closest&&e.target.closest('#teamGrid .person'); if(!card) return; openTeamModal(parseInt(card.getAttribute('data-team-idx'),10),card.querySelector('.readmore')); });
+renderTeam(null);
 
 async function loadStatsAndTeam(){
   if(!sbReady){
@@ -2160,7 +2148,14 @@ loadDeadlineFromPortal();
     { key:'pauling', name:'Linus Pauling', role:'Chemist &middot; two-time Nobel laureate', quote:'The best way to have a good idea is to have lots of ideas.', img:'assets/chemists/linus-pauling.jpg' },
     { key:'franklin', name:'Rosalind Franklin', role:'Chemist & X-ray crystallographer', quote:'Science and everyday life cannot and should not be separated.', img:'assets/chemists/rosalind-franklin.jpg' },
     { key:'rutherford', name:'Ernest Rutherford', role:'Nobel laureate in Chemistry, 1908', quote:'All science is either physics or stamp collecting.', img:'assets/chemists/ernest-rutherford.jpg' },
-    { key:'davy', name:'Humphry Davy', role:'Chemist &middot; discoverer of multiple elements', quote:'Nothing tends so much to the advancement of knowledge as the application of a new instrument.', img:'assets/chemists/humphry-davy.jpg' }
+    { key:'davy', name:'Humphry Davy', role:'Chemist &middot; discoverer of multiple elements', quote:'Nothing tends so much to the advancement of knowledge as the application of a new instrument.', img:'assets/chemists/humphry-davy.jpg' },
+    { key:'mendeleev', name:'Dmitri Mendeleev', role:'Chemist &middot; creator of the periodic table', fact:'Published his periodic table in 1869 and deliberately left gaps for elements that had not yet been discovered.', img:'assets/chemists/dmitri-mendeleev.jpg' },
+    { key:'hodgkin', name:'Dorothy Hodgkin', role:'Chemist & X-ray crystallographer', fact:'Revealed the structures of penicillin and vitamin B12 using X-ray crystallography, and won the 1964 Nobel Prize in Chemistry.', img:'assets/chemists/dorothy-hodgkin.jpg' },
+    { key:'zewail', name:'Ahmed Zewail', role:'Egyptian-American chemist &middot; Nobel laureate', fact:'Won the 1999 Nobel Prize in Chemistry for femtochemistry, watching chemical reactions unfold in real time.', img:'assets/chemists/ahmed-zewail.jpg' },
+    { key:'arnold', name:'Frances Arnold', role:'Chemical engineer &middot; Nobel laureate', fact:'Shared the 2018 Nobel Prize in Chemistry for the directed evolution of enzymes.', img:'assets/chemists/frances-arnold.jpg' },
+    { key:'doudna', name:'Jennifer Doudna', role:'Biochemist &middot; Nobel laureate', fact:'Shared the 2020 Nobel Prize in Chemistry for developing the CRISPR-Cas9 method of genome editing.', img:'assets/chemists/jennifer-doudna.jpg' },
+    { key:'kwolek', name:'Stephanie Kwolek', role:'Polymer chemist &middot; inventor', fact:'Invented the ultra-strong fibre later known as Kevlar while working at DuPont in the 1960s.', img:'assets/chemists/stephanie-kwolek.jpg' },
+    { key:'carver', name:'George Washington Carver', role:'Agricultural chemist & educator', quote:'Education is the key to unlock the golden door of freedom.', img:'assets/chemists/george-washington-carver.jpg' }
   ];
   (function(){
     const cardEl = document.querySelector('.chemist-card');
@@ -2180,7 +2175,8 @@ loadDeadlineFromPortal();
 
     function render(i){
       const chemist = CHEMISTS[i];
-      quoteEl.textContent = chemist.quote;
+      quoteEl.textContent = chemist.quote || chemist.fact;
+      quoteEl.classList.toggle('is-fact', !chemist.quote);
       nameEl.textContent = chemist.name;
       roleEl.innerHTML = chemist.role;
       initEl.textContent = chemist.name.split(' ').map(w=>w[0]).join('');
@@ -2252,85 +2248,7 @@ loadDeadlineFromPortal();
     startAutoplay();
   })();
 
-  /* ---------- Spell your name in elements ---------- */
-  (function(){
-    const nsInput = document.getElementById('nsInput');
-    const nsBtn = document.getElementById('nsBtn');
-    const nsOutput = document.getElementById('nsOutput');
-    const nsNote = document.getElementById('nsNote');
-    if(!nsInput) return;
 
-    const SYMBOL_MAP = {};
-    ELEMENTS.forEach(e => {
-      const [num, sym, name, mass, cat] = e;
-      SYMBOL_MAP[sym.toLowerCase()] = { num, sym, name, cat };
-    });
-
-    function spell(raw){
-      const letters = raw.replace(/[^a-zA-Z]/g,'');
-      const tiles = [];
-      let matchedLetters = 0;
-      let i = 0;
-      while(i < letters.length){
-        const two = letters.substr(i,2).toLowerCase();
-        if(letters.length - i >= 2 && SYMBOL_MAP[two]){
-          tiles.push({ el: SYMBOL_MAP[two] });
-          matchedLetters += 2;
-          i += 2;
-          continue;
-        }
-        const one = letters.substr(i,1).toLowerCase();
-        if(SYMBOL_MAP[one]){
-          tiles.push({ el: SYMBOL_MAP[one] });
-          matchedLetters += 1;
-          i += 1;
-          continue;
-        }
-        tiles.push({ leftover: letters[i] });
-        i += 1;
-      }
-      return { tiles, matchedLetters, totalLetters: letters.length };
-    }
-
-    function render(){
-      const val = nsInput.value.trim();
-      nsOutput.innerHTML = '';
-      if(!val){
-        nsNote.textContent = '';
-        nsNote.className = 'namespell-note';
-        return;
-      }
-      const { tiles, matchedLetters, totalLetters } = spell(val);
-      tiles.forEach((t, idx) => {
-        const div = document.createElement('div');
-        div.style.animationDelay = (idx * 0.05) + 's';
-        if(t.el){
-          div.className = 'ns-tile';
-          div.style.background = CAT_COLOR[t.el.cat] || 'var(--navy-deep)';
-          div.innerHTML = `<span class="ns-num">${t.el.num}</span><span class="ns-sym">${t.el.sym}</span><span class="ns-name">${t.el.name}</span>`;
-          div.title = `${t.el.name} (${t.el.sym})`;
-        } else {
-          div.className = 'ns-tile ns-leftover';
-          div.textContent = t.leftover.toUpperCase();
-          div.title = 'No single element symbol matches here';
-        }
-        nsOutput.appendChild(div);
-      });
-      if(totalLetters === 0){
-        nsNote.textContent = '';
-        nsNote.className = 'namespell-note';
-      } else if(matchedLetters === totalLetters){
-        nsNote.textContent = `Fully spelled with real elements — ${totalLetters} of ${totalLetters} letters matched.`;
-        nsNote.className = 'namespell-note ok';
-      } else {
-        nsNote.textContent = `Closest match — ${matchedLetters} of ${totalLetters} letters mapped to real elements.`;
-        nsNote.className = 'namespell-note';
-      }
-    }
-
-    nsBtn.addEventListener('click', render);
-    nsInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); render(); } });
-  })();
 
 })();
 </script>
@@ -2359,6 +2277,147 @@ loadDeadlineFromPortal();
     }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
     els.forEach(function(el){ el.classList.add('rv'); io.observe(el); });
   }
+})();
+</script>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var track=$('tlTrack'), stage=$('tlStage'), dialog=stage.querySelector('.tl-dialog'), dots=$('tlDots');
+  var NC='Nature Chemistry';
+  var papers=[
+   {t:"Artificial photosynthetic reduction of nitrogen to ammonia at room temperature using natural seawater",a:"Doha Zidouhia, Thierry Tassaing, Dario M. Bassani et al.",d:"25 Aug 2026",u:"https://www.nature.com/articles/s41557-026-02218-2",c:"#0F2438,#1c5a6e",
+    w:"Ammonia underpins most of the world's nitrogen fertiliser, yet its production is responsible for about 1.8% of greenhouse gas emissions, which is why chemists are searching for renewable-powered alternatives. This team showed that artificial photosynthesis, where light-driven nitrogen reduction is coupled to water oxidation, can make ammonia at room temperature efficiently and with high selectivity, even in natural seawater or under ambient air. Those are exactly the untidy, real-world conditions in which many catalysts stop working.",
+    y:"The result challenges the assumption that clean ammonia needs purified water and carefully prepared gas feeds. Whether the approach can be scaled is the open question, and it shows how a fundamental idea in reaction design can bear on food production and on emissions at the same time."},
+   {t:"Lower-temperature bulk depolymerization of commercial polymethacrylates",a:"Richard Whitfield, Victoria Lohmann, Athina Anastasaki et al.",d:"02 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02232-4",c:"#0F2438,#1F6F5E",
+    w:"Chemical recycling tries to break plastics back into their monomers so that new material can be made without fresh feedstock. Until now that has mostly relied on specially designed, thermally fragile polymers or on very dilute conditions, neither of which suits the plastic already in circulation. This paper describes a bulk main-chain scission pathway that depolymerises polymethacrylates rapidly at lower temperature, on commercial polymers, with no pre-installed end-groups and no sacrificial co-monomers, recovering the monomer in high yield.",
+    y:"The significance lies in targeting the plastics we already have instead of requiring a new generation of redesigned ones. Lower processing temperatures also bear on the energy cost of recycling, one of the main barriers between laboratory chemistry and a working circular economy."},
+   {t:"An open-framework boron allotrope exhibiting high conductivity and plasticity",a:"Feng Chen, Lianfeng Zou, Yongjun Tian et al.",d:"23 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02267-7",c:"#1c3a55,#5b3f8c",
+    w:"Boron can arrange its atoms into many structures, but reaching new, metastable forms through conventional thermodynamic routes is a central challenge in boron chemistry. The authors first formed a sodium-boron precursor, Na4B60, under high pressure, then removed the sodium by degassing. What remained is an open-framework allotrope in which B12 icosahedra are joined by triangular B3 units.",
+    y:"The notable result is the combination of properties: the material conducts electricity well and can also deform plastically, whereas boron solids are usually associated with hardness rather than flexibility. It demonstrates that a route of building with a removable partner can reach structures that direct synthesis would not."},
+   {t:"Autonomous migration of a phosphate group along glycerol and inositol scaffolds driven by a phosphodiester reaction cycle",a:"Patrick Alexander Hoffmann, Suchismita Saha, Max von Delius et al.",d:"18 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02240-4",c:"#0F2438,#7a5a2b",
+    w:"Biological motor proteins move along tracks using energy from chemical reactions, but small synthetic molecules that combine autonomous operation with a built-in directional bias have remained elusive. Here, simple phosphoric acid esters drive a non-enzymatic reaction cycle that moves a phosphate group step by step along five hydroxyl footholds on glycerol and inositol scaffolds, without an external hand steering each step.",
+    y:"It matters for the design of synthetic molecular machinery: the direction of travel comes from the kinetics of a reaction cycle instead of from a protein. It also shows how much organised behaviour can arise from very simple phosphate chemistry."},
+   {t:"Directed heterogeneous hydride transfer enables selective CO2 reduction using a Janus palladium membrane electrode",a:"Xiaosong Hu, William Boyd, Yujie Sun et al.",d:"07 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02243-1",c:"#0F2438,#1F6F5E",
+    w:"Electrochemical CO2 reduction is usually limited by proton-coupled electron transfer, which ties CO2 conversion to the competing evolution of hydrogen. This study used a Janus palladium membrane electrode to deliver hydride directly to CO2 through heterogeneous hydride transfer, producing formate selectively.",
+    y:"It opens a route to electrochemical reactivity that does not depend on protons in solution, a different lever for turning a greenhouse gas into a useful chemical."},
+   {t:"Catalyst-directed vibrational frequency disparity for isotopologue sieving in CO2 electrolysis",a:"Ningce Zhang, Haoyun Bai, Shuangyin Wang et al.",d:"25 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02257-9",c:"#1c3a55,#1F6F5E",
+    w:"Carbon-13 is valuable for research and medicine but hard to enrich. The authors show that differences in vibrational frequency between isotopologues, set by the catalyst, control how well electrolysis separates them, and use this as a predictive design principle, reaching 14% 13CO2 output from natural-abundance CO2.",
+    y:"Separating isotopes by a mild, continuous electrochemical process rather than harsh conditions would make an important research tool more accessible, and it shows that quantum-level vibrational differences can be engineered."},
+   {t:"Secondary-sphere hydrogen bonding promotes catalytic nitrate reduction at iron",a:"Writhabrata Sarkar, Andrew R. LaDuca, Nathaniel K. Szymczak et al.",d:"22 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02235-1",c:"#0F2438,#5b3f8c",
+    w:"Nitrate is a stubborn substrate for molecular catalysts because it binds weakly to metals and has strong N-O bonds. A network of hydrogen bonds in the second coordination sphere of an iron complex was shown to improve nitrate binding and activation, enabling its catalytic reduction to nitric oxide and ammonia.",
+    y:"Nitrate is a widespread water pollutant, so understanding how to activate it cleanly matters. The lesson is that the chemistry around a metal centre can matter as much as the metal itself."},
+   {t:"Nanoscale visualization of plasmon-enhanced hydrogen activation on a Pt(111) surface",a:"Zhen-Feng Cai, Meghna A. Manae, Naresh Kumar et al.",d:"10 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02245-z",c:"#0F2438,#b3651d",
+    w:"Watching hydrogen split on a catalyst is hard because ordinary spectroscopy cannot resolve the nanoscale. Using tip-enhanced Raman spectroscopy in a silver-tip and platinum nanocavity, the team mapped H2 activation and saw hydrogen atoms travelling hundreds of nanometres across Pt(111) in a collective crowd effect.",
+    y:"Seeing a catalytic step directly, in space, turns assumptions about surface reactions into measurements, which is how better catalysts get designed."},
+   {t:"Palladium-triggered bioorthogonal phenylalanine decaging",a:"Yuchao Zhu, Shibo Liu, Peng R. Chen et al.",d:"02 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02226-2",c:"#1c3a55,#7a2b4f",
+    w:"The purely hydrocarbon side chain of phenylalanine is very hard to manipulate chemically inside living systems. The authors achieved palladium-triggered release of iodine-caged phenylalanine under biocompatible conditions, allowing on-demand control of hydrophobic and pi interactions, from activating fluorophores and disassembling peptides to protein binding and tumour-immune cell recognition.",
+    y:"Turning a biological interaction on at a chosen moment lets chemists probe how cells work, and points toward more precise ways to study and steer disease processes."},
+   {t:"Sterically gated Lewis acid and base pairs enable orthogonal defect passivation in perovskite solar cells",a:"Donghoon Shin, Shuta Kitade, Edward H. Sargent et al.",d:"23 Sept 2026",u:"https://www.nature.com/articles/s41557-026-02261-z",c:"#0F2438,#b3651d",
+    w:"Charged point defects in perovskite solar cells cause efficiency loss and instability. Lewis acids and bases can each passivate oppositely charged defects, but placed together they normally react with one another and cancel out. The authors paired bulky phosphine bases with fluorinated aromatic acids so that steric hindrance keeps the two from combining, allowing both types of defect to be passivated at once, with power conversion efficiencies reported up to 27.4%.",
+    y:"This is a design lesson in reactivity: the advance comes not from a new element but from controlling molecular shape so that two reactive partners can coexist. Gains of this kind are why perovskites attract so much research attention as a route to more efficient, lower-cost solar power."}];
+  var SHEET='<svg viewBox="0 0 320 170" aria-hidden="true"><rect x="96" y="14" width="128" height="146" rx="7" fill="#fff" transform="rotate(-4 160 85)"/><g transform="rotate(-4 160 85)"><rect x="110" y="28" width="64" height="8" rx="4" fill="#0F2438"/><g fill="#dcd6c4"><rect x="110" y="46" width="100" height="5" rx="2"/><rect x="110" y="58" width="92" height="5" rx="2"/><rect x="110" y="70" width="100" height="5" rx="2"/></g><polygon points="126,104 140,96 154,104 154,120 140,128 126,120" fill="none" stroke="#1F8A70" stroke-width="3"/><path d="M164 122 l14-16 l12 8 l14-18" fill="none" stroke="#E39A3B" stroke-width="3"/></g></svg>';
+  var ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>';
+  function esc(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  function mkTool(k,title,desc,vis,grad,tag){ var c=document.createElement('article'); c.className='tl-card'; c.tabIndex=0; c.setAttribute('data-tool',k);
+    c.innerHTML='<div class="tl-vis" style="position:relative; background:linear-gradient(135deg,'+grad+')"><span class="tl-tag">'+tag+'</span>'+vis+'</div><div class="tl-body"><h3>'+title+'</h3><p>'+desc+'</p><button class="readmore" type="button" aria-label="Open '+title+'" title="Open">'+ARROW+'</button></div>'; track.appendChild(c); }
+  var lines=[[410,'#8a5cff'],[434,'#5b6cff'],[486,'#22b8ff'],[656,'#ff3b30'],[589,'#ffc400'],[546,'#3ddc84']].map(function(l){ return '<i style="left:'+((l[0]-380)/340*100)+'%; color:'+l[1]+'; background:'+l[1]+'"></i>'; }).join('');
+  mkTool('mol','3D Molecule Explorer','Drag to rotate eight real molecules and see the shapes VSEPR predicts.','<svg viewBox="0 0 320 170" aria-hidden="true"><defs><radialGradient id="gC" cx="35%" cy="30%"><stop offset="0" stop-color="#7d8896"/><stop offset="1" stop-color="#1c2530"/></radialGradient><radialGradient id="gH" cx="35%" cy="30%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9fb3c8"/></radialGradient></defs><g stroke="#cfd8e3" stroke-width="7" stroke-linecap="round"><line x1="160" y1="85" x2="98" y2="128"/><line x1="160" y1="85" x2="222" y2="128"/><line x1="160" y1="85" x2="160" y2="30"/><line x1="160" y1="85" x2="200" y2="70"/></g><circle cx="160" cy="85" r="26" fill="url(#gC)"/><circle cx="98" cy="128" r="16" fill="url(#gH)"/><circle cx="222" cy="128" r="16" fill="url(#gH)"/><circle cx="160" cy="30" r="16" fill="url(#gH)"/><circle cx="204" cy="68" r="14" fill="url(#gH)"/></svg>','#0F2438,#1c4a5e','Interactive tool');
+  mkTool('pt','Periodic Table','All 118 elements, colour-coded, searchable and clickable.','<div style="display:grid; grid-template-columns:repeat(6,42px); gap:8px; position:relative;">'+['H','Li','Be','B','C','N','O','F','Ne','Na','Fe','Au'].map(function(t,i){ return '<div style="height:42px; border-radius:7px; color:#fff; font:900 15px Lato,sans-serif; display:flex; align-items:center; justify-content:center; background:'+['#1F8A70','#E39A3B','#C97F22','#5B7C99'][i%4]+'">'+t+'</div>'; }).join('')+'</div>','#0F2438,#1F6F5E','Interactive tool');
+  mkTool('bal','Equation Balancer','Enter any reaction and get the exact whole-number balance.','<div class="tl-eq">C&#8323;H&#8328; + 5O&#8322; &rarr;<br>3CO&#8322; + 4H&#8322;O</div>','#0F2438,#7a3b1d','Interactive tool');
+  mkTool('spec','Emission Spectrum Lab','See the light fingerprints that identify hydrogen, helium, sodium, mercury and neon.','<div class="tl-lines">'+lines+'</div>','#0F2438,#1a1a3a','Interactive tool');
+  papers.forEach(function(p,i){
+    var c=document.createElement('article'); c.className='tl-card'; c.tabIndex=0; c.setAttribute('data-tool','p'+i);
+    c.innerHTML='<div class="tl-vis" style="position:relative; background:linear-gradient(135deg,'+p.c+')"><span class="tl-tag">'+NC+'</span>'+SHEET+'</div><div class="tl-body"><h3 class="clamp">'+esc(p.t)+'</h3><p>'+esc(p.d)+' &middot; Research article</p><button class="readmore" type="button" aria-label="Read about this research" title="Read more">'+ARROW+'</button></div>';
+    track.appendChild(c);
+  });
+  // real photographs / diagrams from Wikimedia Commons; if a file cannot load, the illustration underneath stays
+  var IMG={mol:'Methane-CRC-MW-3D-balls.png',pt:'Simple_Periodic_Table_Chart-en.svg',spec:'Emission_spectrum-H.svg'};
+  Object.keys(IMG).forEach(function(k){ var v=track.querySelector('[data-tool="'+k+'"] .tl-vis'); if(!v) return;
+    var im=new Image(); im.className='tl-photo'; im.alt=''; im.loading='lazy'; im.referrerPolicy='no-referrer'; im.title='Image: Wikimedia Commons';
+    im.onload=function(){ v.appendChild(im); }; im.src='https://commons.wikimedia.org/wiki/Special:FilePath/'+IMG[k]+'?width=640'; });
+  var cards=[].slice.call(track.children);
+  cards.forEach(function(){ dots.appendChild(document.createElement('i')); });
+  var dotEls=[].slice.call(dots.children);
+  var open=null, hold=false, seen=false, lastFocus=null, reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function cw(){ return cards[0].offsetWidth+20; }
+  function step(d){ var max=track.scrollWidth-track.clientWidth, x=track.scrollLeft+d*cw(); if(x>max+6) x=0; if(x<-6) x=max; track.scrollTo({left:x,behavior:'smooth'}); }
+  function sync(){ var n=Math.min(cards.length-1, Math.round(track.scrollLeft/cw())); dotEls.forEach(function(d,i){ d.classList.toggle('on',i===n); }); }
+  track.addEventListener('scroll',sync,{passive:true}); sync();
+  $('tlPrev').onclick=function(){step(-1);}; $('tlNext').onclick=function(){step(1);};
+  dotEls.forEach(function(d,i){ d.onclick=function(){ track.scrollTo({left:i*cw(),behavior:'smooth'}); }; });
+  ['mouseenter','focusin','touchstart','pointerdown'].forEach(function(e){ track.addEventListener(e,function(){hold=true;},{passive:true}); });
+  ['mouseleave','focusout'].forEach(function(e){ track.addEventListener(e,function(){hold=false;}); });
+  track.addEventListener('touchend',function(){ setTimeout(function(){hold=false;},4000); },{passive:true});
+  if('IntersectionObserver' in window) new IntersectionObserver(function(es){ seen=es[0].isIntersecting; }).observe($('tlSlider')); else seen=true;
+  if(!reduce) setInterval(function(){ if(!hold && seen && !open && !document.hidden) step(1); }, 4200);
+  function show(pane, title, narrow){
+    [].forEach.call(stage.querySelectorAll('.tl-pane'),function(x){ x.hidden = x.getAttribute('data-pane')!==pane; });
+    $('tlStageTitle').textContent=title; dialog.classList.toggle('narrow',!!narrow);
+    stage.classList.add('open'); stage.setAttribute('aria-hidden','false'); document.body.classList.add('tm-open'); dialog.scrollTop=0;
+    window.dispatchEvent(new Event('resize')); setTimeout(function(){ window.dispatchEvent(new Event('resize')); },120);
+    $('tlClose').focus();
+  }
+  function openTool(k, trigger){
+    lastFocus=trigger||document.activeElement; open=k;
+    if(k==='mol') show('mol','3D Molecule Explorer');
+    else if(k==='pt') show('pt','Periodic Table');
+    else if(k==='bal') show('bal','Equation Balancer');
+    else if(k==='spec') show('spec','Emission Spectrum Lab');
+    else { var p=papers[parseInt(k.slice(1),10)];
+      $('paperBody').innerHTML='<div class="pp-meta">'+NC+' &middot; Research article &middot; '+esc(p.d)+'</div><h3 class="pp-title">'+esc(p.t)+'</h3><p class="pp-auth">'+esc(p.a)+'</p><div class="pp-body"><h4>What they found</h4><p>'+esc(p.w)+'</p><h4>Why it matters</h4><p>'+esc(p.y)+'</p></div><div class="pp-src"><span>Written for students from the paper\u2019s abstract. Read the original for the full data and methods.</span><a class="btn small" href="'+esc(p.u)+'" target="_blank" rel="noopener">Read the paper &#8599;</a></div>';
+      show('paper','Current research'); dialog.classList.add('narrow'); }
+  }
+  function closeTool(){
+    if(!stage.classList.contains('open')) return;
+    stage.classList.remove('open'); stage.setAttribute('aria-hidden','true'); document.body.classList.remove('tm-open'); open=null;
+    [].forEach.call(stage.querySelectorAll('.tl-pane'),function(x){x.hidden=true;});
+    if(lastFocus&&lastFocus.focus) lastFocus.focus();
+  }
+  cards.forEach(function(c){ var go=function(){ openTool(c.getAttribute('data-tool'), c); };
+    c.addEventListener('click',go); c.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } }); });
+  $('tlClose').onclick=closeTool;
+  stage.addEventListener('click',function(e){ if(e.target===stage) closeTool(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeTool(); });
+
+  // ---- Equation balancer ----
+  function parseF(f){ var i=0; function num(){ var n=''; while(i<f.length&&/\d/.test(f[i])) n+=f[i++]; return n?parseInt(n,10):1; }
+    function grp(){ var o={}; while(i<f.length&&f[i]!==')'){ if(f[i]==='('){ i++; var g=grp(); if(f[i]!==')') throw 0; i++; var m=num(); for(var k in g) o[k]=(o[k]||0)+g[k]*m; }
+      else{ var mm=f.slice(i).match(/^[A-Z][a-z]?/); if(!mm) throw 0; i+=mm[0].length; var n=num(); o[mm[0]]=(o[mm[0]]||0)+n; } } return o; }
+    var r=grp(); if(i<f.length) throw 0; return r; }
+  function balance(eq){
+    var sides=eq.replace(/\u2192|=>|-->/g,'->').split(/->|=/); if(sides.length!==2) throw new Error('Use one arrow, for example  H2 + O2 -> H2O');
+    var L=sides[0].split('+').map(function(x){return x.trim();}), R=sides[1].split('+').map(function(x){return x.trim();}), sp=L.concat(R);
+    if(sp.some(function(x){return !x;})) throw new Error('Check the plus signs and formulas.');
+    var comps=sp.map(function(f){ try{ return parseF(f.replace(/\s/g,'')); }catch(e){ throw new Error('Could not read the formula "'+f+'". Use element symbols like Fe2(SO4)3.'); } });
+    var els=[]; comps.forEach(function(c){ Object.keys(c).forEach(function(e){ if(els.indexOf(e)<0) els.push(e); }); });
+    var n=sp.length, A=els.map(function(e){ return sp.map(function(_,j){ return (j<L.length?1:-1)*(comps[j][e]||0); }); });
+    var piv=[], r=0; for(var c=0;c<n&&r<A.length;c++){ var b=r; for(var k=r;k<A.length;k++) if(Math.abs(A[k][c])>Math.abs(A[b][c])) b=k; if(Math.abs(A[b][c])<1e-9) continue;
+      var t=A[r]; A[r]=A[b]; A[b]=t; var d=A[r][c]; A[r]=A[r].map(function(x){return x/d;});
+      for(var k2=0;k2<A.length;k2++) if(k2!==r){ var f=A[k2][c]; A[k2]=A[k2].map(function(x,j){return x-f*A[r][j];}); } piv.push(c); r++; }
+    var free=[]; for(var j=0;j<n;j++) if(piv.indexOf(j)<0) free.push(j);
+    if(free.length!==1) throw new Error(free.length? 'This equation has more than one valid balance, so it needs more information.' : 'This equation cannot be balanced as written. Check that every element appears on both sides.');
+    var x=new Array(n).fill(0); x[free[0]]=1; piv.forEach(function(pc,i){ x[pc]=-A[i][free[0]]; });
+    var m=0; for(var q=1;q<=2000;q++){ if(x.every(function(v){ return Math.abs(v*q-Math.round(v*q))<1e-6; })){ m=q; break; } } if(!m) throw new Error('Could not find whole-number coefficients.');
+    x=x.map(function(v){ return Math.round(v*m); }); if(x.every(function(v){return v<=0;})) x=x.map(function(v){return -v;});
+    if(x.some(function(v){return v<=0;})) throw new Error('No positive whole-number balance exists for this equation. Check the formulas.');
+    var g=x.reduce(function(a,b){ while(b){ var t=b; b=a%b; a=t; } return a; }); x=x.map(function(v){return v/g;});
+    function fm(f){ return f.replace(/(\d+)/g,'<sub>$1</sub>'); }
+    function term(j){ return (x[j]>1?'<span class="cf">'+x[j]+'</span>':'')+fm(sp[j].replace(/\s/g,'')); }
+    return L.map(function(_,j){return term(j);}).join(' + ')+' &rarr; '+R.map(function(_,j){return term(L.length+j);}).join(' + ');
+  }
+  function runBal(){ var o=$('balOut'); try{ o.className='bal-out'; o.innerHTML=balance($('balIn').value)+'<small>Atoms of every element are equal on both sides.</small>'; }catch(e){ o.className='bal-out err'; o.textContent=e.message||'Could not balance that equation.'; } }
+  $('balGo').onclick=runBal; $('balIn').addEventListener('keydown',function(e){ if(e.key==='Enter') runBal(); });
+  ['Fe + O2 -> Fe2O3','C3H8 + O2 -> CO2 + H2O','Al + HCl -> AlCl3 + H2','KMnO4 + HCl -> KCl + MnCl2 + H2O + Cl2','Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O'].forEach(function(t){ var b=document.createElement('button'); b.type='button'; b.textContent=t; b.onclick=function(){ $('balIn').value=t; runBal(); }; $('balEx').appendChild(b); });
+  runBal();
+  // ---- Emission spectrum ----
+  function wl2rgb(w){ var r=0,g=0,b=0; if(w<440){r=-(w-440)/60;b=1;} else if(w<490){g=(w-440)/50;b=1;} else if(w<510){g=1;b=-(w-510)/20;} else if(w<580){r=(w-510)/70;g=1;} else if(w<645){r=1;g=-(w-645)/65;} else {r=1;}
+    var f=w<420?0.3+0.7*(w-380)/40:(w>700?0.3+0.7*(720-w)/20:1); return 'rgb('+[r,g,b].map(function(v){return Math.round(255*Math.pow(Math.max(0,v)*f,0.8));}).join(',')+')'; }
+  var SPEC={H:['Hydrogen',[410.2,434.0,486.1,656.3]],He:['Helium',[447.1,471.3,492.2,501.6,587.6,667.8]],Na:['Sodium',[568.8,589.0,589.6]],Hg:['Mercury',[404.7,435.8,546.1,577.0,579.1]],Ne:['Neon',[585.2,588.2,603.0,614.3,640.2,650.6,703.2]]};
+  function showSpec(k){ var d=SPEC[k]; [].forEach.call($('specBtns').children,function(b){ b.classList.toggle('on',b.getAttribute('data-k')===k); });
+    $('specBar').innerHTML=d[1].map(function(w){ return '<i style="left:'+((w-380)/340*100)+'%; color:'+wl2rgb(w)+'; background:'+wl2rgb(w)+'"></i>'; }).join('');
+    $('specTab').innerHTML=d[1].map(function(w){ return '<div style="--c:'+wl2rgb(w)+'"><b>'+w.toFixed(1)+' nm</b>'+(1239.84/w).toFixed(2)+' eV per photon</div>'; }).join(''); }
+  Object.keys(SPEC).forEach(function(k){ var b=document.createElement('button'); b.type='button'; b.setAttribute('data-k',k); b.textContent=k+' \u00b7 '+SPEC[k][0]; b.onclick=function(){ showSpec(k); }; $('specBtns').appendChild(b); });
+  showSpec('H');
 })();
 </script>
 </body>
