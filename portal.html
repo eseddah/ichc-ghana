@@ -471,6 +471,30 @@
   .lp-ico{width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); display:flex; align-items:center; justify-content:center; font-size:18px; flex:none;}
   .lp-txt{flex:1; min-width:0; line-height:1.3;} .lp-txt b{display:block; font-size:13.5px; color:var(--navy-deep); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .lp-txt small{display:block; font-size:11.5px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .lp-go{font-size:18px; color:var(--teal-deep); font-weight:900;}
+
+  /* Text a student (ambassador, one recipient at a time) */
+  .psms-wrap{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:22px; align-items:start;}
+  .psms-list{display:flex; flex-direction:column; gap:6px; max-height:460px; overflow:auto;}
+  .psms-row{position:relative; display:flex; flex-direction:column; gap:2px; width:100%; text-align:left; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--paper); color:inherit; font:inherit; cursor:pointer;}
+  .psms-row:hover:not(:disabled){border-color:var(--teal);}
+  .psms-row.on{border-color:var(--teal-deep); background:rgba(31,138,112,.08); box-shadow:inset 3px 0 0 var(--teal-deep);}
+  .psms-row:disabled{opacity:.5; cursor:not-allowed;}
+  .psms-row:focus-visible{outline:2px solid var(--amber); outline-offset:1px;}
+  .psms-name{font-weight:600; font-size:14.5px;}
+  .psms-sub{font-size:12.5px; color:var(--muted);}
+  .psms-flag{position:absolute; top:10px; right:12px; font-size:11px; color:var(--amber-deep); background:rgba(227,154,59,.18); padding:2px 8px; border-radius:999px;}
+  .psms-to{padding:10px 12px; border-radius:10px; background:rgba(15,36,56,.04); margin-bottom:14px;}
+  .psms-to-name{font-weight:600;}
+  .psms-to-sub, .psms-empty{font-size:12.5px; color:var(--muted);}
+  .psms-opts{display:flex; flex-wrap:wrap; gap:6px 18px; margin:-4px 0 12px; font-size:13px; color:var(--muted);}
+  .psms-opts label{display:flex; align-items:center; gap:7px; cursor:pointer;}
+  .psms-opts input{width:auto;}
+  .psms-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+  .psms-count{font-size:12.5px; color:var(--muted);}
+  .psms-status{font-size:13px; margin-top:10px; line-height:1.5;}
+  .psms-status.ok{color:var(--teal-deep);}
+  .psms-status.bad{color:#C0392B;}
+  @media (max-width:820px){ .psms-wrap{grid-template-columns:1fr;} .psms-list{max-height:300px;} }
 </style>
 </head>
 <body>
@@ -1099,7 +1123,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  library:['library'], smslog:['smsLog']
+  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -2260,6 +2284,7 @@ const TAB_ICONS = {
   library:'<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/>',
   exams:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12l2 2 4-4"/>',
   certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+  personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
   notifications:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
@@ -2279,7 +2304,7 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -2360,6 +2385,7 @@ function render(tab){
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
+  else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='smslog') html = smsLogView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
@@ -2453,6 +2479,181 @@ function smsLogView(){
         ${e.cost ? `<div class="item-body" style="font-size:11.5px; color:var(--muted); margin-top:2px;">Cost: ${escapeHtml(e.cost)}</div>` : ''}
       </div>`).join('') : `<div class="empty">No text messages sent ${isAmbassador ? 'yet' : 'to your students yet'}.</div>`}
   </div>`;
+}
+
+// ---- Personal SMS: an ambassador texts ONE student at a time. Nothing here can reach
+// more than one person — there is no multi-select and no "send to all". ----
+const PSMS = { studentId:null, search:'', draft:'', sign:true, link:false, sending:false, status:null };
+
+function sendSmsNow(url, payload){
+  // Same transport as queueSmsSend, but waits for the answer so the sender sees
+  // whether the text was accepted. Goes through the shared queue so it never
+  // collides with a broadcast that is still being sent.
+  return new Promise(resolve=>{
+    _smsQueue = _smsQueue.then(async ()=>{
+      let authHeaders = {};
+      if(sbReady){
+        try{
+          const { data: { session } } = await sb.auth.getSession();
+          if(session && session.access_token){
+            authHeaders = { Authorization: `Bearer ${session.access_token}`, apikey: SUPABASE_CONFIG.anonKey };
+          }
+        }catch(e){ /* non-Supabase webhooks don't need these */ }
+      }
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(), 15000);
+      const out = { ok:false, detail:'' };
+      try{
+        const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json', ...authHeaders}, body: JSON.stringify(payload), signal: controller.signal });
+        out.ok = res.ok;
+        if(!res.ok){
+          let j = null; try{ j = await res.json(); }catch(e){}
+          const d = j && (j.detail || j.error || j.message);
+          out.detail = d ? String(d) : `The SMS service answered ${res.status}.`;
+        }
+      }catch(e){
+        out.detail = e.name==='AbortError' ? 'The SMS service took too long to answer.' : 'The SMS service could not be reached.';
+      }
+      clearTimeout(timeout);
+      resolve(out);
+      await new Promise(r=>setTimeout(r, 800));
+    });
+  });
+}
+
+function psmsSelected(){ return (DB.students||[]).find(s=>s.id===PSMS.studentId) || null; }
+function psmsHasPhone(s){ return String(s && s.phone || '').replace(/\D/g,'').length >= 7; }
+function psmsSmsOn(){ return !!(DB.settings && DB.settings.webhookUrl); }
+function psmsFinalText(){
+  let t = PSMS.draft.trim();
+  if(!t) return '';
+  if(PSMS.sign && ME && ME.name) t += `\n— ${ME.name}`;
+  if(PSMS.link) t = withPortalLink(t);
+  return t;
+}
+function psmsSegments(t){
+  const uni = /[^\x00-\x7F]/.test(t), len = [...t].length;
+  const single = uni ? 70 : 160, multi = uni ? 67 : 153;
+  return { len, parts: len===0 ? 0 : (len<=single ? 1 : Math.ceil(len/multi)) };
+}
+function psmsStudents(){
+  const term = PSMS.search.trim().toLowerCase();
+  return (DB.students||[]).slice()
+    .filter(s=>!term || [s.name, s.email, s.phone, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
+    .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+}
+function psmsListHtml(){
+  if(!(DB.students||[]).length) return `<div class="empty">No students on the roster yet.</div>`;
+  const rows = psmsStudents();
+  if(!rows.length) return `<div class="empty">No student matches "${escapeHtml(PSMS.search)}".</div>`;
+  return rows.map(s=>{
+    const ok = psmsHasPhone(s), on = PSMS.studentId===s.id;
+    const sub = ok ? escapeHtml(s.phone) : 'No phone number on file';
+    const extra = (s.group ? ' · '+escapeHtml(s.group) : '') + (s.coordinatorId ? ' · '+escapeHtml(coordName(s.coordinatorId)) : '');
+    return `<button type="button" class="psms-row${on?' on':''}" data-psms-pick="${escapeHtml(s.id)}" aria-pressed="${on}" ${ok?'':'disabled'}>
+      <span class="psms-name">${escapeHtml(s.name||'Unnamed student')}</span>
+      <span class="psms-sub">${sub}${extra}</span>
+      ${ok && !s.notifySms ? '<span class="psms-flag">Texts off</span>' : ''}
+    </button>`;
+  }).join('');
+}
+function psmsToHtml(){
+  const st = psmsSelected();
+  if(!st) return `<div class="psms-empty">Choose a student from the list to write to them.</div>`;
+  return `<div class="psms-to-name">${escapeHtml(st.name||'Unnamed student')}</div>
+    <div class="psms-to-sub">${escapeHtml(st.phone||'No phone number on file')}${st.phone && !st.notifySms ? ' · Text updates are off for this student' : ''}</div>`;
+}
+function psmsRecentHtml(){
+  const rows = (DB.smsLog||[]).filter(e=>e.subject==='Personal message').sort((a,b)=>b.ts-a.ts).slice(0,8);
+  if(!rows.length) return `<div class="empty">Personal texts you send will appear here with their delivery result.</div>`;
+  return rows.map(e=>`
+    <div class="item">
+      <div class="item-head"><span class="item-title">${escapeHtml(e.name || e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+      <div class="item-body">${escapeHtml(e.to)} ${smsStatusBadge(e.status)}</div>
+      ${e.status!=='delivered' && e.detail ? `<div class="item-body" style="margin-top:6px; padding:8px 10px; background:rgba(192,57,43,.06); border-radius:8px; font-size:12.5px; color:#C0392B;">${escapeHtml(e.detail)}</div>` : ''}
+    </div>`).join('');
+}
+function personalSmsView(){
+  return `
+  <div class="section-title"><div><h2>Text a student</h2><p>Send one text to one student. It goes only to the person you pick, never to a group.</p></div></div>
+  ${psmsSmsOn() ? '' : `<p class="note" style="margin-bottom:14px;">Text messaging isn't connected yet. Add the SMS webhook in Settings, then come back to send.</p>`}
+  <div class="psms-wrap">
+    <div class="card">
+      <div class="field" style="margin-bottom:10px;"><label for="psmsSearch">Find a student</label>
+        <input id="psmsSearch" type="search" autocomplete="off" placeholder="Name, phone, group or coordinator" value="${escapeHtml(PSMS.search)}"></div>
+      <div id="psmsList" class="psms-list">${psmsListHtml()}</div>
+    </div>
+    <div>
+      <div class="card">
+        <div id="psmsTo" class="psms-to">${psmsToHtml()}</div>
+        <div class="field"><label for="psmsBody">Message</label>
+          <textarea id="psmsBody" rows="5" maxlength="600" placeholder="Write your message">${escapeHtml(PSMS.draft)}</textarea></div>
+        <div class="psms-opts">
+          <label><input type="checkbox" id="psmsSign" ${PSMS.sign?'checked':''}> Sign with my name</label>
+          ${portalUrl() ? `<label><input type="checkbox" id="psmsLink" ${PSMS.link?'checked':''}> Add the portal link</label>` : ''}
+        </div>
+        <div class="psms-foot"><span id="psmsCount" class="psms-count"></span><button class="btn teal" id="psmsSend" type="button">Send text</button></div>
+        <div id="psmsStatus" class="psms-status" role="status" aria-live="polite"></div>
+      </div>
+      <h3 style="font-size:15px; margin:22px 0 10px;">Recent personal texts</h3>
+      <div id="psmsRecent" class="list">${psmsRecentHtml()}</div>
+    </div>
+  </div>`;
+}
+function psmsRefreshCompose(){
+  const q = id=>document.getElementById(id);
+  if(!q('psmsTo')) return;
+  const st = psmsSelected(), text = psmsFinalText(), seg = psmsSegments(text);
+  q('psmsTo').innerHTML = psmsToHtml();
+  q('psmsCount').textContent = seg.len ? `${seg.len} characters, ${seg.parts} text${seg.parts>1?'s':''}` : 'Nothing written yet';
+  const btn = q('psmsSend');
+  btn.disabled = PSMS.sending || !st || !psmsHasPhone(st) || !psmsSmsOn() || !text;
+  const first = st && st.name ? String(st.name).trim().split(/\s+/)[0] : '';
+  btn.textContent = PSMS.sending ? 'Sending…' : (first ? `Send to ${first}` : 'Send text');
+  const stat = q('psmsStatus');
+  stat.className = 'psms-status' + (PSMS.status ? (PSMS.status.ok ? ' ok' : ' bad') : '');
+  stat.textContent = PSMS.status ? PSMS.status.msg : '';
+}
+async function psmsSend(){
+  const st = psmsSelected(), text = psmsFinalText(), url = DB.settings && DB.settings.webhookUrl;
+  if(PSMS.sending || !st || !text || !url || !psmsHasPhone(st)) return;
+  if(!st.notifySms && !confirm(`Text updates are off for ${st.name}. Send this one text anyway?`)) return;
+  PSMS.sending = true; PSMS.status = null; psmsRefreshCompose();
+  const res = await sendSmsNow(url, {
+    to: st.phone, name: st.name, from: ME.name, subject: 'Personal message', message: text,
+    recipientId: st.id, recipientRole: 'student', studentCoordinatorId: st.coordinatorId || null
+  });
+  PSMS.sending = false;
+  if(res.ok){
+    PSMS.status = { ok:true, msg:`Text sent to ${st.name}. Its delivery result will appear under Recent personal texts.` };
+    PSMS.draft = '';
+    const b = document.getElementById('psmsBody'); if(b) b.value = '';
+  }else{
+    PSMS.status = { ok:false, msg:`Couldn't send to ${st.name}. ${res.detail || 'Check the SMS connection in Settings and try again.'} Your message is still here.` };
+  }
+  psmsRefreshCompose();
+  setTimeout(async ()=>{
+    try{ await reloadDbKey('sms:log'); }catch(e){}
+    const r = document.getElementById('psmsRecent');
+    if(r && currentTab==='personalsms') r.innerHTML = psmsRecentHtml();
+  }, 2500);
+}
+function wirePersonalSms(){
+  const q = id=>document.getElementById(id);
+  q('psmsSearch').addEventListener('input', e=>{ PSMS.search = e.target.value; q('psmsList').innerHTML = psmsListHtml(); });
+  q('psmsList').addEventListener('click', e=>{
+    const b = e.target.closest('[data-psms-pick]');
+    if(!b || b.disabled) return;
+    PSMS.studentId = b.dataset.psmsPick; PSMS.status = null;
+    q('psmsList').innerHTML = psmsListHtml();
+    psmsRefreshCompose();
+    q('psmsBody').focus();
+  });
+  q('psmsBody').addEventListener('input', e=>{ PSMS.draft = e.target.value; psmsRefreshCompose(); });
+  q('psmsSign').addEventListener('change', e=>{ PSMS.sign = e.target.checked; psmsRefreshCompose(); });
+  if(q('psmsLink')) q('psmsLink').addEventListener('change', e=>{ PSMS.link = e.target.checked; psmsRefreshCompose(); });
+  q('psmsSend').addEventListener('click', psmsSend);
+  psmsRefreshCompose();
 }
 
 function csvCell(v){
@@ -4038,6 +4239,7 @@ function examsView(){
 
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
+  if(tab==='personalsms') wirePersonalSms();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
   // a data-ack-alert button for the same underlying alert.
