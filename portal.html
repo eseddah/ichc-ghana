@@ -489,6 +489,8 @@
   .psms-opts{display:flex; flex-wrap:wrap; gap:6px 18px; margin:-4px 0 12px; font-size:13px; color:var(--muted);}
   .psms-opts label{display:flex; align-items:center; gap:7px; cursor:pointer;}
   .psms-opts input{width:auto;}
+  .psms-opts select{padding:9px 10px; border:1.5px solid var(--line); border-radius:10px; font:inherit; background:#fff; color:inherit;}
+  .mc-link{display:block; margin-top:10px; color:#cfeee6; font-size:13px; text-decoration:underline;}
   .psms-foot{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;}
   .psms-count{font-size:12.5px; color:var(--muted);}
   .psms-status{font-size:13px; margin-top:10px; line-height:1.5;}
@@ -532,6 +534,10 @@
   @keyframes mcBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
   @keyframes mcRise{0%{transform:translateY(0); opacity:.9}100%{transform:translateY(-14px); opacity:0}}
   @media (prefers-reduced-motion:reduce){ .mc-wave .mc-arm,.mc-eyes,.mc-card .mc-svg,.mc-bub,.mc-bubl{animation:none;} }
+
+  .mc-conf{position:fixed; top:-12px; width:9px; height:14px; z-index:1300; pointer-events:none; animation:mcFall linear forwards;}
+  @keyframes mcFall{to{transform:translateY(105vh) rotate(720deg); opacity:.9}}
+  @media (prefers-reduced-motion:reduce){ .mc-conf{display:none;} }
 </style>
 </head>
 <body>
@@ -1129,6 +1135,7 @@ function startRealtimeSync(){
       .on('postgres_changes', { event:'*', schema:'public', table:'ichc_certificates' }, async ()=>{
         DB.certificates = await loadCertificates();
         if(currentTab==='certificates') renderOrDefer('certificates');
+        mcCelebrateCerts();
       })
       .subscribe();
   }catch(e){ console.error('Certificate sync failed to start', e); }
@@ -2111,6 +2118,7 @@ let peopleSearch = ''; // live filter text for the ambassador's People tab (sear
 let attendanceOpenFor = null; // callsheet id currently showing its attendance checklist, for coordinators
 
 // ---- Lab mascot: a cartoon scientist who waves hello after sign-in, then docks as a round icon you can customise ----
+const MC_FACTS = ['A mole is 6.022 × 10²³ particles, known as Avogadro\'s number.','Water is densest at about 4 °C, which is why ice floats on lakes.','Noble gases like helium rarely react because their outer shells are full.','The pH scale is logarithmic: pH 3 is ten times more acidic than pH 4.','Diamond and graphite are both pure carbon, arranged differently.','Mendeleev left gaps in his periodic table for elements not yet discovered.','Sodium reacts violently with water, yet table salt (NaCl) is safe to eat.','Catalysts speed up reactions without being used up.','Bromine is one of only two elements that are liquid at room temperature.','Chemical equations must balance because atoms are never created or destroyed.','Rust is iron slowly reacting with oxygen and water.','Carbon dioxide dissolved in water makes it slightly acidic.'];
 const MC = {
   skins:[['#FFE0C7','#F1C3A0'],['#F6C9A0','#E2A97C'],['#D9A070','#BE8456'],['#B97A50','#9A603C'],['#8A5636','#6F4128'],['#5E3A24','#482B1A']],
   hairs:['#1B1B1F','#4A2C1A','#8B5A2B','#D9A441','#C0392B','#7A5CC9'],
@@ -2163,6 +2171,37 @@ function mcSvg(l, cls){
     ${top}${goggles}
   </svg>`;
 }
+
+// Congratulate the signed-in person once for each new, un-revoked certificate.
+function mcCelebrateCerts(){
+  try{
+    if(!ME || ME.role==='ambassador' || document.getElementById('mcCert') || document.getElementById('mcPop')?.classList.contains('on')) return;
+    const key = 'ichc_cert_seen_' + ME.id; let seen = [];
+    try{ seen = JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){}
+    const fresh = myCertificates().filter(c=>c.status!=='revoked' && !seen.includes(c.id));
+    if(!fresh.length) return;
+    try{ localStorage.setItem(key, JSON.stringify(seen.concat(fresh.map(c=>c.id)))); }catch(e){}
+    const first = ((ME.name||'').trim().split(/\s+/)[0]) || '';
+    const label = fresh.length>1 ? `${fresh.length} new certificates` : `a ${(CERT_COPY[fresh[0].type]||{label:'certificate'}).label}`;
+    const o = document.createElement('div');
+    o.id = 'mcCert'; o.className = 'mc-back on'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-label','New certificate');
+    o.innerHTML = `<div class="mc-card"><div class="mc-bubble"><b id="mcCertHi"></b><span id="mcCertTx"></span></div><div class="mc-wave">${mcSvg(mcLoad())}</div>
+      <button type="button" class="mc-go" id="mcCertGo">View my certificate</button><a class="mc-link" href="#" id="mcCertLater">Later</a></div>`;
+    document.body.appendChild(o);
+    document.getElementById('mcCertHi').textContent = first ? `Congratulations, ${first}!` : 'Congratulations!';
+    document.getElementById('mcCertTx').textContent = `You've earned ${label}.`;
+    const close = ()=>o.remove();
+    document.getElementById('mcCertLater').addEventListener('click', e=>{ e.preventDefault(); close(); });
+    document.getElementById('mcCertGo').addEventListener('click', ()=>{ close(); const t = document.querySelector('#tabs .tab[data-tab="certificates"]'); if(t) t.click(); });
+    o.addEventListener('click', e=>{ if(e.target===o) close(); });
+    const colors = ['#E39A3B','#1F8A70','#4DA3FF','#FF5C8A','#7C5CFF','#FFC857'];
+    for(let n=0;n<36;n++){
+      const c = document.createElement('i'); c.className = 'mc-conf';
+      c.style.cssText = `left:${Math.random()*100}vw; background:${colors[n%colors.length]}; animation-duration:${2.2+Math.random()*2}s; animation-delay:${Math.random()*.8}s;`;
+      document.body.appendChild(c); setTimeout(()=>c.remove(), 5500);
+    }
+  }catch(e){ console.warn('Certificate celebration failed', e); }
+}
 function initMascot(){
   ['mcPop','mcDock','mcEdit'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
   const look = mcLoad(), first = ((ME && ME.name)||'').trim().split(/\s+/)[0];
@@ -2170,26 +2209,30 @@ function initMascot(){
   wrap.innerHTML = `
   <div id="mcPop" class="mc-back" role="dialog" aria-modal="true" aria-label="Welcome"><div class="mc-card">
     <span class="mc-bub" style="width:18px;height:18px;left:12%;bottom:18%"></span><span class="mc-bub" style="width:10px;height:10px;left:84%;bottom:30%;animation-delay:2s"></span><span class="mc-bub" style="width:14px;height:14px;left:76%;bottom:12%;animation-delay:4s"></span>
-    <div class="mc-bubble"><b id="mcHi"></b>Ready for some chemistry today?</div>
+    <div class="mc-bubble"><b id="mcHi"></b><span id="mcFact"></span></div>
     <div class="mc-wave" id="mcPopSvg"></div>
-    <button type="button" class="mc-go" id="mcGo">Let's go</button></div></div>
+    <button type="button" class="mc-go" id="mcGo">Let's go</button><a class="mc-link" href="index.html#videos">New here? Watch the how-to videos</a></div></div>
   <button type="button" id="mcDock" class="mc-dock" aria-label="Open your scientist"></button>
   <div id="mcEdit" class="mc-edit" role="dialog" aria-modal="true" aria-label="Customise your scientist"><div class="mc-sheet">
     <div class="mc-prev" id="mcPrev"></div><div id="mcOpts"></div>
-    <div class="mc-row" style="margin-top:14px"><button type="button" class="mc-go" id="mcWaveBtn" style="margin:0">Wave hello</button><button type="button" class="mc-chip" id="mcDone">Done</button></div></div></div>`;
+    <div class="mc-row" style="margin-top:14px"><button type="button" class="mc-go" id="mcWaveBtn" style="margin:0">Wave hello</button><button type="button" class="mc-chip" id="mcDone">Done</button><a class="mc-chip" href="index.html#videos" style="text-decoration:none">How-to videos</a></div></div></div>`;
   [...wrap.children].forEach(n=>document.body.appendChild(n));
   const $ = id=>document.getElementById(id), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   $('mcHi').textContent = first ? `Welcome back, ${first}!` : 'Welcome back!';
+  $('mcFact').textContent = 'Did you know? ' + MC_FACTS[Math.floor(Date.now()/86400000) % MC_FACTS.length];
+  const remoteKey = ME && ME.id ? 'mascot:' + ME.id : null; let saveT = null;
+  const saveRemote = ()=>{ if(!remoteKey) return; clearTimeout(saveT); saveT = setTimeout(()=>{ sSet(remoteKey, look, true); }, 600); };
   const paint = ()=>{ $('mcPopSvg').innerHTML = mcSvg(look); $('mcDock').innerHTML = mcSvg(look,'mini'); $('mcPrev').innerHTML = mcSvg(look); $('mcPrev').classList.add('mc-wave'); };
   const sw = (key,vals,label)=>`<div class="mc-grp"><h4>${label}</h4><div class="mc-row">${vals.map((v,i)=>`<button type="button" class="mc-sw" data-k="${key}" data-v="${i}" aria-pressed="${look[key]===i}" aria-label="${label} ${i+1}" style="background:${Array.isArray(v)?v[0]:v}"></button>`).join('')}</div></div>`;
   const chips = (key,vals,label,names)=>`<div class="mc-grp"><h4>${label}</h4><div class="mc-row">${vals.map((v,i)=>`<button type="button" class="mc-chip" data-k="${key}" data-v="${v}" aria-pressed="${look[key]===v}">${names[i]}</button>`).join('')}</div></div>`;
   const opts = ()=>{ $('mcOpts').innerHTML = sw('skin',MC.skins,'Skin tone') + chips('hairStyle',MC.styles,'Hair',['Short','Curly','Long','Bun']) + sw('hair',MC.hairs,'Hair colour') + sw('coat',MC.coats,'Lab coat') + chips('tool',MC.tools,'Chemistry tool',['Beaker','Flask','Test tubes','Molecule','None']) + sw('liquid',MC.liquids,'Liquid colour') + chips('goggles',[true,false],'Safety goggles',['On','Off']); };
   paint(); opts();
+  if(remoteKey) sGet(remoteKey, true).then(r=>{ if(r && typeof r==='object'){ Object.assign(look, r); mcSave(look); paint(); opts(); } });
   $('mcOpts').addEventListener('click', e=>{
     const b = e.target.closest('[data-k]'); if(!b) return;
     const k = b.dataset.k, v = b.dataset.v;
     look[k] = (k==='hairStyle'||k==='tool') ? v : (k==='goggles' ? v==='true' : +v);
-    mcSave(look); paint(); opts();
+    mcSave(look); saveRemote(); paint(); opts();
   });
   const dock = $('mcDock'), pop = $('mcPop'), edit = $('mcEdit');
   const openEdit = ()=>{ edit.classList.add('on'); };
@@ -2198,7 +2241,7 @@ function initMascot(){
   edit.addEventListener('click', e=>{ if(e.target===edit) edit.classList.remove('on'); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') edit.classList.remove('on'); });
   $('mcWaveBtn').addEventListener('click', ()=>{ const p=$('mcPrev'); p.classList.remove('mc-wave'); void p.offsetWidth; p.classList.add('mc-wave'); });
-  const showDock = ()=>{ pop.classList.remove('on'); dock.classList.add('on'); if(!reduce) dock.animate([{transform:'scale(.7)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450}); };
+  const showDock = ()=>{ pop.classList.remove('on'); dock.classList.add('on'); if(!reduce) dock.animate([{transform:'scale(.7)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450}); setTimeout(mcCelebrateCerts, 400); };
   let done = false;
   const retract = ()=>{
     if(done) return; done = true;
@@ -2210,7 +2253,7 @@ function initMascot(){
     card.animate([{transform:'none',opacity:1,borderRadius:'24px'},{transform:`translate(${dx}px,${dy}px) scale(${sc})`,opacity:.15,borderRadius:'50%'}],{duration:650,easing:'cubic-bezier(.6,0,.3,1)',fill:'forwards'}).onfinish = showDock;
   };
   $('mcGo').addEventListener('click', retract);
-  if(sessionStorage.getItem('ichc_mascot_welcomed')){ dock.classList.add('on'); return; }
+  if(sessionStorage.getItem('ichc_mascot_welcomed')){ dock.classList.add('on'); mcCelebrateCerts(); return; }
   sessionStorage.setItem('ichc_mascot_welcomed','1');
   pop.classList.add('on'); $('mcGo').focus();
   setTimeout(retract, 6500);
@@ -2650,7 +2693,14 @@ function smsLogView(){
 
 // ---- Personal SMS: an ambassador texts ONE student at a time. Nothing here can reach
 // more than one person — there is no multi-select and no "send to all". ----
-const PSMS = { studentId:null, search:'', draft:'', sign:true, link:false, sending:false, status:null };
+const PSMS = { studentId:null, search:'', draft:'', sign:true, link:false, sending:false, status:null, onlyPhone:false };
+const PSMS_TPL = ['Hi {name}, a reminder that our next session is coming up. Please check the portal for the time and details.','Hi {name}, please log in to the portal and finish your pending task. Reply if you need any help.','Well done, {name}! Great progress. Keep it up.','Hi {name}, we missed you at the last session. Is everything okay? Let us know if you need help catching up.','Hi {name}, new materials have been shared on the portal. Take a look when you can.'];
+function psmsCustomTpl(){ try{ return JSON.parse(localStorage.getItem('ichc_psms_tpl')||'[]'); }catch(e){ return []; } }
+function psmsSentLoad(){ try{ return JSON.parse(localStorage.getItem('ichc_psms_sent')||'[]'); }catch(e){ return []; } }
+function psmsSentAdd(r){ try{ const a = psmsSentLoad(); a.push(r); localStorage.setItem('ichc_psms_sent', JSON.stringify(a.slice(-30))); }catch(e){} }
+function psmsFirst(s){ return s && s.name ? String(s.name).trim().split(/\s+/)[0] : 'there'; }
+function psmsFindSent(e){ const ph = String(e.to||'').replace(/\D/g,'').slice(-9); return psmsSentLoad().slice().reverse().find(r=>r.phone===ph && Math.abs(r.ts-e.ts)<120000) || null; }
+function psmsNoPhoneNote(){ const n = (DB.students||[]).filter(s=>!psmsHasPhone(s)).length; return n ? `<p class="note" style="margin:0 0 8px">${n} student${n>1?'s have':' has'} no phone number and can't be texted.</p>` : ''; }
 
 function sendSmsNow(url, payload){
   // Same transport as queueSmsSend, but waits for the answer so the sender sees
@@ -2706,6 +2756,7 @@ function psmsSegments(t){
 function psmsStudents(){
   const term = PSMS.search.trim().toLowerCase();
   return (DB.students||[]).slice()
+    .filter(s=>!PSMS.onlyPhone || psmsHasPhone(s))
     .filter(s=>!term || [s.name, s.email, s.phone, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
 }
@@ -2737,6 +2788,7 @@ function psmsRecentHtml(){
     <div class="item">
       <div class="item-head"><span class="item-title">${escapeHtml(e.name || e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
       <div class="item-body">${escapeHtml(e.to)} ${smsStatusBadge(e.status)}</div>
+      ${e.status!=='delivered' && psmsFindSent(e) ? `<button type="button" class="mc-chip" style="margin-top:8px" data-psms-resend="${escapeHtml(e.id)}">Put this text back in the box</button>` : ''}
       ${e.status!=='delivered' && e.detail ? `<div class="item-body" style="margin-top:6px; padding:8px 10px; background:rgba(192,57,43,.06); border-radius:8px; font-size:12.5px; color:#C0392B;">${escapeHtml(e.detail)}</div>` : ''}
     </div>`).join('');
 }
@@ -2748,11 +2800,13 @@ function personalSmsView(){
     <div class="card">
       <div class="field" style="margin-bottom:10px;"><label for="psmsSearch">Find a student</label>
         <input id="psmsSearch" type="search" autocomplete="off" placeholder="Name, phone, group or coordinator" value="${escapeHtml(PSMS.search)}"></div>
+      <label class="psms-opts" style="margin:0 0 8px"><input type="checkbox" id="psmsOnlyPhone" ${PSMS.onlyPhone?'checked':''}> Hide students without a phone number</label>${psmsNoPhoneNote()}
       <div id="psmsList" class="psms-list">${psmsListHtml()}</div>
     </div>
     <div>
       <div class="card">
         <div id="psmsTo" class="psms-to">${psmsToHtml()}</div>
+        <div class="field"><label for="psmsTpl">Quick message</label><div class="psms-opts" style="margin:0; flex-wrap:nowrap"><select id="psmsTpl" style="flex:1; min-width:0"><option value="">Choose a ready-made message…</option>${PSMS_TPL.concat(psmsCustomTpl()).map((t,i)=>`<option value="${i}">${escapeHtml(t.length>60?t.slice(0,57)+'…':t)}</option>`).join('')}</select><button type="button" class="mc-chip" id="psmsSaveTpl">Save mine</button></div></div>
         <div class="field"><label for="psmsBody">Message</label>
           <textarea id="psmsBody" rows="5" maxlength="600" placeholder="Write your message">${escapeHtml(PSMS.draft)}</textarea></div>
         <div class="psms-opts">
@@ -2791,6 +2845,7 @@ async function psmsSend(){
     recipientId: st.id, recipientRole: 'student', studentCoordinatorId: st.coordinatorId || null
   });
   PSMS.sending = false;
+  psmsSentAdd({ ts:Date.now(), phone:String(st.phone).replace(/\D/g,'').slice(-9), text, studentId:st.id });
   if(res.ok){
     PSMS.status = { ok:true, msg:`Text sent to ${st.name}. Its delivery result will appear under Recent personal texts.` };
     PSMS.draft = '';
@@ -2820,6 +2875,28 @@ function wirePersonalSms(){
   q('psmsSign').addEventListener('change', e=>{ PSMS.sign = e.target.checked; psmsRefreshCompose(); });
   if(q('psmsLink')) q('psmsLink').addEventListener('change', e=>{ PSMS.link = e.target.checked; psmsRefreshCompose(); });
   q('psmsSend').addEventListener('click', psmsSend);
+  q('psmsOnlyPhone').addEventListener('change', e=>{ PSMS.onlyPhone = e.target.checked; q('psmsList').innerHTML = psmsListHtml(); });
+  q('psmsTpl').addEventListener('change', e=>{
+    if(e.target.value==='') return;
+    const t = PSMS_TPL.concat(psmsCustomTpl())[+e.target.value] || '';
+    PSMS.draft = t.replace(/\{name\}/g, psmsFirst(psmsSelected())); q('psmsBody').value = PSMS.draft;
+    e.target.value = ''; psmsRefreshCompose(); q('psmsBody').focus();
+  });
+  q('psmsSaveTpl').addEventListener('click', ()=>{
+    const t = PSMS.draft.trim(); if(t.length<5) return alert('Write your message first, then save it as a template.');
+    const st = psmsSelected(); let txt = t; if(st && st.name) txt = txt.split(psmsFirst(st)).join('{name}');
+    const a = psmsCustomTpl(); if(!a.includes(txt)) a.push(txt);
+    try{ localStorage.setItem('ichc_psms_tpl', JSON.stringify(a.slice(-10))); }catch(e){}
+    render('personalsms');
+  });
+  q('psmsRecent').addEventListener('click', e=>{
+    const b = e.target.closest('[data-psms-resend]'); if(!b) return;
+    const ent = (DB.smsLog||[]).find(x=>x.id===b.dataset.psmsResend), rec = ent && psmsFindSent(ent);
+    if(!rec) return;
+    PSMS.studentId = rec.studentId; PSMS.draft = rec.text; PSMS.sign = false; PSMS.link = false; PSMS.status = null;
+    render('personalsms');
+    const bd = document.getElementById('psmsBody'); if(bd){ bd.focus(); bd.scrollIntoView({block:'center'}); }
+  });
   psmsRefreshCompose();
 }
 
@@ -4700,10 +4777,14 @@ function wireHandlers(tab){
   }));
 
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
+    const annBtn = q('addAnnBtn'); if(annBtn.disabled) return;
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
     if(!title||!body) return alert('Please fill in both fields.');
-    await appendShared('announcements', {id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
-    await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
+    annBtn.disabled = true;
+    try{
+      await appendShared('announcements', {id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
+      await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
+    }catch(e){ annBtn.disabled = false; console.error(e); return alert('That announcement did not finish posting. Please check before trying again.'); }
     render('announce');
   });
   document.querySelectorAll('[data-save-ann]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -4862,12 +4943,12 @@ function wireHandlers(tab){
   }));
 
   if(q('sendCommentBtn')) q('sendCommentBtn').addEventListener('click', async ()=>{
+    if(q('sendCommentBtn').disabled) return;
     const text=q('commentText').value.trim(); if(!text) return;
     const coordinatorId = q('sendCommentBtn').dataset.coord || null;
     const sendBtn = q('sendCommentBtn'); sendBtn.disabled = true;
     const okSend = await appendShared('comments', {id:uid(), author:ME.name, role:ME.role, coordinatorId, text, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
-    sendBtn.disabled = false;
-    if(!okSend){ alert('Your message couldn\'t be sent — check your connection and try again.'); return; }
+    if(!okSend){ sendBtn.disabled = false; alert('Your message couldn\'t be sent — check your connection and try again.'); return; }
     if(ME.role==='coordinator' || ME.role==='ambassador'){
       await notifyBroadcast({title:`New message from ${ME.name}`, body:text, coordinatorId, author:ME.name, role:ME.role});
     }

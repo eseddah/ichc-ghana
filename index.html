@@ -462,6 +462,9 @@
   .vp-x{position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line); background:#fff; font-size:22px; line-height:1; cursor:pointer; z-index:5;}
   .vp-card .vid-crop{border-radius:10px; max-height:76vh; margin:0 auto;}
   .vp-card .vid-crop video{pointer-events:auto;}
+  .vid-new{position:absolute; bottom:10px; left:10px; z-index:2; background:var(--amber); color:#0A1826; font-size:11px; font-weight:800; padding:3px 10px; border-radius:999px; pointer-events:none;}
+  .vid-move{position:absolute; top:10px; right:48px; z-index:3; display:flex; gap:4px;}
+  .vid-move button{width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:18px; line-height:1; cursor:pointer;}
   .vp-dl{display:block; text-align:center; margin-top:12px; background:var(--teal); color:#fff; border-radius:999px; padding:11px 18px; font-weight:600; font-size:14px; text-decoration:none;}
 </style>
 </head>
@@ -1304,9 +1307,9 @@ function videoCropHtml(v, controls){
   const c = Math.min(Math.max(+v.crop || 0, 0), 0.2), r = +v.ratio || (9/19.5);
   const wrapAspect = r / (1 - c);
   return `<div class="vid-crop" style="aspect-ratio:${wrapAspect.toFixed(4)}">
-    <video src="${escapeHtml(v.url)}#t=0.1" preload="metadata" playsinline ${controls?'controls autoplay':'muted'}
+    <video src="${escapeHtml(v.url)}#t=0.1" ${v.poster&&!controls?`poster="${escapeHtml(v.poster)}" `:''}preload="metadata" playsinline ${controls?'controls autoplay':'muted'}
       style="height:calc(100% / ${(1-c).toFixed(3)}); top:calc(-100% * ${c} / ${(1-c).toFixed(3)});"></video>
-    <div class="vid-logo"><span class="hexlogo"></span>Chemistry Competition Prep</div>${controls?'':'<div class="vid-play"><i></i></div>'}</div>`;
+    <div class="vid-logo"><span class="hexlogo"></span>Chemistry Competition Prep</div>${controls?'':'<div class="vid-play"><i></i></div>'}${!controls && v.date && (Date.now()-new Date(v.date).getTime()) < 14*86400000 ? '<div class="vid-new">New</div>' : ''}</div>`;
 }
 function fillLogos(root){ root.querySelectorAll('.hexlogo:empty').forEach(el=>el.appendChild(document.getElementById('hexlogo-tpl').content.cloneNode(true))); }
 function renderVideos(list){
@@ -1316,12 +1319,13 @@ function renderVideos(list){
   list.slice().reverse().forEach(v=>{
     const wrap = document.createElement('div'); wrap.style.position = 'relative';
     wrap.innerHTML = `<button type="button" class="vid-card" data-vid="${escapeHtml(v.id)}" aria-label="Watch: ${escapeHtml(v.title)}">${videoCropHtml(v,false)}<div class="vid-title">${escapeHtml(v.title)}</div></button>
-      ${window.__isAmbassador ? `<button type="button" class="vid-remove" data-rm="${escapeHtml(v.id)}" aria-label="Remove video">&#10005;</button>` : ''}`;
+      ${window.__isAmbassador ? `<button type="button" class="vid-remove" data-rm="${escapeHtml(v.id)}" aria-label="Remove video">&#10005;</button><div class="vid-move"><button type="button" data-mv="${escapeHtml(v.id)}" data-dir="-1" aria-label="Move earlier">&#8249;</button><button type="button" data-mv="${escapeHtml(v.id)}" data-dir="1" aria-label="Move later">&#8250;</button></div>` : ''}`;
     grid.appendChild(wrap);
   });
   fillLogos(grid);
   grid.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click', ()=>openVideo(list.find(v=>v.id===b.dataset.vid))));
   grid.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', ()=>removeVideo(b.dataset.rm)));
+  grid.querySelectorAll('[data-mv]').forEach(b=>b.addEventListener('click', ()=>moveVideo(b.dataset.mv, +b.dataset.dir)));
 }
 function openVideo(v){
   if(!v) return;
@@ -1344,12 +1348,34 @@ async function loadVideos(){
   if(!sbReady || !document.getElementById('videoGrid')) return;
   try{ renderVideos(await getVideoList()); }catch(e){ console.error('Failed to load videos', e); }
 }
+async function moveVideo(id, dir){
+  try{
+    const list = await getVideoList(), i = list.findIndex(v=>v.id===id), j = i - dir; // list is shown newest-first, so "earlier" = later in the array
+    if(i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    const { error } = await sb.from('ichc_kv').upsert({ key:'site:videos', value:list }); if(error) throw error;
+    renderVideos(list);
+  }catch(e){ console.error(e); alert('Sorry, that video could not be moved. Please try again.'); }
+}
+function videoPoster(file){
+  return new Promise(res=>{
+    const u = URL.createObjectURL(file), v = document.createElement('video'); let done = false;
+    const end = b=>{ if(done) return; done = true; URL.revokeObjectURL(u); res(b); };
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadeddata = ()=>{ v.currentTime = Math.min(1, (v.duration||2)/2); };
+    v.onseeked = ()=>{
+      try{ const w = Math.min(480, v.videoWidth), h = Math.round(w * v.videoHeight / v.videoWidth), c = document.createElement('canvas');
+        c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); c.toBlob(b=>end(b), 'image/jpeg', .8); }catch(e){ end(null); }
+    };
+    v.onerror = ()=>end(null); setTimeout(()=>end(null), 8000); v.src = u;
+  });
+}
 async function removeVideo(id){
   if(!confirm('Remove this video from the page?')) return;
   try{
     const list = await getVideoList(), t = list.find(v=>v.id===id), nl = list.filter(v=>v.id!==id);
     const { error } = await sb.from('ichc_kv').upsert({ key:'site:videos', value:nl }); if(error) throw error;
-    if(t && t.path){ try{ await sb.storage.from(VIDEO_BUCKET).remove([t.path]); }catch(e){} }
+    if(t && t.path){ try{ await sb.storage.from(VIDEO_BUCKET).remove([t.path, t.posterPath].filter(Boolean)); }catch(e){} }
     renderVideos(nl);
   }catch(e){ console.error(e); alert('Sorry, removing that video failed — please try again.'); }
 }
@@ -1380,11 +1406,13 @@ function initVideoEditor(){
       const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
       const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
       const ratio = await videoRatio(file);
+      let poster = null, posterPath = null;
+      try{ const pb = await videoPoster(file); if(pb){ posterPath = path.replace(/\.[^.]+$/, '') + '-poster.jpg'; const { error: pe } = await sb.storage.from(VIDEO_BUCKET).upload(posterPath, pb, { contentType:'image/jpeg' }); if(!pe) poster = sb.storage.from(VIDEO_BUCKET).getPublicUrl(posterPath).data.publicUrl; else posterPath = null; } }catch(e){ console.warn('Poster failed', e); }
       const { error: upErr } = await sb.storage.from(VIDEO_BUCKET).upload(path, file, { upsert:false, contentType: file.type || 'video/mp4' });
       if(upErr) throw upErr;
       const url = sb.storage.from(VIDEO_BUCKET).getPublicUrl(path).data.publicUrl;
       const list = await getVideoList();
-      list.push({ id: Math.random().toString(36).slice(2,9), url, path, title, ratio, crop: +$('videoCrop').value, date: new Date().toISOString().slice(0,10) });
+      list.push({ id: Math.random().toString(36).slice(2,9), url, path, poster, posterPath, title, ratio, crop: +$('videoCrop').value, date: new Date().toISOString().slice(0,10) });
       const { error } = await sb.from('ichc_kv').upsert({ key:'site:videos', value:list }); if(error) throw error;
       renderVideos(list);
       $('videoCancelBtn').click();
