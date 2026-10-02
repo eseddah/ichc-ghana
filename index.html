@@ -462,6 +462,7 @@
   .vp-x{position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line); background:#fff; font-size:22px; line-height:1; cursor:pointer; z-index:5;}
   .vp-card .vid-crop{border-radius:10px; max-height:76vh; margin:0 auto;}
   .vp-card .vid-crop video{pointer-events:auto;}
+  .vp-dl{display:block; text-align:center; margin-top:12px; background:var(--teal); color:#fff; border-radius:999px; padding:11px 18px; font-weight:600; font-size:14px; text-decoration:none;}
 </style>
 </head>
 <body>
@@ -1325,7 +1326,10 @@ function renderVideos(list){
 function openVideo(v){
   if(!v) return;
   document.getElementById('videoPopTitle').textContent = v.title;
-  const stage = document.getElementById('videoPopStage'); stage.innerHTML = videoCropHtml(v,true); fillLogos(stage);
+  const stage = document.getElementById('videoPopStage'); const ext = ((v.path||'').split('.').pop() || 'mp4').toLowerCase();
+  const fname = (v.title||'how-to-video').replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-') + '.' + ext;
+  const dl = v.url + (v.url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(fname);
+  stage.innerHTML = videoCropHtml(v,true) + `<a class="vp-dl" href="${escapeHtml(dl)}" download>Download video</a>`; fillLogos(stage);
   const pop = document.getElementById('videoPop'); pop.classList.add('on'); pop.setAttribute('aria-hidden','false');
 }
 function closeVideo(){
