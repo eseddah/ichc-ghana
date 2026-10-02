@@ -504,7 +504,7 @@
   @media (prefers-reduced-motion:reduce){ .mc-wave .mc-arm,.mc-eyes,.mc-card .mc-svg,.mc-bub,.mc-bubl{animation:none;} }
   .mc-tip{position:fixed; right:88px; bottom:30px; background:#fff; color:#0A1826; border-radius:14px; padding:9px 13px; font-size:13px; font-weight:600; box-shadow:0 8px 22px rgba(10,24,38,.25); z-index:1100; opacity:0; pointer-events:none; transition:opacity .4s;}
   .mc-tip.on{opacity:1;}
-  .mc-chat{position:fixed; right:16px; bottom:92px; width:min(380px, calc(100vw - 24px)); height:min(560px, calc(100vh - 120px)); background:#fff; border-radius:20px; box-shadow:0 18px 50px rgba(10,24,38,.35); z-index:1150; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--line);}
+  .mc-chat{position:fixed; right:16px; bottom:92px; width:min(420px, calc(100vw - 24px)); height:min(640px, calc(100vh - 120px)); background:#fff; border-radius:20px; box-shadow:0 18px 50px rgba(10,24,38,.35); z-index:1150; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--line);}
   .mc-chat.on{display:flex;}
   .mc-ch{display:flex; align-items:center; gap:10px; padding:10px 12px; background:linear-gradient(135deg,#14506a,#0A1826); color:#fff;}
   .mc-ch .mc-av{width:42px; height:42px; border-radius:50%; background:radial-gradient(circle at 50% 30%,#2aa88a,#14506a); border:2px solid #fff; overflow:hidden; flex:none;}
@@ -2689,7 +2689,7 @@ loadDeadlineFromPortal();
   <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><button type="button" id="mcChatX" aria-label="Close chat">&times;</button></div>
   <div class="mc-msgs" id="mcMsgs" aria-live="polite"></div>
   <div class="mc-chips" id="mcChips"></div>
-  <div class="mc-in"><input id="mcQ" type="text" maxlength="200" placeholder="Type your question" autocomplete="off" aria-label="Your question"><button type="button" id="mcSend">Send</button></div>
+  <div class="mc-in"><input id="mcQ" type="text" maxlength="500" placeholder="Type your question" autocomplete="off" aria-label="Your question"><button type="button" id="mcSend">Send</button></div>
 </div>
 <script>
 // ---- ChemPrep scientist: a chat helper that answers only from this page's own programme + IChC content ----
@@ -2812,7 +2812,7 @@ function mcSvg(l, cls){
     if(typeof sbReady === 'undefined' || !sbReady) return null;
     try{
       const msgs = hist.concat([{ role:'user', text:q }]).slice(-8);
-      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 20000)) ]);
+      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 40000)) ]);
       if(r && !r.error && r.data && r.data.reply) return String(r.data.reply);
     }catch(e){ console.warn('AI chat unavailable, using on-page answers', e); }
     return null;
