@@ -466,6 +466,67 @@
   .vid-move{position:absolute; top:10px; right:48px; z-index:3; display:flex; gap:4px;}
   .vid-move button{width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:18px; line-height:1; cursor:pointer;}
   .vp-dl{display:block; text-align:center; margin-top:12px; background:var(--teal); color:#fff; border-radius:999px; padding:11px 18px; font-weight:600; font-size:14px; text-decoration:none;}
+/* Lab mascot: welcome pop-up, round dock icon, and customiser */
+  .mc-back{position:fixed; inset:0; background:rgba(8,20,30,.55); display:none; align-items:center; justify-content:center; z-index:1200; padding:16px;}
+  .mc-back.on{display:flex;}
+  .mc-card{position:relative; width:min(340px,100%); border-radius:24px; padding:22px 20px 20px; text-align:center; color:#fff; overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 0%, #1F8A70 0%, #14506a 55%, #0A1826 100%); box-shadow:0 24px 60px rgba(0,0,0,.4);}
+  .mc-card .mc-svg{width:210px; max-width:70%; margin:0 auto; display:block; animation:mcBob 3s ease-in-out infinite;}
+  .mc-bubble{position:relative; background:#fff; color:#0A1826; border-radius:16px; padding:12px 14px; margin:2px 0 6px; font-size:14.5px; line-height:1.4; box-shadow:0 6px 18px rgba(0,0,0,.2);}
+  .mc-bubble:after{content:""; position:absolute; bottom:-8px; left:50%; margin-left:-9px; border:9px solid transparent; border-bottom:0; border-top-color:#fff;}
+  .mc-bubble b{display:block; font-family:'Fraunces',serif; font-size:19px; margin-bottom:2px;}
+  .mc-bub{position:absolute; border-radius:50%; background:rgba(255,255,255,.18); animation:mcRise 6s linear infinite;}
+  .mc-go{margin-top:12px; background:var(--amber); color:#0A1826; border:none; border-radius:999px; padding:10px 22px; font-weight:700; font-size:14px; cursor:pointer;}
+  .mc-dock{position:fixed; right:16px; bottom:18px; width:62px; height:62px; border-radius:50%; border:3px solid #fff; background:radial-gradient(circle at 50% 30%, #2aa88a, #14506a); box-shadow:0 8px 22px rgba(10,24,38,.4); cursor:pointer; padding:0; z-index:1100; opacity:0; pointer-events:none; overflow:hidden;}
+  .mc-dock.on{opacity:1; pointer-events:auto;}
+  .mc-dock:focus-visible{outline:3px solid var(--amber); outline-offset:3px;}
+  .mc-dock svg{width:100%; height:100%; display:block;}
+  .mc-edit{position:fixed; inset:0; background:rgba(8,20,30,.6); display:none; align-items:flex-end; justify-content:center; z-index:1250;}
+  .mc-edit.on{display:flex;}
+  .mc-sheet{background:#fff; width:min(520px,100%); max-height:92vh; overflow:auto; border-radius:22px 22px 0 0; padding:18px 18px 22px; position:relative;}
+  .mc-prev{background:radial-gradient(120% 90% at 50% 0%, #1F8A70, #14506a 60%, #0A1826); border-radius:18px; padding:10px 0 4px; text-align:center; margin-bottom:12px;}
+  .mc-prev .mc-svg{width:150px; display:inline-block; cursor:pointer;}
+  .mc-grp{margin:12px 0;} .mc-grp h4{margin:0 0 7px; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .mc-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .mc-sw{width:34px; height:34px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1.5px var(--line); cursor:pointer; padding:0;}
+  .mc-sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--teal);}
+  .mc-chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 14px; font-size:13px; font-weight:600; cursor:pointer; color:var(--navy-deep);}
+  .mc-chip[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .mc-arm{transform-origin:150px 178px; transform-box:view-box;}
+  .mc-wave .mc-arm{animation:mcWave .7s ease-in-out infinite;}
+  .mc-eyes{transform-origin:100px 100px; transform-box:view-box; animation:mcBlink 4.5s infinite;}
+  .mc-mini .mc-arm, .mc-mini .mc-tool{display:none;}
+  .mc-bubl{animation:mcRise 3s ease-in infinite;}
+  @keyframes mcWave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(14deg)}}
+  @keyframes mcBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes mcBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  @keyframes mcRise{0%{transform:translateY(0); opacity:.9}100%{transform:translateY(-14px); opacity:0}}
+  @media (prefers-reduced-motion:reduce){ .mc-wave .mc-arm,.mc-eyes,.mc-card .mc-svg,.mc-bub,.mc-bubl{animation:none;} }
+  .mc-tip{position:fixed; right:88px; bottom:30px; background:#fff; color:#0A1826; border-radius:14px; padding:9px 13px; font-size:13px; font-weight:600; box-shadow:0 8px 22px rgba(10,24,38,.25); z-index:1100; opacity:0; pointer-events:none; transition:opacity .4s;}
+  .mc-tip.on{opacity:1;}
+  .mc-chat{position:fixed; right:16px; bottom:92px; width:min(380px, calc(100vw - 24px)); height:min(560px, calc(100vh - 120px)); background:#fff; border-radius:20px; box-shadow:0 18px 50px rgba(10,24,38,.35); z-index:1150; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--line);}
+  .mc-chat.on{display:flex;}
+  .mc-ch{display:flex; align-items:center; gap:10px; padding:10px 12px; background:linear-gradient(135deg,#14506a,#0A1826); color:#fff;}
+  .mc-ch .mc-av{width:42px; height:42px; border-radius:50%; background:radial-gradient(circle at 50% 30%,#2aa88a,#14506a); border:2px solid #fff; overflow:hidden; flex:none;}
+  .mc-ch .mc-av svg{width:100%; height:100%; display:block;}
+  .mc-ch b{display:block; font-size:14.5px;} .mc-ch small{opacity:.8; font-size:11.5px;}
+  .mc-ch button{margin-left:auto; background:rgba(255,255,255,.16); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:20px; cursor:pointer; line-height:1;}
+  .mc-msgs{flex:1; overflow:auto; padding:14px; display:flex; flex-direction:column; gap:10px; background:#F6F4EE;}
+  .mc-m{max-width:86%; padding:10px 13px; border-radius:16px; font-size:14px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word;}
+  .mc-m.bot{background:#fff; color:#0A1826; border:1px solid var(--line); border-bottom-left-radius:4px; align-self:flex-start;}
+  .mc-m.me{background:var(--teal); color:#fff; border-bottom-right-radius:4px; align-self:flex-end;}
+  .mc-m a{color:var(--teal); font-weight:600; font-size:12.5px; display:inline-block; margin-top:6px;}
+  .mc-chips{display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 10px; background:#F6F4EE;}
+  .mc-chips button{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 11px; font-size:12.5px; cursor:pointer; color:#0A1826; font-family:inherit;}
+  .mc-chips button:hover{border-color:var(--teal);}
+  .mc-in{display:flex; gap:8px; padding:10px; border-top:1px solid var(--line); background:#fff;}
+  .mc-in input{flex:1; min-width:0; border:1.5px solid var(--line); border-radius:999px; padding:10px 14px; font:inherit; font-size:14px;}
+  .mc-in button{background:var(--teal); color:#fff; border:none; border-radius:999px; padding:0 18px; font-weight:700; cursor:pointer;}
+  .mc-in button:disabled{opacity:.5; cursor:default;}
+  .mc-dots span{display:inline-block; width:6px; height:6px; margin:0 2px; border-radius:50%; background:#9aa5b1; animation:mcBob 1s infinite;}
+  .mc-dots span:nth-child(2){animation-delay:.15s;} .mc-dots span:nth-child(3){animation-delay:.3s;}
+  @media (max-width:520px){ .mc-chat{right:8px; bottom:84px; height:min(70vh, calc(100vh - 110px));} .mc-tip{right:80px;} }
+
 </style>
 </head>
 <body>
@@ -2619,6 +2680,181 @@ loadDeadlineFromPortal();
   document.getElementById('npClose').addEventListener('click',function(){ set(false); });
   pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
+})();
+</script>
+
+<button type="button" id="mcDock" class="mc-dock on" aria-label="Chat with the Chemistry Competition Prep scientist" aria-expanded="false"></button>
+<div id="mcTip" class="mc-tip" aria-hidden="true">Ask me about the programme!</div>
+<div id="mcChat" class="mc-chat" role="dialog" aria-label="Chat about the programme, the International Chemistry Competition and chemistry">
+  <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><button type="button" id="mcChatX" aria-label="Close chat">&times;</button></div>
+  <div class="mc-msgs" id="mcMsgs" aria-live="polite"></div>
+  <div class="mc-chips" id="mcChips"></div>
+  <div class="mc-in"><input id="mcQ" type="text" maxlength="200" placeholder="Type your question" autocomplete="off" aria-label="Your question"><button type="button" id="mcSend">Send</button></div>
+</div>
+<script>
+// ---- ChemPrep scientist: a chat helper that answers only from this page's own programme + IChC content ----
+const MC = {
+  skins:[['#FFE0C7','#F1C3A0'],['#F6C9A0','#E2A97C'],['#D9A070','#BE8456'],['#B97A50','#9A603C'],['#8A5636','#6F4128'],['#5E3A24','#482B1A']],
+  hairs:['#1B1B1F','#4A2C1A','#8B5A2B','#D9A441','#C0392B','#7A5CC9'],
+  coats:['#FFFFFF','#DDF3EA','#E6E1FA','#DCEBFA'],
+  liquids:['#2EC4A0','#7C5CFF','#FF9F43','#FF5C8A','#4DA3FF'],
+  styles:['short','curly','long','bun'], tools:['beaker','flask','tubes','molecule','none'],
+  def:{skin:1,hairStyle:'short',hair:1,coat:0,tool:'beaker',liquid:0,goggles:true}
+};
+function mcToolSvg(t, liq){
+  const g = {
+    beaker:`<path d="M-14-18V22q0 7 7 7h14q7 0 7-7V-18z" fill="#fff" fill-opacity=".4" stroke="#31506a" stroke-width="2.5"/><path d="M-13.5 2H13.5V22q0 6-6 6h-15q-6 0-6-6z" fill="${liq}"/><path d="M-17-18h34" stroke="#31506a" stroke-width="3" stroke-linecap="round"/><circle class="mc-bubl" cx="-4" cy="-2" r="2.4" fill="#fff"/><circle class="mc-bubl" style="animation-delay:1s" cx="5" cy="-6" r="1.8" fill="#fff"/>`,
+    flask:`<path d="M-6-20V-4L-19 22q-3 7 5 7h28q8 0 5-7L6-4V-20z" fill="#fff" fill-opacity=".4" stroke="#31506a" stroke-width="2.5" stroke-linejoin="round"/><path d="M-12 12L-16 22q-2 5 4 5h24q6 0 4-5L12 12z" fill="${liq}"/><path d="M-9-20h18" stroke="#31506a" stroke-width="3" stroke-linecap="round"/><circle class="mc-bubl" cx="0" cy="8" r="2" fill="#fff"/>`,
+    tubes:[-12,0,12].map((x,i)=>`<g transform="rotate(${(i-1)*12} ${x} 28)"><path d="M${x-4.5}-18v38q0 8 4.5 8t4.5-8v-38z" fill="#fff" fill-opacity=".45" stroke="#31506a" stroke-width="2"/><path d="M${x-4}${4+i*3}v16q0 7 4 7t4-7v-16z" fill="${[liq,'#FF9F43','#FF5C8A'][i]}"/></g>`).join(''),
+    molecule:`<g stroke="#31506a" stroke-width="3" fill="none" stroke-linejoin="round"><polygon points="0,-20 17,-10 17,10 0,20 -17,10 -17,-10"/></g><g><circle cx="0" cy="-20" r="6" fill="${liq}"/><circle cx="17" cy="-10" r="6" fill="#FF5C8A"/><circle cx="17" cy="10" r="6" fill="#FFC857"/><circle cx="0" cy="20" r="6" fill="${liq}"/><circle cx="-17" cy="10" r="6" fill="#FF5C8A"/><circle cx="-17" cy="-10" r="6" fill="#4DA3FF"/></g>`,
+    none:''
+  };
+  return g[t]||'';
+}
+function mcSvg(l, cls){
+  const [sk, sh] = MC.skins[l.skin]||MC.skins[1], hc = MC.hairs[l.hair]||MC.hairs[1], coat = MC.coats[l.coat]||'#fff', liq = MC.liquids[l.liquid]||MC.liquids[0];
+  const st = l.hairStyle;
+  const back = st==='long' ? `<path d="M52 100Q46 40 100 38Q154 40 148 100L154 176Q100 190 46 176Z" fill="${hc}"/>` : '';
+  const top = {
+    short:`<path d="M52 98Q48 46 100 44Q152 46 148 98Q140 72 100 70Q60 72 52 98Z" fill="${hc}"/>`,
+    curly:[[58,74,15],[78,58,17],[102,52,18],[126,58,17],[144,74,15],[52,94,9],[148,94,9]].map(c=>`<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="${hc}"/>`).join(''),
+    long:`<path d="M52 98Q54 52 100 50Q146 52 148 98Q128 70 100 74Q74 70 52 98Z" fill="${hc}"/>`,
+    bun:`<circle cx="100" cy="38" r="15" fill="${hc}"/><path d="M52 98Q48 46 100 44Q152 46 148 98Q140 72 100 70Q60 72 52 98Z" fill="${hc}"/>`
+  }[st]||'';
+  const goggles = l.goggles ? `<path d="M50 98H150" stroke="#2b3a4a" stroke-width="8" stroke-linecap="round"/><circle cx="82" cy="99" r="16" fill="#7fe0ff" fill-opacity=".28" stroke="#1b2b3a" stroke-width="5"/><circle cx="118" cy="99" r="16" fill="#7fe0ff" fill-opacity=".28" stroke="#1b2b3a" stroke-width="5"/><path d="M73 92l8-4M109 92l8-4" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>` : '';
+  const arm = `<g class="mc-arm"><path d="M150 180Q182 166 176 128" fill="none" stroke="#0A182626" stroke-width="30" stroke-linecap="round"/><path d="M150 180Q182 166 176 128" fill="none" stroke="${coat}" stroke-width="26" stroke-linecap="round"/><circle cx="176" cy="120" r="12" fill="${sk}"/><ellipse cx="164" cy="124" rx="4.5" ry="7" fill="${sk}" transform="rotate(-30 164 124)"/></g>`;
+  const tool = `<g class="mc-tool"><path d="M50 180Q28 204 44 226" fill="none" stroke="#0A182626" stroke-width="30" stroke-linecap="round"/><path d="M50 180Q28 204 44 226" fill="none" stroke="${coat}" stroke-width="26" stroke-linecap="round"/><g transform="translate(46 210)">${mcToolSvg(l.tool, liq)}</g><circle cx="44" cy="228" r="11" fill="${sk}"/></g>`;
+  const vb = cls==='mini' ? '38 28 124 128' : '0 20 200 232';
+  return `<svg class="mc-svg ${cls==='mini'?'mc-mini':''}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cartoon scientist">
+    ${back}
+    <path d="M30 252L36 192Q42 168 72 160H128Q158 168 164 192L170 252Z" fill="${coat}" stroke="#0A182626" stroke-width="2.5"/>
+    <path d="M84 160L100 198L116 160Z" fill="#1F8A70"/><path d="M82 160L98 184L74 178ZM118 160L102 184L126 178Z" fill="${coat}" stroke="#0A182630" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="124" y="206" width="28" height="26" rx="4" fill="none" stroke="#0A182630" stroke-width="2"/><path d="M132 206v-9M140 206v-7" stroke="#E39A3B" stroke-width="3" stroke-linecap="round"/>
+    ${tool}${arm}
+    <rect x="88" y="138" width="24" height="28" rx="8" fill="${sh}"/>
+    <circle cx="54" cy="106" r="8.5" fill="${sk}"/><circle cx="146" cy="106" r="8.5" fill="${sk}"/>
+    <ellipse cx="100" cy="102" rx="47" ry="50" fill="${sk}"/>
+    <circle cx="73" cy="120" r="7.5" fill="#FF8FA3" opacity=".4"/><circle cx="127" cy="120" r="7.5" fill="#FF8FA3" opacity=".4"/>
+    <g class="mc-eyes"><ellipse cx="82" cy="100" rx="8.5" ry="10" fill="#fff"/><ellipse cx="118" cy="100" rx="8.5" ry="10" fill="#fff"/><circle cx="83" cy="102" r="5.2" fill="#2b1d16"/><circle cx="119" cy="102" r="5.2" fill="#2b1d16"/><circle cx="85" cy="99.5" r="1.8" fill="#fff"/><circle cx="121" cy="99.5" r="1.8" fill="#fff"/></g>
+    <path d="M71 84Q82 78 92 83M108 83Q118 78 129 84" stroke="${hc}" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    <path d="M100 108q-5 9 1 11" stroke="${sh}" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <path d="M85 126Q100 146 115 126Z" fill="#8A3B34"/><path d="M92 135Q100 141 108 135Q100 131 92 135Z" fill="#FF8FA3"/>
+    ${top}${goggles}
+  </svg>`;
+}
+(function(){
+  const look = Object.assign({}, MC.def, { goggles:true });
+  const $ = id=>document.getElementById(id);
+  $('mcDock').innerHTML = mcSvg(look,'mini'); $('mcAv').innerHTML = mcSvg(look,'mini');
+  const STOP = new Set('a an the is are was were be been am do does did can could would should will i you we me my your our it its this that these those of to in on at for from by with about and or but if so as what whats how when where which whom why please tell know want need get any some there their they them he she his her very much many just also'.split(' '));
+  const SYN = { apply:['application','join','enrol','enroll','register','signup','admission','admit'], application:['apply','join'], join:['apply'], register:['apply'], free:['cost','fee','pay','price','charge','paid','money','tuition'], cost:['free','fee','pay'], fee:['free','cost','pay'], pay:['free','cost','fee'], time:['hour','weekly','week','schedule','commit','commitment','long'], hour:['time','weekly'], week:['weekly','time','schedule'], schedule:['time','weekly'], portal:['login','log','access','account'], login:['portal','access'], contact:['email','reach','ambassador','touch'], email:['contact','reach'], ichc:['competition','international','contest','olympiad'], competition:['ichc','contest','olympiad','international'], olympiad:['ichc','competition'], round:['stage','qualification','semi','final'], stage:['round'], prize:['award','certificate'], certificate:['prize','award'], parent:['teacher','safe','legit','legitimate','trust','volunteer'], teacher:['parent'], safe:['parent','legit','trust','independent','volunteer'], legit:['safe','parent','independent','volunteer'], eligible:['who','age','requirement','qualify'], age:['eligible','who','grade'], requirement:['eligible','who','apply'], coordinator:['mentor','group','matched'], mentor:['coordinator'], mock:['practice','timed','exam'], practice:['mock','question'], ghana:['ghanaian','chapter','local'], video:['navigate','tutorial','guide','help'], navigate:['video','website','guide'], website:['navigate','video','site'] };
+  const stem = w=>{ if(w.length<=3) return w; if(/ies$/.test(w)) return w.slice(0,-3)+'y'; if(/(ss|us|is)$/.test(w)) return w; if(/(ches|shes|xes|sses)$/.test(w)) return w.slice(0,-2); if(/s$/.test(w)) w = w.slice(0,-1); return w.length>5 ? w.replace(/(ing|ed)$/,'') : w; };
+  const toks = (t, expand)=>{
+    const base = String(t).toLowerCase().replace(/[^a-z0-9]+/g,' ').split(' ').filter(w=>w.length>1 && !STOP.has(w));
+    const out = new Map();
+    base.forEach(w=>{ out.set(stem(w), { w:1, src:stem(w) }); });
+    if(expand) base.forEach(w=>{ (SYN[w]||SYN[stem(w)]||[]).forEach(x=>{ const k = stem(x); if(!out.has(k)) out.set(k, { w:.75, src:stem(w) }); }); });
+    return out;
+  };
+  let chunks = null;
+  function build(){
+    chunks = [];
+    ['about','ichc','why','gain','how','why-chem','impact','faq','parents','contact'].forEach(id=>{
+      const sec = document.getElementById(id); if(!sec) return;
+      const title = (sec.querySelector('h2')||{}).textContent || '';
+      let head = '';
+      sec.querySelectorAll('h2,h3,h4,summary,p').forEach(el=>{
+        const t = el.textContent.replace(/\s+/g,' ').trim();
+        if(!t) return;
+        if(el.tagName!=='P'){ head = t; return; }
+        if(t.length < 25 || /^(Loading|Live)/i.test(t)) return;
+        const hd = id==='parents' ? 'Is this safe, legitimate and trustworthy for parents, teachers and my child?' : head;
+        chunks.push({ head:hd, body:t, href:'#'+id, hs:new Set(toks(hd+' '+title).keys()), hh:new Set(toks(hd).keys()), bs:new Set(toks(t).keys()) });
+      });
+      sec.querySelectorAll('div > b').forEach(b=>{
+        const sp = b.parentElement.querySelector(':scope > span'), h = b.textContent.replace(/\s+/g,' ').trim(), t = sp ? sp.textContent.replace(/\s+/g,' ').trim() : '';
+        if(t.length > 15) chunks.push({ head:h, body:t, href:'#'+id, hs:new Set(toks(h+' '+title).keys()), hh:new Set(toks(h).keys()), bs:new Set(toks(t).keys()) });
+      });
+    });
+    [['Contact the Ambassador email reach in touch', 'You can reach the Ambassador, Eddah Edmond Seyram (Local Ambassador, IChC, Ghana chapter), at eseyram@amb.intchc.org.', '#contact'],
+     ['How to use navigate the website videos help guide', 'Short screen-recorded videos on this page show you how to use the website, step by step. Open the "How-to videos" section and tap any video to watch it.', '#videos']
+    ].forEach(([h,b,href])=>chunks.push({ head:h, body:b, href, hs:new Set(toks(h).keys()), hh:new Set(toks(h).keys()), bs:new Set(toks(b).keys()) }));
+  }
+  function trim(t, n){ if(t.length<=n) return t; const c = t.slice(0,n), i = Math.max(c.lastIndexOf('. '), c.lastIndexOf('? ')); return (i>120 ? c.slice(0,i+1) : c.replace(/\s+\S*$/,'') + '…'); }
+  const OFF = 'I can only answer questions about Chemistry Competition Prep and the International Chemistry Competition, and I couldn\'t find that on this site. Try asking how to apply, who can join, or how the competition rounds work. You can also email the Ambassador at eseyram@amb.intchc.org.';
+  function answer(q){
+    const t = q.trim().toLowerCase();
+    if(/^(hi|hello|hey|hola|good (morning|afternoon|evening)|greetings)\b/.test(t) && t.length<30) return { text:'Hello! I can answer questions about Chemistry Competition Prep and the International Chemistry Competition. What would you like to know?' };
+    if(/\bthank/.test(t)) return { text:'You\'re welcome! Ask me anything else about the programme or the competition.' };
+    if(/(who|what) are you|your name|are you (a )?(bot|ai|real)/.test(t)) return { text:'I\'m the Chemistry Competition Prep scientist, a helper that answers questions using the information on this website, about the programme and the International Chemistry Competition.' };
+    if(!chunks) build();
+    const qt = toks(q, true); if(!qt.size) return { text:OFF };
+    const GEN = new Set(['who']); let tot = 0; qt.forEach((o,k)=>{ if(o.w===1 && !GEN.has(k)) tot += 2; });
+    let best = null, bs = 0, braw = 0;
+    chunks.forEach(c=>{
+      const bySrc = new Map(); let gen = 0;
+      qt.forEach((o,k)=>{
+        const v = c.hs.has(k) ? 2*o.w + (c.bs.has(k) ? .5*o.w : 0) : (c.bs.has(k) ? o.w : 0);
+        if(!v) return;
+        if(GEN.has(k)) gen = Math.max(gen, v); else bySrc.set(o.src, Math.max(bySrc.get(o.src)||0, v));
+      });
+      let raw = 0; bySrc.forEach(v=>{ raw += v; });
+      let sc = raw ? raw + gen : 0;
+      if(sc && c.href==='#faq') sc += .3;
+      if(sc && c.hh && c.hh.size && [...c.hh].every(k=>qt.has(k))) sc += 1;
+      if(sc>bs){ bs = sc; braw = raw; best = c; }
+    });
+    if(!best || braw < Math.min(1.5, tot*.5) || braw/tot < .3) return { text:OFF };
+    return { text: trim(best.body, 460), href: best.href };
+  }
+  const hist = [];
+  async function aiAnswer(q){
+    if(typeof sbReady === 'undefined' || !sbReady) return null;
+    try{
+      const msgs = hist.concat([{ role:'user', text:q }]).slice(-8);
+      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 20000)) ]);
+      if(r && !r.error && r.data && r.data.reply) return String(r.data.reply);
+    }catch(e){ console.warn('AI chat unavailable, using on-page answers', e); }
+    return null;
+  }
+  const msgs = $('mcMsgs');
+  function add(text, who, href){
+    const d = document.createElement('div'); d.className = 'mc-m ' + who; d.textContent = text;
+    if(href){ const a = document.createElement('a'); a.href = href; a.textContent = 'See this on the page'; a.addEventListener('click', ()=>{ if(innerWidth<700) close(); }); d.appendChild(document.createElement('br')); d.appendChild(a); }
+    msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d;
+  }
+  function ask(q){
+    q = q.trim(); if(!q) return;
+    add(q, 'me'); $('mcQ').value = ''; $('mcSend').disabled = true;
+    const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
+    (async ()=>{
+      const [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 550))]);
+      dots.remove();
+      const r = ai ? { text: ai } : answer(q); // falls back to the on-page answers if the AI is unavailable
+      hist.push({ role:'user', text:q }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);
+      add(r.text, 'bot', r.href); $('mcSend').disabled = false; $('mcQ').focus();
+    })();
+  }
+  let started = false;
+  function open(){
+    $('mcChat').classList.add('on'); $('mcDock').setAttribute('aria-expanded','true'); $('mcTip').classList.remove('on');
+    sessionStorage.setItem('ichc_tip','1');
+    if(!started){
+      started = true; if(!chunks) build();
+      add('Hi! I\'m the Chemistry Competition Prep scientist. Ask me about the programme, the International Chemistry Competition, or chemistry ideas you want explained.', 'bot');
+      const faqQs = [...document.querySelectorAll('#faq summary')].map(x=>x.textContent.trim()).slice(0,4);
+      const chips = faqQs.slice(0,3).concat(['What are the IChC rounds?', 'What prizes can you win?', 'Explain what a mole is']);
+      $('mcChips').innerHTML = ''; chips.forEach(c=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.addEventListener('click', ()=>ask(c)); $('mcChips').appendChild(b); });
+    }
+    setTimeout(()=>$('mcQ').focus(), 50);
+  }
+  function close(){ $('mcChat').classList.remove('on'); $('mcDock').setAttribute('aria-expanded','false'); }
+  $('mcDock').addEventListener('click', ()=> $('mcChat').classList.contains('on') ? close() : open());
+  $('mcChatX').addEventListener('click', close);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+  $('mcSend').addEventListener('click', ()=>ask($('mcQ').value));
+  $('mcQ').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); if(!$('mcSend').disabled) ask($('mcQ').value); } });
+  if(!sessionStorage.getItem('ichc_tip')){ setTimeout(()=>{ if(!$('mcChat').classList.contains('on')){ $('mcTip').classList.add('on'); setTimeout(()=>$('mcTip').classList.remove('on'), 6000); } }, 2500); }
 })();
 </script>
 </body>
