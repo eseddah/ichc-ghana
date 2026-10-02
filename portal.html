@@ -1167,7 +1167,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog']
+  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -2494,6 +2494,7 @@ const TAB_ICONS = {
   library:'<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/>',
   exams:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12l2 2 4-4"/>',
   certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+  load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
   notifications:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
@@ -2514,7 +2515,7 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -2596,6 +2597,7 @@ function render(tab){
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
+  else if(tab==='load' && ME.role==='ambassador') html = coordLoadView();
   else if(tab==='smslog') html = smsLogView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
@@ -2670,6 +2672,95 @@ function smsStatusBadge(status){
 // own students — not other coordinators, not applicants, not students
 // belonging to someone else's group. Scoping happens here, off the same
 // studentCoordinatorId the send-sms function stamped onto each log entry.
+
+// ---- Undelivered texts: resend once Africa's Talking credit is topped up ----
+function smsScopedRows(){ return (DB.smsLog||[]).filter(e=>ME.role==='ambassador' || e.studentCoordinatorId===ME.id); }
+function smsOutstanding(rows){
+  const delivered = rows.filter(e=>e.status==='delivered'), seen = new Set(), out = []; let old = 0;
+  rows.slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
+    if(e.status!=='failed') return;
+    if(!e.message){ old++; return; }
+    const k = e.to + '|' + e.message;
+    if(seen.has(k)) return; seen.add(k);
+    if(delivered.some(d=>d.to===e.to && d.message===e.message && d.ts>=e.ts)) return;
+    out.push(e);
+  });
+  return { out, old };
+}
+function smsResendHtml(rows){
+  const { out, old } = smsOutstanding(rows);
+  const oldNote = old ? `<p class="note" style="margin:10px 0 0;">${old} older failed text${old>1?'s were':' was'} sent before resending was added, so ${old>1?'they':'it'} can't be resent from here.</p>` : '';
+  if(!out.length) return old ? `<div style="margin-bottom:14px;">${oldNote}</div>` : '';
+  const low = out.some(e=>/insufficient|balance|credit|fund/i.test(e.detail||''));
+  return `<div class="card" id="smsResendBox" style="margin-bottom:16px; border-color:rgba(192,57,43,.35);">
+    <h3 style="margin:0 0 6px; font-size:16px;">${out.length} text${out.length>1?'s':''} didn't reach ${out.length>1?'students':'the student'}</h3>
+    <p class="note" style="margin:0 0 10px;">${low ? "Africa's Talking looks out of credit. Top up your account there, then press Resend." : "Once the problem is fixed (for example, Africa's Talking credit topped up), press Resend to try again."}</p>
+    <button class="btn teal" id="smsResendAll" type="button">Resend all ${out.length}</button>
+    <div id="smsResendStatus" class="psms-status" role="status" aria-live="polite"></div>
+    <div class="list" style="margin-top:12px;">${out.slice(0,50).map(e=>`
+      <div class="item"><div class="item-head"><span class="item-title">${escapeHtml(e.name||e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+      <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(String(e.message).slice(0,140))}</div>
+      <button type="button" class="mc-chip" style="margin-top:8px" data-sms-resend="${escapeHtml(e.id)}">Resend</button></div>`).join('')}
+    ${out.length>50 ? `<p class="note">Showing the first 50. "Resend all" covers every one.</p>` : ''}</div>${oldNote}</div>`;
+}
+function wireSmsResend(){
+  const box = document.getElementById('smsResendBox'); if(!box) return;
+  let busy = false;
+  const run = async (items)=>{
+    const status = document.getElementById('smsResendStatus');
+    if(busy || !items.length) return;
+    const url = DB.settings && DB.settings.webhookUrl;
+    if(!url){ status.className = 'psms-status bad'; status.textContent = "Text messaging isn't connected. Add the SMS webhook in Settings first."; return; }
+    busy = true; box.querySelectorAll('button').forEach(b=>{ b.disabled = true; });
+    status.className = 'psms-status';
+    let n = 0;
+    for(const e of items){
+      n++; status.textContent = `Resending ${n} of ${items.length}…`;
+      await sendSmsNow(url, { to:e.to, name:e.name, from:ME.name, subject:null, message:e.message, recipientId:e.recipientId, recipientRole:e.recipientRole, studentCoordinatorId:e.studentCoordinatorId });
+    }
+    status.textContent = 'Checking delivery results…';
+    await new Promise(r=>setTimeout(r, 3500));
+    try{ await reloadDbKey('sms:log'); }catch(err){}
+    const still = new Set(smsOutstanding(smsScopedRows()).out.map(e=>e.to+'|'+e.message));
+    const fixed = items.filter(e=>!still.has(e.to+'|'+e.message)).length;
+    render('smslog');
+    const st = document.getElementById('smsResendStatus');
+    if(st){
+      st.className = 'psms-status ' + (fixed===items.length ? 'ok' : 'bad');
+      st.textContent = fixed===items.length ? `All ${fixed} delivered.` : `${fixed} of ${items.length} delivered. The rest still failed. Check your Africa's Talking credit and try again.`;
+    }
+  };
+  box.addEventListener('click', ev=>{
+    const b = ev.target.closest('button'); if(!b || b.disabled) return;
+    const out = smsOutstanding(smsScopedRows()).out;
+    if(b.id==='smsResendAll') run(out);
+    else if(b.dataset.smsResend) run(out.filter(e=>e.id===b.dataset.smsResend));
+  });
+}
+
+// ---- Coordinator load: how many students each coordinator has (ambassador, for pairing) ----
+function coordLoadView(){
+  const students = DB.students||[], coords = DB.coordinators||[];
+  const counts = new Map(); students.forEach(s=>{ if(s.coordinatorId) counts.set(s.coordinatorId, (counts.get(s.coordinatorId)||0)+1); });
+  const unassigned = students.filter(s=>!s.coordinatorId || !coords.some(c=>c.id===s.coordinatorId)).length;
+  const rows = coords.map(c=>({ c, n:counts.get(c.id)||0 })).sort((a,b)=>a.n-b.n || String(a.c.name).localeCompare(String(b.c.name)));
+  const max = Math.max(1, ...rows.map(r=>r.n)), min = rows.length ? rows[0].n : 0;
+  const assigned = students.length - unassigned, avg = rows.length ? (assigned/rows.length).toFixed(1) : '0';
+  const stat = (v,l)=>`<div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700;">${v}</div><div class="note" style="margin:0;">${l}</div></div>`;
+  return `
+  <div class="section-title"><div><h2>Coordinator load</h2><p>How many students each coordinator has. Sorted with the fewest first, so you can see who has room for the next pairing.</p></div></div>
+  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">${stat(students.length,'students')}${stat(coords.length,'coordinators')}${stat(avg,'average per coordinator')}${stat(unassigned,'not yet paired')}</div>
+  <div class="list">
+    ${unassigned ? `<div class="item" style="border-color:rgba(227,154,59,.6);"><div class="item-head"><span class="item-title">Not yet paired</span><span class="item-meta">${unassigned} student${unassigned>1?'s':''}</span></div><div class="item-body" style="font-size:12.5px; color:var(--muted);">These students don't have a coordinator yet.</div></div>` : ''}
+    ${rows.length ? rows.map(({c,n})=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(c.name||'Unnamed')}${n===min && rows.length>1 ? ' <span style="font-size:11px; font-weight:700; color:var(--teal-deep); background:rgba(31,138,112,.12); padding:2px 8px; border-radius:999px; margin-left:6px;">Most room</span>' : ''}</span><span class="item-meta">${n} student${n===1?'':'s'}</span></div>
+        <div class="item-body" style="font-size:12.5px; color:var(--muted);">${[c.region, c.subject].filter(Boolean).map(escapeHtml).join(' · ') || 'No region or subject set'}</div>
+        <div style="height:8px; background:rgba(15,36,56,.08); border-radius:999px; margin-top:8px; overflow:hidden;"><div style="height:100%; width:${Math.round(n/max*100)}%; background:var(--teal); border-radius:999px;"></div></div>
+      </div>`).join('') : '<div class="empty">No coordinators yet.</div>'}
+  </div>`;
+}
+
 function smsLogView(){
   const isAmbassador = ME.role==='ambassador';
   const rows = (DB.smsLog||[])
@@ -2679,6 +2770,7 @@ function smsLogView(){
   return `
   <div class="section-title"><div><h2>SMS Log</h2><p>${isAmbassador ? 'Every text message sent across the programme' : 'Texts sent to your students'} — pulled directly from Africa\'s Talking\'s own delivery result, not just whether the request was made.</p></div></div>
   ${rows.length ? `<p class="note" style="margin-bottom:14px;">${delivered} of ${rows.length} delivered.</p>` : ''}
+  ${smsResendHtml(rows)}
   <div class="list">
     ${rows.length ? rows.map(e=>`
       <div class="item">
@@ -4484,6 +4576,7 @@ function examsView(){
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='personalsms') wirePersonalSms();
+  if(tab==='smslog') wireSmsResend();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
   // a data-ack-alert button for the same underlying alert.

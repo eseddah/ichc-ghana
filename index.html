@@ -2825,6 +2825,7 @@ function mcSvg(l, cls){
   }
   function ask(q){
     q = q.trim(); if(!q) return;
+    $('mcChips').style.display = 'none';
     add(q, 'me'); $('mcQ').value = ''; $('mcSend').disabled = true;
     const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
     (async ()=>{
@@ -2844,7 +2845,7 @@ function mcSvg(l, cls){
       started = true; if(!chunks) build();
       add('Hi there! 👋 I\'m your ChemPrep Scientist. I love chemistry, and I\'m happy to help with the programme, the International Chemistry Competition, or any chemistry idea you\'d like explained. What are you curious about?', 'bot');
       const faqQs = [...document.querySelectorAll('#faq summary')].map(x=>x.textContent.trim()).slice(0,4);
-      const chips = faqQs.slice(0,3).concat(['What are the IChC rounds?', 'What prizes can you win?', 'Explain what a mole is']);
+      const chips = faqQs.slice(0,2).concat(['Who are the coordinators?', 'What are the IChC rounds?', 'What prizes can you win?', 'Explain what a mole is']);
       $('mcChips').innerHTML = ''; chips.forEach(c=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.addEventListener('click', ()=>ask(c)); $('mcChips').appendChild(b); });
     }
     setTimeout(()=>$('mcQ').focus(), 50);
@@ -2854,6 +2855,7 @@ function mcSvg(l, cls){
   $('mcChatX').addEventListener('click', close);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
   $('mcSend').addEventListener('click', ()=>ask($('mcQ').value));
+  $('mcQ').addEventListener('input', ()=>{ if($('mcQ').value.length) $('mcChips').style.display = 'none'; });
   $('mcQ').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); if(!$('mcSend').disabled) ask($('mcQ').value); } });
   if(!sessionStorage.getItem('ichc_tip')){ setTimeout(()=>{ if(!$('mcChat').classList.contains('on')){ $('mcTip').classList.add('on'); setTimeout(()=>$('mcTip').classList.remove('on'), 6000); } }, 2500); }
 })();
