@@ -527,6 +527,13 @@
   .mc-dots span:nth-child(2){animation-delay:.15s;} .mc-dots span:nth-child(3){animation-delay:.3s;}
   @media (max-width:520px){ .mc-chat{right:8px; bottom:84px; height:min(70vh, calc(100vh - 110px));} .mc-tip{right:80px;} }
 
+
+  .ws-bar{display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:34px; margin:-8px 0 12px;}
+  .ws-bar .ws-hint{font-size:12px; color:var(--muted);}
+  .ws-bar button{border:1.5px solid var(--line); background:#fff; color:var(--navy-deep); border-radius:999px; padding:5px 12px; font:inherit; font-size:13px; font-weight:600; cursor:pointer;}
+  .ws-bar button:first-of-type{border-color:var(--teal); background:rgba(31,138,112,.08);}
+  .ws-bar button:hover{border-color:var(--teal);}
+  .ws-bar button:focus-visible{outline:2px solid var(--amber); outline-offset:1px;}
 </style>
 </head>
 <body>
@@ -2858,6 +2865,76 @@ function mcSvg(l, cls){
   $('mcQ').addEventListener('input', ()=>{ if($('mcQ').value.length) $('mcChips').style.display = 'none'; });
   $('mcQ').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); if(!$('mcSend').disabled) ask($('mcQ').value); } });
   if(!sessionStorage.getItem('ichc_tip')){ setTimeout(()=>{ if(!$('mcChat').classList.contains('on')){ $('mcTip').classList.add('on'); setTimeout(()=>$('mcTip').classList.remove('on'), 6000); } }, 2500); }
+})();
+</script>
+
+<script>
+// ---- Word suggestions while typing (announcement composer): finish the word you are typing, or suggest the next one ----
+(function(){
+  const ids = ['announceComposeTitle','announceComposeMessage'];
+  const BASE = ('announcement announcements applications application apply applied deadline extended extension reminder important update updates welcome congratulations congratulate thank thanks please note attention students student coordinators coordinator ambassador programme program competition international chemistry qualification semi-final final round rounds registration register registered certificate certificates results result session sessions weekly practice questions question mock exam exams training portal website visit visitors join joining open closed closing closes starts start starting begins ending tomorrow today tonight monday tuesday wednesday thursday friday saturday sunday morning afternoon evening online details information contact email message messages invitation invite available opportunity prizes prize winners winner participate participation participants successful selected accepted pleased announce announcing excited happy proud reminder submit submission submitted submissions complete completed review reviewed schedule scheduled postponed cancelled rescheduled venue time date week month year learn learning study studying prepare preparation preparing support mentor mentorship guidance community together everyone welcome encourage encouraged encouraging follow following check checking click link below above team thank-you good luck best wishes regards sincerely').split(/\s+/);
+  const PHRASES = ['we are pleased to announce that','applications are now open','applications have been extended','the deadline is','please note that','join us for','register before the deadline','congratulations to all','this is a reminder that','do not forget to','thank you for your interest','for more information please contact','results will be announced','all students are encouraged to','we look forward to seeing you','good luck to everyone','the next session will be','please check your email','sessions will start on','we are excited to share'];
+  const STARTERS = ['We','Please','Applications','Reminder','Congratulations','Thank','Join','The','All','Our','This'];
+  let counts = null, big = null, ready = false;
+  function build(){
+    counts = new Map(); big = new Map();
+    const add = (a, b, w)=>{ if(!big.has(a)) big.set(a, new Map()); const m = big.get(a); m.set(b, (m.get(b)||0) + w); };
+    const feed = (words, w)=>{ words.forEach((x,i)=>{ counts.set(x, (counts.get(x)||0) + w); if(i) add(words[i-1], x, w); }); };
+    BASE.forEach(x=>counts.set(x, (counts.get(x)||0) + 2));
+    PHRASES.forEach(p=>feed(p.split(' '), 4));
+    const skip = new Set(ids);
+    const text = (document.body.innerText || '').split(/[.!?\n]+/);
+    text.forEach(sent=>{ const words = (sent.toLowerCase().match(/[a-z][a-z'’-]{2,}/g) || []); if(words.length>1 && words.length<40) feed(words, 1); });
+    ready = true;
+  }
+  const cap = (w, like)=> /^[A-Z]/.test(like) ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+  function suggest(before){
+    const part = (before.match(/([A-Za-z][A-Za-z'’-]*)$/) || [])[1] || '';
+    const rest = part ? before.slice(0, before.length - part.length) : before;
+    const prevM = rest.match(/([A-Za-z][A-Za-z'’-]*)\s*$/), prev = prevM ? prevM[1].toLowerCase() : '';
+    const sentenceStart = !before.trim() || /[.!?]\s*$/.test(rest.trimEnd()) && /\s$|^$/.test(rest) || /[.!?:]\s+$/.test(rest) || /\n\s*$/.test(rest);
+    const bg = prev && big.get(prev);
+    if(part.length >= 2){
+      const p = part.toLowerCase(), out = [];
+      counts.forEach((n, w)=>{ if(w.length > p.length && w.startsWith(p)) out.push([w, n + (bg && bg.get(w) ? 50 + bg.get(w) : 0)]); });
+      return { part, list: out.sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>cap(x[0], part)) };
+    }
+    if(part.length === 0 && /\s$/.test(before) || !before){
+      if(sentenceStart) return { part:'', list: STARTERS.slice(0,5) };
+      if(bg) return { part:'', list: [...bg.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]) };
+    }
+    return { part, list:[] };
+  }
+  ids.forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.setAttribute('spellcheck','true'); el.setAttribute('autocapitalize','sentences'); el.setAttribute('autocorrect','on'); el.setAttribute('autocomplete','on');
+    const bar = document.createElement('div'); bar.className = 'ws-bar'; bar.setAttribute('aria-live','polite'); el.insertAdjacentElement('afterend', bar);
+    const hint = ()=>{ bar.innerHTML = '<span class="ws-hint">Word suggestions appear here as you type.</span>'; };
+    hint();
+    let cur = { part:'', list:[] };
+    function refresh(){
+      if(!ready) build();
+      const pos = el.selectionStart == null ? el.value.length : el.selectionStart;
+      cur = suggest(el.value.slice(0, pos));
+      if(!cur.list.length){ hint(); return; }
+      bar.innerHTML = '';
+      cur.list.forEach(w=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = w; b.addEventListener('mousedown', e=>e.preventDefault()); b.addEventListener('click', ()=>pick(w)); bar.appendChild(b); });
+    }
+    function pick(w){
+      const pos = el.selectionStart == null ? el.value.length : el.selectionStart, before = el.value.slice(0, pos), after = el.value.slice(pos);
+      const start = before.length - cur.part.length, sp = /^\s/.test(after) ? '' : ' ';
+      el.value = before.slice(0, start) + w + sp + after;
+      const np = start + w.length + sp.length; el.setSelectionRange(np, np); el.focus();
+      if(counts) counts.set(w.toLowerCase(), (counts.get(w.toLowerCase())||0) + 3);
+      refresh();
+    }
+    el.addEventListener('input', refresh); el.addEventListener('click', refresh); el.addEventListener('focus', refresh);
+    el.addEventListener('keyup', e=>{ if(e.key.startsWith('Arrow')) refresh(); });
+    el.addEventListener('keydown', e=>{
+      if(e.key === 'Tab' && !e.shiftKey && cur.part && cur.list.length){ e.preventDefault(); pick(cur.list[0]); }
+      else if(e.key === 'Escape' && cur.list.length){ e.stopPropagation(); cur = { part:'', list:[] }; hint(); }
+    });
+  });
 })();
 </script>
 </body>
