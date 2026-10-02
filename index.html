@@ -442,6 +442,26 @@
   .np-card h3{font-size:22px; margin:0 0 8px; color:var(--navy-deep);} .np-card p{font-size:15px; line-height:1.6; color:var(--muted); margin:0 0 20px;}
   .np-go{width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg,var(--teal),var(--teal-deep)); color:#fff; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 10px 22px -8px rgba(20,105,86,.7); transition:transform .15s;} .np-go:hover{transform:scale(1.08) rotate(-6deg);} .np-go svg{width:26px; height:26px;}
   .np-card small{display:block; margin-top:8px; font-size:12px; font-weight:700; color:var(--muted);}
+
+  .vf-l{font-size:12px; font-weight:700; letter-spacing:.04em; color:var(--muted); text-transform:uppercase;}
+  .vf-i{display:block; margin-top:6px; width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 14px; font-size:14px; font-family:inherit; background:#fff; text-transform:none; letter-spacing:0; font-weight:400;}
+  .vid-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; position:relative; cursor:pointer; padding:0; text-align:left; font:inherit; color:inherit; width:100%;}
+  .vid-card:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+  .vid-crop{position:relative; overflow:hidden; background:#0b2230; max-height:420px; width:100%;}
+  .vid-crop video{position:absolute; left:0; width:100%; display:block; pointer-events:none;}
+  .vid-logo{position:absolute; top:10px; left:10px; display:flex; align-items:center; gap:7px; background:rgba(255,255,255,.92); color:var(--navy-deep); border-radius:999px; padding:5px 11px 5px 8px; font-size:11px; font-weight:700; z-index:2; pointer-events:none;}
+  .vid-logo .hexlogo{width:22px;}
+  .vid-play{position:absolute; inset:0; margin:auto; width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,.92); display:flex; align-items:center; justify-content:center; z-index:2; pointer-events:none;}
+  .vid-play i{border-left:16px solid var(--navy-deep); border-top:10px solid transparent; border-bottom:10px solid transparent; margin-left:4px;}
+  .vid-title{padding:14px 16px; font-size:14.5px; font-weight:600; color:var(--navy-deep); line-height:1.4;}
+  .vid-remove{position:absolute; top:10px; right:10px; z-index:3; width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; cursor:pointer;}
+  .vp-back{position:fixed; inset:0; background:rgba(8,20,30,.8); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px;}
+  .vp-back.on{display:flex;}
+  .vp-card{position:relative; background:#fff; border-radius:16px; width:min(440px,100%); max-height:94vh; overflow:auto; padding:16px;}
+  .vp-title{font-weight:700; color:var(--navy-deep); padding:2px 40px 12px 2px;}
+  .vp-x{position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; border:1.5px solid var(--line); background:#fff; font-size:22px; line-height:1; cursor:pointer; z-index:5;}
+  .vp-card .vid-crop{border-radius:10px; max-height:76vh; margin:0 auto;}
+  .vp-card .vid-crop video{pointer-events:auto;}
 </style>
 </head>
 <body>
@@ -524,7 +544,7 @@
   </div>
 </div>
 <div id="menuScrim"></div>
-<nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span>Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#about">About</a><a href="#tools">Interactive tools</a><a href="#ichc">The competition</a><a href="#chemist">Chemists, live</a><a href="#why">Why it matters</a><a href="#gain">What you gain</a><a href="#how">Programme</a><a href="#why-chem">A note to students</a><a href="#impact">Impact</a><a href="#activities">Activities</a><a href="#team">Meet the team</a><a href="#faq">FAQ</a><a href="#parents">For parents</a><a href="#contact">Contact</a></nav>
+<nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span>Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#about">About</a><a href="#tools">Interactive tools</a><a href="#ichc">The competition</a><a href="#chemist">Chemists, live</a><a href="#why">Why it matters</a><a href="#gain">What you gain</a><a href="#how">Programme</a><a href="#why-chem">A note to students</a><a href="#impact">Impact</a><a href="#videos">How-to videos</a><a href="#activities">Activities</a><a href="#team">Meet the team</a><a href="#faq">FAQ</a><a href="#parents">For parents</a><a href="#contact">Contact</a></nav>
 
 <main id="top">
 
@@ -845,6 +865,37 @@
       </div>
     </div>
   </section>
+
+  <section id="videos" style="background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:26px;">
+        <div class="eyebrow">How-to videos</div>
+        <h2>See how to use the website.</h2>
+        <p>Short screen recordings that walk you through the site, step by step. Tap a video to watch it.</p>
+      </div>
+      <div id="videoAmbassadorBar" style="display:none; margin-bottom:20px;">
+        <button type="button" id="addVideoBtn" style="background:var(--navy-deep); color:var(--chalk); border:none; border-radius:999px; padding:11px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">+ Add how-to video</button>
+      </div>
+      <div id="videoForm" style="display:none; background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:24px;">
+        <div style="display:flex; flex-direction:column; gap:12px; max-width:480px;">
+          <label class="vf-l">Video (MP4, WebM or MOV, up to 50 MB)<input type="file" id="videoFile" accept="video/mp4,video/webm,video/quicktime" class="vf-i"></label>
+          <label class="vf-l">Title<input type="text" id="videoTitle" placeholder="e.g. How to apply" class="vf-i"></label>
+          <label class="vf-l">Hide phone status bar (battery, time)
+            <select id="videoCrop" class="vf-i"><option value="0.06" selected>Hide the top bar (recommended)</option><option value="0.09">Hide more (phones with a notch)</option><option value="0">Show the full screen</option></select></label>
+          <div style="display:flex; gap:10px;">
+            <button type="button" id="videoPostBtn" style="background:var(--teal); color:#fff; border:none; border-radius:999px; padding:10px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">Post</button>
+            <button type="button" id="videoCancelBtn" style="background:rgba(0,0,0,.08); color:var(--navy-deep); border:none; border-radius:999px; padding:10px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">Cancel</button>
+          </div>
+          <p id="videoFormStatus" style="font-size:12.5px; color:var(--muted); margin:0;"></p>
+        </div>
+      </div>
+      <div class="grid cols-3" id="videoGrid"></div>
+    </div>
+  </section>
+
+  <div id="videoPop" class="vp-back" aria-hidden="true"><div class="vp-card" role="dialog" aria-modal="true" aria-label="Video player">
+    <button type="button" class="vp-x" id="videoPopClose" aria-label="Close video">&times;</button>
+    <div class="vp-title" id="videoPopTitle"></div><div id="videoPopStage"></div></div></div>
 
   <section id="activities">
     <div class="wrap">
@@ -1245,6 +1296,106 @@ function initActivityEditor(){
   });
 }
 
+
+// ---- How-to videos: ambassador posts screen recordings; visitors tap to watch in a popup ----
+const VIDEO_BUCKET = 'how-to-videos';
+function videoCropHtml(v, controls){
+  const c = Math.min(Math.max(+v.crop || 0, 0), 0.2), r = +v.ratio || (9/19.5);
+  const wrapAspect = r / (1 - c);
+  return `<div class="vid-crop" style="aspect-ratio:${wrapAspect.toFixed(4)}">
+    <video src="${escapeHtml(v.url)}#t=0.1" preload="metadata" playsinline ${controls?'controls autoplay':'muted'}
+      style="height:calc(100% / ${(1-c).toFixed(3)}); top:calc(-100% * ${c} / ${(1-c).toFixed(3)});"></video>
+    <div class="vid-logo"><span class="hexlogo"></span>Chemistry Competition Prep</div>${controls?'':'<div class="vid-play"><i></i></div>'}</div>`;
+}
+function fillLogos(root){ root.querySelectorAll('.hexlogo:empty').forEach(el=>el.appendChild(document.getElementById('hexlogo-tpl').content.cloneNode(true))); }
+function renderVideos(list){
+  const grid = document.getElementById('videoGrid'); if(!grid) return;
+  if(!list.length){ grid.innerHTML = '<div class="activity-empty">No how-to videos yet — check back soon.</div>'; return; }
+  grid.innerHTML = '';
+  list.slice().reverse().forEach(v=>{
+    const wrap = document.createElement('div'); wrap.style.position = 'relative';
+    wrap.innerHTML = `<button type="button" class="vid-card" data-vid="${escapeHtml(v.id)}" aria-label="Watch: ${escapeHtml(v.title)}">${videoCropHtml(v,false)}<div class="vid-title">${escapeHtml(v.title)}</div></button>
+      ${window.__isAmbassador ? `<button type="button" class="vid-remove" data-rm="${escapeHtml(v.id)}" aria-label="Remove video">&#10005;</button>` : ''}`;
+    grid.appendChild(wrap);
+  });
+  fillLogos(grid);
+  grid.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click', ()=>openVideo(list.find(v=>v.id===b.dataset.vid))));
+  grid.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', ()=>removeVideo(b.dataset.rm)));
+}
+function openVideo(v){
+  if(!v) return;
+  document.getElementById('videoPopTitle').textContent = v.title;
+  const stage = document.getElementById('videoPopStage'); stage.innerHTML = videoCropHtml(v,true); fillLogos(stage);
+  const pop = document.getElementById('videoPop'); pop.classList.add('on'); pop.setAttribute('aria-hidden','false');
+}
+function closeVideo(){
+  const pop = document.getElementById('videoPop'); pop.classList.remove('on'); pop.setAttribute('aria-hidden','true');
+  document.getElementById('videoPopStage').innerHTML = '';
+}
+async function getVideoList(){
+  const { data, error } = await sb.from('ichc_kv').select('value').eq('key','site:videos').maybeSingle();
+  if(error) throw error; return (data && data.value) || [];
+}
+async function loadVideos(){
+  if(!sbReady || !document.getElementById('videoGrid')) return;
+  try{ renderVideos(await getVideoList()); }catch(e){ console.error('Failed to load videos', e); }
+}
+async function removeVideo(id){
+  if(!confirm('Remove this video from the page?')) return;
+  try{
+    const list = await getVideoList(), t = list.find(v=>v.id===id), nl = list.filter(v=>v.id!==id);
+    const { error } = await sb.from('ichc_kv').upsert({ key:'site:videos', value:nl }); if(error) throw error;
+    if(t && t.path){ try{ await sb.storage.from(VIDEO_BUCKET).remove([t.path]); }catch(e){} }
+    renderVideos(nl);
+  }catch(e){ console.error(e); alert('Sorry, removing that video failed — please try again.'); }
+}
+function videoRatio(file){
+  return new Promise(res=>{
+    const u = URL.createObjectURL(file), v = document.createElement('video');
+    v.preload = 'metadata'; v.muted = true;
+    v.onloadedmetadata = ()=>{ const r = v.videoWidth && v.videoHeight ? v.videoWidth / v.videoHeight : 0; URL.revokeObjectURL(u); res(r); };
+    v.onerror = ()=>{ URL.revokeObjectURL(u); res(0); };
+    v.src = u;
+  });
+}
+function initVideoEditor(){
+  const $ = id=>document.getElementById(id);
+  if(!$('videoAmbassadorBar')) return;
+  $('videoAmbassadorBar').style.display = 'block';
+  loadVideos(); // re-render with remove buttons now that we know it's the ambassador
+  $('addVideoBtn').addEventListener('click', ()=>{ $('videoForm').style.display = 'block'; $('addVideoBtn').style.display = 'none'; });
+  $('videoCancelBtn').addEventListener('click', ()=>{ $('videoForm').style.display = 'none'; $('addVideoBtn').style.display = 'inline-block'; $('videoFile').value = ''; $('videoTitle').value = ''; $('videoFormStatus').textContent = ''; });
+  $('videoPostBtn').addEventListener('click', async ()=>{
+    const file = $('videoFile').files[0], title = $('videoTitle').value.trim(), st = $('videoFormStatus');
+    const bad = m=>{ st.textContent = m; st.style.color = '#C0392B'; };
+    if(!file) return bad('Choose a video first.');
+    if(!title) return bad('Add a short title.');
+    if(file.size > 50*1024*1024) return bad('That video is over 50 MB. Trim it or lower its quality and try again.');
+    $('videoPostBtn').disabled = true; st.style.color = 'var(--muted)'; st.textContent = 'Uploading… keep this page open.';
+    try{
+      const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const ratio = await videoRatio(file);
+      const { error: upErr } = await sb.storage.from(VIDEO_BUCKET).upload(path, file, { upsert:false, contentType: file.type || 'video/mp4' });
+      if(upErr) throw upErr;
+      const url = sb.storage.from(VIDEO_BUCKET).getPublicUrl(path).data.publicUrl;
+      const list = await getVideoList();
+      list.push({ id: Math.random().toString(36).slice(2,9), url, path, title, ratio, crop: +$('videoCrop').value, date: new Date().toISOString().slice(0,10) });
+      const { error } = await sb.from('ichc_kv').upsert({ key:'site:videos', value:list }); if(error) throw error;
+      renderVideos(list);
+      $('videoCancelBtn').click();
+    }catch(e){ console.error('Video post failed', e); bad((e && e.message) || 'Upload failed — please try again.'); }
+    finally{ $('videoPostBtn').disabled = false; }
+  });
+}
+(function(){
+  const pop = document.getElementById('videoPop');
+  document.getElementById('videoPopClose').addEventListener('click', closeVideo);
+  pop.addEventListener('click', e=>{ if(e.target===pop) closeVideo(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeVideo(); });
+  loadVideos();
+})();
+
 const AMBASSADOR_EMAIL_PUBLIC = 'edmondeddah999@gmail.com';
 let editMode = false;
 let originalContent = {};
@@ -1271,6 +1422,7 @@ async function initAmbassadorEditing(){
   window.__isAmbassador = !!isAmbassador;
   if(!isAmbassador) return;
   initActivityEditor();
+  initVideoEditor();
 
   const bar = document.createElement('div');
   bar.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:500; display:flex; gap:10px; align-items:center;';
