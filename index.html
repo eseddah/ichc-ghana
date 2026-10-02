@@ -2689,7 +2689,7 @@ loadDeadlineFromPortal();
   <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><button type="button" id="mcChatX" aria-label="Close chat">&times;</button></div>
   <div class="mc-msgs" id="mcMsgs" aria-live="polite"></div>
   <div class="mc-chips" id="mcChips"></div>
-  <div class="mc-in"><input id="mcQ" type="text" maxlength="500" placeholder="Type your question" autocomplete="off" aria-label="Your question"><button type="button" id="mcSend">Send</button></div>
+  <div class="mc-in"><input id="mcQ" type="text" maxlength="500" placeholder="Ask me anything about chemistry…" autocomplete="off" aria-label="Your question"><button type="button" id="mcSend">Send</button></div>
 </div>
 <script>
 // ---- ChemPrep scientist: a chat helper that answers only from this page's own programme + IChC content ----
@@ -2781,12 +2781,12 @@ function mcSvg(l, cls){
     ].forEach(([h,b,href])=>chunks.push({ head:h, body:b, href, hs:new Set(toks(h).keys()), hh:new Set(toks(h).keys()), bs:new Set(toks(b).keys()) }));
   }
   function trim(t, n){ if(t.length<=n) return t; const c = t.slice(0,n), i = Math.max(c.lastIndexOf('. '), c.lastIndexOf('? ')); return (i>120 ? c.slice(0,i+1) : c.replace(/\s+\S*$/,'') + '…'); }
-  const OFF = 'I can only answer questions about Chemistry Competition Prep and the International Chemistry Competition, and I couldn\'t find that on this site. Try asking how to apply, who can join, or how the competition rounds work. You can also email the Ambassador at eseyram@amb.intchc.org.';
+  const OFF = 'Thanks for asking! That one is outside what I can help with, but I\'d love to help with the programme, the International Chemistry Competition, or chemistry. You could try asking how to apply, who can join, or how the competition rounds work. You can also email the Ambassador at eseyram@amb.intchc.org.';
   function answer(q){
     const t = q.trim().toLowerCase();
-    if(/^(hi|hello|hey|hola|good (morning|afternoon|evening)|greetings)\b/.test(t) && t.length<30) return { text:'Hello! I can answer questions about Chemistry Competition Prep and the International Chemistry Competition. What would you like to know?' };
-    if(/\bthank/.test(t)) return { text:'You\'re welcome! Ask me anything else about the programme or the competition.' };
-    if(/(who|what) are you|your name|are you (a )?(bot|ai|real)/.test(t)) return { text:'I\'m the Chemistry Competition Prep scientist, a helper that answers questions using the information on this website, about the programme and the International Chemistry Competition.' };
+    if(/^(hi|hello|hey|hola|good (morning|afternoon|evening)|greetings)\b/.test(t) && t.length<30) return { text:'Hello! 😊 So nice to meet you. Ask me anything about Chemistry Competition Prep or the International Chemistry Competition, and I\'ll do my best to help!' };
+    if(/\bthank/.test(t)) return { text:'You\'re very welcome! 😊 Ask me anything else about the programme or the competition anytime.' };
+    if(/(who|what) are you|your name|are you (a )?(bot|ai|real)/.test(t)) return { text:'I\'m the ChemPrep Scientist, your friendly chemistry helper! I can tell you all about the programme and the International Chemistry Competition.' };
     if(!chunks) build();
     const qt = toks(q, true); if(!qt.size) return { text:OFF };
     const GEN = new Set(['who']); let tot = 0; qt.forEach((o,k)=>{ if(o.w===1 && !GEN.has(k)) tot += 2; });
@@ -2812,7 +2812,7 @@ function mcSvg(l, cls){
     if(typeof sbReady === 'undefined' || !sbReady) return null;
     try{
       const msgs = hist.concat([{ role:'user', text:q }]).slice(-8);
-      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 40000)) ]);
+      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 60000)) ]);
       if(r && !r.error && r.data && r.data.reply) return String(r.data.reply);
     }catch(e){ console.warn('AI chat unavailable, using on-page answers', e); }
     return null;
@@ -2828,9 +2828,10 @@ function mcSvg(l, cls){
     add(q, 'me'); $('mcQ').value = ''; $('mcSend').disabled = true;
     const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
     (async ()=>{
-      const [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 550))]);
+      let [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 550))]);
+      for(let n = 0; !ai && n < 2; n++){ await new Promise(r=>setTimeout(r, 2000)); ai = await aiAnswer(q); } // keep trying quietly
       dots.remove();
-      const r = ai ? { text: ai } : answer(q); // falls back to the on-page answers if the AI is unavailable
+      const r = ai ? { text: ai } : answer(q); // last resort only: answer from the page text
       hist.push({ role:'user', text:q }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);
       add(r.text, 'bot', r.href); $('mcSend').disabled = false; $('mcQ').focus();
     })();
@@ -2841,7 +2842,7 @@ function mcSvg(l, cls){
     sessionStorage.setItem('ichc_tip','1');
     if(!started){
       started = true; if(!chunks) build();
-      add('Hi! I\'m the Chemistry Competition Prep scientist. Ask me about the programme, the International Chemistry Competition, or chemistry ideas you want explained.', 'bot');
+      add('Hi there! 👋 I\'m your ChemPrep Scientist. I love chemistry, and I\'m happy to help with the programme, the International Chemistry Competition, or any chemistry idea you\'d like explained. What are you curious about?', 'bot');
       const faqQs = [...document.querySelectorAll('#faq summary')].map(x=>x.textContent.trim()).slice(0,4);
       const chips = faqQs.slice(0,3).concat(['What are the IChC rounds?', 'What prizes can you win?', 'Explain what a mole is']);
       $('mcChips').innerHTML = ''; chips.forEach(c=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.addEventListener('click', ()=>ask(c)); $('mcChips').appendChild(b); });
