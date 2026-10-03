@@ -2699,6 +2699,64 @@ loadDeadlineFromPortal();
   <div class="mc-in"><input id="mcQ" type="text" maxlength="500" placeholder="Ask me anything about chemistry…" autocomplete="off" aria-label="Your question"><button type="button" id="mcMic" aria-label="Speak your question" title="Speak your question" style="background:#fff; color:var(--teal); border:1.5px solid var(--line); padding:0 12px; font-size:16px;">&#127908;</button><button type="button" id="mcSend">Send</button></div>
 </div>
 <script>
+// ---- Chemistry notation: turns plain text like H2SO4, Ca2+, ->, 10^-3 into real symbols (H₂SO₄, Ca²⁺, →, 10⁻³) ----
+const CHEM_EL = new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' '));
+const CHEM_SUB = '₀₁₂₃₄₅₆₇₈₉', CHEM_SUP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻' };
+const chemSub = d=>String(d).replace(/\d/g, c=>CHEM_SUB[c]);
+const chemSup = d=>String(d).replace(/[\d+-]/g, c=>CHEM_SUP[c]);
+function chemParse(body){
+  // returns { out, groups, simple } or null when body is not a chemical formula
+  let i = 0, out = '', n = 0, depth = 0, lastDigits = '', hasParen = false;
+  while(i < body.length){
+    const ch = body[i];
+    if(ch === '('){ depth++; hasParen = true; out += '('; i++; lastDigits = ''; continue; }
+    if(ch === ')'){ if(!depth) return null; depth--; out += ')'; i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++]; if(d) out += chemSub(d); lastDigits = d; continue; }
+    if(/[A-Z]/.test(ch)){
+      let sym = ch;
+      if(/[a-z]/.test(body[i+1]||'')){ if(CHEM_EL.has(ch + body[i+1])){ sym = ch + body[i+1]; i++; } else return null; }
+      else if(!CHEM_EL.has(ch)) return null;
+      i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++];
+      out += sym; n++; if(d) out += chemSub(d); lastDigits = d; continue;
+    }
+    return null;
+  }
+  if(depth || !n) return null;
+  return { out, groups:n, hasParen, lastDigits };
+}
+function chemify(text){
+  if(!text) return text;
+  let t = String(text);
+  // arrows and symbols
+  t = t.replace(/<-{1,2}>|<=+>|⇄/g, '⇌').replace(/(^|\s)(?:-{1,2}>|=>)(?=\s|$)/g, '$1→').replace(/(^|\s)<-(?=\s)/g, '$1←');
+  t = t.replace(/(\d)\s*(?:degrees?|deg)\s*C(?:elsius)?\b/gi, '$1 °C').replace(/\b[Dd]elta\s?(?=[HGSEUT]\b)/g, 'Δ');
+  // scientific notation and powers: 2.5 x 10^-3, mol L^-1, m^2, and charges written with ^
+  t = t.replace(/(\d(?:\.\d+)?)\s*[xX*]\s*10(?=\^)/g, '$1 × 10');
+  t = t.replace(/\^\{?([+-]?\d*[+-]?)\}?/g, (m, g)=> g ? chemSup(g) : m);
+  t = t.replace(/(^|[\s(=])-(?=\d)/g, '$1−').replace(/\be-(?![A-Za-z0-9])/g, 'e⁻');
+  // hydrates first: CuSO4.5H2O -> CuSO4·5H2O
+  t = t.replace(/(?<=[A-Za-z)]\d*)\.(?=\d+[A-Z(])/g, '·');
+  // formulas: subscripts and ion charges (an optional leading coefficient such as 2H2O is kept as is)
+  t = t.replace(/(?<![A-Za-z0-9_.])(\d*)([A-Z(][A-Za-z0-9()]*)([+-]?)(?![A-Za-z0-9])/g, (m, coef, body, sign)=>{
+    let suf = ''; const sm = body.match(/\((?:s|l|g|aq)\)$/);
+    if(sm){ suf = sm[0]; body = body.slice(0, body.length - suf.length); }
+    if(!body) return m;
+    let charge = sign, core = body;
+    if(sign){
+      const mm = body.match(/(\d+)$/), digits = mm ? mm[1] : '';
+      if(digits){
+        const stem = body.replace(/\d+$/, ''), p0 = chemParse(stem);
+        if(p0 && p0.groups === 1 && !p0.hasParen && /^[A-Z][a-z]?$/.test(stem)){ charge = digits + sign; core = stem; }
+        else if(digits.length >= 2){ charge = digits.slice(-1) + sign; core = body.slice(0, body.length - 1); }
+      }
+    }
+    const p = chemParse(core);
+    if(!p) return m;
+    if(p.out === core && !charge) return m;
+    return coef + p.out + (charge ? chemSup(charge) : '') + suf;
+  });
+  return t;
+}
+
 // ---- ChemPrep scientist: a chat helper that answers only from this page's own programme + IChC content ----
 const MC = {
   skins:[['#FFE0C7','#F1C3A0'],['#F6C9A0','#E2A97C'],['#D9A070','#BE8456'],['#B97A50','#9A603C'],['#8A5636','#6F4128'],['#5E3A24','#482B1A']],
@@ -2827,7 +2885,7 @@ function mcSvg(l, cls){
   }
   const msgs = $('mcMsgs');
   function add(text, who, href){
-    const d = document.createElement('div'); d.className = 'mc-m ' + who; d.textContent = text;
+    const d = document.createElement('div'); d.className = 'mc-m ' + who; d.textContent = who === 'bot' ? chemify(text) : text;
     if(href){ const a = document.createElement('a'); a.href = href; a.textContent = 'See this on the page'; a.addEventListener('click', ()=>{ if(innerWidth<700) close(); }); d.appendChild(document.createElement('br')); d.appendChild(a); }
     msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d;
   }

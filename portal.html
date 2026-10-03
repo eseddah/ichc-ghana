@@ -562,6 +562,20 @@
   .gc-mention button{display:block; width:100%; text-align:left; background:none; border:none; padding:9px 14px; font:inherit; font-size:13.5px; cursor:pointer;} .gc-mention button:hover{background:rgba(0,0,0,.05);} .gc-mention span{color:var(--muted); font-size:11.5px; margin-left:6px;}
   .gc-in{display:flex; align-items:flex-end; gap:8px; padding:8px; background:#F0F0F0;}
   .gc-in textarea{flex:1; resize:none; border:none; border-radius:20px; padding:10px 14px; font:inherit; font-size:14px; max-height:120px; min-height:40px; margin:0;}
+
+  /* AI exam builder */
+  .eb-box{border:1.5px solid var(--line); border-radius:14px; padding:14px; margin:10px 0 14px; background:rgba(31,138,112,.04);}
+  .eb-head{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .eb-presets{font-size:12.5px; color:var(--muted);} .eb-presets button{margin-left:4px;}
+  .eb-lab{display:block; font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:12px 0 6px;}
+  .eb-total{text-transform:none; letter-spacing:0; font-weight:600; color:var(--teal-deep);}
+  .eb-chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .eb-chip{display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:5px 12px; font-size:12.5px; cursor:pointer;}
+  .eb-chip input{width:auto; margin:0;} .eb-chip:has(input:checked){border-color:var(--teal); background:rgba(31,138,112,.1);}
+  .eb-row{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+  .eb-row5{display:grid; grid-template-columns:repeat(5,1fr); gap:8px;}
+  .eb-check{display:flex; align-items:center; gap:8px; margin-top:10px; font-size:13px; cursor:pointer;} .eb-check input{width:auto; margin:0;}
+  @media (max-width:640px){ .eb-row{grid-template-columns:1fr;} .eb-row5{grid-template-columns:repeat(2,1fr);} }
 </style>
 </head>
 <body>
@@ -3021,6 +3035,64 @@ function wirePersonalSms(){
 }
 
 
+// ---- Chemistry notation: turns plain text like H2SO4, Ca2+, ->, 10^-3 into real symbols (H₂SO₄, Ca²⁺, →, 10⁻³) ----
+const CHEM_EL = new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' '));
+const CHEM_SUB = '₀₁₂₃₄₅₆₇₈₉', CHEM_SUP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻' };
+const chemSub = d=>String(d).replace(/\d/g, c=>CHEM_SUB[c]);
+const chemSup = d=>String(d).replace(/[\d+-]/g, c=>CHEM_SUP[c]);
+function chemParse(body){
+  // returns { out, groups, simple } or null when body is not a chemical formula
+  let i = 0, out = '', n = 0, depth = 0, lastDigits = '', hasParen = false;
+  while(i < body.length){
+    const ch = body[i];
+    if(ch === '('){ depth++; hasParen = true; out += '('; i++; lastDigits = ''; continue; }
+    if(ch === ')'){ if(!depth) return null; depth--; out += ')'; i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++]; if(d) out += chemSub(d); lastDigits = d; continue; }
+    if(/[A-Z]/.test(ch)){
+      let sym = ch;
+      if(/[a-z]/.test(body[i+1]||'')){ if(CHEM_EL.has(ch + body[i+1])){ sym = ch + body[i+1]; i++; } else return null; }
+      else if(!CHEM_EL.has(ch)) return null;
+      i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++];
+      out += sym; n++; if(d) out += chemSub(d); lastDigits = d; continue;
+    }
+    return null;
+  }
+  if(depth || !n) return null;
+  return { out, groups:n, hasParen, lastDigits };
+}
+function chemify(text){
+  if(!text) return text;
+  let t = String(text);
+  // arrows and symbols
+  t = t.replace(/<-{1,2}>|<=+>|⇄/g, '⇌').replace(/(^|\s)(?:-{1,2}>|=>)(?=\s|$)/g, '$1→').replace(/(^|\s)<-(?=\s)/g, '$1←');
+  t = t.replace(/(\d)\s*(?:degrees?|deg)\s*C(?:elsius)?\b/gi, '$1 °C').replace(/\b[Dd]elta\s?(?=[HGSEUT]\b)/g, 'Δ');
+  // scientific notation and powers: 2.5 x 10^-3, mol L^-1, m^2, and charges written with ^
+  t = t.replace(/(\d(?:\.\d+)?)\s*[xX*]\s*10(?=\^)/g, '$1 × 10');
+  t = t.replace(/\^\{?([+-]?\d*[+-]?)\}?/g, (m, g)=> g ? chemSup(g) : m);
+  t = t.replace(/(^|[\s(=])-(?=\d)/g, '$1−').replace(/\be-(?![A-Za-z0-9])/g, 'e⁻');
+  // hydrates first: CuSO4.5H2O -> CuSO4·5H2O
+  t = t.replace(/(?<=[A-Za-z)]\d*)\.(?=\d+[A-Z(])/g, '·');
+  // formulas: subscripts and ion charges (an optional leading coefficient such as 2H2O is kept as is)
+  t = t.replace(/(?<![A-Za-z0-9_.])(\d*)([A-Z(][A-Za-z0-9()]*)([+-]?)(?![A-Za-z0-9])/g, (m, coef, body, sign)=>{
+    let suf = ''; const sm = body.match(/\((?:s|l|g|aq)\)$/);
+    if(sm){ suf = sm[0]; body = body.slice(0, body.length - suf.length); }
+    if(!body) return m;
+    let charge = sign, core = body;
+    if(sign){
+      const mm = body.match(/(\d+)$/), digits = mm ? mm[1] : '';
+      if(digits){
+        const stem = body.replace(/\d+$/, ''), p0 = chemParse(stem);
+        if(p0 && p0.groups === 1 && !p0.hasParen && /^[A-Z][a-z]?$/.test(stem)){ charge = digits + sign; core = stem; }
+        else if(digits.length >= 2){ charge = digits.slice(-1) + sign; core = body.slice(0, body.length - 1); }
+      }
+    }
+    const p = chemParse(core);
+    if(!p) return m;
+    if(p.out === core && !charge) return m;
+    return coef + p.out + (charge ? chemSup(charge) : '') + suf;
+  });
+  return t;
+}
+
 // ================= exam-ai helper =================
 async function examAi(action, payload){
   if(!sbReady) throw new Error('offline');
@@ -3072,8 +3144,8 @@ function mockPaint(){
     const qs = MOCK.exam.questions;
     root.innerHTML = `<div style="position:sticky; top:0; z-index:5; background:var(--paper); padding:10px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); margin-bottom:12px;"><b>Mock competition</b><span id="mockTimer" style="font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;">--:--</span></div>
       ${qs.map((q,i)=>`<div class="card" style="margin-bottom:12px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Question ${i+1} of ${qs.length} · ${escapeHtml(q.topic)} · ${q.type==='mcq'?'1 point':'2 points'}</div>
-        <div style="white-space:pre-wrap; margin-bottom:10px;">${escapeHtml(q.text)}</div>
-        ${q.type==='mcq' ? q.options.map((o,j)=>`<label style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; cursor:pointer;"><input type="radio" name="mq_${q.id}" value="${j}" data-mq="${q.id}" ${String(MOCK.answers[q.id])===String(j)?'checked':''} style="width:auto; margin-top:3px;"> <span>${escapeHtml(o)}</span></label>`).join('') : `<input type="text" inputmode="decimal" data-mq="${q.id}" placeholder="Your answer${q.unit?' ('+escapeHtml(q.unit)+')':''}" value="${escapeHtml(MOCK.answers[q.id]||'')}" style="max-width:240px;">`}</div>`).join('')}
+        <div style="white-space:pre-wrap; margin-bottom:10px;">${escapeHtml(chemify(q.text))}</div>
+        ${q.type==='mcq' ? q.options.map((o,j)=>`<label style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; cursor:pointer;"><input type="radio" name="mq_${q.id}" value="${j}" data-mq="${q.id}" ${String(MOCK.answers[q.id])===String(j)?'checked':''} style="width:auto; margin-top:3px;"> <span>${escapeHtml(chemify(o))}</span></label>`).join('') : `<input type="text" inputmode="decimal" data-mq="${q.id}" placeholder="Your answer${q.unit?' ('+escapeHtml(q.unit)+')':''}" value="${escapeHtml(MOCK.answers[q.id]||'')}" style="max-width:240px;">`}</div>`).join('')}
       <button class="btn teal" id="mockSubmit" type="button">Submit my answers</button><span id="mockSubStatus" class="note" style="margin-left:10px;"></span>`;
     root.querySelectorAll('[data-mq]').forEach(el=>el.addEventListener('input', ()=>{ MOCK.answers[el.dataset.mq] = el.value; }));
     root.querySelectorAll('input[type=radio][data-mq]').forEach(el=>el.addEventListener('change', ()=>{ if(el.checked) MOCK.answers[el.dataset.mq] = el.value; }));
@@ -3087,7 +3159,7 @@ function mockPaint(){
       <div class="card" style="text-align:center; margin-bottom:16px;"><div style="font-size:44px; font-weight:800;">${r.score} / ${r.max}</div><div style="font-size:18px;">${pct}% · finished in ${mockFmt(r.duration)}</div>${r.overTime?'<p class="psms-status bad">You went over the time limit, so this score is not counted on the leaderboard.</p>':''}</div>
       <div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 6px; font-size:16px;">By topic</h3>${MOCK_TOPICS.filter(([f])=>r.topics[f]).map(([f,sh])=>{ const p = mockPct(r.topics[f]); return `<div style="display:flex; align-items:center; gap:10px; margin:5px 0;"><span style="width:92px; font-size:12.5px;">${sh}</span><div style="flex:1; height:16px; background:rgba(15,36,56,.07); border-radius:8px; overflow:hidden;"><div style="width:${p}%; height:100%; background:${mockHeat(p)};"></div></div><span style="width:70px; text-align:right; font-size:12.5px;">${r.topics[f].got}/${r.topics[f].max}</span></div>`; }).join('')}</div>
       <h3 style="font-size:16px; margin:0 0 8px;">Review</h3>
-      ${r.results.map((x,i)=>`<div class="card" style="margin-bottom:10px; border-left:4px solid ${x.correct?'var(--teal)':'#C0392B'};"><div style="font-size:12px; color:var(--muted);">Question ${i+1} · ${escapeHtml(x.topic)} · ${x.points}/${x.maxPoints}</div><div style="white-space:pre-wrap; margin:4px 0;">${escapeHtml(x.text)}</div><div style="font-size:13px;">Your answer: <b>${escapeHtml(x.given||'(none)')}</b>${x.correct?' ✓':''}</div>${x.correct?'':`<div style="font-size:13px;">Correct answer: <b>${escapeHtml(String(x.answer))}</b></div>`}${x.explanation?`<div class="note" style="margin-top:6px;">${escapeHtml(x.explanation)}</div>`:''}</div>`).join('')}
+      ${r.results.map((x,i)=>`<div class="card" style="margin-bottom:10px; border-left:4px solid ${x.correct?'var(--teal)':'#C0392B'};"><div style="font-size:12px; color:var(--muted);">Question ${i+1} · ${escapeHtml(x.topic)} · ${x.points}/${x.maxPoints}</div><div style="white-space:pre-wrap; margin:4px 0;">${escapeHtml(chemify(x.text))}</div><div style="font-size:13px;">Your answer: <b>${escapeHtml(chemify(x.given||'(none)'))}</b>${x.correct?' ✓':''}</div>${x.correct?'':`<div style="font-size:13px;">Correct answer: <b>${escapeHtml(chemify(String(x.answer)))}</b></div>`}${x.explanation?`<div class="note" style="margin-top:6px;">${escapeHtml(chemify(x.explanation))}</div>`:''}</div>`).join('')}
       <button class="btn teal" id="mockBack" type="button">Back to mock competition</button>`;
     document.getElementById('mockBack').addEventListener('click', ()=>{ MOCK.phase = 'home'; MOCK.result = null; mockPaint(); mockLoadData(); });
   }
@@ -4788,7 +4860,7 @@ function examRunningScreen(exam, attempt){
       <div id="examTimerDisplay" class="mono" style="font-size:22px; font-weight:700; color:${remaining<60?'#C0392B':'var(--teal-deep)'};">${secsToClock(remaining)}</div>
     </div>
     <details style="margin-bottom:14px;"><summary style="cursor:pointer; font-size:12.5px; color:var(--muted);">Protocol reminder</summary><p style="font-size:13px; color:var(--muted); margin-top:6px;">${linkify(exam.protocol||'')}</p></details>
-    <div class="item" style="margin-bottom:14px; background:rgba(15,36,56,.02);"><div class="item-body" style="white-space:pre-wrap;">${linkify(exam.content)}</div></div>
+    <div class="item" style="margin-bottom:14px; background:rgba(15,36,56,.02);"><div class="item-body" style="white-space:pre-wrap;">${linkify(chemify(exam.content))}</div></div>
     <div class="field" style="margin:0 0 12px;"><label>Your answer</label><textarea id="examAnswerBox" rows="12" placeholder="Write your full working and final answer here">${escapeHtml(attempt.draft||'')}</textarea></div>
     <div style="font-size:12px; color:var(--muted); margin-bottom:12px;" id="examIntegrityNote">${attempt.tabSwitches?`⚠ You've left this tab ${attempt.tabSwitches} time(s) — this is recorded.`:'Stay on this tab — leaving it is recorded.'}</div>
     <button class="btn teal" id="examSubmitBtn">Submit final answer</button>
@@ -4826,16 +4898,38 @@ function examsManageView(){
       <div class="field" style="margin:0;"><label>Title</label><input id="examTitle" placeholder="e.g. Week 6 timed mock — Kinetics"></div>
       <div class="field" style="margin:0;"><label>Subject / topic</label><input id="examSubject" placeholder="e.g. Reaction kinetics"></div>
       <div class="field" style="margin:0;"><label>Time limit (minutes)</label><input id="examTime" type="number" min="1" value="60"></div>
-      <div class="field" style="margin:0;"><label>Difficulty (for AI draft)</label>
-        <select id="examDifficulty"><option>Foundation</option><option selected>Intermediate</option><option>Olympiad</option></select>
-      </div>
+      <div class="field" style="margin:0;"><label>Total marks</label><input id="examMarks" type="number" min="1" max="300" value="50"></div>
     </div>
     <div class="field" style="margin:10px 0;"><label>Protocol / rules</label><textarea id="examProtocol" rows="2">Single attempt only. No calculator, notes, or outside help. The timer starts the moment you begin and auto-submits your answer at zero.</textarea></div>
+    <div id="examBuilder" class="eb-box">
+      <div class="eb-head"><b>✦ AI exam builder</b><span class="eb-presets">Presets:
+        <button type="button" class="btn ghost small" data-eb-preset="quick">Quick quiz</button>
+        <button type="button" class="btn ghost small" data-eb-preset="test">Class test</button>
+        <button type="button" class="btn ghost small" data-eb-preset="ichc">IChC-style</button></span></div>
+      <label class="eb-lab">Topics (tick any, and/or type a focus in "Subject / topic" above)</label>
+      <div class="eb-chips"><label class="eb-chip"><input type="checkbox" data-eb-topic value="Stoichiometry"> Stoichiometry</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Atomic structure & periodic table"> Atomic structure & periodic table</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Bonding & structure"> Bonding & structure</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Acids, bases & equilibrium"> Acids, bases & equilibrium</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Thermodynamics & kinetics"> Thermodynamics & kinetics</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Electrochemistry"> Electrochemistry</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Organic chemistry"> Organic chemistry</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Inorganic chemistry"> Inorganic chemistry</label><label class="eb-chip"><input type="checkbox" data-eb-topic value="Analytical & lab skills"> Analytical & lab skills</label></div>
+      <div class="eb-row">
+        <div class="field" style="margin:0;"><label>Student level</label><select id="ebLevel"><option value="Junior">Junior (10th grade and below)</option><option value="Youth" selected>Youth (11th-13th grade)</option><option value="Senior">Senior (university)</option><option value="Mixed">Mixed</option></select></div>
+        <div class="field" style="margin:0;"><label>Difficulty</label><select id="ebDiff"><option>Foundation</option><option selected>Intermediate</option><option>Olympiad</option><option value="Progressive">Progressive (easy to hard)</option></select></div>
+      </div>
+      <label class="eb-lab">Number of questions of each type <span id="ebTotal" class="eb-total"></span></label>
+      <div class="eb-row5"><div class="field" style="margin:0;"><label>Multiple choice</label><input id="ebMcq" type="number" min="0" max="30" value="5"></div><div class="field" style="margin:0;"><label>Short answer</label><input id="ebShort" type="number" min="0" max="30" value="3"></div><div class="field" style="margin:0;"><label>Structured (a, b, c)</label><input id="ebStruct" type="number" min="0" max="30" value="2"></div><div class="field" style="margin:0;"><label>Calculation</label><input id="ebCalc" type="number" min="0" max="30" value="0"></div><div class="field" style="margin:0;"><label>Theory / explain</label><input id="ebTheory" type="number" min="0" max="30" value="0"></div></div>
+      <div class="field" style="margin:10px 0 0;"><label>Your own instructions (optional)</label><textarea id="ebInstr" rows="3" placeholder="e.g. No organic chemistry. Use SI units. Include one titration calculation. Make question 1 an easy warm-up. Avoid questions about ..."></textarea></div>
+      <label class="eb-check"><input type="checkbox" id="ebData"> Add a data line with constants and atomic masses</label>
+      <div style="margin-top:10px;"><button type="button" class="btn teal small" id="genExamBtn">✦ Generate exam</button>
+        <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;"></span></div>
+      <div id="ebRefine" style="display:none; margin-top:10px;"><span class="eb-lab" style="display:inline;">Adjust this draft:</span>
+        <button type="button" class="btn ghost small" data-eb-refine="fresh">New set</button>
+        <button type="button" class="btn ghost small" data-eb-refine="easier">Easier</button>
+        <button type="button" class="btn ghost small" data-eb-refine="harder">Harder</button>
+        <button type="button" class="btn ghost small" data-eb-refine="shorter">Shorter</button>
+        <button type="button" class="btn ghost small" data-eb-refine="longer">Longer</button>
+        <button type="button" class="btn ghost small" data-eb-refine="custom">Apply my instructions</button></div>
+    </div>
     <div class="field" style="margin:0 0 10px;">
-      <label>Exam content / questions</label>
-      <textarea id="examContent" rows="6" placeholder="Write or paste the real exam problem(s) here"></textarea>
-      <button class="btn ghost small" id="genExamBtn" style="margin-top:8px;">✦ Generate a draft with Claude</button>
-      <span id="genExamStatus" style="font-size:12.5px; color:var(--muted); margin-left:8px;"></span>
+      <label>Exam content / questions (edit freely before posting)</label>
+      <textarea id="examContent" rows="14" placeholder="Generate with the builder above, or write or paste the real exam problem(s) here"></textarea>
+      <button type="button" class="btn ghost small" id="chemFixBtn" style="margin-top:8px;">Fix chemistry symbols (H2O → H₂O, Ca2+ → Ca²⁺, -> → →)</button>
     </div>
     <button class="btn teal small" id="addExamBtn">Post exam${ME.role==='ambassador'?' (programme-wide)':''}</button>
   </div>
@@ -5543,7 +5637,7 @@ function wireHandlers(tab){
       const timeLimitMin = Math.max(1, parseInt(q('examTime').value,10)||60);
       const protocol = q('examProtocol').value.trim();
       const coordinatorId = ME.role==='ambassador' ? null : ME.id;
-      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
+      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, totalMarks:(parseInt(q('examMarks').value,10)||null), protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
       await saveKey('exams'); render('exams');
       await notifyBroadcast({title:`New exam posted: ${title}`, body:`${timeLimitMin} minutes · one attempt · opens now.`, coordinatorId, author:ME.name, role:ME.role});
     });
@@ -5565,30 +5659,58 @@ function wireHandlers(tab){
       document.body.appendChild(toast);
       setTimeout(()=>toast.remove(), 2000);
     }));
-    if(q('genExamBtn')) q('genExamBtn').addEventListener('click', async ()=>{
-      const btn = q('genExamBtn'), status = q('genExamStatus');
-      const subject = q('examSubject').value.trim() || 'general chemistry';
-      const difficulty = q('examDifficulty').value;
-      const timeLimitMin = parseInt(q('examTime').value,10) || 60;
-      btn.disabled = true; status.textContent = 'Generating… this can take up to a minute.';
-      const old = document.getElementById('genExamNotes'); if(old) old.remove();
-      try{
-        const data = await examAi('draft', { subject, difficulty, timeLimitMin });
-        q('examContent').value = data.content;
-        status.textContent = '✓ Draft generated — review and edit before posting.';
-        if(data.notes){
-          const d = document.createElement('details'); d.id = 'genExamNotes'; d.style.cssText = 'margin-top:8px; font-size:13px;';
-          const sm = document.createElement('summary'); sm.textContent = 'Marking notes (only you see these; not posted)'; sm.style.cursor = 'pointer';
-          const p = document.createElement('div'); p.style.cssText = 'white-space:pre-wrap; margin-top:6px; color:var(--muted);'; p.textContent = data.notes;
-          d.append(sm, p); status.insertAdjacentElement('afterend', d);
+    if(q('chemFixBtn')) q('chemFixBtn').addEventListener('click', ()=>{ const t = q('examContent'); t.value = chemify(t.value); });
+    if(q('genExamBtn')){
+      const TYPES = ['Mcq','Short','Struct','Calc','Theory'];
+      const total = ()=>TYPES.reduce((n,t)=>n+(Math.max(0,parseInt(q('eb'+t).value,10)||0)),0);
+      const upd = ()=>{ const n = total(); q('ebTotal').textContent = `· ${n} question${n===1?'':'s'} in total`; };
+      TYPES.forEach(t=>q('eb'+t).addEventListener('input', upd)); upd();
+      const PRE = { quick:{Mcq:10,Short:0,Struct:0,Calc:0,Theory:0,marks:10,time:15,diff:'Intermediate',level:'Youth'}, test:{Mcq:8,Short:4,Struct:1,Calc:3,Theory:0,marks:50,time:60,diff:'Intermediate',level:'Youth'}, ichc:{Mcq:0,Short:0,Struct:3,Calc:2,Theory:0,marks:100,time:90,diff:'Olympiad',level:'Senior'} };
+      document.querySelectorAll('[data-eb-preset]').forEach(b=>b.addEventListener('click', ()=>{
+        const p = PRE[b.dataset.ebPreset]; TYPES.forEach(t=>{ q('eb'+t).value = p[t]; }); q('examMarks').value = p.marks; q('examTime').value = p.time; q('ebDiff').value = p.diff; q('ebLevel').value = p.level; upd();
+      }));
+      const run = async (refine)=>{
+        const status = q('genExamStatus');
+        const n = total();
+        if(n < 1) { status.textContent = 'Choose at least one question.'; return; }
+        if(n > 40) { status.textContent = 'Maximum 40 questions per exam.'; return; }
+        const spec = {
+          title: q('examTitle').value.trim(), subject: q('examSubject').value.trim(),
+          topics: [...document.querySelectorAll('[data-eb-topic]:checked')].map(x=>x.value),
+          level: q('ebLevel').value, difficulty: q('ebDiff').value,
+          mix: { mcq:+q('ebMcq').value||0, short:+q('ebShort').value||0, structured:+q('ebStruct').value||0, calc:+q('ebCalc').value||0, theory:+q('ebTheory').value||0 },
+          totalMarks: parseInt(q('examMarks').value,10) || 50, timeLimitMin: parseInt(q('examTime').value,10) || 60,
+          instructions: q('ebInstr').value.trim(), dataSheet: q('ebData').checked,
+          previous: refine ? q('examContent').value : '', refine: refine || ''
+        };
+        if(refine && !spec.previous.trim()){ status.textContent = 'Generate a draft first.'; return; }
+        const btns = document.querySelectorAll('#examBuilder button'); btns.forEach(b=>{ b.disabled = true; });
+        status.textContent = refine ? 'Adjusting the draft… this can take up to two minutes.' : 'Writing your exam… this can take up to two minutes.';
+        const old = document.getElementById('genExamNotes'); if(old) old.remove();
+        try{
+          const data = await examAi('draft', { spec });
+          q('examContent').value = chemify(data.content);
+          if(!q('examTitle').value.trim() && data.title) q('examTitle').value = chemify(data.title);
+          q('examMarks').value = data.totalMarks;
+          status.textContent = `✓ Draft ready: ${data.count} question${data.count===1?'':'s'}, ${data.totalMarks} marks. Review and edit before posting.`;
+          if(data.warning){ status.textContent += ' ' + data.warning; }
+          q('ebRefine').style.display = 'block';
+          if(data.notes){
+            const d = document.createElement('details'); d.id = 'genExamNotes'; d.style.cssText = 'margin-top:10px; font-size:13px;';
+            const sm = document.createElement('summary'); sm.textContent = 'Answers and marking notes (only you see these; they are not posted)'; sm.style.cssText = 'cursor:pointer; font-weight:600;';
+            const pre = document.createElement('div'); pre.style.cssText = 'white-space:pre-wrap; margin-top:6px; color:var(--muted);'; pre.textContent = chemify(data.notes);
+            d.append(sm, pre); q('ebRefine').insertAdjacentElement('afterend', d);
+          }
+        }catch(e){
+          console.error('Exam generation failed', e);
+          status.textContent = e.message==='not_configured' ? 'The Gemini key is not set on the server.' : e.message==='rate_limited' ? 'Too many drafts this hour. Please try again later.' : e.message==='too_many' ? 'Maximum 40 questions per exam.' : 'Generation failed. Please try again in a moment.';
+        }finally{
+          btns.forEach(b=>{ b.disabled = false; });
         }
-      }catch(e){
-        console.error('Exam generation failed', e);
-        status.textContent = e.message==='not_configured' ? 'The Gemini key is not set on the server.' : e.message==='rate_limited' ? 'Too many drafts this hour. Please try again later.' : 'Generation failed. Please try again in a moment.';
-      }finally{
-        btn.disabled = false;
-      }
-    });
+      };
+      q('genExamBtn').addEventListener('click', ()=>run(''));
+      document.querySelectorAll('[data-eb-refine]').forEach(b=>b.addEventListener('click', ()=>run(b.dataset.ebRefine)));
+    }
   }
 
   // ---- Certificates ----
