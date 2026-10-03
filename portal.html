@@ -538,6 +538,30 @@
   .mc-conf{position:fixed; top:-12px; width:9px; height:14px; z-index:1300; pointer-events:none; animation:mcFall linear forwards;}
   @keyframes mcFall{to{transform:translateY(105vh) rotate(720deg); opacity:.9}}
   @media (prefers-reduced-motion:reduce){ .mc-conf{display:none;} }
+
+  /* Community chat */
+  .gc-wrap{position:relative; display:flex; flex-direction:column; height:calc(100vh - 240px); min-height:420px; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#ECE5DD;}
+  .gc-list{flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:5px;}
+  .gc-day{text-align:center; margin:8px 0;} .gc-day span{background:rgba(255,255,255,.85); font-size:11.5px; padding:3px 12px; border-radius:999px; color:var(--muted);}
+  .gc-row{display:flex;} .gc-row.me{justify-content:flex-end;}
+  .gc-b{position:relative; max-width:80%; padding:6px 10px 4px; border-radius:12px; background:#fff; box-shadow:0 1px 1px rgba(0,0,0,.12); font-size:14px; line-height:1.4; word-wrap:break-word; transition:background .4s;}
+  .gc-row.me .gc-b{background:#DCF8C6;}
+  .gc-b.ment{box-shadow:inset 3px 0 0 var(--amber), 0 1px 1px rgba(0,0,0,.12);} .gc-b.flash{background:#FFF3C4;}
+  .gc-name{font-size:12.5px; font-weight:700; margin-bottom:2px;} .gc-name span{font-weight:500; font-size:11px; color:var(--muted); margin-left:6px;}
+  .gc-coordinator{color:#14506A;} .gc-student{color:#1F8A70;} .gc-ambassador{color:#B5651D;}
+  .gc-quote{border-left:3px solid var(--teal); background:rgba(0,0,0,.05); border-radius:6px; padding:4px 8px; margin-bottom:4px; font-size:12.5px; cursor:pointer;}
+  .gc-del{font-style:italic; color:var(--muted); font-size:13px;}
+  .gc-men{color:#0B6EA8; font-weight:600;}
+  .gc-meta{font-size:10.5px; color:var(--muted); text-align:right; margin-top:2px;}
+  .gc-dots{background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; padding:0 0 0 4px; line-height:1;}
+  .gc-menu{position:absolute; right:6px; top:24px; z-index:6; background:#fff; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.25); display:flex; flex-direction:column; overflow:hidden; min-width:110px;}
+  .gc-menu button{background:none; border:none; text-align:left; padding:9px 14px; font:inherit; font-size:13.5px; cursor:pointer;} .gc-menu button:hover{background:rgba(0,0,0,.05);}
+  .gc-bar{align-items:center; gap:8px; padding:8px 12px; background:#F7F7F7; border-top:1px solid var(--line); font-size:12.5px;} .gc-bar button{background:none; border:none; font-size:22px; cursor:pointer;}
+  .gc-ellip{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted);}
+  .gc-mention{position:absolute; left:10px; right:10px; bottom:62px; background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.25); z-index:7; overflow:hidden;}
+  .gc-mention button{display:block; width:100%; text-align:left; background:none; border:none; padding:9px 14px; font:inherit; font-size:13.5px; cursor:pointer;} .gc-mention button:hover{background:rgba(0,0,0,.05);} .gc-mention span{color:var(--muted); font-size:11.5px; margin-left:6px;}
+  .gc-in{display:flex; align-items:flex-end; gap:8px; padding:8px; background:#F0F0F0;}
+  .gc-in textarea{flex:1; resize:none; border:none; border-radius:20px; padding:10px 14px; font:inherit; font-size:14px; max-height:120px; min-height:40px; margin:0;}
 </style>
 </head>
 <body>
@@ -2494,6 +2518,8 @@ const TAB_ICONS = {
   library:'<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5z"/><path d="M19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/>',
   exams:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12l2 2 4-4"/>',
   certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+  chat:'<path d="M4 5h16v11H11l-4 4v-4H4z"/>',
+  mock:'<circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M9 3h6"/>',
   load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
@@ -2515,9 +2541,9 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -2592,6 +2618,8 @@ function render(tab){
   else if(tab==='settings') html = settingsView();
   else if(tab==='library') html = libraryView();
   else if(tab==='exams') html = examsView();
+  else if(tab==='mock') html = '<div id="mockRoot"></div>';
+  else if(tab==='chat') html = chatView();
   else if(tab==='applications') html = applicationsView();
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
@@ -2992,6 +3020,289 @@ function wirePersonalSms(){
   psmsRefreshCompose();
 }
 
+
+// ================= exam-ai helper =================
+async function examAi(action, payload){
+  if(!sbReady) throw new Error('offline');
+  const { data, error } = await sb.functions.invoke('exam-ai', { body:{ action, ...(payload||{}) } });
+  if(error){ let m = ''; try{ const j = await error.context.json(); m = j.error || ''; }catch(e){} throw new Error(m || 'unavailable'); }
+  return data;
+}
+
+// ================= Mock competition + progress heatmap =================
+const MOCK_TOPICS = [['Stoichiometry','Stoich.'],['Atomic structure & periodic table','Atoms'],['Bonding & structure','Bonding'],['Acids, bases & equilibrium','Acids/Eq.'],['Thermodynamics & kinetics','Thermo/Kin.'],['Electrochemistry','Electro.'],['Organic chemistry','Organic'],['Inorganic chemistry','Inorganic'],['Analytical & lab skills','Analytical']];
+const MOCK = { phase:'home', exam:null, endsAt:0, answers:{}, result:null, board:null, stats:null, busy:false, err:'', timer:null };
+function mockHeat(pct){ return pct==null ? 'rgba(15,36,56,.05)' : `hsl(${Math.round(pct*1.2)},60%,86%)`; }
+function mockPct(t){ return t && t.max ? Math.round(100*t.got/t.max) : null; }
+function mockStatsHtml(){
+  const st = MOCK.stats; if(!st) return '<p class="note">Loading your progress…</p>';
+  const mine = st.mine || { attempts:[], topics:{} };
+  const bars = MOCK_TOPICS.map(([full,short])=>{ const p = mockPct(mine.topics[full]); return `<div style="display:flex; align-items:center; gap:10px; margin:5px 0;"><span style="width:92px; font-size:12.5px;">${short}</span><div style="flex:1; height:16px; background:rgba(15,36,56,.07); border-radius:8px; overflow:hidden;"><div style="width:${p||0}%; height:100%; background:${mockHeat(p)}; border-right:${p?'2px solid rgba(15,36,56,.25)':'0'};"></div></div><span style="width:40px; text-align:right; font-size:12.5px;">${p==null?'–':p+'%'}</span></div>`; }).join('');
+  let html = `<div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 4px; font-size:16px;">My strengths and gaps</h3><p class="note" style="margin:0 0 8px;">${mine.attempts.length ? `${mine.attempts.length} mock${mine.attempts.length>1?'s':''} taken. Green = strong, red = needs work.` : 'Take a mock to see your topic strengths here.'}</p>${bars}</div>`;
+  if(ME.role!=='student' && st.group){
+    const head = MOCK_TOPICS.map(([,sh])=>`<th style="padding:6px 8px; font-size:11.5px; font-weight:600;">${sh}</th>`).join('');
+    const row = (name, extra, topics, att)=>`<tr><td style="padding:6px 8px; font-size:12.5px; white-space:nowrap;">${escapeHtml(name)}${extra?`<div style="font-size:11px; color:var(--muted);">${escapeHtml(extra)}</div>`:''}</td><td style="text-align:center; font-size:12.5px;">${att}</td>${MOCK_TOPICS.map(([full])=>{ const p = mockPct(topics[full]); return `<td style="text-align:center; font-size:12px; background:${mockHeat(p)}; padding:6px 4px;">${p==null?'–':p+'%'}</td>`; }).join('')}</tr>`;
+    html += `<div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 4px; font-size:16px;">${ME.role==='ambassador' ? 'Programme heatmap' : 'My students heatmap'}</h3><p class="note" style="margin:0 0 8px;">Average mock score by topic. Use it to see where to focus the next call.</p>
+      ${st.group.length ? `<div style="overflow:auto;"><table style="border-collapse:separate; border-spacing:2px; width:100%;"><thead><tr><th style="text-align:left; padding:6px 8px; font-size:11.5px;">Student</th><th style="font-size:11.5px;">Mocks</th>${head}</tr></thead><tbody>${row('Everyone','',st.all||{},st.group.reduce((n,g)=>n+g.attempts,0))}${st.group.map(g=>row(g.name, ME.role==='ambassador' && g.coordinatorId ? coordName(g.coordinatorId) : '', g.topics, g.attempts)).join('')}</tbody></table></div>` : '<p class="note">No student has taken a mock yet.</p>'}</div>`;
+  }
+  return html;
+}
+function mockBoardHtml(){
+  const b = MOCK.board; if(!b) return '<p class="note">Loading leaderboard…</p>';
+  if(!b.top.length) return '<p class="note">No scores yet. Be the first on the board.</p>';
+  return b.top.map((r,i)=>`<div style="display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--line); ${r.mine?'font-weight:700;':''}"><span style="width:26px; text-align:center;">${['🥇','🥈','🥉'][i]||i+1}</span><span style="flex:1;">${escapeHtml(r.name||'Unnamed')}${r.mine?' (you)':''}</span><span style="font-size:12px; color:var(--muted);">${r.attempts} mock${r.attempts>1?'s':''}</span><b>${r.best}%</b></div>`).join('') + (b.myRank && b.myRank>10 ? `<p class="note" style="margin-top:8px;">You are ranked #${b.myRank} of ${b.total}.</p>` : '');
+}
+async function mockLoadData(){
+  try{ MOCK.stats = await examAi('stats'); }catch(e){ MOCK.stats = { mine:{attempts:[],topics:{}} }; }
+  try{ MOCK.board = await examAi('board'); }catch(e){ MOCK.board = { top:[], total:0 }; }
+  if(currentTab==='mock' && MOCK.phase==='home') mockPaint();
+}
+function mockFmt(sec){ sec = Math.max(0, sec); return String(Math.floor(sec/60)).padStart(2,'0') + ':' + String(sec%60).padStart(2,'0'); }
+function mockPaint(){
+  const root = document.getElementById('mockRoot'); if(!root) return;
+  if(MOCK.phase==='home'){
+    root.innerHTML = `<div class="section-title"><div><h2>${ME.role==='student'?'Mock competition':'Mock & progress'}</h2><p>A timed, auto-marked practice competition in the style of the IChC final round: 15 questions, 30 minutes. Every mock is freshly written, so no two are the same.</p></div></div>
+      <div class="card" style="margin-bottom:16px;"><button class="btn teal" id="mockStart" type="button" ${MOCK.busy?'disabled':''}>${MOCK.busy?'Writing your exam… (up to a minute)':'Start a mock competition'}</button>
+      <p class="note" style="margin:8px 0 0;">Once you start, the clock runs even if you leave this page. Calculators are fine; no notes or searching, please.</p>
+      ${MOCK.err ? `<p class="psms-status bad">${escapeHtml(MOCK.err)}</p>` : ''}</div>
+      <div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 6px; font-size:16px;">Leaderboard</h3>${mockBoardHtml()}</div>
+      ${mockStatsHtml()}`;
+    const b = document.getElementById('mockStart'); if(b) b.addEventListener('click', mockStart);
+  } else if(MOCK.phase==='running'){
+    const qs = MOCK.exam.questions;
+    root.innerHTML = `<div style="position:sticky; top:0; z-index:5; background:var(--paper); padding:10px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); margin-bottom:12px;"><b>Mock competition</b><span id="mockTimer" style="font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;">--:--</span></div>
+      ${qs.map((q,i)=>`<div class="card" style="margin-bottom:12px;"><div style="font-size:12px; color:var(--muted); margin-bottom:4px;">Question ${i+1} of ${qs.length} · ${escapeHtml(q.topic)} · ${q.type==='mcq'?'1 point':'2 points'}</div>
+        <div style="white-space:pre-wrap; margin-bottom:10px;">${escapeHtml(q.text)}</div>
+        ${q.type==='mcq' ? q.options.map((o,j)=>`<label style="display:flex; gap:8px; align-items:flex-start; padding:6px 0; cursor:pointer;"><input type="radio" name="mq_${q.id}" value="${j}" data-mq="${q.id}" ${String(MOCK.answers[q.id])===String(j)?'checked':''} style="width:auto; margin-top:3px;"> <span>${escapeHtml(o)}</span></label>`).join('') : `<input type="text" inputmode="decimal" data-mq="${q.id}" placeholder="Your answer${q.unit?' ('+escapeHtml(q.unit)+')':''}" value="${escapeHtml(MOCK.answers[q.id]||'')}" style="max-width:240px;">`}</div>`).join('')}
+      <button class="btn teal" id="mockSubmit" type="button">Submit my answers</button><span id="mockSubStatus" class="note" style="margin-left:10px;"></span>`;
+    root.querySelectorAll('[data-mq]').forEach(el=>el.addEventListener('input', ()=>{ MOCK.answers[el.dataset.mq] = el.value; }));
+    root.querySelectorAll('input[type=radio][data-mq]').forEach(el=>el.addEventListener('change', ()=>{ if(el.checked) MOCK.answers[el.dataset.mq] = el.value; }));
+    document.getElementById('mockSubmit').addEventListener('click', ()=>{ if(confirm('Submit your answers now?')) mockSubmit(); });
+    clearInterval(MOCK.timer);
+    const tick = ()=>{ const left = Math.round((MOCK.endsAt - Date.now())/1000), el = document.getElementById('mockTimer'); if(el){ el.textContent = mockFmt(left); el.style.color = left<=300 ? '#C0392B' : ''; } if(left<=0){ clearInterval(MOCK.timer); mockSubmit(); } };
+    tick(); MOCK.timer = setInterval(tick, 1000);
+  } else if(MOCK.phase==='review'){
+    const r = MOCK.result, pct = r.max ? Math.round(100*r.score/r.max) : 0;
+    root.innerHTML = `<div class="section-title"><div><h2>Your result</h2></div></div>
+      <div class="card" style="text-align:center; margin-bottom:16px;"><div style="font-size:44px; font-weight:800;">${r.score} / ${r.max}</div><div style="font-size:18px;">${pct}% · finished in ${mockFmt(r.duration)}</div>${r.overTime?'<p class="psms-status bad">You went over the time limit, so this score is not counted on the leaderboard.</p>':''}</div>
+      <div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 6px; font-size:16px;">By topic</h3>${MOCK_TOPICS.filter(([f])=>r.topics[f]).map(([f,sh])=>{ const p = mockPct(r.topics[f]); return `<div style="display:flex; align-items:center; gap:10px; margin:5px 0;"><span style="width:92px; font-size:12.5px;">${sh}</span><div style="flex:1; height:16px; background:rgba(15,36,56,.07); border-radius:8px; overflow:hidden;"><div style="width:${p}%; height:100%; background:${mockHeat(p)};"></div></div><span style="width:70px; text-align:right; font-size:12.5px;">${r.topics[f].got}/${r.topics[f].max}</span></div>`; }).join('')}</div>
+      <h3 style="font-size:16px; margin:0 0 8px;">Review</h3>
+      ${r.results.map((x,i)=>`<div class="card" style="margin-bottom:10px; border-left:4px solid ${x.correct?'var(--teal)':'#C0392B'};"><div style="font-size:12px; color:var(--muted);">Question ${i+1} · ${escapeHtml(x.topic)} · ${x.points}/${x.maxPoints}</div><div style="white-space:pre-wrap; margin:4px 0;">${escapeHtml(x.text)}</div><div style="font-size:13px;">Your answer: <b>${escapeHtml(x.given||'(none)')}</b>${x.correct?' ✓':''}</div>${x.correct?'':`<div style="font-size:13px;">Correct answer: <b>${escapeHtml(String(x.answer))}</b></div>`}${x.explanation?`<div class="note" style="margin-top:6px;">${escapeHtml(x.explanation)}</div>`:''}</div>`).join('')}
+      <button class="btn teal" id="mockBack" type="button">Back to mock competition</button>`;
+    document.getElementById('mockBack').addEventListener('click', ()=>{ MOCK.phase = 'home'; MOCK.result = null; mockPaint(); mockLoadData(); });
+  }
+}
+async function mockStart(){
+  if(MOCK.busy) return;
+  MOCK.busy = true; MOCK.err = ''; mockPaint();
+  try{
+    const d = await examAi('mock_create');
+    MOCK.exam = d; MOCK.answers = {}; MOCK.endsAt = new Date(d.startedAt).getTime() + d.timeLimitMin*60000; MOCK.phase = 'running';
+  }catch(e){
+    MOCK.err = e.message==='rate_limited' ? 'You have started a lot of mocks this hour. Please try again a little later.' : e.message==='not_configured' ? 'The Gemini key is not set on the server.' : 'Could not write an exam just now. Please try again.';
+  }
+  MOCK.busy = false; mockPaint();
+}
+async function mockSubmit(){
+  if(MOCK.phase!=='running' || MOCK.busy) return;
+  MOCK.busy = true; clearInterval(MOCK.timer);
+  document.querySelectorAll('#mockRoot [data-mq]').forEach(el=>{ if(el.type==='radio'){ if(el.checked) MOCK.answers[el.dataset.mq] = el.value; } else MOCK.answers[el.dataset.mq] = el.value; });
+  const st = document.getElementById('mockSubStatus'); if(st) st.textContent = 'Marking…';
+  try{
+    MOCK.result = await examAi('mock_submit', { examId: MOCK.exam.examId, answers: MOCK.answers });
+    MOCK.phase = 'review'; MOCK.exam = null;
+  }catch(e){
+    MOCK.busy = false; if(st) st.textContent = 'Could not submit. Check your connection and press Submit again.';
+    return;
+  }
+  MOCK.busy = false; if(currentTab==='mock') mockPaint();
+}
+function wireMock(){ mockPaint(); if(MOCK.phase==='home') mockLoadData(); }
+
+// ================= Community chat (all roles) =================
+const GC = { msgs:[], loaded:false, channel:null, replyTo:null, editing:null, draft:'', menuFor:null, err:'' };
+function gcMe(){ return { id: ME.role==='ambassador' ? 'ambassador' : ME.id, name: ME.name }; }
+function gcMembers(){
+  const out = [];
+  (DB.coordinators||[]).forEach(c=>out.push({ id:c.id, name:c.name, role:'coordinator' }));
+  (DB.students||[]).forEach(s=>out.push({ id:s.id, name:s.name, role:'student' }));
+  out.push({ id:'ambassador', name:'Ambassador', role:'ambassador' });
+  return out.filter(m=>m.name && m.id!==gcMe().id);
+}
+const gcRe = t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function gcBodyHtml(m){
+  let h = escapeHtml(m.body);
+  const names = gcMembers().map(x=>escapeHtml(x.name)).sort((a,b)=>b.length-a.length);
+  if(names.length) h = h.replace(new RegExp('@(' + names.map(gcRe).join('|') + ')','g'), '<span class="gc-men">@$1</span>');
+  return h.replace(/\n/g,'<br>');
+}
+function gcDay(ts){ const d = new Date(ts), t = new Date(), y = new Date(Date.now()-864e5); const same = (a,b)=>a.toDateString()===b.toDateString(); return same(d,t) ? 'Today' : same(d,y) ? 'Yesterday' : d.toLocaleDateString(undefined,{day:'numeric',month:'long',year:'numeric'}); }
+function gcListHtml(){
+  if(!GC.loaded) return '<div class="empty">Loading messages…</div>';
+  if(!GC.msgs.length) return '<div class="empty">No messages yet. Say hello 👋</div>';
+  const me = gcMe(); let last = '', out = '';
+  GC.msgs.forEach(m=>{
+    const day = gcDay(m.created_at); if(day!==last){ out += `<div class="gc-day"><span>${day}</span></div>`; last = day; }
+    const mine = m.author_id===me.id, mentionsMe = (m.mentions||[]).includes(me.id);
+    const rep = m.reply_to ? GC.msgs.find(x=>x.id===m.reply_to) : null;
+    const time = new Date(m.created_at).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    out += `<div class="gc-row${mine?' me':''}"><div class="gc-b${mentionsMe&&!m.deleted?' ment':''}" data-gc="${m.id}">
+      ${mine?'':`<div class="gc-name gc-${escapeHtml(m.author_role||'student')}">${escapeHtml(m.author_name)}<span>${m.author_role==='ambassador'?'Ambassador':m.author_role==='coordinator'?'Coordinator':''}</span></div>`}
+      ${rep && !m.deleted ? `<div class="gc-quote" data-gc-jump="${rep.id}"><b>${escapeHtml(rep.author_name)}</b><br>${escapeHtml(rep.deleted?'This message was deleted':String(rep.body).slice(0,90))}</div>` : ''}
+      ${m.deleted ? '<div class="gc-del">🚫 This message was deleted</div>' : `<div class="gc-text">${gcBodyHtml(m)}</div>`}
+      <div class="gc-meta">${m.edited_at && !m.deleted ? 'edited · ' : ''}${time}${m.deleted?'':` <button type="button" class="gc-dots" data-gc-menu="${m.id}" aria-label="Message options">&#8964;</button>`}</div>
+      ${GC.menuFor===m.id ? `<div class="gc-menu"><button data-gc-act="reply" data-id="${m.id}">Reply</button><button data-gc-act="copy" data-id="${m.id}">Copy</button>${mine?`<button data-gc-act="edit" data-id="${m.id}">Edit</button>`:''}${mine||ME.role==='ambassador'?`<button data-gc-act="del" data-id="${m.id}" style="color:#C0392B">Delete</button>`:''}</div>` : ''}
+    </div></div>`;
+  });
+  return out;
+}
+function chatView(){
+  return `<div class="section-title"><div><h2>Community chat</h2><p>One group chat for everyone: students, coordinators and the Ambassador. Type @ to tag someone. Be kind and keep it about chemistry and the programme.</p></div></div>
+  <div class="gc-wrap"><div class="gc-list" id="gcList"></div>
+    <div id="gcBar" class="gc-bar" style="display:none;"></div>
+    <div id="gcMention" class="gc-mention" style="display:none;"></div>
+    <div class="gc-in"><textarea id="gcInput" rows="1" maxlength="2000" placeholder="Type a message" aria-label="Message"></textarea><button type="button" id="gcSend" class="btn teal" aria-label="Send">Send</button></div></div>
+  <p id="gcErr" class="psms-status bad"></p>`;
+}
+function gcPaint(keepScroll){
+  const l = document.getElementById('gcList'); if(!l) return;
+  const atBottom = l.scrollHeight - l.scrollTop - l.clientHeight < 80;
+  l.innerHTML = gcListHtml();
+  if(!keepScroll && atBottom || !GC.painted){ l.scrollTop = l.scrollHeight; GC.painted = true; }
+  const bar = document.getElementById('gcBar');
+  if(bar){
+    const t = GC.editing ? GC.msgs.find(m=>m.id===GC.editing) : GC.replyTo ? GC.msgs.find(m=>m.id===GC.replyTo) : null;
+    bar.style.display = t ? 'flex' : 'none';
+    if(t) bar.innerHTML = `<div style="flex:1; min-width:0;"><b>${GC.editing?'Editing message':'Replying to '+escapeHtml(t.author_name)}</b><div class="gc-ellip">${escapeHtml(String(t.body).slice(0,100))}</div></div><button type="button" id="gcBarX" aria-label="Cancel">&times;</button>`;
+    const x = document.getElementById('gcBarX'); if(x) x.addEventListener('click', ()=>{ GC.replyTo = null; GC.editing = null; const i = document.getElementById('gcInput'); if(i){ i.value = ''; GC.draft = ''; } gcPaint(true); });
+  }
+}
+function gcMerge(r){ const i = GC.msgs.findIndex(m=>m.id===r.id); if(i>=0) GC.msgs[i] = r; else GC.msgs.push(r); GC.msgs.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); }
+async function gcLoad(){
+  if(!sbReady) return;
+  const { data, error } = await sb.from('group_messages').select('*').order('created_at',{ascending:false}).limit(300);
+  if(error){ GC.err = 'Could not load messages.'; console.error(error); }
+  else { GC.msgs = (data||[]).reverse(); GC.loaded = true; GC.err = ''; }
+  if(currentTab==='chat') gcPaint();
+}
+function gcSubscribe(){
+  if(GC.channel || !sbReady) return;
+  GC.channel = sb.channel('group-chat').on('postgres_changes', { event:'*', schema:'public', table:'group_messages' }, p=>{
+    if(p.new && p.new.id){ gcMerge(p.new); if(currentTab==='chat') gcPaint(); }
+  }).subscribe();
+}
+async function gcSend(){
+  const inp = document.getElementById('gcInput'), errEl = document.getElementById('gcErr'); if(!inp) return;
+  const text = inp.value.trim(); if(!text) return;
+  const mentions = gcMembers().filter(m=>text.includes('@'+m.name)).map(m=>m.id);
+  errEl.textContent = '';
+  inp.disabled = true;
+  try{
+    if(GC.editing){
+      const { data, error } = await sb.from('group_messages').update({ body:text, mentions, edited_at:new Date().toISOString() }).eq('id', GC.editing).select().single();
+      if(error) throw error; gcMerge(data); GC.editing = null;
+    } else {
+      const me = gcMe();
+      const { data, error } = await sb.from('group_messages').insert({ author_id:me.id, author_name:me.name, author_role:ME.role, body:text, reply_to:GC.replyTo||null, mentions }).select().single();
+      if(error) throw error; gcMerge(data); GC.replyTo = null;
+    }
+    inp.value = ''; GC.draft = ''; GC.painted = false;
+  }catch(e){ console.error(e); errEl.textContent = 'Could not send. Please check your connection and try again.'; }
+  inp.disabled = false; inp.focus(); gcPaint();
+}
+async function gcAct(act, id){
+  const m = GC.msgs.find(x=>x.id===id); if(!m) return;
+  GC.menuFor = null;
+  if(act==='reply'){ GC.replyTo = id; GC.editing = null; }
+  else if(act==='copy'){ try{ await navigator.clipboard.writeText(m.body); }catch(e){} }
+  else if(act==='edit'){ GC.editing = id; GC.replyTo = null; const i = document.getElementById('gcInput'); if(i){ i.value = m.body; GC.draft = m.body; } }
+  else if(act==='del'){
+    if(!confirm('Delete this message for everyone?')){ gcPaint(true); return; }
+    const { data, error } = await sb.from('group_messages').update({ deleted:true, body:'', mentions:[] }).eq('id', id).select().single();
+    if(!error) gcMerge(data); else document.getElementById('gcErr').textContent = 'Could not delete that message.';
+  }
+  gcPaint(true); const i = document.getElementById('gcInput'); if(i && act!=='copy') i.focus();
+}
+function wireChat(){
+  const q = id=>document.getElementById(id), inp = q('gcInput'); if(!inp) return;
+  inp.value = GC.draft; gcPaint(); gcSubscribe(); gcLoad();
+  const fit = ()=>{ inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; };
+  const mention = q('gcMention');
+  const mentionUpdate = ()=>{
+    const pos = inp.selectionStart || 0, m = inp.value.slice(0,pos).match(/(^|\s)@([^\s@]{0,20})$/);
+    if(!m){ mention.style.display = 'none'; return; }
+    const term = m[2].toLowerCase();
+    const list = gcMembers().filter(x=>!term || x.name.toLowerCase().split(/\s+/).some(w=>w.startsWith(term)) || x.name.toLowerCase().startsWith(term)).slice(0,6);
+    if(!list.length){ mention.style.display = 'none'; return; }
+    mention.style.display = 'block';
+    mention.innerHTML = list.map(x=>`<button type="button" data-name="${escapeHtml(x.name)}"><b>${escapeHtml(x.name)}</b> <span>${x.role==='ambassador'?'Ambassador':x.role==='coordinator'?'Coordinator':'Student'}</span></button>`).join('');
+  };
+  mention.addEventListener('mousedown', e=>e.preventDefault());
+  mention.addEventListener('click', e=>{
+    const b = e.target.closest('button[data-name]'); if(!b) return;
+    const pos = inp.selectionStart || 0, before = inp.value.slice(0,pos).replace(/@([^\s@]{0,20})$/, '@' + b.dataset.name + ' '), after = inp.value.slice(pos);
+    inp.value = before + after; GC.draft = inp.value; inp.setSelectionRange(before.length, before.length); inp.focus(); mention.style.display = 'none'; fit();
+  });
+  inp.addEventListener('input', ()=>{ GC.draft = inp.value; fit(); mentionUpdate(); });
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey && matchMedia('(pointer:fine)').matches){ e.preventDefault(); gcSend(); } else if(e.key==='Escape'){ mention.style.display = 'none'; } });
+  q('gcSend').addEventListener('click', gcSend);
+  q('gcList').addEventListener('click', e=>{
+    const mb = e.target.closest('[data-gc-menu]'), ab = e.target.closest('[data-gc-act]'), jb = e.target.closest('[data-gc-jump]');
+    if(ab){ gcAct(ab.dataset.gcAct, ab.dataset.id); return; }
+    if(mb){ GC.menuFor = GC.menuFor===mb.dataset.gcMenu ? null : mb.dataset.gcMenu; gcPaint(true); return; }
+    if(jb){ const t = q('gcList').querySelector(`[data-gc="${jb.dataset.gcJump}"]`); if(t){ t.scrollIntoView({block:'center',behavior:'smooth'}); t.classList.add('flash'); setTimeout(()=>t.classList.remove('flash'),1200); } return; }
+    if(GC.menuFor){ GC.menuFor = null; gcPaint(true); }
+  });
+  fit();
+}
+
+// ================= Shareable certificates (QR code + share card) =================
+function loadQr(){ return new Promise(res=>{ if(window.qrcode) return res(true); const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; sc.onload = ()=>res(!!window.qrcode); sc.onerror = ()=>res(false); document.head.appendChild(sc); }); }
+function certCardCanvas(c, url, hasQr){
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  const bg = g.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#0A1826'); bg.addColorStop(1,'#14506A'); g.fillStyle = bg; g.fillRect(0,0,W,H);
+  g.fillStyle = '#FFFFFF'; g.beginPath(); g.roundRect ? g.roundRect(60,60,W-120,H-120,36) : g.rect(60,60,W-120,H-120); g.fill();
+  g.strokeStyle = '#E39A3B'; g.lineWidth = 6; g.strokeRect(100,100,W-200,H-200);
+  g.textAlign = 'center'; const serif = "Fraunces, Georgia, serif", sans = "system-ui, Arial, sans-serif";
+  const wrap = (t, x, y, maxW, lh, font)=>{ g.font = font; const words = String(t).split(' '); let line = '', yy = y; words.forEach(w=>{ const test = line ? line + ' ' + w : w; if(g.measureText(test).width > maxW && line){ g.fillText(line, x, yy); line = w; yy += lh; } else line = test; }); g.fillText(line, x, yy); return yy; };
+  g.fillStyle = '#E39A3B'; g.font = `700 30px ${sans}`; g.fillText('CHEMISTRY COMPETITION PREP', W/2, 220);
+  g.fillStyle = '#0A1826'; g.font = `600 64px ${serif}`; g.fillText(CERT_COPY[c.type].label, W/2, 330);
+  g.fillStyle = '#5B6670'; g.font = `400 32px ${sans}`; g.fillText('This certifies that', W/2, 410);
+  g.fillStyle = '#14506A'; let y = wrap(c.recipient_name, W/2, 520, 800, 84, `700 76px ${serif}`);
+  g.fillStyle = '#39424D'; y = wrap(c.program_name + (c.cohort_year ? ' · ' + c.cohort_year : ''), W/2, y + 80, 800, 44, `400 34px ${sans}`);
+  g.fillStyle = '#5B6670'; g.font = `400 30px ${sans}`; g.fillText('Issued ' + fmtDate(String(c.issue_date)), W/2, y + 70);
+  const qs = 300, qx = (W-qs)/2, qy = 820;
+  if(hasQr){ try{ const qr = window.qrcode(0,'M'); qr.addData(url); qr.make(); const n = qr.getModuleCount(), m = qs/n; g.fillStyle = '#fff'; g.fillRect(qx-16,qy-16,qs+32,qs+32); g.fillStyle = '#0A1826'; for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(qr.isDark(r,k)) g.fillRect(qx+k*m, qy+r*m, Math.ceil(m), Math.ceil(m)); }catch(e){} }
+  g.fillStyle = '#0A1826'; g.font = `600 30px ${sans}`; g.fillText(hasQr ? 'Scan to verify this certificate' : 'Verify this certificate online', W/2, qy + qs + 70);
+  g.fillStyle = '#5B6670'; g.font = `500 28px monospace`; g.fillText('ID: ' + c.id, W/2, qy + qs + 120);
+  return cv;
+}
+async function shareCert(id){
+  const c = (DB.certificates||[]).find(x=>x.id===id); if(!c) return;
+  const url = certVerifyUrl(c.id), hasQr = await loadQr(), cv = certCardCanvas(c, url, hasQr);
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed; inset:0; z-index:1400; background:rgba(8,20,30,.7); display:flex; align-items:center; justify-content:center; padding:14px; overflow:auto;';
+  const text = `I earned a ${CERT_COPY[c.type].label} from ${c.program_name}! Verify it here: ${url}`;
+  o.innerHTML = `<div style="background:#fff; border-radius:18px; padding:16px; width:min(420px,100%); text-align:center;"><div id="shCv"></div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px;">
+      <a class="btn teal small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Share on WhatsApp</a>
+      <button class="btn ghost small" id="shNative" type="button">Share image</button>
+      <button class="btn ghost small" id="shDl" type="button">Download card</button>
+      <button class="btn ghost small" id="shCopy" type="button">Copy link</button>
+      <button class="btn ghost small" id="shX" type="button">Close</button></div></div>`;
+  document.body.appendChild(o);
+  cv.style.cssText = 'width:100%; height:auto; border-radius:10px;'; o.querySelector('#shCv').appendChild(cv);
+  const blob = ()=>new Promise(r=>cv.toBlob(r,'image/png'));
+  o.querySelector('#shX').addEventListener('click', ()=>o.remove());
+  o.addEventListener('click', e=>{ if(e.target===o) o.remove(); });
+  o.querySelector('#shCopy').addEventListener('click', async e=>{ try{ await navigator.clipboard.writeText(url); e.target.textContent = 'Copied ✓'; }catch(err){ prompt('Copy this link:', url); } });
+  o.querySelector('#shDl').addEventListener('click', async ()=>{ const a = document.createElement('a'); a.href = URL.createObjectURL(await blob()); a.download = `certificate-${c.id}.png`; a.click(); });
+  o.querySelector('#shNative').addEventListener('click', async ()=>{
+    try{ const f = new File([await blob()], `certificate-${c.id}.png`, { type:'image/png' });
+      if(navigator.canShare && navigator.canShare({ files:[f] })) await navigator.share({ files:[f], text }); else if(navigator.share) await navigator.share({ text, url }); else alert('Sharing is not supported on this device. Use Download card instead.'); }catch(e){}
+  });
+}
+document.addEventListener('click', e=>{ const b = e.target.closest('[data-share-cert]'); if(b) shareCert(b.dataset.shareCert); });
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
@@ -3272,6 +3583,7 @@ function certItemHtml(c){
       <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
       <button class="btn ghost small" data-copy-verify="${c.id}">Copy verification ID</button>
       <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>
     </div>
   </div>`;
 }
@@ -3315,6 +3627,7 @@ function certificatesAmbassadorView(){
         <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
         <button class="btn ghost small" data-copy-verify="${c.id}">Copy verification ID</button>
         <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>
         ${c.status==='revoked'
           ? `<button class="btn ghost small" data-reinstate-cert="${c.id}">Reinstate</button>`
           : `<button class="btn ghost small" data-revoke-cert="${c.id}">Revoke</button>`}
@@ -4576,6 +4889,8 @@ function examsView(){
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='personalsms') wirePersonalSms();
+  if(tab==='mock') wireMock();
+  if(tab==='chat') wireChat();
   if(tab==='smslog') wireSmsResend();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
@@ -5251,23 +5566,25 @@ function wireHandlers(tab){
       setTimeout(()=>toast.remove(), 2000);
     }));
     if(q('genExamBtn')) q('genExamBtn').addEventListener('click', async ()=>{
-      const s = DB.settings || {};
-      if(!s.aiWebhookUrl){ alert('Connect a Claude exam-generation webhook first, in Settings.'); return; }
       const btn = q('genExamBtn'), status = q('genExamStatus');
       const subject = q('examSubject').value.trim() || 'general chemistry';
       const difficulty = q('examDifficulty').value;
       const timeLimitMin = parseInt(q('examTime').value,10) || 60;
-      btn.disabled = true; status.textContent = 'Generating…';
+      btn.disabled = true; status.textContent = 'Generating… this can take up to a minute.';
+      const old = document.getElementById('genExamNotes'); if(old) old.remove();
       try{
-        const res = await fetch(s.aiWebhookUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ subject, difficulty, timeLimitMin }) });
-        if(!res.ok) throw new Error('bad status');
-        const data = await res.json();
-        if(!data || !data.content) throw new Error('no content');
+        const data = await examAi('draft', { subject, difficulty, timeLimitMin });
         q('examContent').value = data.content;
         status.textContent = '✓ Draft generated — review and edit before posting.';
+        if(data.notes){
+          const d = document.createElement('details'); d.id = 'genExamNotes'; d.style.cssText = 'margin-top:8px; font-size:13px;';
+          const sm = document.createElement('summary'); sm.textContent = 'Marking notes (only you see these; not posted)'; sm.style.cursor = 'pointer';
+          const p = document.createElement('div'); p.style.cssText = 'white-space:pre-wrap; margin-top:6px; color:var(--muted);'; p.textContent = data.notes;
+          d.append(sm, p); status.insertAdjacentElement('afterend', d);
+        }
       }catch(e){
-        console.error('AI exam generation failed', e);
-        status.textContent = 'Generation failed — check the webhook in Settings.';
+        console.error('Exam generation failed', e);
+        status.textContent = e.message==='not_configured' ? 'The Gemini key is not set on the server.' : e.message==='rate_limited' ? 'Too many drafts this hour. Please try again later.' : 'Generation failed. Please try again in a moment.';
       }finally{
         btn.disabled = false;
       }
