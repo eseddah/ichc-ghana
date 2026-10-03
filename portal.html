@@ -3171,7 +3171,7 @@ async function mockStart(){
     const d = await examAi('mock_create');
     MOCK.exam = d; MOCK.answers = {}; MOCK.endsAt = new Date(d.startedAt).getTime() + d.timeLimitMin*60000; MOCK.phase = 'running';
   }catch(e){
-    MOCK.err = e.message==='rate_limited' ? 'You have started a lot of mocks this hour. Please try again a little later.' : e.message==='not_configured' ? 'The Gemini key is not set on the server.' : 'Could not write an exam just now. Please try again.';
+    MOCK.err = e.message==='quota' ? "Google's free Gemini limit for your key has been reached. It resets daily, or you can turn on billing in Google AI Studio for higher limits. Please try again later." : e.message==='rate_limited' ? 'You have started a lot of mocks this hour. Please try again a little later.' : e.message==='not_configured' ? 'The Gemini key is not set on the server.' : 'Could not write an exam just now. Please try again.';
   }
   MOCK.busy = false; mockPaint();
 }
@@ -5703,7 +5703,7 @@ function wireHandlers(tab){
           }
         }catch(e){
           console.error('Exam generation failed', e);
-          status.textContent = e.message==='not_configured' ? 'The Gemini key is not set on the server.' : e.message==='rate_limited' ? 'Too many drafts this hour. Please try again later.' : e.message==='too_many' ? 'Maximum 40 questions per exam.' : 'Generation failed. Please try again in a moment.';
+          status.textContent = e.message==='quota' ? "Google's free Gemini limit for your key has been reached. It resets daily, or you can turn on billing in Google AI Studio for higher limits. Please try again later." : e.message==='not_configured' ? 'The Gemini key is not set on the server.' : e.message==='rate_limited' ? 'Too many drafts this hour. Please try again later.' : e.message==='too_many' ? 'Maximum 40 questions per exam.' : 'Generation failed. Please try again in a moment.';
         }finally{
           btns.forEach(b=>{ b.disabled = false; });
         }
