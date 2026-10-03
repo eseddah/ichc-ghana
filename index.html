@@ -2869,21 +2869,60 @@ function mcSvg(l, cls){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition, VOICE = { 'English':'en-GH', 'Français':'fr-FR' };
   $('mcLang').addEventListener('change', ()=>{
     mcLang = $('mcLang').value;
-    const note = mcLang==='English' ? 'Back to English. How can I help?' : mcLang==='Français' ? 'Très bien ! Je répondrai en français. Posez-moi votre question.' : `Okay, I will answer in ${mcLang}. You can type in ${mcLang} or English. My ${mcLang} is still improving, so please forgive any mistakes!`;
+    const note = mcLang==='English' ? 'Back to English. How can I help?' : mcLang==='Français' ? 'Très bien ! Je répondrai en français. Posez-moi votre question.' : `Okay, I will answer in ${mcLang}. You can type or tap the mic and speak in ${mcLang} or English. My ${mcLang} is still improving, so please forgive any mistakes!`;
     add(note, 'bot');
-    $('mcMic').style.opacity = (SR && VOICE[mcLang]) ? '1' : '.45';
   });
-  let rec = null;
+  let rec = null, recorder = null, audioParts = [], recTimer = null;
+  const micBusy = on=>{ $('mcMic').style.background = on ? '#FFD9D4' : '#fff'; };
+  const hint = t=>{ $('mcQ').placeholder = t; };
+  const IDLE = 'Ask me anything about chemistry…';
+  async function transcribe(blob){
+    hint('Turning your voice into text…');
+    try{
+      const b64 = await new Promise((res,rej)=>{ const fr = new FileReader(); fr.onload = ()=>res(String(fr.result).split(',')[1]); fr.onerror = rej; fr.readAsDataURL(blob); });
+      const { data, error } = await sb.functions.invoke('voice-to-text', { body:{ audio:b64, mime:blob.type || 'audio/webm', lang:mcLang } });
+      if(error || !data) throw (error || new Error('no data'));
+      if(data.text){ $('mcQ').value = data.text; $('mcChips').style.display = 'none'; $('mcQ').focus(); hint(IDLE); }
+      else hint('I couldn\'t hear anything. Tap the mic and try again.');
+    }catch(e){ console.warn('voice-to-text failed', e); hint('Voice typing couldn\'t understand that. Please try again or type.'); }
+  }
+  async function recordFallback(){
+    if(recorder){ recorder.stop(); return; }
+    if(!navigator.mediaDevices || !window.MediaRecorder || typeof sbReady === 'undefined' || !sbReady){ hint('Voice typing is not available on this device. Please type your question.'); return; }
+    let stream;
+    try{ stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }catch(e){ hint('Please allow microphone access in your browser settings, then tap the mic again.'); return; }
+    const mt = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(t=>MediaRecorder.isTypeSupported(t));
+    audioParts = []; recorder = mt ? new MediaRecorder(stream, { mimeType:mt }) : new MediaRecorder(stream);
+    recorder.ondataavailable = e=>{ if(e.data.size) audioParts.push(e.data); };
+    recorder.onstop = ()=>{
+      clearTimeout(recTimer); stream.getTracks().forEach(t=>t.stop()); micBusy(false);
+      const blob = new Blob(audioParts, { type: (recorder && recorder.mimeType) || mt || 'audio/webm' }); recorder = null;
+      if(blob.size > 1500) transcribe(blob); else hint('I couldn\'t hear anything. Tap the mic and try again.');
+    };
+    recorder.start(); micBusy(true); hint('Listening… tap the mic again when you finish.');
+    recTimer = setTimeout(()=>{ if(recorder) recorder.stop(); }, 30000);
+  }
+  function recognize(code, retried){
+    rec = new SR(); rec.lang = code; rec.interimResults = true;
+    let failed = false; micBusy(true); hint('Listening…');
+    rec.onresult = e=>{
+      const t = [...e.results].map(r=>r[0].transcript).join(' '); $('mcQ').value = t; $('mcChips').style.display = 'none';
+      if(e.results[e.results.length-1].isFinal){ rec.stop(); if(t.trim()) ask(t); }
+    };
+    rec.onerror = e=>{
+      failed = true; rec = null; micBusy(false); const c = e.error;
+      if(c === 'not-allowed' || c === 'service-not-allowed') hint('Please allow microphone access in your browser settings, then tap the mic again.');
+      else if(c === 'language-not-supported' && !retried) recognize(code.startsWith('fr') ? 'fr-FR' : 'en-US', true);
+      else if(c === 'no-speech' || c === 'aborted') hint('I couldn\'t hear anything. Tap the mic and try again.');
+      else recordFallback();
+    };
+    rec.onend = ()=>{ if(!failed){ rec = null; micBusy(false); hint(IDLE); } };
+    try{ rec.start(); }catch(e){ rec = null; micBusy(false); recordFallback(); }
+  }
   $('mcMic').addEventListener('click', ()=>{
-    if(!SR){ $('mcQ').placeholder = 'Voice typing is not supported in this browser. Please type.'; return; }
-    if(!VOICE[mcLang]){ $('mcQ').placeholder = `Voice typing isn't available for ${mcLang} yet. Please type.`; return; }
     if(rec){ rec.stop(); return; }
-    rec = new SR(); rec.lang = VOICE[mcLang]; rec.interimResults = true; rec.maxAlternatives = 1;
-    $('mcMic').style.background = '#FFD9D4';
-    rec.onresult = e=>{ const t = [...e.results].map(r=>r[0].transcript).join(' '); $('mcQ').value = t; $('mcChips').style.display = 'none'; if(e.results[e.results.length-1].isFinal){ rec.stop(); if(t.trim()) ask(t); } };
-    rec.onerror = ()=>{ $('mcQ').placeholder = 'I could not hear that. Please try again or type.'; };
-    rec.onend = ()=>{ rec = null; $('mcMic').style.background = '#fff'; };
-    try{ rec.start(); }catch(e){ rec = null; $('mcMic').style.background = '#fff'; }
+    if(recorder){ recorder.stop(); return; }
+    if(SR && VOICE[mcLang]) recognize(VOICE[mcLang]); else recordFallback();
   });
   if(!sessionStorage.getItem('ichc_tip')){ setTimeout(()=>{ if(!$('mcChat').classList.contains('on')){ $('mcTip').classList.add('on'); setTimeout(()=>$('mcTip').classList.remove('on'), 6000); } }, 2500); }
 })();
