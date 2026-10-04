@@ -2026,7 +2026,7 @@ async function handleGoogleSignIn(ev){
   // otherwise let someone straight through. It also records which door was
   // picked, so the account's actual role can be checked against it once
   // we're back from Google — see resolveGoogleSession().
-  sessionStorage.setItem('ichc_pending_role', clickedRole);
+  sessionStorage.setItem('ichc_pending_role', clickedRole); sessionStorage.setItem('ichc_last_role', clickedRole);
   // Flip every option's state synchronously, before the await below, so there's
   // no dead gap between the click and visible feedback while the browser sets
   // up the redirect to Google.
@@ -2117,6 +2117,7 @@ async function redirectToRegisteredAccount(email, pendingRole){
 
 const ROLE_LABEL = { ambassador:'Ambassador', coordinator:'Coordinator', student:'Student' };
 function showAuthPopup(title, message, opts={}){
+  const oldSwitch = document.getElementById('authPopupSwitchBtn'); if(oldSwitch) oldSwitch.remove();
   document.getElementById('authPopupTitle').textContent = title;
   document.getElementById('authPopupText').textContent = message;
   document.getElementById('authPopupApplyLink').classList.toggle('hidden', !opts.applyLink);
@@ -2141,9 +2142,24 @@ function showRoleMismatchScreen(actualRoles, pendingRole){
 function showEmailNotFoundScreen(email){
   showAuthPopup(
     'No record found',
-    `${email} has no record in the programme database. Kindly apply.`,
+    `${email} has no record in the programme database. If you registered with a different Gmail address, use the button below to sign in with that one. Otherwise, please apply.`,
     { applyLink: true }
   );
+  // Most failed sign-ins are people using a different Google account from the one they registered with.
+  const ok = document.getElementById('authPopupOkBtn');
+  const b = document.createElement('button');
+  b.id = 'authPopupSwitchBtn'; b.type = 'button'; b.className = 'btn teal'; b.style.cssText = 'margin-right:8px;';
+  b.textContent = 'Use a different Google account';
+  b.addEventListener('click', async ()=>{
+    b.disabled = true; b.textContent = 'Opening Google…';
+    try{
+      const role = sessionStorage.getItem('ichc_last_role') || 'student';
+      sessionStorage.setItem('ichc_pending_role', role);
+      if(sbReady) await sb.auth.signOut();
+      await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.href.split('#')[0], queryParams:{ prompt:'select_account' } } });
+    }catch(e){ b.disabled = false; b.textContent = 'Use a different Google account'; }
+  });
+  ok.parentNode.insertBefore(b, ok);
 }
 
 async function signOutEverywhere(){
