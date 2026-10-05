@@ -1879,14 +1879,7 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
   const recipients = audienceFor(coordinatorId);
   const s = DB.settings || {};
 
-  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
-    recipients.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
-      queueEmailSend({
-        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-        template_params: { to_email:r.email, to_name:r.name, from_name:author, subject:title, message:withPortalLink(body) }
-      });
-    });
-  }
+  dispatchEmails(recipients, { subject:title, body, author, kind:'announcement' });
   if(s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       const isStudent = r.coordinatorId !== undefined;
@@ -1909,14 +1902,7 @@ async function dispatchAlertNotifications(alert){
   const title = `${prefix}: ${alert.title}`;
   const body = alert.actionUrl ? `${alert.message} ${normalizeUrl(alert.actionUrl)}` : alert.message;
 
-  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
-    targets.filter(r=>r.email && r.notifyEmail!==false).forEach(r=>{
-      queueEmailSend({
-        service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-        template_params: { to_email:r.email, to_name:r.name, from_name:alert.author, subject:title, message:withPortalLink(body) }
-      });
-    });
-  }
+  dispatchEmails(targets, { subject:title, body, author:alert.author, kind:'alert' });
   if(s.webhookUrl){
     targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:withPortalLink(body),
@@ -1940,12 +1926,7 @@ async function notifyApplicantDecision({app, decision, reason}){
   if(reason) bodyLines.push(reason);
   const body = bodyLines.join(' ');
 
-  if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId && app.email){
-    queueEmailSend({
-      service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-      template_params: { to_email:app.email, to_name:app.name, from_name:ME.name, subject:title, message:withPortalLink(body) }
-    });
-  }
+  if(app.email) dispatchEmails([{ email:app.email, name:app.name, id:app.id, role:'applicant' }], { subject:title, body, author:ME.name, kind:'decision' });
   if(s.webhookUrl && app.phone && wantsSms){
     queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:withPortalLink(body),
       recipientId:app.id, recipientRole:'applicant', studentCoordinatorId:null });
@@ -2554,6 +2535,7 @@ const TAB_ICONS = {
   certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
   chat:'<path d="M4 5h16v11H11l-4 4v-4H4z"/>',
   mock:'<circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M9 3h6"/>',
+  emaillog:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
@@ -2575,8 +2557,8 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['notifications','Notifications']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
@@ -2660,6 +2642,7 @@ function render(tab){
   else if(tab==='certificates') html = certificatesView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='load' && ME.role==='ambassador') html = coordLoadView();
+  else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
@@ -3425,6 +3408,89 @@ async function shareCert(id){
   });
 }
 document.addEventListener('click', e=>{ const b = e.target.closest('[data-share-cert]'); if(b) shareCert(b.dataset.shareCert); });
+
+// ---- Server email (Brevo): branded, logged, resendable. Falls back to EmailJS when the server is not set up ----
+let _srvEmailQueue = Promise.resolve();
+function queueServerEmail(payload, fallback){
+  _srvEmailQueue = _srvEmailQueue.then(async ()=>{
+    try{
+      const { error } = await sb.functions.invoke('send-email', { body: payload });
+      if(error){
+        let m = ''; try{ m = (await error.context.json()).error; }catch(e){}
+        if(m === 'not_configured' && fallback) fallback(); else console.error('Server email failed:', m, payload.to);
+      }
+    }catch(e){ console.error('Server email error', e); }
+    await new Promise(r=>setTimeout(r, 400));
+  });
+}
+function dispatchEmails(list, { subject, body, author, kind }){
+  const s = DB.settings || {};
+  const targets = list.filter(r=>r.email && r.notifyEmail!==false);
+  const useServer = s.emailMode === 'server' && typeof sbReady !== 'undefined' && sbReady;
+  const viaJs = r=>{
+    if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)
+      queueEmailSend({ service_id:s.emailjsServiceId, template_id:s.emailjsTemplateId, user_id:s.emailjsPublicKey,
+        template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:withPortalLink(body) } });
+  };
+  targets.forEach(r=>{
+    if(!useServer){ viaJs(r); return; }
+    const isStudent = r.coordinatorId !== undefined;
+    queueServerEmail({ to:r.email, name:r.name, subject, message:withPortalLink(body), author, kind: kind||'', replyTo: ME && ME.email,
+      recipientId:r.id, recipientRole: r.role || (isStudent ? 'student' : 'coordinator'), studentCoordinatorId: isStudent ? r.coordinatorId : null }, ()=>viaJs(r));
+  });
+}
+
+let EMAILLOG = null;
+function emailScopedRows(){ return (EMAILLOG||[]).filter(e=>ME.role==='ambassador' || e.studentCoordinatorId===ME.id); }
+function emailOutstanding(rows){
+  const ok = rows.filter(e=>e.status==='sent'), seen = new Set(), out = [];
+  rows.slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
+    if(e.status!=='failed') return;
+    const k = e.to + '|' + e.subject + '|' + e.message; if(seen.has(k)) return; seen.add(k);
+    if(ok.some(d=>d.to===e.to && d.subject===e.subject && d.message===e.message && d.ts>=e.ts)) return;
+    out.push(e);
+  });
+  return out;
+}
+function emailLogPaint(note){
+  const root = document.getElementById('emailLogRoot'); if(!root) return;
+  const rows = emailScopedRows().slice().sort((a,b)=>b.ts-a.ts), out = emailOutstanding(rows), sent = rows.filter(e=>e.status==='sent').length;
+  const badge = st=>`<span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; ${st==='sent'?'background:rgba(31,138,112,.14); color:var(--teal-deep);':'background:rgba(192,57,43,.12); color:#C0392B;'}">${st==='sent'?'Sent':'Failed'}</span>`;
+  root.innerHTML = `
+    <div class="section-title"><div><h2>Email Log</h2><p>Every email sent through the server, with its result. Emails sent through EmailJS aren't logged here.</p></div></div>
+    ${note ? `<p class="psms-status ${note.ok?'ok':'bad'}">${escapeHtml(note.text)}</p>` : ''}
+    ${!rows.length ? `<div class="empty">No server emails yet. Choose "Server via Brevo" under Settings once the Brevo key is added, and every announcement email will be listed here.</div>` : `
+    <p class="note" style="margin-bottom:14px;">${sent} of ${rows.length} accepted for delivery.</p>
+    ${out.length ? `<div class="card" id="emailResendBox" style="margin-bottom:16px; border-color:rgba(192,57,43,.35);">
+      <h3 style="margin:0 0 6px; font-size:16px;">${out.length} email${out.length>1?'s':''} didn't go out</h3>
+      <p class="note" style="margin:0 0 10px;">Fix the cause (for example the daily limit resetting), then press Resend.</p>
+      <button class="btn teal" id="emailResendAll" type="button">Resend all ${out.length}</button><span id="emailResendStatus" class="note" style="margin-left:10px;"></span>
+      <div style="margin-top:8px; font-size:12.5px; color:var(--muted);">Latest reason: ${escapeHtml(String(out[0].detail||'').slice(0,160))}</div></div>` : ''}
+    <div class="list">${rows.slice(0,100).map(e=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(e.name||e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+      <div class="item-body" style="font-size:13px;">${escapeHtml(e.to)} ${badge(e.status)}</div><div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(e.subject)}</div>
+      ${e.status==='failed' && e.detail ? `<div class="item-body" style="font-size:12px; color:#C0392B;">${escapeHtml(String(e.detail).slice(0,160))}</div>` : ''}</div>`).join('')}</div>`}`;
+  const b = document.getElementById('emailResendAll');
+  if(b) b.addEventListener('click', async ()=>{
+    b.disabled = true; const st = document.getElementById('emailResendStatus'); let n = 0;
+    for(const e of out){
+      n++; st.textContent = `Resending ${n} of ${out.length}…`;
+      try{ await sb.functions.invoke('send-email', { body:{ to:e.to, name:e.name, subject:e.subject, message:e.message, author:e.author, kind:e.kind, replyTo:ME.email, recipientId:e.recipientId, recipientRole:e.recipientRole, studentCoordinatorId:e.studentCoordinatorId } }); }catch(err){}
+      await new Promise(r=>setTimeout(r, 400));
+    }
+    st.textContent = 'Checking results…';
+    await new Promise(r=>setTimeout(r, 1500));
+    EMAILLOG = (await sGet('email:log', true)) || [];
+    const left = emailOutstanding(emailScopedRows()).length;
+    emailLogPaint({ ok: left===0, text: left===0 ? `All ${out.length} sent.` : `${out.length-left} of ${out.length} sent. The rest still failed, check the reason shown and try again.` });
+  });
+}
+async function wireEmailLog(){
+  const root = document.getElementById('emailLogRoot'); if(!root) return;
+  root.innerHTML = '<div class="empty">Loading…</div>';
+  EMAILLOG = (await sGet('email:log', true)) || [];
+  emailLogPaint();
+}
+
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
@@ -4751,6 +4817,10 @@ function settingsView(){
   <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
   <div class="card" style="margin-bottom:18px;">
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
+    <h3 style="font-size:15px; margin:18px 0 8px;">Email delivery</h3>
+    <div class="field" style="margin:0 0 6px;"><label>Send emails through</label>
+      <select id="setEmailMode"><option value="emailjs" ${s.emailMode==='server'?'':'selected'}>EmailJS (from the browser; small free limit)</option><option value="server" ${s.emailMode==='server'?'selected':''}>Server via Brevo (300 free per day, with an Email Log)</option></select></div>
+    <p class="note" style="margin:0 0 6px;">Server mode needs the Brevo key set on the server. Until it is, emails automatically go through EmailJS instead, so nothing is lost.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email — via EmailJS (free tier available)</h3>
     <div class="field" style="margin:0 0 10px;"><label>Public key</label><input id="setEmailKey" value="${escapeHtml(s.emailjsPublicKey||'')}" placeholder="EmailJS public key"></div>
     <div class="field" style="margin:0 0 10px;"><label>Service ID</label><input id="setEmailService" value="${escapeHtml(s.emailjsServiceId||'')}" placeholder="EmailJS service ID"></div>
@@ -5041,6 +5111,7 @@ function wireHandlers(tab){
   if(tab==='mock') wireMock();
   if(tab==='chat') wireChat();
   if(tab==='smslog') wireSmsResend();
+  if(tab==='emaillog') wireEmailLog();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
   // a data-ack-alert button for the same underlying alert.
@@ -5519,6 +5590,7 @@ function wireHandlers(tab){
     btn.disabled = true;
     DB.settings = {
       ...DB.settings,
+      emailMode: q('setEmailMode').value,
       emailjsPublicKey: q('setEmailKey').value.trim(),
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
