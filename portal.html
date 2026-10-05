@@ -1209,7 +1209,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], load:['students','coordinators']
+  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -2535,6 +2535,7 @@ const TAB_ICONS = {
   certificates:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
   chat:'<path d="M4 5h16v11H11l-4 4v-4H4z"/>',
   mock:'<circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M9 3h6"/>',
+  personalemail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><circle cx="18" cy="17" r="3"/>',
   emaillog:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
   load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
@@ -2557,7 +2558,7 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -2641,6 +2642,7 @@ function render(tab){
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
+  else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
   else if(tab==='load' && ME.role==='ambassador') html = coordLoadView();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
@@ -3489,6 +3491,123 @@ async function wireEmailLog(){
   root.innerHTML = '<div class="empty">Loading…</div>';
   EMAILLOG = (await sGet('email:log', true)) || [];
   emailLogPaint();
+}
+
+
+// ---- Email a student: one personal email to one student (ambassador). Mirrors "Text a student". ----
+const PEM = { studentId:null, search:'', subject:'', body:'', sign:true, link:false, sending:false, status:null, onlyEmail:true };
+function pemHasEmail(s){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s && s.email || '').trim()); }
+function pemSelected(){ return (DB.students||[]).find(s=>s.id===PEM.studentId) || null; }
+function pemStudents(){
+  const term = PEM.search.trim().toLowerCase();
+  return (DB.students||[]).slice().filter(s=>!PEM.onlyEmail || pemHasEmail(s))
+    .filter(s=>!term || [s.name, s.email, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
+    .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+}
+function pemListHtml(){
+  if(!(DB.students||[]).length) return '<div class="empty">No students on the roster yet.</div>';
+  const rows = pemStudents();
+  if(!rows.length) return `<div class="empty">No student matches "${escapeHtml(PEM.search)}".</div>`;
+  return rows.map(s=>{
+    const ok = pemHasEmail(s), on = PEM.studentId===s.id;
+    return `<button type="button" class="psms-row${on?' on':''}" data-pem-pick="${escapeHtml(s.id)}" aria-pressed="${on}" ${ok?'':'disabled'}>
+      <span class="psms-name">${escapeHtml(s.name||'Unnamed student')}</span>
+      <span class="psms-sub">${ok ? escapeHtml(s.email) : 'No email address on file'}${s.coordinatorId ? ' · ' + escapeHtml(coordName(s.coordinatorId)) : ''}</span>
+      ${ok && s.notifyEmail===false ? '<span class="psms-flag">Emails off</span>' : ''}</button>`;
+  }).join('');
+}
+function pemToHtml(){
+  const st = pemSelected();
+  if(!st) return '<div class="psms-empty">Choose a student from the list to write to them.</div>';
+  return `<div class="psms-to-name">${escapeHtml(st.name||'Unnamed student')}</div><div class="psms-to-sub">${escapeHtml(st.email||'No email address on file')}${st.notifyEmail===false ? ' · Email updates are off for this student' : ''}</div>`;
+}
+function pemRecentHtml(){
+  const rows = (EMAILLOG||[]).filter(e=>e.kind==='personal').sort((a,b)=>b.ts-a.ts).slice(0,8);
+  if(!rows.length) return '<div class="empty">Personal emails you send will appear here with their result.</div>';
+  return rows.map(e=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(e.name||e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+    <div class="item-body" style="font-size:13px;">${escapeHtml(e.subject)} <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; ${e.status==='sent'?'background:rgba(31,138,112,.14); color:var(--teal-deep);':'background:rgba(192,57,43,.12); color:#C0392B;'}">${e.status==='sent'?'Sent':'Failed'}</span></div>
+    ${e.status==='failed' ? `<div class="item-body" style="font-size:12px; color:#C0392B;">${escapeHtml(String(e.detail||'').slice(0,160))}</div><button type="button" class="mc-chip" style="margin-top:8px" data-pem-reuse="${escapeHtml(e.id)}">Put this email back in the box</button>` : ''}</div>`).join('');
+}
+function personalEmailView(){
+  return `<div class="section-title"><div><h2>Email a student</h2><p>Send one email to one student. It goes only to the person you pick, never to a group.</p></div></div>
+  <div class="psms-wrap">
+    <div class="card">
+      <div class="field" style="margin-bottom:10px;"><label for="pemSearch">Find a student</label><input id="pemSearch" type="search" autocomplete="off" placeholder="Name, email, group or coordinator" value="${escapeHtml(PEM.search)}"></div>
+      <label class="psms-opts" style="margin:0 0 8px"><input type="checkbox" id="pemOnlyEmail" ${PEM.onlyEmail?'checked':''}> Hide students without an email address</label>
+      <div id="pemList" class="psms-list">${pemListHtml()}</div>
+    </div>
+    <div>
+      <div class="card">
+        <div id="pemTo" class="psms-to">${pemToHtml()}</div>
+        <div class="field"><label for="pemSubject">Subject</label><input id="pemSubject" type="text" maxlength="150" placeholder="What is this about?" value="${escapeHtml(PEM.subject)}"></div>
+        <div class="field"><label for="pemBody">Message</label><textarea id="pemBody" rows="8" maxlength="3000" placeholder="Write your message">${escapeHtml(PEM.body)}</textarea></div>
+        <div class="psms-opts">
+          <label><input type="checkbox" id="pemSign" ${PEM.sign?'checked':''}> Sign with my name</label>
+          ${portalUrl() ? `<label><input type="checkbox" id="pemLink" ${PEM.link?'checked':''}> Add the portal link</label>` : ''}
+        </div>
+        <div class="psms-foot"><span class="psms-count">The student can reply to you directly.</span><button class="btn teal" id="pemSend" type="button">Send email</button></div>
+        <div id="pemStatus" class="psms-status" role="status" aria-live="polite"></div>
+      </div>
+      <h3 style="font-size:15px; margin:22px 0 10px;">Recent personal emails</h3>
+      <div id="pemRecent" class="list">${pemRecentHtml()}</div>
+    </div>
+  </div>`;
+}
+function pemRefresh(){
+  const q = id=>document.getElementById(id); if(!q('pemTo')) return;
+  const st = pemSelected();
+  q('pemTo').innerHTML = pemToHtml();
+  const btn = q('pemSend');
+  btn.disabled = PEM.sending || !st || !pemHasEmail(st) || !PEM.subject.trim() || !PEM.body.trim();
+  const first = st && st.name ? String(st.name).trim().split(/\s+/)[0] : '';
+  btn.textContent = PEM.sending ? 'Sending…' : (first ? `Email ${first}` : 'Send email');
+  const stat = q('pemStatus'); stat.className = 'psms-status' + (PEM.status ? (PEM.status.ok ? ' ok' : ' bad') : ''); stat.textContent = PEM.status ? PEM.status.msg : '';
+}
+async function pemSend(){
+  const st = pemSelected(); if(PEM.sending || !st || !pemHasEmail(st)) return;
+  const subject = PEM.subject.trim(); let message = PEM.body.trim(); if(!subject || !message) return;
+  if(st.notifyEmail===false && !confirm(`Email updates are off for ${st.name}. Send this one email anyway?`)) return;
+  if(PEM.sign && ME && ME.name) message += `\n\n${ME.name}`;
+  if(PEM.link) message = withPortalLink(message);
+  PEM.sending = true; PEM.status = null; pemRefresh();
+  let ok = false, msg = '';
+  try{
+    const { error } = await sb.functions.invoke('send-email', { body:{ to:st.email, name:st.name, subject, message, author:ME.name, kind:'personal', replyTo:ME.email, recipientId:st.id, recipientRole:'student', studentCoordinatorId:st.coordinatorId||null } });
+    if(error){
+      let code = '', detail = ''; try{ const j = await error.context.json(); code = j.error; detail = j.detail || ''; }catch(e){}
+      const s = DB.settings || {};
+      if(code === 'not_configured' && s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId){
+        queueEmailSend({ service_id:s.emailjsServiceId, template_id:s.emailjsTemplateId, user_id:s.emailjsPublicKey, template_params:{ to_email:st.email, to_name:st.name, from_name:ME.name, subject, message } });
+        ok = true; msg = `Email to ${st.name} was sent through EmailJS because the Brevo server email is not set up yet. It won't appear in the Email Log.`;
+      } else msg = code === 'not_configured' ? 'Server email is not set up yet. Add the Brevo secrets in Supabase first.' : code === 'rate_limited' ? 'Too many emails sent this hour. Please try again later.' : `Couldn't send to ${st.name}. ${detail || 'Please try again.'} Your message is still here.`;
+    } else { ok = true; msg = `Email sent to ${st.name}. Its result will appear under Recent personal emails.`; }
+  }catch(e){ msg = `Couldn't send to ${st.name}. Check your connection and try again. Your message is still here.`; }
+  PEM.sending = false; PEM.status = { ok, msg };
+  if(ok){ PEM.subject = ''; PEM.body = ''; const a = document.getElementById('pemSubject'), b = document.getElementById('pemBody'); if(a) a.value = ''; if(b) b.value = ''; }
+  pemRefresh();
+  setTimeout(async ()=>{ try{ EMAILLOG = (await sGet('email:log', true)) || []; }catch(e){} const r = document.getElementById('pemRecent'); if(r && currentTab==='personalemail') r.innerHTML = pemRecentHtml(); }, 2500);
+}
+async function wirePersonalEmail(){
+  const q = id=>document.getElementById(id); if(!q('pemSend')) return;
+  q('pemSearch').addEventListener('input', e=>{ PEM.search = e.target.value; q('pemList').innerHTML = pemListHtml(); });
+  q('pemOnlyEmail').addEventListener('change', e=>{ PEM.onlyEmail = e.target.checked; q('pemList').innerHTML = pemListHtml(); });
+  q('pemList').addEventListener('click', e=>{
+    const b = e.target.closest('[data-pem-pick]'); if(!b || b.disabled) return;
+    PEM.studentId = b.dataset.pemPick; PEM.status = null; q('pemList').innerHTML = pemListHtml(); pemRefresh(); q('pemSubject').focus();
+  });
+  q('pemSubject').addEventListener('input', e=>{ PEM.subject = e.target.value; pemRefresh(); });
+  q('pemBody').addEventListener('input', e=>{ PEM.body = e.target.value; pemRefresh(); });
+  q('pemSign').addEventListener('change', e=>{ PEM.sign = e.target.checked; });
+  if(q('pemLink')) q('pemLink').addEventListener('change', e=>{ PEM.link = e.target.checked; });
+  q('pemSend').addEventListener('click', pemSend);
+  q('pemRecent').addEventListener('click', e=>{
+    const b = e.target.closest('[data-pem-reuse]'); if(!b) return;
+    const ent = (EMAILLOG||[]).find(x=>x.id===b.dataset.pemReuse); if(!ent) return;
+    PEM.studentId = ent.recipientId || PEM.studentId; PEM.subject = ent.subject; PEM.body = ent.message; PEM.sign = false; PEM.link = false; PEM.status = null;
+    render('personalemail');
+  });
+  pemRefresh();
+  try{ EMAILLOG = (await sGet('email:log', true)) || []; const r = q('pemRecent'); if(r) r.innerHTML = pemRecentHtml(); }catch(e){}
 }
 
 function csvCell(v){
@@ -5108,6 +5227,7 @@ function examsView(){
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='personalsms') wirePersonalSms();
+  if(tab==='personalemail') wirePersonalEmail();
   if(tab==='mock') wireMock();
   if(tab==='chat') wireChat();
   if(tab==='smslog') wireSmsResend();
