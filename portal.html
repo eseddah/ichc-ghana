@@ -7,6 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function (OneSignal) {
+    try{ await OneSignal.init({ appId: "c711029f-212c-4c50-8498-ea78aecbb153" }); }
+    catch(e){ console.warn('OneSignal init failed', e); }
+  });
+</script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -749,6 +757,7 @@
             </div>
             <img id="avatarImg" class="avatar-circle hidden" alt="">
             <div id="avatarFallback" class="avatar-circle avatar-fallback"></div>
+            <button class="switchbtn" id="pushBell" type="button" title="Notifications" style="margin-left:2px;">&#128276; Notifications: ...</button>
             <button class="switchbtn" id="switchUser" style="margin-left:2px;">Switch user</button>
           </div>
         </div>
@@ -2327,6 +2336,62 @@ function showApp(){
   startPresenceLoop();
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
+  try{ pushSetup(); }catch(e){ console.warn('Push setup failed', e); }
+}
+
+/* ---------- Web push notifications (OneSignal) ----------
+   Signing in links this device to the person's email; the browser's Allow prompt is
+   shown once. The bell in the top bar turns notifications on or off at any time. */
+function pushRun(fn){
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async function(OneSignal){ try{ await fn(OneSignal); }catch(e){ console.warn('Push error', e); } });
+}
+function pushPaint(OneSignal){
+  const b = document.getElementById('pushBell'); if(!b) return;
+  const native = OneSignal.Notifications.permissionNative;
+  const on = OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn;
+  b.textContent = native==='denied' ? '\uD83D\uDD15 Notifications: blocked' : on ? '\uD83D\uDD14 Notifications: on' : '\uD83D\uDD15 Notifications: off';
+}
+function pushSetup(){
+  const email = (ME && ME.email || '').toLowerCase();
+  if(!email) return;
+  const bell = document.getElementById('pushBell');
+  if(bell && !bell.dataset.wired){
+    bell.dataset.wired = '1';
+    bell.addEventListener('click', ()=>pushToggle());
+  }
+  pushRun(async (OneSignal)=>{
+    await OneSignal.login(email);
+    const userTurnedOff = localStorage.getItem('ichc_push_off')==='1';
+    if(userTurnedOff){
+      OneSignal.User.PushSubscription.optOut();
+    }else if(OneSignal.Notifications.permissionNative==='default'){
+      await OneSignal.Notifications.requestPermission();
+    }else if(OneSignal.Notifications.permission){
+      OneSignal.User.PushSubscription.optIn();
+    }
+    OneSignal.User.PushSubscription.addEventListener('change', ()=>pushPaint(OneSignal));
+    pushPaint(OneSignal);
+  });
+}
+function pushToggle(){
+  pushRun(async (OneSignal)=>{
+    const native = OneSignal.Notifications.permissionNative;
+    if(native==='denied'){
+      alert('Notifications are blocked for this site. Open your browser settings for this site and allow notifications, then reload.');
+      return;
+    }
+    const on = OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn;
+    if(on){
+      localStorage.setItem('ichc_push_off','1');
+      OneSignal.User.PushSubscription.optOut();
+    }else{
+      localStorage.removeItem('ichc_push_off');
+      if(native==='default') await OneSignal.Notifications.requestPermission();
+      OneSignal.User.PushSubscription.optIn();
+    }
+    pushPaint(OneSignal);
+  });
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -2340,6 +2405,7 @@ async function switchUser(ev, forceFull){
   }
   if(sbReady && !keepSession) await sb.auth.signOut();
   await sDelete('me', false);
+  pushRun(async (OneSignal)=>{ await OneSignal.logout(); });
   ME = null;
   document.getElementById('app').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
