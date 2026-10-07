@@ -88,6 +88,14 @@
   .done .tick{width:54px; height:54px; border-radius:50%; background:rgba(31,138,112,.14); color:var(--teal-deep); display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:26px;}
 
   @media(max-width:480px){ .chip-row{grid-template-columns:1fr 1fr;} }
+
+  .stepper{display:flex; gap:6px; margin:0 0 16px;} .stepper i{flex:1; height:6px; border-radius:99px; background:var(--line);} .stepper i.on{background:var(--teal);} .stepper i.cur{background:var(--amber);}
+  .sec-h{font-family:'Fraunces',Georgia,serif; font-size:20px; margin:0 0 14px;} .hint{color:var(--muted); font-size:13.5px; margin:-6px 0 12px;}
+  .chip-wrap{display:flex; flex-wrap:wrap; gap:8px;} .chip-wrap .chip{width:auto; padding:9px 14px;}
+  .check{display:flex; gap:10px; align-items:flex-start; font-size:14.5px; margin:10px 0; cursor:pointer;} .check input{width:auto; margin-top:3px;}
+  .nav-row{display:flex; gap:10px; justify-content:space-between; margin-top:18px;} .btn.ghost{background:transparent; color:var(--navy-deep); border:1.5px solid var(--line);}
+  .error{color:#C0392B; font-size:13.5px; min-height:18px; margin:10px 0 0;}
+  .track{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:18px;} .track span{font-size:12px; font-weight:700; padding:5px 11px; border-radius:99px; background:var(--line); color:var(--muted);} .track span.now{background:var(--teal); color:#fff;}
 </style>
 </head>
 <body>
@@ -111,106 +119,66 @@
 <div class="wrap">
   <div class="top"><div class="hexlogo" style="width:120px; color:var(--navy-deep);"></div></div>
   <h1 class="title">Join Programme Now</h1>
-  <p class="sub">No account needed to apply — just fill this in. Right after you submit, you'll be sent to our WhatsApp group so you're plugged in from day one. Portal sign-in is a separate step — if you're accepted, the Ambassador will follow up by email with how to sign in.</p>
+  <p class="sub">Applications are open. Fill in each section (about 5 minutes) and submit. We'll email you to confirm we received it. If you're accepted, your student portal is switched on and you'll be guided through a short onboarding.</p>
+
+  <div class="stepper" id="stepper" aria-label="Application progress"></div>
 
   <div class="card" id="formCard">
-    <div class="field">
-      <label>Full name</label>
-      <input id="fName" placeholder="e.g. Ama Owusu">
-    </div>
-    <div class="field">
-      <label>Email</label>
-      <input id="fEmail" type="email" placeholder="e.g. ama.owusu@email.com">
-    </div>
-    <div class="field">
-      <label>Phone number <span class="req">(required — so a coordinator can reach you)</span></label>
-      <input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000">
-    </div>
-    <div class="field checkline" style="margin-top:-8px; margin-bottom:18px;">
-      <input type="checkbox" id="fNotifySms" checked> <label style="text-transform:none; font-weight:500; margin:0; color:var(--ink);" for="fNotifySms">Text me call sheet updates and announcements</label>
-    </div>
-
-    <div class="field">
-      <label>School</label>
-      <input id="fSchool" placeholder="e.g. Achimota School">
-    </div>
-    <div class="field">
-      <label>Region</label>
-      <select id="fRegion">
-        <option value="">Select your region</option>
-        <option>Ahafo</option><option>Ashanti</option><option>Bono</option><option>Bono East</option>
-        <option>Central</option><option>Eastern</option><option>Greater Accra</option><option>North East</option>
-        <option>Northern</option><option>Oti</option><option>Savannah</option><option>Upper East</option>
-        <option>Upper West</option><option>Volta</option><option>Western</option><option>Western North</option>
-        <option>Outside Ghana</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Age range</label>
-      <div class="chip-row" id="ageChips">
-        <div class="chip" data-age="14-17">14 – 17</div>
-        <div class="chip" data-age="18-21">18 – 21</div>
-        <div class="chip" data-age="22-25">22 – 25</div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>How did you hear about us?</label>
-      <select id="fHeard">
-        <option value="">Select one</option>
-        <option>WhatsApp</option>
-        <option>School / teacher</option>
-        <option>Friend or classmate</option>
-        <option>Social media</option>
-        <option>Coordinator or Ambassador</option>
-        <option>Other</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Why do you want to join? <span class="opt">(a few sentences is plenty)</span></label>
-      <textarea id="fMessage" placeholder="Tell us a bit about your interest in chemistry and what you're hoping to get from the programme."></textarea>
-    </div>
-
-    <p class="err" id="formErr"></p>
-    <button class="btn" id="submitBtn">JOIN PROGRAMME NOW</button>
+    <section class="sec" data-sec="1"><h2 class="sec-h">1. About you</h2>
+      <div class="field"><label>Full name</label><input id="fName" placeholder="e.g. Ama Owusu" autocomplete="name"></div>
+      <div class="field"><label>Email <span class="req">(you'll sign in to the portal with this email)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
+      <div class="field"><label>Phone number <span class="req">(required, so a coordinator can reach you)</span></label><input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000" autocomplete="tel"></div>
+      <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates</label>
+      <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="Under 15">Under 15</button><button type="button" class="chip" data-age="15 to 17">15 to 17</button><button type="button" class="chip" data-age="18 and over">18 and over</button></div></div>
+    </section>
+    <section class="sec hidden" data-sec="2"><h2 class="sec-h">2. School</h2>
+      <div class="field"><label>School name</label><input id="fSchool" placeholder="e.g. Presec Legon"></div>
+      <div class="field"><label>Class or level</label><select id="fLevel"><option value="">Choose one</option><option>JHS 3</option><option>SHS 1</option><option>SHS 2</option><option>SHS 3</option><option>Completed SHS</option><option>University</option><option>Other</option></select></div>
+      <div class="field"><label>Region or town</label><input id="fRegion" placeholder="e.g. Greater Accra"></div>
+      <div class="field"><label>How did you hear about us? <span class="req">(optional)</span></label><input id="fHeard" placeholder="e.g. a friend, my teacher, social media"></div>
+    </section>
+    <section class="sec hidden" data-sec="3"><h2 class="sec-h">3. Your chemistry background</h2>
+      <div class="field"><label>How would you describe your chemistry level?</label><select id="fChemLevel"><option value="">Choose one</option><option>Just starting out</option><option>I know the basics</option><option>Comfortable with the school syllabus</option><option>I study beyond the school syllabus</option></select></div>
+      <div class="field"><label>What chemistry have you studied so far? <span class="req">(a few lines)</span></label><textarea id="fBackground" rows="4" placeholder="Topics, classes, books, online courses, anything relevant"></textarea></div>
+      <div class="field"><label>Previous competition experience</label><select id="fCompetition"><option value="">Choose one</option><option>None yet</option><option>School-level competition</option><option>Regional competition</option><option>National competition</option><option>International competition</option></select></div>
+      <div class="field"><label>Tell us about it <span class="req">(optional)</span></label><input id="fCompDetails" placeholder="Which competition, when, and how did it go?"></div>
+    </section>
+    <section class="sec hidden" data-sec="4"><h2 class="sec-h">4. Areas of chemistry you like</h2>
+      <p class="hint">Pick at least one. You can choose several.</p>
+      <div class="chip-wrap" id="interestChips"><button type="button" class="chip" data-int="Organic chemistry">Organic chemistry</button><button type="button" class="chip" data-int="Inorganic chemistry">Inorganic chemistry</button><button type="button" class="chip" data-int="Physical chemistry">Physical chemistry</button><button type="button" class="chip" data-int="Analytical chemistry">Analytical chemistry</button><button type="button" class="chip" data-int="Biochemistry">Biochemistry</button><button type="button" class="chip" data-int="Environmental chemistry">Environmental chemistry</button><button type="button" class="chip" data-int="Industrial and everyday chemistry">Industrial and everyday chemistry</button><button type="button" class="chip" data-int="Solving competition problems">Solving competition problems</button><button type="button" class="chip" data-int="Lab skills and practicals">Lab skills and practicals</button></div>
+    </section>
+    <section class="sec hidden" data-sec="5"><h2 class="sec-h">5. Why you want to join</h2>
+      <div class="field"><label>Your motivation <span class="req">(at least a few sentences)</span></label><textarea id="fMessage" rows="6" placeholder="Why do you want to join, and what do you hope to get out of it?"></textarea></div>
+    </section>
+    <section class="sec hidden" data-sec="6"><h2 class="sec-h">6. Weekly availability and commitment</h2>
+      <div class="field"><label>Days you could usually join a session</label><div class="chip-wrap" id="dayChips"><button type="button" class="chip" data-day="Mon">Mon</button><button type="button" class="chip" data-day="Tue">Tue</button><button type="button" class="chip" data-day="Wed">Wed</button><button type="button" class="chip" data-day="Thu">Thu</button><button type="button" class="chip" data-day="Fri">Fri</button><button type="button" class="chip" data-day="Sat">Sat</button><button type="button" class="chip" data-day="Sun">Sun</button></div></div>
+      <div class="field"><label>Best time of day</label><div class="chip-wrap" id="timeChips"><button type="button" class="chip" data-time="Morning">Morning</button><button type="button" class="chip" data-time="Afternoon">Afternoon</button><button type="button" class="chip" data-time="Evening">Evening</button></div></div>
+      <div class="field"><label>Hours you can give each week</label><select id="fHours"><option value="">Choose one</option><option>1 to 2 hours</option><option>3 to 4 hours</option><option>5 or more hours</option></select></div>
+      <h3 class="sec-h" style="font-size:16px; margin-top:20px;">My commitment</h3>
+      <label class="check"><input type="checkbox" id="cAttend"> I will attend the programme sessions.</label>
+      <label class="check"><input type="checkbox" id="cTalk"> I will stay in touch with my coordinator and reply to messages.</label>
+      <label class="check"><input type="checkbox" id="cDo"> I will complete the activities and practice questions I'm given.</label>
+    </section>
+    <p class="error" id="errMsg" role="alert"></p>
+    <div class="nav-row"><button type="button" class="btn ghost" id="backBtn">Back</button><button type="button" class="btn" id="nextBtn">Next</button><button type="button" class="btn" id="submitBtn" style="display:none;">Submit my application</button></div>
   </div>
-
-  <p class="foot-link">Already accepted? <a href="portal.html">Sign in to the portal →</a></p>
+  <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
 
 <div class="wrap hidden" id="closedScreen">
-  <div class="card done">
-    <div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">⏱</div>
-    <h2 style="font-size:24px; margin:0 0 10px;">Applications are closed</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">The application window for this round closed on <b id="deadlineDateText">30 September 2026</b>. We're no longer accepting new applications, but you can join the interest list below to hear first when the next round opens.</p>
-  </div>
-  <div class="card" id="interestCard" style="margin-top:18px;">
-    <h2 style="font-size:20px; margin:0 0 6px;">Get first notice of the next round</h2>
-    <p style="color:var(--muted); font-size:14.5px; line-height:1.6; margin:0 0 16px;">Leave your details and we'll contact you when applications reopen. This is not an application.</p>
-    <div id="interestFormBox">
-      <div class="field"><label>Full name</label><input id="iName" placeholder="e.g. Ama Owusu"></div>
-      <div class="field"><label>Email</label><input id="iEmail" type="email" placeholder="e.g. ama.owusu@email.com"></div>
-      <div class="field"><label>Phone number <span class="req">(optional)</span></label><input id="iPhone" type="tel" placeholder="e.g. +233 24 000 0000"></div>
-      <div class="err" id="iErr"></div>
-      <button class="btn" id="iBtn" type="button">Notify me</button>
-    </div>
-    <div id="interestDone" class="hidden" style="text-align:center; padding:8px 0;"><div class="tick" style="margin:0 auto 10px;">✓</div><b>You're on the list.</b><p style="color:var(--muted); font-size:14.5px; margin:6px 0 0;">We'll reach out when the next round opens.</p></div>
-  </div>
-  <p class="foot-link">Already applied? <a href="index.html">← Back to the programme page</a> to check your status.</p>
+  <div class="card done"><div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">&#9201;</div>
+    <h2 style="font-size:24px; margin:0 0 10px;">Applications are paused</h2>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">We aren't taking applications right now. Please check back soon.</p></div>
+  <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
 
 <div class="wrap hidden" id="doneScreen">
-  <div class="card done">
-    <div class="tick">✓</div>
+  <div class="card done"><div class="tick">&#10003;</div>
     <h2 style="font-size:24px; margin:0 0 10px;">Application received</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">Thanks for applying. Taking you to the programme WhatsApp group now — that's where announcements and updates happen day to day.</p>
-    <p style="color:var(--muted); font-size:13.5px; margin:14px 0 0;" id="redirectCountdown">Redirecting in <span id="redirectSecs">4</span>s…</p>
-    <a class="btn" id="joinWhatsappBtn" href="#" target="_blank" rel="noopener" style="margin-top:16px; text-decoration:none;">Join the WhatsApp group now →</a>
-    <button type="button" id="cancelRedirectBtn" style="margin-top:10px; background:none; border:none; color:var(--muted); font-size:12.5px; text-decoration:underline; cursor:pointer;">Stay on this page instead</button>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:440px; margin:0 auto;">Thank you for applying. <span id="mailNote">We're sending a confirmation email to your inbox. Check your spam folder if you don't see it.</span></p>
+    <div class="track" id="doneTrack"></div>
+    <p style="color:var(--muted); font-size:13.5px; line-height:1.6; max-width:440px; margin:14px auto 0;">If you're accepted, your student portal is switched on. Sign in with the same email you applied with, confirm your place and watch the short orientation video. The official WhatsApp group invitation comes during onboarding.</p>
   </div>
-  <p style="color:var(--muted); font-size:13px; text-align:center; max-width:420px; margin:18px auto 0; line-height:1.6;">The Ambassador still reviews applications for the student portal separately — if you're accepted, you'll hear from us by email with sign-in instructions.</p>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
 
@@ -284,18 +252,15 @@ paintLogos();
 // link above — sourced from the portal's Settings tab (same "settings:notify"
 // row) so the Ambassador can move the deadline without editing this file.
 // Falls back to this default until the Ambassador sets one from the portal.
-let APPLICATION_DEADLINE = new Date('2026-09-30T23:59:59Z');
-function applicationsAreClosed(){ return (APPLICATION_DEADLINE - new Date()) <= 0; }
+let PORTAL_PAUSED = false;
+function applicationsAreClosed(){ return PORTAL_PAUSED; }
 function fmtDeadlineDate(d){
   return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
 }
 function applyDeadlineState(){
-  const dateEl = document.getElementById('deadlineDateText');
-  if(dateEl) dateEl.textContent = fmtDeadlineDate(APPLICATION_DEADLINE);
   if(applicationsAreClosed()){
-    document.querySelector('.wrap').classList.add('hidden');
-    const closedScreen = document.getElementById('closedScreen');
-    if(closedScreen) closedScreen.classList.remove('hidden');
+    document.getElementById('formCard').closest('.wrap').classList.add('hidden');
+    const c = document.getElementById('closedScreen'); if(c) c.classList.remove('hidden');
   }
 }
 applyDeadlineState();
@@ -307,11 +272,8 @@ applyDeadlineState();
 // differs from the fallback above.
 async function loadDeadlineFromPortal(){
   const s = await getPortalSettings();
-  if(s.applicationDeadline){
-    const d = new Date(s.applicationDeadline);
-    if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
-  }
-  renderSystemStatusBanner(s.systemStatus, s.systemStatusMessage);
+  PORTAL_PAUSED = !!s.applicationsClosed;
+    renderSystemStatusBanner(s.systemStatus, s.systemStatusMessage);
   maintenanceActive = s.systemStatus === 'maintenance';
   if(s.programName) document.title = 'Apply — ' + s.programName;
   applyDeadlineState();
@@ -372,29 +334,6 @@ async function markWhatsappRedirected(app){
 }
 
 let redirectTimer = null, redirectInterval = null;
-function startWhatsappRedirect(url, app){
-  const btn = document.getElementById('joinWhatsappBtn');
-  btn.href = url;
-  btn.addEventListener('click', ()=>{ markWhatsappRedirected(app); });
-  let secs = 4;
-  const secsEl = document.getElementById('redirectSecs');
-  redirectInterval = setInterval(()=>{
-    secs -= 1;
-    if(secsEl) secsEl.textContent = String(Math.max(secs,0));
-  }, 1000);
-  redirectTimer = setTimeout(async ()=>{
-    // Mark first, then navigate — once the browser leaves this page, an
-    // in-flight fetch has no guarantee of finishing.
-    await markWhatsappRedirected(app);
-    window.location.href = url;
-  }, 4000);
-  document.getElementById('cancelRedirectBtn').addEventListener('click', ()=>{
-    clearTimeout(redirectTimer); clearInterval(redirectInterval);
-    const cd = document.getElementById('redirectCountdown');
-    if(cd) cd.textContent = "No problem — tap the button above whenever you're ready.";
-  });
-}
-
 async function sendConfirmationEmail(name, email){
   // Best-effort only — if Settings > Connections isn't configured yet in the
   // portal, this silently does nothing and the application is still saved.
@@ -414,81 +353,68 @@ async function sendConfirmationEmail(name, email){
   }catch(e){ /* non-blocking */ }
 }
 
-document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  const errEl = document.getElementById('formErr');
-  errEl.textContent = '';
-  const name = document.getElementById('fName').value.trim();
-  const email = document.getElementById('fEmail').value.trim().toLowerCase();
-  const phone = document.getElementById('fPhone').value.trim();
-  const notifySms = document.getElementById('fNotifySms').checked;
-  const school = document.getElementById('fSchool').value.trim();
-  const region = document.getElementById('fRegion').value;
-  const howHeard = document.getElementById('fHeard').value;
-  const message = document.getElementById('fMessage').value.trim();
 
-  if(!name) return errEl.textContent = 'Please enter your full name.';
-  if(!email || !validEmail(email)) return errEl.textContent = 'Please enter a valid email address.';
-  if(!phone) return errEl.textContent = 'Please add a phone number — it\'s how your coordinator reaches you.';
-  if(!chosenAge) return errEl.textContent = 'Please select your age range.';
-  if(!message) return errEl.textContent = 'Please add a line or two on why you want to join.';
-  if(!sbReady) return errEl.textContent = 'Applications aren\'t connected yet — please try again shortly or contact the Ambassador directly.';
-  if(applicationsAreClosed()){
-    // Covers a page left open across the deadline moment — the initial
-    // load check above only fires once, at load time.
-    document.querySelector('.wrap').classList.add('hidden');
-    const closedScreen = document.getElementById('closedScreen');
-    if(closedScreen) closedScreen.classList.remove('hidden');
+// ---- Multi-section application ----
+const TOTAL = 6; let step = 1; const picks = { interests:new Set(), days:new Set(), times:new Set() };
+function bindMulti(id, attr, set){ document.querySelectorAll('#'+id+' .chip').forEach(c=>c.addEventListener('click', ()=>{ const v = c.dataset[attr]; if(set.has(v)){ set.delete(v); c.classList.remove('active'); } else { set.add(v); c.classList.add('active'); } })); }
+bindMulti('interestChips','int',picks.interests); bindMulti('dayChips','day',picks.days); bindMulti('timeChips','time',picks.times);
+const $ = id=>document.getElementById(id), val = id=>($(id).value||'').trim();
+function paintSteps(){
+  document.querySelectorAll('.sec').forEach(x=>x.classList.toggle('hidden', +x.dataset.sec !== step));
+  $('stepper').innerHTML = Array.from({length:TOTAL},(_,i)=>`<i class="${i+1<step?'on':i+1===step?'cur':''}"></i>`).join('');
+  $('backBtn').style.visibility = step===1 ? 'hidden' : 'visible';
+  $('nextBtn').style.display = step===TOTAL ? 'none' : ''; $('submitBtn').style.display = step===TOTAL ? '' : 'none';
+  $('errMsg').textContent = ''; window.scrollTo({top:0, behavior:'smooth'});
+}
+function validate(n){
+  if(n===1){
+    if(val('fName').length < 3) return 'Please enter your full name.';
+    if(!validEmail(val('fEmail'))) return 'Please enter a valid email address.';
+    if(val('fPhone').replace(/\D/g,'').length < 9) return 'Please enter a phone number we can reach you on.';
+    if(!chosenAge) return 'Please select your age range.';
+  }
+  if(n===2){ if(val('fSchool').length < 2) return 'Please enter your school.'; if(!val('fLevel')) return 'Please choose your class or level.'; if(val('fRegion').length < 2) return 'Please enter your region or town.'; }
+  if(n===3){ if(!val('fChemLevel')) return 'Please choose your chemistry level.'; if(val('fBackground').length < 15) return 'Please tell us a little about the chemistry you have studied.'; if(!val('fCompetition')) return 'Please choose your competition experience.'; }
+  if(n===4 && !picks.interests.size) return 'Please pick at least one area of chemistry.';
+  if(n===5 && val('fMessage').length < 40) return 'Please write a few sentences about why you want to join.';
+  if(n===6){ if(!picks.days.size) return 'Please pick at least one day you could join.'; if(!picks.times.size) return 'Please pick a best time of day.'; if(!val('fHours')) return 'Please choose how many hours you can give each week.'; if(!($('cAttend').checked && $('cTalk').checked && $('cDo').checked)) return 'Please tick all three commitments to submit.'; }
+  return '';
+}
+$('nextBtn').addEventListener('click', ()=>{ const e = validate(step); if(e){ $('errMsg').textContent = e; return; } step++; paintSteps(); });
+$('backBtn').addEventListener('click', ()=>{ if(step>1){ step--; paintSteps(); } });
+paintSteps();
+
+const STAGES = ['Applied','Under review','Accepted','Pending confirmation','Onboarding','Completed'];
+$('submitBtn').addEventListener('click', async ()=>{
+  const btn = $('submitBtn'); const e = validate(6); if(e){ $('errMsg').textContent = e; return; }
+  for(let n=1;n<6;n++){ const e2 = validate(n); if(e2){ step = n; paintSteps(); $('errMsg').textContent = e2; return; } }
+  btn.disabled = true; btn.textContent = 'Submitting…';
+  const email = val('fEmail').toLowerCase();
+  const app = { id: uid(), token: uid(), name: val('fName'), email, phone: val('fPhone'), notifySms: $('fNotifySms').checked, school: val('fSchool'), region: val('fRegion'), ageRange: chosenAge, howHeard: val('fHeard'),
+    level: val('fLevel'), chemLevel: val('fChemLevel'), background: val('fBackground'), competition: val('fCompetition'), competitionDetails: val('fCompDetails'),
+    interests: [...picks.interests], message: val('fMessage'), availability: { days:[...picks.days], times:[...picks.times], hours: val('fHours') },
+    commitments: { attend:true, communicate:true, activities:true }, stage:'Applied', date: today(), submittedAt: new Date().toISOString() };
+  try{
+    const { error } = await sb.rpc('append_kv_item', { p_key:'applications:list', p_item: app });
+    if(error) throw error;
+  }catch(err){
+    console.error('Application save failed', err);
+    btn.disabled = false; btn.textContent = 'Submit my application';
+    $('errMsg').textContent = String(err && err.message || '').includes('closed') ? 'Applications are paused right now. Please check back soon.' : 'Something went wrong saving your application. Please try again.';
     return;
   }
-  if(maintenanceActive){
-    // Same idea as the deadline recheck above, for a maintenance window toggled
-    // on after this page was already loaded.
-    return errEl.textContent = 'Applications are temporarily paused for maintenance — please check back shortly.';
-  }
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'Submitting…';
-
+  try{ localStorage.setItem('ichc_applied', JSON.stringify({ id:app.id, token:app.token, email, name:app.name })); }catch(x){}
+  $('formCard').closest('.wrap').classList.add('hidden'); $('doneScreen').classList.remove('hidden');
+  $('doneTrack').innerHTML = STAGES.map((st,i)=>`<span class="${i===0?'now':''}">${st}</span>`).join('');
+  window.scrollTo({top:0});
+  // confirmation email: the server sends the branded one; EmailJS is the backup
+  let sent = false;
   try{
-    // Atomic append via a Postgres function (see the SQL you need to run once
-    // in Supabase — ask me if you haven't yet) instead of read-then-write from
-    // the browser. That closes the race condition where two applicants
-    // submitting at the same instant could have one overwrite the other.
-    // A random token, private to this browser, generated fresh for this
-    // submission and never shown anywhere. The status banner below matches
-    // on this instead of the applicant's email, so someone can't see another
-    // applicant's review status/decision reason just by knowing their email.
-    const newApplication = { id: uid(), token: uid(), name, email, phone, notifySms, school, region, ageRange: chosenAge, howHeard, message, date: today(), whatsappRedirected: false };
-    const { error } = await sb.rpc('append_kv_item', { p_key: 'applications:list', p_item: newApplication });
-    if(error) throw error;
-
-    sendConfirmationEmail(name, email);
-
-    // Remember who applied on this device/browser, so the status banner (below)
-    // can look up and show them where their application stands on any page of
-    // this site, without requiring a login.
-    try{ localStorage.setItem('ichc_applicant', JSON.stringify({ email, name, token: newApplication.token })); }catch(e){}
-    renderApplicationStatusBanner();
-
-    document.getElementById('formCard').parentElement.querySelectorAll('.card, .foot-link').forEach(el=>el.remove());
-    document.querySelector('.wrap').classList.add('hidden');
-    document.getElementById('doneScreen').classList.remove('hidden');
-    const whatsappUrl = await getWhatsappUrl();
-    startWhatsappRedirect(whatsappUrl, newApplication);
-  }catch(e){
-    console.error(e);
-    // The database itself now rejects late submissions too (a safety net
-    // behind the client-side deadline check above) — recognize that specific
-    // rejection and show the closed screen rather than a generic error.
-    if(e && e.message && /applications are closed/i.test(e.message)){
-      document.querySelector('.wrap').classList.add('hidden');
-      const closedScreen = document.getElementById('closedScreen');
-      if(closedScreen) closedScreen.classList.remove('hidden');
-      return;
-    }
-    errEl.textContent = 'Something went wrong submitting your application — please check your connection and try again.';
-    btn.disabled = false; btn.textContent = 'JOIN PROGRAMME NOW';
-  }
+    const r = await fetch(SUPABASE_CONFIG.url + '/functions/v1/application-received', { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_CONFIG.anonKey }, body: JSON.stringify({ id:app.id, email }) });
+    sent = r.ok;
+  }catch(x){}
+  if(!sent) await sendConfirmationEmail(app.name, email);
+  $('mailNote').textContent = 'A confirmation email is on its way to ' + email + '. Check your spam folder if you don\'t see it.';
 });
 
 // ---- Application status banner ----

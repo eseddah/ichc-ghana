@@ -7,18 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
-<link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#0E1A36">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function (OneSignal) {
-    try{ await OneSignal.init({ appId: "c711029f-212c-4c50-8498-ea78aecbb153" }); }
-    catch(e){ console.warn('OneSignal init failed', e); }
-  });
-</script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -592,6 +580,16 @@
   .wa-btn{display:inline-flex; align-items:center; gap:6px; background:#25D366; color:#fff !important; border-radius:999px; padding:6px 14px; font-weight:700; font-size:13px; text-decoration:none; line-height:1;}
   .wa-btn:hover{background:#1EBE5A;} .wa-btn:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
   .wa-btn.wa-big{padding:12px 24px; font-size:15px; letter-spacing:.04em; box-shadow:0 6px 16px rgba(37,211,102,.35);}
+
+  .acc-badge{display:inline-block; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:999px;}
+  .acc-on{background:rgba(31,138,112,.14); color:var(--teal-deep);} .acc-off{background:rgba(192,57,43,.12); color:#C0392B;}
+  .acc-tick{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; margin:0; text-transform:none; letter-spacing:0; cursor:pointer;} .acc-tick input{width:auto; margin:0;}
+
+  .stage-chip{display:inline-block; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:999px;}
+  .ob-bar{height:8px; background:rgba(15,36,56,.08); border-radius:99px; overflow:hidden; margin-top:12px;} .ob-bar div{height:100%; background:var(--teal); border-radius:99px; transition:width .4s;}
+  .ob-mini{display:inline-block; width:60px; height:6px; background:rgba(15,36,56,.1); border-radius:99px; overflow:hidden; vertical-align:middle;} .ob-mini i{display:block; height:100%; background:var(--teal);}
+  .ob-step{display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--line); font-size:14px;} .ob-step b{font-size:15px;}
+  .ob-tick{flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff;} .ob-tick.on{background:var(--teal); border-color:var(--teal);}
 </style>
 </head>
 <body>
@@ -761,7 +759,6 @@
             </div>
             <img id="avatarImg" class="avatar-circle hidden" alt="">
             <div id="avatarFallback" class="avatar-circle avatar-fallback"></div>
-            <button class="switchbtn" id="pushBell" type="button" title="Notifications" style="margin-left:2px;">&#128276; Notifications: ...</button>
             <button class="switchbtn" id="switchUser" style="margin-left:2px;">Switch user</button>
           </div>
         </div>
@@ -920,6 +917,7 @@ async function loadDB(){
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
+  DB.lastSeen = await loadAllLastSeen();
 }
 // Certificates live in their own Supabase table (not the generic ichc_kv store)
 // because the verify page has to read a single record WITHOUT anyone being signed
@@ -1279,15 +1277,19 @@ window.addEventListener('focus', ()=>{ if(ME) pollLive(true); });
 // requests with a 429. These queues send one request at a time with a short gap between
 // each, so a broadcast to many recipients doesn't get rate-limited.
 let _emailQueue = Promise.resolve();
-function queueEmailSend(payload){
+function queueEmailSend(payload, meta){
+  const logResult = (status, detail)=>{
+    if(!meta || typeof sbReady === 'undefined' || !sbReady) return;
+    try{ sb.rpc('append_kv_item', { p_key:'email:log', p_item:{ id:(crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()), to:payload.template_params.to_email, name:meta.name||null, subject:meta.subject||'', message:String(meta.message||'').slice(0,1500), author:meta.author||null, kind:meta.kind||null, recipientId:meta.recipientId||null, recipientRole:meta.recipientRole||null, studentCoordinatorId:meta.studentCoordinatorId||null, via:'emailjs', status, detail, ts:Date.now() } }).then(()=>{}, ()=>{}); }catch(e){}
+  };
   _emailQueue = _emailQueue.then(()=> new Promise(resolve=>{
     const controller = new AbortController();
     const timeout = setTimeout(()=>controller.abort(), 10000);
     fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), signal: controller.signal
     })
-    .then(res=>{ if(!res.ok) console.error('EmailJS send failed', res.status, payload.template_params && payload.template_params.to_email); })
-    .catch(e=>console.error('EmailJS send error', e.name==='AbortError' ? 'timed out after 10s' : e))
+    .then(res=>{ if(!res.ok){ console.error('EmailJS send failed', res.status, payload.template_params && payload.template_params.to_email); logResult('failed', 'EmailJS answered ' + res.status); } else logResult('sent', 'Sent through EmailJS'); })
+    .catch(e=>{ console.error('EmailJS send error', e.name==='AbortError' ? 'timed out after 10s' : e); logResult('failed', e.name==='AbortError' ? 'EmailJS timed out' : 'EmailJS could not be reached'); })
     .finally(()=>{ clearTimeout(timeout); setTimeout(resolve, 1200); });
   }));
 }
@@ -1934,7 +1936,7 @@ async function notifyApplicantDecision({app, decision, reason}){
     ? `You're in! Your IChC Outreach Program application was accepted`
     : `Update on your IChC Outreach Program application`;
   const bodyLines = decision==='accepted'
-    ? [`Hi ${app.name}, great news — your application to the IChC Outreach Program has been accepted.`, `We'll be in touch soon with next steps.`]
+    ? [`Hi ${app.name}, great news — your application has been accepted and your student portal is now switched on.`, `Sign in with the Google account for ${app.email} to confirm your place, watch the short orientation video and meet your coordinator. The official WhatsApp group invitation comes during onboarding.`]
     : [`Hi ${app.name}, thank you for applying to the IChC Outreach Program.`, `We're unable to move forward with your application at this time.`];
   if(reason) bodyLines.push(reason);
   const body = bodyLines.join(' ');
@@ -2083,6 +2085,8 @@ async function resolveGoogleSession(){
     ME = { id: coordMatch.id, name: coordMatch.name, email, role:'coordinator', coordinatorId:null, avatarUrl };
   }else{
     const studentMatch = DB.students.find(s=>s.email && s.email.toLowerCase()===email);
+    const acc = studentAccess(studentMatch);
+    if(acc.locked){ showInactiveScreen(studentMatch, acc); return true; }
     ME = { id: studentMatch.id, name: studentMatch.name, email, role:'student', coordinatorId: studentMatch.coordinatorId, avatarUrl };
   }
   await sSet('me', ME, false);
@@ -2112,6 +2116,7 @@ async function redirectToRegisteredAccount(email, pendingRole){
 const ROLE_LABEL = { ambassador:'Ambassador', coordinator:'Coordinator', student:'Student' };
 function showAuthPopup(title, message, opts={}){
   const oldSwitch = document.getElementById('authPopupSwitchBtn'); if(oldSwitch) oldSwitch.remove();
+  const oldExtra = document.getElementById('authPopupExtra'); if(oldExtra) oldExtra.remove();
   document.getElementById('authPopupTitle').textContent = title;
   document.getElementById('authPopupText').textContent = message;
   document.getElementById('authPopupApplyLink').classList.toggle('hidden', !opts.applyLink);
@@ -2340,62 +2345,6 @@ function showApp(){
   startPresenceLoop();
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
-  try{ pushSetup(); }catch(e){ console.warn('Push setup failed', e); }
-}
-
-/* ---------- Web push notifications (OneSignal) ----------
-   Signing in links this device to the person's email; the browser's Allow prompt is
-   shown once. The bell in the top bar turns notifications on or off at any time. */
-function pushRun(fn){
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(async function(OneSignal){ try{ await fn(OneSignal); }catch(e){ console.warn('Push error', e); } });
-}
-function pushPaint(OneSignal){
-  const b = document.getElementById('pushBell'); if(!b) return;
-  const native = OneSignal.Notifications.permissionNative;
-  const on = OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn;
-  b.textContent = native==='denied' ? '\uD83D\uDD15 Notifications: blocked' : on ? '\uD83D\uDD14 Notifications: on' : '\uD83D\uDD15 Notifications: off';
-}
-function pushSetup(){
-  const email = (ME && ME.email || '').toLowerCase();
-  if(!email) return;
-  const bell = document.getElementById('pushBell');
-  if(bell && !bell.dataset.wired){
-    bell.dataset.wired = '1';
-    bell.addEventListener('click', ()=>pushToggle());
-  }
-  pushRun(async (OneSignal)=>{
-    await OneSignal.login(email);
-    const userTurnedOff = localStorage.getItem('ichc_push_off')==='1';
-    if(userTurnedOff){
-      OneSignal.User.PushSubscription.optOut();
-    }else if(OneSignal.Notifications.permissionNative==='default'){
-      await OneSignal.Notifications.requestPermission();
-    }else if(OneSignal.Notifications.permission){
-      OneSignal.User.PushSubscription.optIn();
-    }
-    OneSignal.User.PushSubscription.addEventListener('change', ()=>pushPaint(OneSignal));
-    pushPaint(OneSignal);
-  });
-}
-function pushToggle(){
-  pushRun(async (OneSignal)=>{
-    const native = OneSignal.Notifications.permissionNative;
-    if(native==='denied'){
-      alert('Notifications are blocked for this site. Open your browser settings for this site and allow notifications, then reload.');
-      return;
-    }
-    const on = OneSignal.Notifications.permission && OneSignal.User.PushSubscription.optedIn;
-    if(on){
-      localStorage.setItem('ichc_push_off','1');
-      OneSignal.User.PushSubscription.optOut();
-    }else{
-      localStorage.removeItem('ichc_push_off');
-      if(native==='default') await OneSignal.Notifications.requestPermission();
-      OneSignal.User.PushSubscription.optIn();
-    }
-    pushPaint(OneSignal);
-  });
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -2409,7 +2358,6 @@ async function switchUser(ev, forceFull){
   }
   if(sbReady && !keepSession) await sb.auth.signOut();
   await sDelete('me', false);
-  pushRun(async (OneSignal)=>{ await OneSignal.logout(); });
   ME = null;
   document.getElementById('app').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
@@ -2607,6 +2555,8 @@ const TAB_ICONS = {
   mock:'<circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2M9 3h6"/>',
   personalemail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/><circle cx="18" cy="17" r="3"/>',
   emaillog:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  onboarding:'<polygon points="6 4 20 12 6 20"/>',
+  applicantmsg:'<path d="M3 11l18-8-8 18-2-8z"/>',
   load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
@@ -2628,7 +2578,7 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -2711,6 +2661,8 @@ function render(tab){
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
+  else if(tab==='onboarding' && ME.role==='ambassador') html = onboardingSetupView();
+  else if(tab==='applicantmsg' && ME.role==='ambassador') html = applicantMsgView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
   else if(tab==='load' && ME.role==='ambassador') html = coordLoadView();
@@ -2786,7 +2738,7 @@ function waLine(person, label, text){
     ? `<div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;"><span>&#128222; ${escapeHtml(person.phone)}</span>${waBtn(person.phone, label, text)}</div>`
     : `<div class="item-body" style="color:var(--muted); font-size:12.5px;">No phone number on file</div>`;
 }
-function studentCoordinatorCard(){
+function studentCoordinatorCardPlain(){
   const c = DB.coordinators.find(x=>x.id===myCoordinatorId());
   if(!c) return `<div class="card" style="margin-bottom:16px;"><b>Your coordinator</b><p class="note" style="margin:6px 0 0;">You'll be matched with a coordinator soon. Their name and number will appear here.</p></div>`;
   const first = String(c.name||'').trim().split(/\s+/)[0] || 'there';
@@ -3489,7 +3441,7 @@ function queueServerEmail(payload, fallback){
       const { error } = await sb.functions.invoke('send-email', { body: payload });
       if(error){
         let m = ''; try{ m = (await error.context.json()).error; }catch(e){}
-        if(m === 'not_configured' && fallback) fallback(); else console.error('Server email failed:', m, payload.to);
+        if((m === 'not_configured' || m === 'send_failed') && fallback) fallback(); else console.error('Server email failed:', m, payload.to);
       }
     }catch(e){ console.error('Server email error', e); }
     await new Promise(r=>setTimeout(r, 400));
@@ -3498,11 +3450,13 @@ function queueServerEmail(payload, fallback){
 function dispatchEmails(list, { subject, body, author, kind }){
   const s = DB.settings || {};
   const targets = list.filter(r=>r.email && r.notifyEmail!==false);
-  const useServer = s.emailMode === 'server' && typeof sbReady !== 'undefined' && sbReady;
+  const useServer = s.emailMode !== 'emailjs' && typeof sbReady !== 'undefined' && sbReady;
   const viaJs = r=>{
+    const isStudent = r.coordinatorId !== undefined;
     if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)
       queueEmailSend({ service_id:s.emailjsServiceId, template_id:s.emailjsTemplateId, user_id:s.emailjsPublicKey,
-        template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:withPortalLink(body) } });
+        template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:withPortalLink(body) } },
+        { name:r.name, subject, message:withPortalLink(body), author, kind:kind||'', recipientId:r.id, recipientRole:r.role || (isStudent?'student':'coordinator'), studentCoordinatorId:isStudent ? r.coordinatorId : null });
   };
   targets.forEach(r=>{
     if(!useServer){ viaJs(r); return; }
@@ -3529,9 +3483,9 @@ function emailLogPaint(note){
   const rows = emailScopedRows().slice().sort((a,b)=>b.ts-a.ts), out = emailOutstanding(rows), sent = rows.filter(e=>e.status==='sent').length;
   const badge = st=>`<span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; ${st==='sent'?'background:rgba(31,138,112,.14); color:var(--teal-deep);':'background:rgba(192,57,43,.12); color:#C0392B;'}">${st==='sent'?'Sent':'Failed'}</span>`;
   root.innerHTML = `
-    <div class="section-title"><div><h2>Email Log</h2><p>Every email sent through the server, with its result. Emails sent through EmailJS aren't logged here.</p></div></div>
+    <div class="section-title"><div><h2>Email Log</h2><p>Every email sent through the server, with its result. Emails sent through the EmailJS fallback are listed too.</p></div></div>
     ${note ? `<p class="psms-status ${note.ok?'ok':'bad'}">${escapeHtml(note.text)}</p>` : ''}
-    ${!rows.length ? `<div class="empty">No server emails yet. Choose "Server via Brevo" under Settings once the Brevo key is added, and every announcement email will be listed here.</div>` : `
+    ${!rows.length ? `<div class="empty">No emails yet. Post an announcement and every email it sends will be listed here.</div>` : `
     <p class="note" style="margin-bottom:14px;">${sent} of ${rows.length} accepted for delivery.</p>
     ${out.length ? `<div class="card" id="emailResendBox" style="margin-bottom:16px; border-color:rgba(192,57,43,.35);">
       <h3 style="margin:0 0 6px; font-size:16px;">${out.length} email${out.length>1?'s':''} didn't go out</h3>
@@ -3678,6 +3632,280 @@ async function wirePersonalEmail(){
   });
   pemRefresh();
   try{ EMAILLOG = (await sGet('email:log', true)) || []; const r = q('pemRecent'); if(r) r.innerHTML = pemRecentHtml(); }catch(e){}
+}
+
+
+// ================= Student access: active / inactive =================
+// Active   = signed in (or manually activated) within the last 14 days.
+// Inactive = never joined, last seen more than 14 days ago, or switched off by the Ambassador / a coordinator.
+// Inactive students are locked out of the portal (unless it's a brand-new student who has never joined and the
+// "require activation" setting is off) and asked to contact the Ambassador / their coordinator.
+const IDLE_LIMIT_MS = 14 * 864e5;
+const LASTSEEN_PREFIX = 'lastseen:';
+let peopleStatus = 'all', STATUS_REQ = [];
+async function loadAllLastSeen(){
+  if(!sbReady) return {};
+  const emails = new Set();
+  (DB.students||[]).forEach(s=>{ if(s.email) emails.add(s.email.toLowerCase()); });
+  if(!emails.size) return {};
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('key,value').in('key', [...emails].map(e=>LASTSEEN_PREFIX+e));
+    if(error) throw error;
+    const m = {}; (data||[]).forEach(r=>{ if(r.value && r.value.iso) m[r.key.slice(LASTSEEN_PREFIX.length)] = r.value.iso; });
+    return m;
+  }catch(e){ console.warn('lastseen load failed', e); return DB.lastSeen || {}; }
+}
+function studentSeenMs(s){
+  const e = s.email ? s.email.toLowerCase() : '';
+  const pres = e && DB.presence && DB.presence[e] && DB.presence[e].lastSeen ? new Date(DB.presence[e].lastSeen).getTime() : 0;
+  const ls = e && DB.lastSeen && DB.lastSeen[e] ? new Date(DB.lastSeen[e]).getTime() : 0;
+  return Math.max(pres || 0, ls || 0);
+}
+function studentAccess(s){
+  const seen = studentSeenMs(s), ref = Math.max(seen, s.activatedAt || 0);
+  if(s.portalBlocked) return { state:'inactive', locked:true, reason:'blocked', by:s.blockedBy || 'ambassador', seen };
+  if(!ref) return { state:'inactive', locked:!!(DB.settings && DB.settings.lockNeverJoined), reason:'never', seen:0 };
+  const idle = Date.now() - ref;
+  if(idle > IDLE_LIMIT_MS) return { state:'inactive', locked:true, reason:'idle', seen:ref, days:Math.floor(idle/864e5) };
+  return { state:'active', locked:false, seen:ref, days:Math.floor(idle/864e5) };
+}
+function accessBadge(s){
+  const a = studentAccess(s);
+  if(a.state === 'active') return `<span class="acc-badge acc-on">Active${a.days>0 ? ' · seen '+a.days+'d ago' : ' · seen today'}</span>`;
+  const why = a.reason==='blocked' ? `switched off by ${a.by==='coordinator'?'a coordinator':'the Ambassador'}` : a.reason==='idle' ? `not seen for ${a.days} days` : 'never joined';
+  return `<span class="acc-badge acc-off">Inactive · ${why}</span>`;
+}
+async function setStudentAccess(id, makeActive, by){
+  const st = DB.students.find(x=>x.id===id); if(!st) return;
+  if(!makeActive && ME.role==='coordinator' && st.coordinatorId!==ME.id) return;
+  if(makeActive && ME.role==='coordinator' && st.portalBlocked && st.blockedBy==='ambassador'){ alert('The Ambassador switched this portal off, so only the Ambassador can switch it back on.'); return render(currentTab); }
+  if(makeActive){ st.portalBlocked = false; st.blockedBy = null; st.activatedAt = Date.now(); }
+  else { st.portalBlocked = true; st.blockedBy = by; st.blockedAt = Date.now(); }
+  await saveKey('students');
+  render(currentTab);
+}
+function accessControlsAmb(s){
+  const a = studentAccess(s), on = a.state === 'active';
+  return `<button class="btn ${on?'ghost':'teal'} small" data-access-amb="${s.id}" data-make="${on?'off':'on'}">${on?'Make inactive':'Activate'}</button>`;
+}
+function accessRowCoord(s){
+  const a = studentAccess(s), on = a.state === 'active', ambLocked = s.portalBlocked && s.blockedBy === 'ambassador';
+  return `<div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">${accessBadge(s)}
+    <label class="acc-tick"><input type="checkbox" data-access-coord="${s.id}" ${on?'checked':''} ${ambLocked?'disabled':''}> Active</label>
+    ${ambLocked ? '<span style="font-size:12px; color:var(--muted);">Only the Ambassador can switch this back on.</span>' : ''}</div>`;
+}
+function accessSummary(list){
+  const n = list.length, act = list.filter(s=>studentAccess(s).state==='active').length;
+  return {n, act, off:n-act};
+}
+async function loadStatusRequests(){ try{ STATUS_REQ = (await sGet('status:requests', true)) || []; }catch(e){ STATUS_REQ = []; } }
+function pendingRequests(list){
+  const ids = new Set(list.map(s=>s.id)), latest = new Map();
+  STATUS_REQ.forEach(r=>{ if(ids.has(r.studentId) && (!latest.has(r.studentId) || latest.get(r.studentId).ts < r.ts)) latest.set(r.studentId, r); });
+  return [...latest.values()].filter(r=>{ const st = list.find(x=>x.id===r.studentId); return st && studentAccess(st).state==='inactive' && r.ts > (st.activatedAt||0); }).sort((a,b)=>b.ts-a.ts);
+}
+function requestBoxHtml(list){
+  const reqs = pendingRequests(list); if(!reqs.length) return '';
+  return `<div class="card" style="margin-bottom:14px; border-color:rgba(227,154,59,.7);"><b>${reqs.length} student${reqs.length>1?'s':''} asked to be reactivated</b>
+    ${reqs.map(r=>`<div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;"><span style="font-weight:600;">${escapeHtml(r.name||'')}</span><span style="font-size:12px; color:var(--muted);">${fmtDateTime(r.ts)}</span><button class="btn teal small" data-req-activate="${r.studentId}">Activate</button></div>`).join('')}</div>`;
+}
+async function wireAccess(tab){
+  document.querySelectorAll('[data-access-amb]').forEach(b=>b.addEventListener('click', ()=>setStudentAccess(b.dataset.accessAmb, b.dataset.make==='on', 'ambassador')));
+  document.querySelectorAll('[data-access-coord]').forEach(c=>c.addEventListener('change', ()=>setStudentAccess(c.dataset.accessCoord, c.checked, 'coordinator')));
+  document.querySelectorAll('[data-people-status]').forEach(b=>b.addEventListener('click', ()=>{ peopleStatus = b.dataset.peopleStatus; render('people'); }));
+  const fill = ()=>{
+    const box = document.getElementById('statusReqBox'); if(!box) return;
+    box.innerHTML = requestBoxHtml(ME.role==='ambassador' ? DB.students : myStudents());
+    box.querySelectorAll('[data-req-activate]').forEach(b=>b.addEventListener('click', ()=>setStudentAccess(b.dataset.reqActivate, true, ME.role)));
+  };
+  await loadStatusRequests(); fill(); paintStages();
+}
+function showInactiveScreen(st, a){
+  const coord = (DB.coordinators||[]).find(c=>c.id===st.coordinatorId);
+  const why = a.reason==='blocked' ? `Your portal has been switched off by ${a.by==='coordinator' ? 'your coordinator' : 'the Ambassador'}.` : a.reason==='idle' ? `You haven't been on the portal for more than two weeks, so it was set to inactive.` : `Your portal hasn't been activated yet.`;
+  showAuthPopup('Your portal is inactive', `${why} Please send a message to your coordinator or the Ambassador and ask them to activate your portal.`);
+  const ok = document.getElementById('authPopupOkBtn'), box = document.createElement('div');
+  box.id = 'authPopupExtra'; box.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-bottom:10px;';
+  const first = String(st.name||'').trim().split(/\s+/)[0] || '';
+  const msg = `Hello, this is ${st.name}. My Chemistry Competition Prep portal is inactive. Please activate it for me.`;
+  if(coord && coord.phone && waLink(coord.phone, msg)) box.insertAdjacentHTML('beforeend', `<a class="wa-btn wa-big" style="justify-content:center;" href="${waLink(coord.phone, msg)}" target="_blank" rel="noopener">${WA_ICON}Message my coordinator</a>`);
+  box.insertAdjacentHTML('beforeend', `<a class="btn ghost" style="justify-content:center; text-decoration:none;" href="mailto:eseyram@amb.intchc.org?subject=${encodeURIComponent('Please activate my portal')}&body=${encodeURIComponent(msg)}">Email the Ambassador</a>`);
+  const req = document.createElement('button'); req.type = 'button'; req.className = 'btn teal'; req.style.justifyContent = 'center'; req.textContent = 'Send a reactivation request';
+  req.addEventListener('click', async ()=>{
+    req.disabled = true; req.textContent = 'Sending…';
+    try{ await sb.rpc('append_kv_item', { p_key:'status:requests', p_item:{ id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())), studentId:st.id, name:st.name, email:st.email, coordinatorId:st.coordinatorId||null, ts:Date.now() } }); req.textContent = 'Request sent ✓ your coordinator and the Ambassador can see it'; }
+    catch(e){ req.disabled = false; req.textContent = 'Could not send. Try the buttons above.'; }
+  });
+  box.appendChild(req); ok.parentNode.insertBefore(box, ok); ok.textContent = 'Sign out';
+}
+
+
+// ================= Recruitment flow: stages, onboarding checklist, videos =================
+const STAGE_LIST = ['Applied','Under review','Accepted','Pending confirmation','Onboarding','Completed'];
+const DEFAULT_WA_GROUP = 'https://chat.whatsapp.com/EctgAsWf78z3GVVCsQzOPc';
+function stageChip(st){
+  const i = Math.max(0, STAGE_LIST.indexOf(st)), hue = [210,38,150,38,185,150][i];
+  return `<span class="stage-chip" style="background:hsla(${hue},55%,45%,.14); color:hsl(${hue},60%,26%);">${escapeHtml(st)}</span>`;
+}
+function appDetailsHtml(a){
+  const rows = [['Class or level',a.level],['Chemistry level',a.chemLevel],['Studied so far',a.background],['Interests',(a.interests||[]).join(', ')],['Competition experience',[a.competition,a.competitionDetails].filter(Boolean).join(' — ')],
+    ['Availability', a.availability ? [(a.availability.days||[]).join(', '), (a.availability.times||[]).join('/'), a.availability.hours].filter(Boolean).join(' · ') : ''],
+    ['Commitment', a.commitments ? 'Agreed to attend sessions, stay in touch and complete activities' : '']].filter(r=>r[1]);
+  if(!rows.length) return '';
+  return `<details class="item-body" style="margin-top:6px;"><summary style="cursor:pointer; font-weight:600; font-size:13px;">Full application</summary><div style="margin-top:6px; font-size:13px; line-height:1.55;">${rows.map(r=>`<div><span style="color:var(--muted);">${r[0]}:</span> ${escapeHtml(r[1])}</div>`).join('')}</div></details>`;
+}
+// Pure state calculation, shared by the student checklist and the coordinator / ambassador dashboards
+function obState(s, d, videos){
+  d = d || {}; const req = (videos||[]).filter(v=>v.required!==false), hasCoord = !!(s && s.coordinatorId);
+  const steps = [
+    { id:'confirm', label:'Confirm your place', done:!!d.confirmed },
+    { id:'videos', label:'Watch the orientation video' + (req.length>1 ? 's' : ''), done: !!req.length && req.every(v=>d.videos && d.videos[v.id]) },
+    ...(hasCoord ? [{ id:'hello', label:'Say hello to your coordinator', done:!!(d.steps && d.steps.hello) }] : []),
+    { id:'whatsapp', label:'Join the official WhatsApp group', done:!!(d.steps && d.steps.whatsapp) }
+  ];
+  const done = steps.filter(x=>x.done).length, all = done === steps.length || !!d.completedAt;
+  const stage = !s || !s.stage ? null : all ? 'Completed' : d.confirmed ? 'Onboarding' : 'Pending confirmation';
+  return { steps, done, total:steps.length, all, stage, pct:Math.round(100*done/steps.length) };
+}
+const ONB = { loaded:false, data:{ confirmed:false, videos:{}, steps:{} }, videos:[] };
+function onbStudent(){ return ME && ME.role==='student' ? (DB.students||[]).find(x=>x.id===ME.id) : null; }
+function isNewFlow(s){ return !!(s && s.stage); }
+async function onbSave(){ ONB.data.updated = Date.now(); const st = obState(onbStudent(), ONB.data, ONB.videos); if(st.all && !ONB.data.completedAt) ONB.data.completedAt = Date.now(); await sSet('onboard:' + ME.id, ONB.data, true); }
+function studentCoordinatorCard(){ return isNewFlow(onbStudent()) ? '<div id="coordRoot"></div>' : studentCoordinatorCardPlain(); }
+function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbRoot" class="card" style="margin-bottom:16px;"><p class="note">Loading your onboarding…</p></div>' : ''; }
+async function wireOnboarding(){
+  const s = onbStudent(); if(!isNewFlow(s)) return;
+  if(!ONB.loaded){
+    try{ ONB.data = Object.assign({ confirmed:false, videos:{}, steps:{} }, (await sGet('onboard:' + ME.id, true)) || {}); ONB.videos = (await sGet('onboarding:videos', true)) || []; }catch(e){ console.warn('onboarding load failed', e); }
+    ONB.loaded = true;
+  }
+  paintOnboarding();
+}
+function paintOnboarding(){
+  const root = document.getElementById('onbRoot'), coordRoot = document.getElementById('coordRoot'), s = onbStudent(); if(!root || !s) return;
+  const st = obState(s, ONB.data, ONB.videos), d = ONB.data, req = ONB.videos.filter(v=>v.required!==false), extra = ONB.videos.filter(v=>v.required===false);
+  const coord = (DB.coordinators||[]).find(c=>c.id===s.coordinatorId), first = String(coord && coord.name || '').trim().split(/\s+/)[0] || 'there';
+  const tick = ok=>`<span class="ob-tick ${ok?'on':''}">${ok?'&#10003;':''}</span>`;
+  const lock = msg=>`<p class="note" style="margin:6px 0 0;">&#128274; ${msg}</p>`;
+  const vid = v=>{ const done = !!(d.videos && d.videos[v.id]); return `<div style="margin-top:10px;"><div style="font-weight:600; font-size:14px;">${escapeHtml(v.title)} ${done ? '<span class="acc-badge acc-on">Watched &#10003;</span>' : (v.required===false ? '<span style="font-size:11px; color:var(--muted);">optional</span>' : '<span class="acc-badge acc-off">Required</span>')}</div>
+      <video class="ob-video" data-vid="${v.id}" src="${escapeHtml(v.url)}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsinline preload="metadata" style="width:100%; max-width:560px; border-radius:10px; margin-top:6px; background:#000;"></video>
+      ${done ? '' : '<p class="note" style="margin:4px 0 0;">Watch to the end. You can rewind, but you can\'t skip ahead.</p>'}</div>`; };
+  const waUrl = (DB.settings && DB.settings.whatsappGroupUrl || '').trim() || DEFAULT_WA_GROUP;
+  const videosOpen = d.confirmed;
+  root.innerHTML = `
+    <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;"><div><div style="font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);">Your onboarding</div><div style="font-size:19px; font-weight:700;">${st.all ? 'You\'re all set!' : 'Welcome! Let\'s get you started'}</div></div>${stageChip(st.stage)}</div>
+    <div class="ob-bar"><div style="width:${st.pct}%;"></div></div><div class="note" style="margin:4px 0 12px;">${st.done} of ${st.total} steps done</div>
+    <div class="ob-step">${tick(d.confirmed)}<div style="flex:1;"><b>1. Confirm your place</b>
+      ${d.confirmed ? '<p class="note" style="margin:4px 0 0;">Confirmed. Welcome to the programme!</p>' : `<p class="note" style="margin:4px 0 8px;">You've been accepted. By confirming, you promise to ${(s.commitments ? 'attend the sessions, stay in touch with your coordinator and complete the activities' : 'take part fully')}.</p><button class="btn teal small" id="obConfirm">Yes, I confirm my place</button>`}</div></div>
+    <div class="ob-step">${tick(st.steps.find(x=>x.id==='videos').done)}<div style="flex:1;"><b>2. Watch the videos</b>
+      ${!videosOpen ? lock('Confirm your place to unlock the videos.') : !req.length ? '<p class="note" style="margin:4px 0 0;">Your orientation video is being prepared. Please check back soon.</p>' : req.map(vid).join('')}
+      ${videosOpen && extra.length ? `<div style="margin-top:12px; font-size:13px; font-weight:700;">More videos for you</div>${extra.map(vid).join('')}` : ''}</div></div>
+    <div class="ob-step">${tick(!!(d.steps && d.steps.hello))}<div style="flex:1;"><b>3. Meet your coordinator</b>
+      ${!st.steps.find(x=>x.id==='videos').done ? lock('Finish the video to unlock your coordinator\'s name and number.') : !coord ? '<p class="note" style="margin:4px 0 0;">A coordinator will be assigned to you soon. We\'ll let you know.</p>' : `<div style="display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:6px;"><div><div style="font-size:16px; font-weight:700;">${escapeHtml(coord.name||'')}</div><div style="font-size:13px; color:var(--muted);">${[coord.subject, coord.region].filter(Boolean).map(escapeHtml).join(' · ')}</div>${coord.phone ? `<div style="margin-top:2px;">&#128222; ${escapeHtml(coord.phone)}</div>` : ''}</div>${coord.phone ? `<a class="wa-btn wa-big" id="obHello" href="${waLink(coord.phone, `Hello ${first}, this is ${ME.name} from Chemistry Competition Prep.`)}" target="_blank" rel="noopener">${WA_ICON}TEXT NOW</a>` : '<span class="note">Your coordinator hasn\'t added a number yet.</span>'}</div>`}</div></div>
+    <div class="ob-step">${tick(!!(d.steps && d.steps.whatsapp))}<div style="flex:1;"><b>${coord ? '4' : '3'}. Join the official WhatsApp group</b>
+      ${!st.steps.find(x=>x.id==='videos').done ? lock('Finish the video to get the group invitation.') : `<p class="note" style="margin:4px 0 8px;">This is where announcements and updates happen day to day.</p><a class="wa-btn" id="obWa" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener">${WA_ICON}Join the WhatsApp group</a>`}</div></div>`;
+  if(coordRoot) coordRoot.innerHTML = st.all ? studentCoordinatorCardPlain() : '';
+  const c = document.getElementById('obConfirm'); if(c) c.addEventListener('click', async ()=>{ c.disabled = true; ONB.data.confirmed = true; ONB.data.confirmedAt = Date.now(); await onbSave(); paintOnboarding(); });
+  const mark = (id, key)=>{ const el = document.getElementById(id); if(el) el.addEventListener('click', ()=>{ ONB.data.steps = ONB.data.steps || {}; if(!ONB.data.steps[key]){ ONB.data.steps[key] = Date.now(); setTimeout(async ()=>{ await onbSave(); paintOnboarding(); }, 600); } }); };
+  mark('obHello','hello'); mark('obWa','whatsapp');
+  root.querySelectorAll('video.ob-video').forEach(vd=>{
+    let max = 0; const done = () => !!(ONB.data.videos && ONB.data.videos[vd.dataset.vid]);
+    vd.defaultPlaybackRate = 1;
+    vd.addEventListener('timeupdate', ()=>{ if(!vd.seeking && vd.currentTime > max) max = vd.currentTime; });
+    vd.addEventListener('seeking', ()=>{ if(!done() && vd.currentTime > max + 1.5) vd.currentTime = max; });
+    vd.addEventListener('ratechange', ()=>{ if(vd.playbackRate !== 1) vd.playbackRate = 1; });
+    vd.addEventListener('ended', async ()=>{
+      if(done()) return;
+      if(vd.duration && max >= vd.duration - 3){ ONB.data.videos = ONB.data.videos || {}; ONB.data.videos[vd.dataset.vid] = Date.now(); await onbSave(); paintOnboarding(); }
+      else { vd.currentTime = 0; max = 0; }
+    });
+  });
+}
+// Stage + progress chips for the ambassador (People) and coordinator (My students) dashboards
+async function paintStages(){
+  const list = (ME.role==='ambassador' ? DB.students : myStudents()).filter(s=>s.stage); if(!list.length) return;
+  let videos = []; let map = {};
+  try{
+    videos = (await sGet('onboarding:videos', true)) || [];
+    if(sbReady){ const { data } = await sb.from('ichc_kv').select('key,value').in('key', list.map(s=>'onboard:'+s.id)); (data||[]).forEach(r=>{ map[r.key.slice(8)] = r.value; }); }
+  }catch(e){ console.warn('stage load failed', e); }
+  list.forEach(s=>{
+    const st = obState(s, map[s.id], videos), c = DB.coordinators.find(x=>x.id===s.coordinatorId);
+    document.querySelectorAll(`[data-stage-for="${s.id}"]`).forEach(el=>{
+      el.innerHTML = `${stageChip(st.stage)} <span class="ob-mini"><i style="width:${st.pct}%"></i></span> <span style="font-size:12px; color:var(--muted);">${st.done}/${st.total} onboarding steps · ${c ? 'Coordinator: ' + escapeHtml(c.name) : '<b style="color:#C0392B;">No coordinator assigned yet</b>'}</span>`;
+    });
+  });
+}
+
+// ---- Ambassador: onboarding videos ----
+function onboardingSetupView(){
+  return `<div class="section-title"><div><h2>Onboarding setup</h2><p>Videos newly accepted students watch before they unlock their coordinator and the WhatsApp group. Required videos must be watched to the end, with no skipping ahead. The WhatsApp group link is set under Settings.</p></div></div><div id="obSetupRoot"></div>`;
+}
+async function wireOnboardingSetup(){
+  const root = document.getElementById('obSetupRoot'); if(!root) return;
+  let list = (await sGet('onboarding:videos', true)) || [];
+  const save = async ()=>{ await sSet('onboarding:videos', list, true); paint(); };
+  function paint(){
+    root.innerHTML = `<div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 10px; font-size:16px;">Add a video</h3>
+      <div class="field"><label>Title</label><input id="obvTitle" placeholder="e.g. Welcome and orientation"></div>
+      <div class="field"><label>Video file (MP4, WebM or MOV, up to 50 MB)</label><input id="obvFile" type="file" accept="video/mp4,video/webm,video/quicktime"></div>
+      <label class="eb-check"><input type="checkbox" id="obvReq" checked> Required (students must watch it to finish onboarding)</label>
+      <div style="margin-top:10px;"><button class="btn teal small" id="obvAdd" type="button">Upload and add</button> <span id="obvStatus" class="note"></span></div></div>
+      <div class="list">${list.length ? list.map((v,i)=>`<div class="item"><div class="item-head"><span class="item-title">${i+1}. ${escapeHtml(v.title)}</span><span class="item-meta">${v.required===false?'Optional':'Required'}</span></div>
+        <video src="${escapeHtml(v.url)}" controls preload="metadata" style="width:100%; max-width:420px; border-radius:8px; margin-top:6px;"></video>
+        <div class="item-actions"><button class="btn ghost small" data-obv-req="${v.id}">Make ${v.required===false?'required':'optional'}</button><button class="btn ghost small" data-obv-up="${v.id}">Move up</button><button class="btn ghost small" data-obv-del="${v.id}">Remove</button></div></div>`).join('') : '<div class="empty">No onboarding videos yet. Add a short orientation video first.</div>'}</div>`;
+    document.getElementById('obvAdd').addEventListener('click', async ()=>{
+      const title = document.getElementById('obvTitle').value.trim(), file = document.getElementById('obvFile').files[0], st = document.getElementById('obvStatus');
+      if(!title || !file){ st.textContent = 'Add a title and choose a video.'; return; }
+      if(file.size > 50*1024*1024){ st.textContent = 'That video is over 50 MB. Trim it or lower its quality.'; return; }
+      st.textContent = 'Uploading… keep this page open.'; document.getElementById('obvAdd').disabled = true;
+      try{
+        const ext = (file.name.split('.').pop() || 'mp4').toLowerCase(), path = `onboarding/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
+        const { error } = await sb.storage.from('how-to-videos').upload(path, file, { contentType: file.type || 'video/mp4' }); if(error) throw error;
+        const url = sb.storage.from('how-to-videos').getPublicUrl(path).data.publicUrl;
+        list.push({ id:uid(), title, url, path, required: document.getElementById('obvReq').checked, createdAt:Date.now() }); await save();
+      }catch(e){ console.error(e); st.textContent = (e && e.message) || 'Upload failed. Please try again.'; document.getElementById('obvAdd').disabled = false; }
+    });
+    root.querySelectorAll('[data-obv-req]').forEach(b=>b.addEventListener('click', ()=>{ const v = list.find(x=>x.id===b.dataset.obvReq); if(v){ v.required = v.required===false; save(); } }));
+    root.querySelectorAll('[data-obv-up]').forEach(b=>b.addEventListener('click', ()=>{ const i = list.findIndex(x=>x.id===b.dataset.obvUp); if(i>0){ [list[i-1], list[i]] = [list[i], list[i-1]]; save(); } }));
+    root.querySelectorAll('[data-obv-del]').forEach(b=>b.addEventListener('click', async ()=>{ if(!confirm('Remove this video?')) return; const v = list.find(x=>x.id===b.dataset.obvDel); list = list.filter(x=>x.id!==b.dataset.obvDel); if(v && v.path){ try{ await sb.storage.from('how-to-videos').remove([v.path]); }catch(e){} } save(); }));
+  }
+  paint();
+}
+
+// ---- Ambassador: announcements to people joining the programme ----
+function applicantMsgView(){
+  return `<div class="section-title"><div><h2>Applicant updates</h2><p>Send an announcement to the people joining the programme: the interest list from the main website, applicants whose applications are open, or newly accepted students still onboarding. Emails go through Brevo and are listed in the Email Log.</p></div></div>
+  <div class="card"><div class="field"><label>Send to</label><select id="amAud"><option value="interest">Interest list (people who left their name and email on the main website)</option><option value="applicants">Applicants waiting for a decision</option><option value="onboarding">Accepted students who haven't finished onboarding</option></select></div>
+    <div id="amCount" class="note" style="margin:-4px 0 10px;"></div>
+    <div class="field"><label>Subject</label><input id="amSubject" maxlength="150" placeholder="e.g. Applications are now open"></div>
+    <div class="field"><label>Message</label><textarea id="amBody" rows="7" maxlength="1500" placeholder="Write your announcement"></textarea></div>
+    <label class="eb-check"><input type="checkbox" id="amEmail" checked> Send by email</label>
+    <label class="eb-check"><input type="checkbox" id="amSms"> Also send a text message to those with a phone number (uses SMS credit)</label>
+    <div style="margin-top:12px;"><button class="btn teal" id="amSend" type="button">Send announcement</button> <span id="amStatus" class="note"></span></div></div>`;
+}
+function amAudience(kind){
+  if(kind==='interest') return DB.applications.filter(a=>a.status==='interested');
+  if(kind==='applicants') return DB.applications.filter(a=>a.status!=='interested');
+  return DB.students.filter(s=>s.stage && s.stage!=='Completed');
+}
+function wireApplicantMsg(){
+  const q = id=>document.getElementById(id); if(!q('amSend')) return;
+  const upd = ()=>{ const l = amAudience(q('amAud').value), em = l.filter(x=>x.email).length, ph = l.filter(x=>x.phone).length; q('amCount').textContent = `${l.length} ${l.length===1?'person':'people'}: ${em} with an email address, ${ph} with a phone number.`; };
+  q('amAud').addEventListener('change', upd); upd();
+  q('amSend').addEventListener('click', ()=>{
+    const subject = q('amSubject').value.trim(), body = q('amBody').value.trim(), l = amAudience(q('amAud').value), st = q('amStatus');
+    if(!subject || !body){ st.textContent = 'Add a subject and a message.'; return; }
+    if(!q('amEmail').checked && !q('amSms').checked){ st.textContent = 'Choose email, text message, or both.'; return; }
+    if(!l.length){ st.textContent = 'There is nobody in that group yet.'; return; }
+    if(!confirm(`Send this to ${l.length} ${l.length===1?'person':'people'}?`)) return;
+    let emails = 0, texts = 0;
+    if(q('amEmail').checked){ const t = l.filter(x=>x.email); emails = t.length; dispatchEmails(t.map(x=>({ email:x.email, name:x.name, id:x.id, role:'applicant' })), { subject, body, author:ME.name, kind:'applicant-update' }); }
+    const s = DB.settings || {};
+    if(q('amSms').checked && s.webhookUrl){ l.filter(x=>x.phone).forEach(x=>{ texts++; queueSmsSend(s.webhookUrl, { to:x.phone, name:x.name, from:ME.name, subject, message:body, recipientId:x.id, recipientRole:'applicant', studentCoordinatorId:null }); }); }
+    st.textContent = `Sending ${emails} email${emails===1?'':'s'}${q('amSms').checked ? ` and ${texts} text${texts===1?'':'s'}` : ''}. Watch the Email Log for results.`;
+    q('amSubject').value = ''; q('amBody').value = '';
+  });
 }
 
 function csvCell(v){
@@ -4325,10 +4553,18 @@ async function touchPresence(){
   // Each person writes only their own row now — never the whole presence map —
   // so nobody's heartbeat can overwrite anyone else's status.
   await sSet(presenceKeyFor(ME.email), rec, true);
+  // a permanent last-seen record (sign-out deletes the presence row, this one stays), refreshed every 10 minutes
+  if(!window._lsWriteAt || Date.now() - window._lsWriteAt > 600000){ window._lsWriteAt = Date.now(); DB.lastSeen = DB.lastSeen || {}; DB.lastSeen[ME.email.toLowerCase()] = rec.lastSeen; sSet(LASTSEEN_PREFIX + ME.email.toLowerCase(), { iso: rec.lastSeen }, true); }
+  // if the Ambassador or a coordinator switched this portal off while the student is signed in, lock it now
+  if(ME.role === 'student'){
+    const me = DB.students.find(x=>x.id===ME.id);
+    if(me && me.portalBlocked){ const a = studentAccess(me); await switchUser(null, true); showInactiveScreen(me, a); }
+  }
 }
 async function refreshPresence(){
   if(!sbReady) return;
   DB.presence = await loadAllPresence();
+  if(ME && ME.role !== 'student'){ const now = Date.now(); if(!window._lsLoadAt || now - window._lsLoadAt > 300000){ window._lsLoadAt = now; DB.lastSeen = await loadAllLastSeen(); } }
 }
 let presenceTimer = null;
 function startPresenceLoop(){
@@ -4423,7 +4659,7 @@ function ambassadorView(tab){
   if(tab==='people'){
     const pq = (peopleSearch||'').toLowerCase().trim();
     const coordMatch = c => !pq || [c.name,c.email,c.subject,c.region,c.bio].some(v=>v && String(v).toLowerCase().includes(pq));
-    const studentMatch = s => !pq || [s.name,s.email,s.school,s.region,s.group,s.ageRange,s.howHeard,s.status,coordName(s.coordinatorId)].some(v=>v && String(v).toLowerCase().includes(pq));
+    const studentMatch = s => (peopleStatus==='all' || studentAccess(s).state===peopleStatus) && (!pq || [s.name,s.email,s.school,s.region,s.group,s.ageRange,s.howHeard,s.status,coordName(s.coordinatorId)].some(v=>v && String(v).toLowerCase().includes(pq)));
     const shownCoords = DB.coordinators.filter(coordMatch);
     const shownStudents = DB.students.filter(studentMatch);
     return `
@@ -4490,6 +4726,13 @@ function ambassadorView(tab){
       </div>
       <button class="btn amber small" id="addStudentBtn" style="margin-top:10px;">Add student</button>
     </div>
+    <div id="statusReqBox"></div>
+    <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
+      <span style="font-size:13px; font-weight:600;">Portal access</span>
+      ${(()=>{ const t = accessSummary(DB.students); return `<span style="font-size:12.5px; color:var(--muted);">${t.act} active · ${t.off} inactive of ${t.n}</span>`; })()}
+      ${[['all','All'],['active','Active'],['inactive','Inactive']].map(([v,l])=>`<button class="btn ${peopleStatus===v?'teal':'ghost'} small" data-people-status="${v}">${l}</button>`).join('')}
+      <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Active means seen in the last 14 days. Inactive students (not seen for 14 days, switched off, or never joined) are locked out and asked to contact you or their coordinator.</span>
+    </div>
     <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
       <span style="font-size:13px; font-weight:600;">Text updates</span>
       <button class="btn ghost small" id="smsAllStudents">Select all shown</button>
@@ -4517,6 +4760,8 @@ function ambassadorView(tab){
           })()}
           <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
             <span>${presenceBadge(s.email)}</span>
+            <span>${accessBadge(s)}</span>${accessControlsAmb(s)}
+            <span data-stage-for="${s.id}" style="flex-basis:100%;"></span>
             <span>${whatsappBadge(s.whatsappRedirected)}</span>
             <input data-name-for-amb="${s.id}" value="${escapeHtml(s.name||'')}" placeholder="Student name" style="min-width:170px; padding:6px 10px; font-size:12.5px; font-weight:600;">
             <select data-status-for="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">
@@ -4666,7 +4911,9 @@ function coordinatorView(tab){
     const mine = myStudents();
     const groups = [...new Set(mine.map(s=>s.group).filter(Boolean))];
     return `
-    <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster.</p></div></div>
+    <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster. Untick <b>Active</b> to switch a student's portal off, tick it to switch it back on.</p></div></div>
+    ${(()=>{ const t = accessSummary(mine); return `<p class="note" style="margin-bottom:10px;">${t.act} active · ${t.off} inactive of ${t.n}. Students not seen for 14 days become inactive automatically.</p>`; })()}
+    <div id="statusReqBox"></div>
     <div class="list">
       ${mine.length ? mine.map(s=>{
         const notes = DB.progressNotes.filter(n=>n.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
@@ -4674,6 +4921,8 @@ function coordinatorView(tab){
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">joined ${fmtDate(s.joined)}</span></div>
           <div class="item-body">${presenceBadge(s.email)}</div>
+          ${accessRowCoord(s)}
+          <div class="item-body" data-stage-for="${s.id}"></div>
           ${waLine(s, 'WhatsApp', `Hello ${String(s.name||'').trim().split(/\s+/)[0]}, this is your coordinator ${ME.name} from Chemistry Competition Prep.`)}
           <div class="item-body" style="display:flex; align-items:center; gap:10px;">
             <label style="margin:0; text-transform:none; font-weight:500; color:var(--ink);">Group:</label>
@@ -4788,6 +5037,7 @@ function studentView(tab){
       <p>You made it into the IChC Outreach Program Ghana — Ghana's pathway toward the International Chemistry Competition. Someone looked at what you've got and decided it was worth investing in. From here, expect a steady rhythm: practice questions, structured competition prep, and a mentor genuinely in your corner.</p>
     </div>
 
+    ${onboardingCardHtml()}
     ${studentCoordinatorCard()}
 
     ${activeSession ? `
@@ -4885,18 +5135,20 @@ function applicationsView(){
   const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
-  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public website's application form — approve to add someone straight to the student roster. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
+  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant under review, then accept to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
     ${sorted.length ? sorted.map(a=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
-        <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${a.ageRange?(' · Age '+escapeHtml(a.ageRange)):''}${a.school?(' · '+escapeHtml(a.school)):''}${a.region?(' · '+escapeHtml(a.region)):''} ${whatsappBadge(a.whatsappRedirected)}</div>
+        <div class="item-body">${stageChip(a.stage||'Applied')} ${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${a.ageRange?(' · Age '+escapeHtml(a.ageRange)):''}${a.school?(' · '+escapeHtml(a.school)):''}${a.region?(' · '+escapeHtml(a.region)):''} ${whatsappBadge(a.whatsappRedirected)}</div>
         ${a.howHeard ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(a.howHeard)}</div>` : ''}
-        ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;">${linkify(a.message)}</div>`):''}
+        ${appDetailsHtml(a)}
+        ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b style="font-size:12px;">Motivation</b><br>${linkify(a.message)}</div>`):''}
         <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — included in the email/text to the applicant"></div>
         <div class="item-actions">
-          <button class="btn teal small" data-approve-app="${a.id}">Add as student</button>
+          ${(a.stage||'Applied')==='Applied' ? `<button class="btn ghost small" data-review-app="${a.id}">Mark under review</button>` : ''}
+          <button class="btn teal small" data-approve-app="${a.id}">Accept &amp; switch on portal</button>
           <button class="btn ghost small" data-decline-app="${a.id}">Decline</button>
         </div>
       </div>`).join('') : `<div class="empty">No applications yet — submissions from the public website's "Start your application" form will appear here.</div>`}
@@ -5006,10 +5258,16 @@ function settingsView(){
   <div class="section-title"><div><h2>Notification settings</h2><p>Connect real email and SMS delivery for every announcement and group message.</p></div></div>
   <div class="card" style="margin-bottom:18px;">
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
+    <h3 style="font-size:15px; margin:18px 0 8px;">Applications</h3>
+    <label class="eb-check" style="margin:0 0 4px;"><input type="checkbox" id="setPauseApps" ${s.applicationsClosed?'checked':''}> Pause new applications</label>
+    <p class="note" style="margin:0 0 6px;">Applications are open all the time by default. Tick this only if you need to stop taking them for a while.</p>
+    <h3 style="font-size:15px; margin:18px 0 8px;">Student access</h3>
+    <label class="eb-check" style="margin:0 0 4px;"><input type="checkbox" id="setLockNew" ${s.lockNeverJoined?'checked':''}> Also lock students who have never joined (they can't sign in until you or their coordinator activates them)</label>
+    <p class="note" style="margin:0 0 6px;">Off by default, so a new student can sign in for the first time. Students not seen for 14 days are always locked.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email delivery</h3>
     <div class="field" style="margin:0 0 6px;"><label>Send emails through</label>
-      <select id="setEmailMode"><option value="emailjs" ${s.emailMode==='server'?'':'selected'}>EmailJS (from the browser; small free limit)</option><option value="server" ${s.emailMode==='server'?'selected':''}>Server via Brevo (300 free per day, with an Email Log)</option></select></div>
-    <p class="note" style="margin:0 0 6px;">Server mode needs the Brevo key set on the server. Until it is, emails automatically go through EmailJS instead, so nothing is lost.</p>
+      <select id="setEmailMode"><option value="server" ${s.emailMode==='emailjs'?'':'selected'}>Server via Brevo (recommended: 300 free per day, with an Email Log)</option><option value="emailjs" ${s.emailMode==='emailjs'?'selected':''}>EmailJS only (from the browser; small free limit)</option></select></div>
+    <p class="note" style="margin:0 0 6px;">Emails go through Brevo first. If Brevo isn't set up or rejects one, that email is sent through EmailJS instead, and every email, whichever way it goes, is recorded in the Email Log.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email — via EmailJS (free tier available)</h3>
     <div class="field" style="margin:0 0 10px;"><label>Public key</label><input id="setEmailKey" value="${escapeHtml(s.emailjsPublicKey||'')}" placeholder="EmailJS public key"></div>
     <div class="field" style="margin:0 0 10px;"><label>Service ID</label><input id="setEmailService" value="${escapeHtml(s.emailjsServiceId||'')}" placeholder="EmailJS service ID"></div>
@@ -5296,8 +5554,12 @@ function examsView(){
 
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
+  if(tab==='welcome') wireOnboarding();
+  if(tab==='onboarding') wireOnboardingSetup();
+  if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
   if(tab==='personalemail') wirePersonalEmail();
+  if(tab==='people' || tab==='students') wireAccess(tab);
   if(tab==='mock') wireMock();
   if(tab==='chat') wireChat();
   if(tab==='smslog') wireSmsResend();
@@ -5781,6 +6043,8 @@ function wireHandlers(tab){
     DB.settings = {
       ...DB.settings,
       emailMode: q('setEmailMode').value,
+      lockNeverJoined: q('setLockNew').checked,
+      applicationsClosed: q('setPauseApps').checked,
       emailjsPublicKey: q('setEmailKey').value.trim(),
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
@@ -5880,6 +6144,10 @@ function wireHandlers(tab){
     await saveKey('library'); render('library');
   }));
 
+  document.querySelectorAll('[data-review-app]').forEach(b=>b.addEventListener('click', async ()=>{
+    await mutateApplications(list=>list.map(x=>x.id===b.dataset.reviewApp ? Object.assign({}, x, { stage:'Under review' }) : x));
+    render('applications');
+  }));
   document.querySelectorAll('[data-approve-app]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.approveApp);
     if(!app) return;
@@ -5888,7 +6156,7 @@ function wireHandlers(tab){
     if(DB.students.some(s=>s.email && s.email.toLowerCase()===app.email.toLowerCase())){
       alert('A student with this email already exists.');
     } else {
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
     }
     await notifyApplicantDecision({app, decision:'accepted', reason});

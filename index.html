@@ -534,6 +534,9 @@
   .ws-bar button:first-of-type{border-color:var(--teal); background:rgba(31,138,112,.08);}
   .ws-bar button:hover{border-color:var(--teal);}
   .ws-bar button:focus-visible{outline:2px solid var(--amber); outline-offset:1px;}
+
+  .np-field{margin-bottom:10px;} .np-field input{width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit; font-size:15px;}
+  .np-err{color:#C0392B !important; font-size:13px !important; min-height:16px; margin:0 0 10px !important;}
 </style>
 </head>
 <body>
@@ -600,7 +603,7 @@
       <div class="name">Chemistry Competition Prep<small>Ghana Chapter</small></div>
     </a>
     <div class="navcta">
-      <a href="apply.html" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Apply</a>
+      <a href="apply.html" class="btn outline dark" id="navApplyBtn" style="padding:9px 18px; font-size:13.5px;">Join now</a>
       <a href="portal.html" class="btn amber" style="padding:9px 18px; font-size:13.5px;">Portal login</a>
     </div>
   </div>
@@ -609,10 +612,20 @@
   <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="npTitle">
     <button class="tm-close" id="npClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
     <div class="np-bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></div>
-    <h3 id="npTitle">Applications closed for now</h3>
-    <p>Join the interest list and be first in line when applications reopen.</p>
-    <a class="np-go" href="apply.html#interestCard" aria-label="Go to the interest form" title="Go to the interest form"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><line x1="14" y1="7" x2="17" y2="10"/></svg></a>
-    <small>Interest form</small>
+    <h3 id="npTitle">Applications will be open soon</h3>
+    <div id="npFormBox">
+      <p>Add your name and email and we'll send you more details as soon as they're ready.</p>
+      <div class="np-field"><input id="npName" type="text" placeholder="Your full name" autocomplete="name" aria-label="Your name"></div>
+      <div class="np-field"><input id="npEmail" type="email" placeholder="Your email address" autocomplete="email" aria-label="Your email"></div>
+      <p class="np-err" id="npErr" role="alert"></p>
+      <button type="button" class="btn amber" id="npSend" style="width:100%; justify-content:center;">Send me the details</button>
+      <small>Already open? <a href="apply.html" style="color:var(--teal-deep); font-weight:700;">Start your application</a></small>
+    </div>
+    <div id="npDone" class="hidden" style="display:none;">
+      <p style="color:var(--navy-deep); font-weight:700; margin:0 0 6px;">Thank you, <span id="npDoneName"></span>!</p>
+      <p>We'll email you at <b id="npDoneEmail"></b> with more details.</p>
+      <a class="btn amber" href="apply.html" style="width:100%; justify-content:center; text-decoration:none;">Start your application</a>
+    </div>
   </div>
 </div>
 <div id="menuScrim"></div>
@@ -636,7 +649,7 @@
       <h1 style="color:var(--chalk);" id="edit-heroTitle" data-edit="heroTitle">Your chemistry talent deserves a stage this big.</h1>
       <p class="lead" id="edit-heroLead" data-edit="heroLead">Wherever you're starting from, there's a place for you here. We'll pair you with a mentor, hand you real competition practice, and walk with you every step toward the International Chemistry Competition — because talent should never need a head start to be seen.</p>
       <div class="ctas">
-        <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">Interest form</button>
+        <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">JOIN PROGRAMME NOW</button>
         <a href="#about" class="btn outline">Learn how it works</a>
       </div>
       <div class="stats">
@@ -2687,6 +2700,27 @@ loadDeadlineFromPortal();
   document.getElementById('npClose').addEventListener('click',function(){ set(false); });
   pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
+})();
+</script>
+<script>
+(function(){
+  var send=document.getElementById('npSend'); if(!send) return;
+  var valid=function(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); };
+  send.addEventListener('click', async function(){
+    var name=document.getElementById('npName').value.trim(), email=document.getElementById('npEmail').value.trim().toLowerCase(), err=document.getElementById('npErr');
+    err.textContent='';
+    if(name.length<2){ err.textContent='Please enter your name.'; return; }
+    if(!valid(email)){ err.textContent='Please enter a valid email address.'; return; }
+    send.disabled=true; send.textContent='Sending…';
+    try{
+      if(typeof sb==='undefined' || !sb || !sbReady) throw new Error('offline');
+      var item={ id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()), status:'interested', name:name, email:email, phone:'', date:new Date().toISOString().slice(0,10), submittedAt:new Date().toISOString(), source:'main-site' };
+      var r=await sb.rpc('append_kv_item',{ p_key:'applications:list', p_item:item });
+      if(r.error) throw r.error;
+    }catch(e){ console.error('Interest save failed',e); send.disabled=false; send.textContent='Send me the details'; err.textContent='Something went wrong. Please try again in a moment.'; return; }
+    document.getElementById('npDoneName').textContent=name.split(/\s+/)[0]; document.getElementById('npDoneEmail').textContent=email;
+    document.getElementById('npFormBox').style.display='none'; var d=document.getElementById('npDone'); d.classList.remove('hidden'); d.style.display='block';
+  });
 })();
 </script>
 
