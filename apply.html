@@ -129,7 +129,7 @@
       <div class="field"><label>Email <span class="req">(you'll sign in to the portal with this email)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
       <div class="field"><label>Phone number <span class="req">(required, so a coordinator can reach you)</span></label><input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000" autocomplete="tel"></div>
       <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates</label>
-      <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="Under 15">Under 15</button><button type="button" class="chip" data-age="15 to 17">15 to 17</button><button type="button" class="chip" data-age="18 and over">18 and over</button></div></div>
+      <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="14-17">14-17</button><button type="button" class="chip" data-age="18-21">18-21</button><button type="button" class="chip" data-age="21-24">21-24</button></div></div>
     </section>
     <section class="sec hidden" data-sec="2"><h2 class="sec-h">2. School</h2>
       <div class="field"><label>School name</label><input id="fSchool" placeholder="e.g. Presec Legon"></div>
@@ -159,6 +159,7 @@
       <label class="check"><input type="checkbox" id="cTalk"> I will stay in touch with my coordinator and reply to messages.</label>
       <label class="check"><input type="checkbox" id="cDo"> I will complete the activities and practice questions I'm given.</label>
     </section>
+    <div id="captchaWrap" style="display:none; margin-top:16px;"><label style="font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);">One last check</label><div id="captchaBox" style="margin-top:8px;"></div></div>
     <p class="error" id="errMsg" role="alert"></p>
     <div class="nav-row"><button type="button" class="btn ghost" id="backBtn">Back</button><button type="button" class="btn" id="nextBtn">Next</button><button type="button" class="btn" id="submitBtn" style="display:none;">Submit my application</button></div>
   </div>
@@ -384,6 +385,16 @@ $('nextBtn').addEventListener('click', ()=>{ const e = validate(step); if(e){ $(
 $('backBtn').addEventListener('click', ()=>{ if(step>1){ step--; paintSteps(); } });
 paintSteps();
 
+let CAPTCHA_ON = false, CAPTCHA_ID = null;
+(async function initCaptcha(){
+  try{
+    const set = await getPortalSettings(), key = String((set && set.recaptchaSiteKey) || '').trim(); if(!key) return;
+    window.onCaptchaReady = function(){
+      try{ CAPTCHA_ID = grecaptcha.render('captchaBox', { sitekey:key }); CAPTCHA_ON = true; document.getElementById('captchaWrap').style.display = 'block'; }catch(e){ console.warn('reCAPTCHA failed to start', e); }
+    };
+    const sc = document.createElement('script'); sc.src = 'https://www.google.com/recaptcha/api.js?onload=onCaptchaReady&render=explicit'; sc.async = true; sc.defer = true; document.head.appendChild(sc);
+  }catch(e){ console.warn('captcha setup skipped', e); }
+})();
 const STAGES = ['Applied','Under review','Accepted','Pending confirmation','Onboarding','Completed'];
 $('submitBtn').addEventListener('click', async ()=>{
   const btn = $('submitBtn'); const e = validate(6); if(e){ $('errMsg').textContent = e; return; }
@@ -394,23 +405,28 @@ $('submitBtn').addEventListener('click', async ()=>{
     level: val('fLevel'), chemLevel: val('fChemLevel'), background: val('fBackground'), competition: val('fCompetition'), competitionDetails: val('fCompDetails'),
     interests: [...picks.interests], message: val('fMessage'), availability: { days:[...picks.days], times:[...picks.times], hours: val('fHours') },
     commitments: { attend:true, communicate:true, activities:true }, stage:'Applied', date: today(), submittedAt: new Date().toISOString() };
+  let savedId = app.id, savedToken = app.token;
   try{
-    const { error } = await sb.rpc('append_kv_item', { p_key:'applications:list', p_item: app });
-    if(error) throw error;
+    if(CAPTCHA_ON && !(CAPTCHA_ID !== null && window.grecaptcha && grecaptcha.getResponse(CAPTCHA_ID))){ btn.disabled = false; btn.textContent = 'Submit my application'; $('errMsg').textContent = 'Please tick "I\'m not a robot" before submitting.'; return; }
+    const r = await fetch(SUPABASE_CONFIG.url + '/functions/v1/submit-application', { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_CONFIG.anonKey }, body: JSON.stringify({ application: app, recaptchaToken: CAPTCHA_ON ? grecaptcha.getResponse(CAPTCHA_ID) : '' }) });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error || 'Something went wrong saving your application. Please try again.');
+    savedId = j.id || savedId; savedToken = j.token || savedToken;
   }catch(err){
     console.error('Application save failed', err);
     btn.disabled = false; btn.textContent = 'Submit my application';
-    $('errMsg').textContent = String(err && err.message || '').includes('closed') ? 'Applications are paused right now. Please check back soon.' : 'Something went wrong saving your application. Please try again.';
+    if(CAPTCHA_ON && window.grecaptcha && CAPTCHA_ID !== null) try{ grecaptcha.reset(CAPTCHA_ID); }catch(x){}
+    $('errMsg').textContent = (err && err.message) || 'Something went wrong saving your application. Please try again.';
     return;
   }
-  try{ localStorage.setItem('ichc_applied', JSON.stringify({ id:app.id, token:app.token, email, name:app.name })); }catch(x){}
+  try{ localStorage.setItem('ichc_applied', JSON.stringify({ id:savedId, token:savedToken, email, name:app.name })); }catch(x){}
   $('formCard').closest('.wrap').classList.add('hidden'); $('doneScreen').classList.remove('hidden');
   $('doneTrack').innerHTML = STAGES.map((st,i)=>`<span class="${i===0?'now':''}">${st}</span>`).join('');
   window.scrollTo({top:0});
   // confirmation email: the server sends the branded one; EmailJS is the backup
   let sent = false;
   try{
-    const r = await fetch(SUPABASE_CONFIG.url + '/functions/v1/application-received', { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_CONFIG.anonKey }, body: JSON.stringify({ id:app.id, email }) });
+    const r = await fetch(SUPABASE_CONFIG.url + '/functions/v1/application-received', { method:'POST', headers:{ 'Content-Type':'application/json', apikey: SUPABASE_CONFIG.anonKey }, body: JSON.stringify({ id:savedId, email }) });
     sent = r.ok;
   }catch(x){}
   if(!sent) await sendConfirmationEmail(app.name, email);

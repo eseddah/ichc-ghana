@@ -5260,6 +5260,8 @@ function settingsView(){
     <p style="font-size:13.5px; color:var(--muted); line-height:1.6; margin-top:0;">Every message is always logged in-app under <b>Notifications</b> for everyone — that part needs no setup. To also push messages out as real emails or texts, connect the services below. This is a front-end page, so it can only ever call services built to accept requests directly from a browser — never a service that needs a private secret key.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Applications</h3>
     <label class="eb-check" style="margin:0 0 4px;"><input type="checkbox" id="setPauseApps" ${s.applicationsClosed?'checked':''}> Pause new applications</label>
+    <div class="field" style="margin:8px 0 4px;"><label>reCAPTCHA site key (public key, shown on the application form)</label><input id="setRecaptcha" value="${escapeHtml(s.recaptchaSiteKey||'')}" placeholder="Paste the site key from Google reCAPTCHA (v2 checkbox)"></div>
+    <p class="note" style="margin:0 0 6px;">The matching secret key goes in Supabase as the <b>RECAPTCHA_SECRET_KEY</b> secret. Leave this empty to switch the check off.</p>
     <p class="note" style="margin:0 0 6px;">Applications are open all the time by default. Tick this only if you need to stop taking them for a while.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Student access</h3>
     <label class="eb-check" style="margin:0 0 4px;"><input type="checkbox" id="setLockNew" ${s.lockNeverJoined?'checked':''}> Also lock students who have never joined (they can't sign in until you or their coordinator activates them)</label>
@@ -6045,6 +6047,7 @@ function wireHandlers(tab){
       emailMode: q('setEmailMode').value,
       lockNeverJoined: q('setLockNew').checked,
       applicationsClosed: q('setPauseApps').checked,
+      recaptchaSiteKey: q('setRecaptcha').value.trim(),
       emailjsPublicKey: q('setEmailKey').value.trim(),
       emailjsServiceId: q('setEmailService').value.trim(),
       emailjsTemplateId: q('setEmailTemplate').value.trim(),
