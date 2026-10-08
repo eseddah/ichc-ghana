@@ -144,9 +144,10 @@
       <div class="field"><label>Previous competition experience</label><select id="fCompetition"><option value="">Choose one</option><option>None yet</option><option>School-level competition</option><option>Regional competition</option><option>National competition</option><option>International competition</option></select></div>
       <div class="field"><label>Tell us about it <span class="req">(optional)</span></label><input id="fCompDetails" placeholder="Which competition, when, and how did it go?"></div>
     </section>
-    <section class="sec hidden" data-sec="4"><h2 class="sec-h">4. Areas of chemistry you like</h2>
-      <p class="hint">Pick at least one. You can choose several.</p>
-      <div class="chip-wrap" id="interestChips"><button type="button" class="chip" data-int="Organic chemistry">Organic chemistry</button><button type="button" class="chip" data-int="Inorganic chemistry">Inorganic chemistry</button><button type="button" class="chip" data-int="Physical chemistry">Physical chemistry</button><button type="button" class="chip" data-int="Analytical chemistry">Analytical chemistry</button><button type="button" class="chip" data-int="Biochemistry">Biochemistry</button><button type="button" class="chip" data-int="Environmental chemistry">Environmental chemistry</button><button type="button" class="chip" data-int="Industrial and everyday chemistry">Industrial and everyday chemistry</button><button type="button" class="chip" data-int="Solving competition problems">Solving competition problems</button><button type="button" class="chip" data-int="Lab skills and practicals">Lab skills and practicals</button></div>
+    <section class="sec hidden" data-sec="4"><h2 class="sec-h">4. Prospects in chemistry</h2>
+      <p class="hint">Which area of chemistry do you see yourself in? Pick at least one. You can choose several. If yours isn't listed, choose Others and type it.</p>
+      <div class="chip-wrap" id="interestChips"><button type="button" class="chip" data-int="Physical chemistry">Physical chemistry</button><button type="button" class="chip" data-int="Organic chemistry">Organic chemistry</button><button type="button" class="chip" data-int="Inorganic chemistry">Inorganic chemistry</button><button type="button" class="chip" data-int="Analytical chemistry">Analytical chemistry</button><button type="button" class="chip" data-int="Biochemistry">Biochemistry</button><button type="button" class="chip" data-int="General chemistry">General chemistry</button><button type="button" class="chip" data-int="Others">Others</button></div>
+      <div class="field" id="otherBox" style="display:none; margin-top:14px;"><label>Type your prospect</label><input id="fOtherInterest" maxlength="50" placeholder="e.g. Polymer chemistry, Forensic chemistry"></div>
     </section>
     <section class="sec hidden" data-sec="5"><h2 class="sec-h">5. Why you want to join</h2>
       <div class="field"><label>Your motivation <span class="req">(at least a few sentences)</span></label><textarea id="fMessage" rows="6" placeholder="Why do you want to join, and what do you hope to get out of it?"></textarea></div>
@@ -367,7 +368,8 @@ async function sendConfirmationEmail(name, email){
 // ---- Multi-section application ----
 const TOTAL = 6; let step = 1; const picks = { interests:new Set(), days:new Set(), times:new Set() };
 function bindMulti(id, attr, set){ document.querySelectorAll('#'+id+' .chip').forEach(c=>c.addEventListener('click', ()=>{ const v = c.dataset[attr]; if(set.has(v)){ set.delete(v); c.classList.remove('active'); } else { set.add(v); c.classList.add('active'); } })); }
-bindMulti('interestChips','int',picks.interests); bindMulti('dayChips','day',picks.days); bindMulti('timeChips','time',picks.times);
+bindMulti('interestChips','int',picks.interests);
+document.getElementById('interestChips').addEventListener('click', ()=>{ const on = picks.interests.has('Others'); document.getElementById('otherBox').style.display = on ? 'block' : 'none'; if(on) document.getElementById('fOtherInterest').focus(); }); bindMulti('dayChips','day',picks.days); bindMulti('timeChips','time',picks.times);
 const $ = id=>document.getElementById(id), val = id=>($(id).value||'').trim();
 function paintSteps(){
   document.querySelectorAll('.sec').forEach(x=>x.classList.toggle('hidden', +x.dataset.sec !== step));
@@ -385,7 +387,7 @@ function validate(n){
   }
   if(n===2){ if(val('fSchool').length < 2) return 'Please enter your school.'; if(!val('fLevel')) return 'Please choose your class or level.'; if(val('fRegion').length < 2) return 'Please enter your region or town.'; }
   if(n===3){ if(!val('fChemLevel')) return 'Please choose your chemistry level.'; if(val('fBackground').length < 15) return 'Please tell us a little about the chemistry you have studied.'; if(!val('fCompetition')) return 'Please choose your competition experience.'; }
-  if(n===4 && !picks.interests.size) return 'Please pick at least one area of chemistry.';
+  if(n===4){ if(!picks.interests.size) return 'Please pick at least one prospect in chemistry.'; if(picks.interests.has('Others') && val('fOtherInterest').length < 2) return 'Please type your prospect in the box.'; }
   if(n===5 && val('fMessage').length < 40) return 'Please write a few sentences about why you want to join.';
   if(n===6){ if(!picks.days.size) return 'Please pick at least one day you could join.'; if(!picks.times.size) return 'Please pick a best time of day.'; if(!val('fHours')) return 'Please choose how many hours you can give each week.'; if(!($('cAttend').checked && $('cTalk').checked && $('cDo').checked)) return 'Please tick all three commitments to submit.'; }
   return '';
@@ -393,6 +395,13 @@ function validate(n){
 $('nextBtn').addEventListener('click', ()=>{ const e = validate(step); if(e){ $('errMsg').textContent = e; return; } step++; paintSteps(); });
 $('backBtn').addEventListener('click', ()=>{ if(step>1){ step--; paintSteps(); } });
 paintSteps();
+(function prefill(){
+  try{
+    const q = new URLSearchParams(location.search), n = (q.get('name')||'').trim().slice(0,120), e = (q.get('email')||'').trim().slice(0,200);
+    if(n && !$('fName').value) $('fName').value = n;
+    if(e && !$('fEmail').value) $('fEmail').value = e;
+  }catch(x){}
+})();
 
 let CAPTCHA_ON = false, CAPTCHA_ID = null;
 (async function initCaptcha(){
@@ -412,7 +421,7 @@ $('submitBtn').addEventListener('click', async ()=>{
   const email = val('fEmail').toLowerCase();
   const app = { id: uid(), token: uid(), name: val('fName'), email, phone: val('fPhone'), notifySms: $('fNotifySms').checked, school: val('fSchool'), region: val('fRegion'), ageRange: chosenAge, howHeard: val('fHeard'),
     level: val('fLevel'), chemLevel: val('fChemLevel'), background: val('fBackground'), competition: val('fCompetition'), competitionDetails: val('fCompDetails'),
-    interests: [...picks.interests], message: val('fMessage'), availability: { days:[...picks.days], times:[...picks.times], hours: val('fHours') },
+    interests: [...picks.interests].map(x=>x==='Others' ? 'Other: ' + val('fOtherInterest') : x), message: val('fMessage'), availability: { days:[...picks.days], times:[...picks.times], hours: val('fHours') },
     commitments: { attend:true, communicate:true, activities:true }, stage:'Applied', date: today(), submittedAt: new Date().toISOString() };
   let savedId = app.id, savedToken = app.token;
   try{

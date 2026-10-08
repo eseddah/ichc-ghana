@@ -2722,6 +2722,19 @@ function portalUrl(){
   if(/^https?:$/.test(location.protocol)) return location.origin + location.pathname.replace(/index\.html$/,'');
   return '';
 }
+function applyUrl(){
+  const u = portalUrl(); if(!u) return 'apply.html';
+  return /portal\.html/i.test(u) ? u.replace(/portal\.html.*$/i, 'apply.html') : u.replace(/\/?$/, '/') + 'apply.html';
+}
+function inviteLink(app){ return `${applyUrl()}?name=${encodeURIComponent(app.name||'')}&email=${encodeURIComponent(app.email||'')}`; }
+// Emails someone from the interest list to say applications are open, with a link straight to the form (name and email pre-filled)
+function inviteInterest(app){
+  const first = String(app.name||'').trim().split(/\s+/)[0] || 'there';
+  dispatchEmails([{ email:app.email, name:app.name, id:app.id, role:'applicant' }], {
+    subject:'Applications are open: start your application',
+    body:`Hi ${first}, good news! Applications for Chemistry Competition Prep are now open, and you can start yours right away.\n\nStart your application here: ${inviteLink(app)}\n\nIt takes about 5 minutes, and your name and email are already filled in for you.`,
+    author: ME.name, kind:'interest-open', noPortalLink:true });
+}
 function withPortalLink(text){
   const u = portalUrl();
   if(!u || String(text||'').includes(u)) return text;
@@ -3480,7 +3493,8 @@ function queueServerEmail(payload, fallback){
     await new Promise(r=>setTimeout(r, 400));
   });
 }
-function dispatchEmails(list, { subject, body, author, kind }){
+function dispatchEmails(list, { subject, body, author, kind, noPortalLink }){
+  const msgText = noPortalLink ? body : withPortalLink(body);
   const s = DB.settings || {};
   const targets = list.filter(r=>r.email && r.notifyEmail!==false);
   const useServer = s.emailMode !== 'emailjs' && typeof sbReady !== 'undefined' && sbReady;
@@ -3488,13 +3502,13 @@ function dispatchEmails(list, { subject, body, author, kind }){
     const isStudent = r.coordinatorId !== undefined;
     if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)
       queueEmailSend({ service_id:s.emailjsServiceId, template_id:s.emailjsTemplateId, user_id:s.emailjsPublicKey,
-        template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:withPortalLink(body) } },
-        { name:r.name, subject, message:withPortalLink(body), author, kind:kind||'', recipientId:r.id, recipientRole:r.role || (isStudent?'student':'coordinator'), studentCoordinatorId:isStudent ? r.coordinatorId : null });
+        template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:msgText } },
+        { name:r.name, subject, message:msgText, author, kind:kind||'', recipientId:r.id, recipientRole:r.role || (isStudent?'student':'coordinator'), studentCoordinatorId:isStudent ? r.coordinatorId : null });
   };
   targets.forEach(r=>{
     if(!useServer){ viaJs(r); return; }
     const isStudent = r.coordinatorId !== undefined;
-    queueServerEmail({ to:r.email, name:r.name, subject, message:withPortalLink(body), author, kind: kind||'', replyTo: ME && ME.email,
+    queueServerEmail({ to:r.email, name:r.name, subject, message:msgText, author, kind: kind||'', replyTo: ME && ME.email,
       recipientId:r.id, recipientRole: r.role || (isStudent ? 'student' : 'coordinator'), studentCoordinatorId: isStudent ? r.coordinatorId : null }, ()=>viaJs(r));
   });
 }
@@ -3913,6 +3927,7 @@ function applicantMsgView(){
     <div id="amCount" class="note" style="margin:-4px 0 10px;"></div>
     <div class="field"><label>Subject</label><input id="amSubject" maxlength="150" placeholder="e.g. Applications are now open"></div>
     <div class="field"><label>Message</label><textarea id="amBody" rows="7" maxlength="1500" placeholder="Write your announcement"></textarea></div>
+    <div style="margin:-2px 0 10px;"><button class="btn ghost small" id="amTpl" type="button">Fill in the "applications are open" message</button></div>
     <label class="eb-check"><input type="checkbox" id="amEmail" checked> Send by email</label>
     <label class="eb-check"><input type="checkbox" id="amSms"> Also send a text message to those with a phone number (uses SMS credit)</label>
     <div style="margin-top:12px;"><button class="btn teal" id="amSend" type="button">Send announcement</button> <span id="amStatus" class="note"></span></div></div>`;
@@ -3926,6 +3941,7 @@ function wireApplicantMsg(){
   const q = id=>document.getElementById(id); if(!q('amSend')) return;
   const upd = ()=>{ const l = amAudience(q('amAud').value), em = l.filter(x=>x.email).length, ph = l.filter(x=>x.phone).length; q('amCount').textContent = `${l.length} ${l.length===1?'person':'people'}: ${em} with an email address, ${ph} with a phone number.`; };
   q('amAud').addEventListener('change', upd); upd();
+  q('amTpl').addEventListener('click', ()=>{ q('amSubject').value = 'Applications are open: start your application'; q('amBody').value = `Good news! Applications for Chemistry Competition Prep are now open.\n\nStart your application here: ${applyUrl()}\n\nIt takes about 5 minutes. We look forward to hearing from you!`; });
   q('amSend').addEventListener('click', ()=>{
     const subject = q('amSubject').value.trim(), body = q('amBody').value.trim(), l = amAudience(q('amAud').value), st = q('amStatus');
     if(!subject || !body){ st.textContent = 'Add a subject and a message.'; return; }
@@ -5181,11 +5197,11 @@ function applicationsView(){
         ${appDetailsHtml(a)}
         ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b style="font-size:12px;">Motivation</b><br>${linkify(a.message)}</div>`):''}
         <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — included in the email/text to the applicant"></div>
-        <div class="item-actions">
+        ${a.stage==='Invited' ? `<div class="item-actions"><span class="note" style="flex-basis:100%; margin:0 0 6px;">Invited by email. Waiting for them to complete the application form.</span><button class="btn ghost small" data-resend-invite="${a.id}">Send the invitation again</button><button class="btn ghost small" data-remove-interest="${a.id}">Remove</button></div>` : `<div class="item-actions">
           ${(a.stage||'Applied')==='Applied' ? `<button class="btn ghost small" data-review-app="${a.id}">Mark under review</button>` : ''}
           <button class="btn teal small" data-approve-app="${a.id}">Accept &amp; switch on portal</button>
           <button class="btn ghost small" data-decline-app="${a.id}">Decline</button>
-        </div>
+        </div>`}
       </div>`).join('') : `<div class="empty">No applications yet — submissions from the public website's "Start your application" form will appear here.</div>`}
   </div>
 
@@ -6222,12 +6238,19 @@ function wireHandlers(tab){
   document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.convertInterest);
     if(!app) return;
-    await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; if(!y.date) y.date=today(); return y; }));
+    const moved = await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; y.stage='Invited'; if(!y.date) y.date=today(); return y; }));
+    if(!moved){ alert('Could not move this person: the database refused the change. Please try again.'); render('applications'); return; }
+    inviteInterest(app);
     render('applications');
+    alert('Moved to Applications. An email inviting ' + (String(app.name||'').trim().split(/\s+/)[0] || 'them') + ' to start their application is on its way.');
+  }));
+  document.querySelectorAll('[data-resend-invite]').forEach(b=>b.addEventListener('click', ()=>{
+    const app = DB.applications.find(a=>a.id===b.dataset.resendInvite); if(!app) return;
+    inviteInterest(app); b.textContent = 'Invitation sent again ✓'; b.disabled = true;
   }));
   document.querySelectorAll('[data-remove-interest]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.removeInterest); if(!app) return;
-    if(!confirm('Remove '+app.name+' from the Interest List?')) return;
+    if(!confirm('Remove '+app.name+' from this list?')) return;
     const removed = await mutateApplications(list=>list.filter(x=>x.id!==app.id));
     if(!removed) alert('Could not remove this person: the database refused the change. Please try again.');
     render('applications');
