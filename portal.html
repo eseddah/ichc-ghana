@@ -591,6 +591,13 @@
   .ob-step{display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--line); font-size:14px;} .ob-step b{font-size:15px;}
   .ob-tick{flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff;} .ob-tick.on{background:var(--teal); border-color:var(--teal);}
 </style>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  try{ await OneSignal.init({ appId:'c711029f-212c-4c50-8498-ea78aecbb153', serviceWorkerPath:'OneSignalSDKWorker.js', notifyButton:{ enable:false }, welcomeNotification:{ disable:true } }); }catch(e){ console.warn('OneSignal init failed', e); }
+});
+</script>
 </head>
 <body>
 
@@ -1887,6 +1894,27 @@ function audienceFor(coordinatorId){
   const coords = coordinatorId ? DB.coordinators.filter(c=>c.id===coordinatorId) : DB.coordinators;
   return [...students, ...coords];
 }
+
+// Every update lets the sender choose email and/or text message. App (push) notifications are automatic for everyone.
+function askChannels(title){
+  let saved = null; try{ saved = JSON.parse(localStorage.getItem('ichc_channels') || 'null'); }catch(e){}
+  saved = saved || { email:true, sms:false };
+  return new Promise(resolve=>{
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.65); display:flex; align-items:center; justify-content:center; padding:16px;';
+    o.innerHTML = `<div role="dialog" aria-modal="true" style="background:#fff; border-radius:16px; padding:20px; width:min(420px,100%);">
+      <h3 style="margin:0 0 4px; font-size:18px;">Send this update by&hellip;</h3>
+      <p class="note" style="margin:0 0 12px;" id="chTitle"></p>
+      <label class="eb-check"><input type="checkbox" id="chEmail" ${saved.email?'checked':''}> Email</label>
+      <label class="eb-check"><input type="checkbox" id="chSms" ${saved.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit)</span></label>
+      <p class="note" style="margin:10px 0 14px;">&#128276; App notifications on phones and computers go to everyone automatically.</p>
+      <div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn ghost small" id="chSkip" type="button">Neither</button><button class="btn teal small" id="chGo" type="button">Send</button></div></div>`;
+    document.body.appendChild(o); o.querySelector('#chTitle').textContent = title;
+    const done = ch=>{ try{ localStorage.setItem('ichc_channels', JSON.stringify(ch)); }catch(e){} o.remove(); resolve(ch); };
+    o.querySelector('#chGo').addEventListener('click', ()=>done({ email:o.querySelector('#chEmail').checked, sms:o.querySelector('#chSms').checked }));
+    o.querySelector('#chSkip').addEventListener('click', ()=>done({ email:false, sms:false }));
+  });
+}
 async function notifyBroadcast({title, body, coordinatorId, author, role}){
   const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
   await appendShared('notifications', entry);
@@ -1894,8 +1922,9 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
   const recipients = audienceFor(coordinatorId);
   const s = DB.settings || {};
 
-  dispatchEmails(recipients, { subject:title, body, author, kind:'announcement' });
-  if(s.webhookUrl){
+  const ch = await askChannels(title);
+  if(ch.email) dispatchEmails(recipients, { subject:title, body, author, kind:'announcement' });
+  if(ch.sms && s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       const isStudent = r.coordinatorId !== undefined;
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:author, subject:title, message:withPortalLink(body),
@@ -1910,15 +1939,15 @@ async function notifyBroadcast({title, body, coordinatorId, author, role}){
 // audienceFor() gives everything else. Normal-priority alerts stay in-app only —
 // only Critical and Important are urgent enough to justify a real text/email.
 async function dispatchAlertNotifications(alert){
-  if(alert.priority==='normal') return;
   const targets = resolveAlertAudience(alert);
   const s = DB.settings || {};
-  const prefix = alert.priority==='critical' ? '🔴 CRITICAL ALERT' : '⚠️ IMPORTANT ALERT';
+  const prefix = alert.priority==='critical' ? '🔴 CRITICAL ALERT' : alert.priority==='normal' ? 'ALERT' : '⚠️ IMPORTANT ALERT';
   const title = `${prefix}: ${alert.title}`;
   const body = alert.actionUrl ? `${alert.message} ${normalizeUrl(alert.actionUrl)}` : alert.message;
 
-  dispatchEmails(targets, { subject:title, body, author:alert.author, kind:'alert' });
-  if(s.webhookUrl){
+  const ch = await askChannels(title);
+  if(ch.email) dispatchEmails(targets, { subject:title, body, author:alert.author, kind:'alert' });
+  if(ch.sms && s.webhookUrl){
     targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:withPortalLink(body),
         recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId });
@@ -2345,6 +2374,8 @@ function showApp(){
   startPresenceLoop();
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
+  // push notifications: link this device to the signed-in person and ask once for permission
+  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); if(OS.Notifications && OS.Notifications.permission === false && OS.Slidedown) await OS.Slidedown.promptPush(); }catch(e){ console.warn('push setup skipped', e); } }); }catch(e){}
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -3191,12 +3222,14 @@ function mockPaint(){
   const root = document.getElementById('mockRoot'); if(!root) return;
   if(MOCK.phase==='home'){
     root.innerHTML = `<div class="section-title"><div><h2>${ME.role==='student'?'Mock competition':'Mock & progress'}</h2><p>A timed, auto-marked practice competition in the style of the IChC final round: 15 questions, 30 minutes. Every mock is freshly written, so no two are the same.</p></div></div>
-      <div class="card" style="margin-bottom:16px;"><button class="btn teal" id="mockStart" type="button" ${MOCK.busy?'disabled':''}>${MOCK.busy?'Writing your exam… (up to a minute)':'Start a mock competition'}</button>
+      <div class="card" style="margin-bottom:16px;"><button class="btn teal" id="mockStart" type="button" ${MOCK.busy?'disabled':''}>${MOCK.busy?'Getting your exam ready…':'Start a mock competition'}</button>
       <p class="note" style="margin:8px 0 0;">Once you start, the clock runs even if you leave this page. Calculators are fine; no notes or searching, please.</p>
-      ${MOCK.err ? `<p class="psms-status bad">${escapeHtml(MOCK.err)}</p>` : ''}</div>
+      ${MOCK.err ? `<p class="psms-status bad">${escapeHtml(MOCK.err)}</p>` : ''}
+      ${ME.role!=='student' ? '<div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--line);"><button class="btn ghost small" id="mockPrep" type="button">Prepare 2 ready-made mocks</button> <span id="mockPrepStatus" class="note"></span><p class="note" style="margin:6px 0 0;">Ready-made mocks let students start instantly. The system also tops them up on its own.</p></div>' : ''}</div>
       <div class="card" style="margin-bottom:16px;"><h3 style="margin:0 0 6px; font-size:16px;">Leaderboard</h3>${mockBoardHtml()}</div>
       ${mockStatsHtml()}`;
     const b = document.getElementById('mockStart'); if(b) b.addEventListener('click', mockStart);
+    const pr = document.getElementById('mockPrep'); if(pr) pr.addEventListener('click', async ()=>{ const st = document.getElementById('mockPrepStatus'); pr.disabled = true; st.textContent = 'Preparing… this takes a minute or two.'; try{ const r = await examAi('pool_fill', { count:2 }); st.textContent = `Done. ${r.ready} ready-made mock${r.ready===1?'':'s'} on the shelf.`; }catch(e){ st.textContent = e.message==='quota' ? 'The Gemini limit was reached. Try again later.' : 'Could not prepare them just now.'; } pr.disabled = false; });
   } else if(MOCK.phase==='running'){
     const qs = MOCK.exam.questions;
     root.innerHTML = `<div style="position:sticky; top:0; z-index:5; background:var(--paper); padding:10px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); margin-bottom:12px;"><b>Mock competition</b><span id="mockTimer" style="font-size:20px; font-weight:700; font-variant-numeric:tabular-nums;">--:--</span></div>
@@ -3225,7 +3258,7 @@ async function mockStart(){
   if(MOCK.busy) return;
   MOCK.busy = true; MOCK.err = ''; mockPaint();
   try{
-    const d = await examAi('mock_create');
+    let d; try{ d = await examAi('mock_create'); }catch(e1){ if(e1.message==='unavailable'){ await new Promise(r=>setTimeout(r,1500)); d = await examAi('mock_create'); } else throw e1; }
     MOCK.exam = d; MOCK.answers = {}; MOCK.endsAt = new Date(d.startedAt).getTime() + d.timeLimitMin*60000; MOCK.phase = 'running';
   }catch(e){
     MOCK.err = e.message==='quota' ? "Google's free Gemini limit for your key has been reached. It resets daily, or you can turn on billing in Google AI Studio for higher limits. Please try again later." : e.message==='rate_limited' ? 'You have started a lot of mocks this hour. Please try again a little later.' : e.message==='not_configured' ? 'The Gemini key is not set on the server.' : 'Could not write an exam just now. Please try again.';
@@ -5125,8 +5158,10 @@ async function mutateApplications(fn){
   const next = fn(list) || list;
   DB.applications = next;
   lastLocalWriteAt = Date.now();
-  await sSet(KEY_MAP.applications, next, true);
+  const ok = await sSet(KEY_MAP.applications, next, true);
   lastLocalWriteAt = Date.now();
+  if(!ok){ DB.applications = list; }   // the database refused it: put the list back so nothing looks done when it isn't
+  return !!ok;
 }
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
@@ -6176,22 +6211,25 @@ function wireHandlers(tab){
     if(!app) return;
     const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
     const reason = reasonInp ? reasonInp.value.trim() : '';
+    b.disabled = true;
+    const removed = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+    if(!removed){ alert('Could not decline this applicant: the database refused the change. Nothing was sent to the applicant. Please try again.'); render('applications'); return; }
     await notifyApplicantDecision({app, decision:'declined', reason});
     DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
     await saveKey('applicationDecisions');
-    await mutateApplications(list=>list.filter(a=>a.id!==app.id));
     render('applications');
   }));
   document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.convertInterest);
     if(!app) return;
-    await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; if(typeof y.whatsappRedirected!=='boolean') y.whatsappRedirected=false; if(!y.date) y.date=today(); return y; }));
+    await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; if(!y.date) y.date=today(); return y; }));
     render('applications');
   }));
   document.querySelectorAll('[data-remove-interest]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.removeInterest); if(!app) return;
     if(!confirm('Remove '+app.name+' from the Interest List?')) return;
-    await mutateApplications(list=>list.filter(x=>x.id!==app.id));
+    const removed = await mutateApplications(list=>list.filter(x=>x.id!==app.id));
+    if(!removed) alert('Could not remove this person: the database refused the change. Please try again.');
     render('applications');
   }));
 

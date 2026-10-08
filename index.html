@@ -537,9 +537,17 @@
 
   .np-field{margin-bottom:10px;} .np-field input{width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit; font-size:15px;}
   .np-err{color:#C0392B !important; font-size:13px !important; min-height:16px; margin:0 0 10px !important;}
+
+  .dl-bar{background:var(--navy-deep); color:#fff; text-align:center; padding:10px 14px; font-size:14px; font-weight:600; position:relative; z-index:60;}
+  .dl-bar #dlClock{display:inline-flex; gap:6px; margin-left:12px; vertical-align:middle;}
+  .dl-bar .dl-u{background:rgba(255,255,255,.12); border-radius:8px; padding:3px 8px; min-width:44px; display:inline-block; font-variant-numeric:tabular-nums;}
+  .dl-bar .dl-u b{color:var(--amber); font-size:16px;} .dl-bar .dl-u small{font-size:10px; opacity:.8; margin-left:2px; font-weight:600;}
+  .dl-bar.closed{background:#5B6670;}
 </style>
 </head>
 <body>
+<div id="dlBar" class="dl-bar" style="display:none;" role="status" aria-live="polite"><span id="dlLabel"></span><span id="dlClock"></span></div>
+
 <a class="skip-link" href="#about">Skip to content</a>
 <div id="scrollBar"></div>
 <button id="toTop" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,15 12,9 18,15"/></svg></button>
@@ -2700,6 +2708,37 @@ loadDeadlineFromPortal();
   document.getElementById('npClose').addEventListener('click',function(){ set(false); });
   pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
+})();
+</script>
+
+<script>
+// Live countdown to the application deadline (set by the Ambassador under Settings). Shows nothing until a future deadline is set.
+(function(){
+  var bar=document.getElementById('dlBar'), label=document.getElementById('dlLabel'), clock=document.getElementById('dlClock'), timer=null;
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function show(deadline, paused){
+    bar.style.display='block';
+    if(paused){ bar.classList.add('closed'); label.textContent='Applications are paused right now'; clock.innerHTML=''; return; }
+    function tick(){
+      var ms=deadline-Date.now();
+      if(ms<=0){ bar.classList.add('closed'); label.textContent='Applications are now closed'; clock.innerHTML=''; clearInterval(timer); return; }
+      bar.classList.remove('closed'); label.textContent='Applications close in';
+      var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), sec=Math.floor(ms%6e4/1e3);
+      clock.innerHTML='<span class="dl-u"><b>'+d+'</b><small>d</small></span><span class="dl-u"><b>'+pad(h)+'</b><small>h</small></span><span class="dl-u"><b>'+pad(m)+'</b><small>m</small></span><span class="dl-u"><b>'+pad(sec)+'</b><small>s</small></span>';
+    }
+    tick(); timer=setInterval(tick,1000);
+  }
+  async function init(){
+    try{
+      for(var n=0;n<40 && (typeof sbReady==='undefined' || !sbReady);n++) await new Promise(function(r){ setTimeout(r,150); });
+      if(typeof sbReady==='undefined' || !sbReady) return;
+      var r=await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+      var set=(r.data&&r.data.value)||{}, dl=set.applicationDeadline?new Date(set.applicationDeadline).getTime():NaN;
+      if(set.applicationsClosed) return show(NaN,true);
+      if(isFinite(dl)) show(dl,false);
+    }catch(e){ console.warn('Countdown skipped',e); }
+  }
+  init();
 })();
 </script>
 <script>

@@ -121,6 +121,7 @@
   <h1 class="title">Join Programme Now</h1>
   <p class="sub">Applications are open. Fill in each section (about 5 minutes) and submit. We'll email you to confirm we received it. If you're accepted, your student portal is switched on and you'll be guided through a short onboarding.</p>
 
+  <div id="applyCountdown" style="display:none; background:var(--navy-deep); color:#fff; border-radius:12px; padding:10px 14px; margin:0 0 14px; font-size:14px; font-weight:600; text-align:center;"></div>
   <div class="stepper" id="stepper" aria-label="Application progress"></div>
 
   <div class="card" id="formCard">
@@ -253,11 +254,17 @@ paintLogos();
 // link above — sourced from the portal's Settings tab (same "settings:notify"
 // row) so the Ambassador can move the deadline without editing this file.
 // Falls back to this default until the Ambassador sets one from the portal.
-let PORTAL_PAUSED = false;
+let PORTAL_PAUSED = false, PORTAL_DEADLINE = NaN;
 function applicationsAreClosed(){ return PORTAL_PAUSED; }
 function fmtDeadlineDate(d){
   return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
 }
+setInterval(function(){
+  var el = document.getElementById('applyCountdown'); if(!el || !isFinite(PORTAL_DEADLINE) || PORTAL_PAUSED) return;
+  var ms = PORTAL_DEADLINE - Date.now(); if(ms <= 0){ el.style.display = 'none'; applyDeadlineState(); return; }
+  var d = Math.floor(ms/864e5), h = Math.floor(ms%864e5/36e5), m = Math.floor(ms%36e5/6e4), sc = Math.floor(ms%6e4/1e3);
+  el.style.display = 'block'; el.innerHTML = 'Applications close in <b style="color:var(--amber);">' + d + 'd ' + String(h).padStart(2,'0') + 'h ' + String(m).padStart(2,'0') + 'm ' + String(sc).padStart(2,'0') + 's</b>';
+}, 1000);
 function applyDeadlineState(){
   if(applicationsAreClosed()){
     document.getElementById('formCard').closest('.wrap').classList.add('hidden');
@@ -274,6 +281,8 @@ applyDeadlineState();
 async function loadDeadlineFromPortal(){
   const s = await getPortalSettings();
   PORTAL_PAUSED = !!s.applicationsClosed;
+  PORTAL_DEADLINE = s.applicationDeadline ? new Date(s.applicationDeadline).getTime() : NaN;
+  if(isFinite(PORTAL_DEADLINE) && Date.now() > PORTAL_DEADLINE) PORTAL_PAUSED = true;
     renderSystemStatusBanner(s.systemStatus, s.systemStatusMessage);
   maintenanceActive = s.systemStatus === 'maintenance';
   if(s.programName) document.title = 'Apply — ' + s.programName;
