@@ -1915,8 +1915,15 @@ function askChannels(title){
     o.querySelector('#chSkip').addEventListener('click', ()=>done({ email:false, sms:false }));
   });
 }
-async function notifyBroadcast({title, body, coordinatorId, author, role}){
-  const entry = { id: uid(), title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
+async function removeNotificationsFor(ann){
+  // an announcement that is deleted also disappears from everyone's notification area
+  const fresh = await sharedRead('notifications'), base = Array.isArray(fresh) ? fresh : (DB.notifications || []);
+  const keep = base.filter(n=>!(n.refId===ann.id || (!n.refId && n.role==='ambassador' && n.title===ann.title && n.body===ann.body)));
+  if(keep.length === base.length) return;
+  DB.notifications = keep; await saveKey('notifications');
+}
+async function notifyBroadcast({title, body, coordinatorId, author, role, refId}){
+  const entry = { id: uid(), refId: refId||null, title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
   await appendShared('notifications', entry);
 
   const recipients = audienceFor(coordinatorId);
@@ -5915,8 +5922,9 @@ function wireHandlers(tab){
     if(!title||!body) return alert('Please fill in both fields.');
     annBtn.disabled = true;
     try{
-      await appendShared('announcements', {id:uid(), title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
-      await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador'});
+      const annId = uid();
+      await appendShared('announcements', {id:annId, title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
+      await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador', refId:annId});
     }catch(e){ annBtn.disabled = false; console.error(e); return alert('That announcement did not finish posting. Please check before trying again.'); }
     render('announce');
   });
@@ -5930,8 +5938,11 @@ function wireHandlers(tab){
   }));
   document.querySelectorAll('[data-remove-ann]').forEach(b=>b.addEventListener('click', async ()=>{
     if(!confirm('Remove this announcement? This can\'t be undone.')) return;
+    const ann = DB.announcements.find(a=>a.id===b.dataset.removeAnn);
     DB.announcements = DB.announcements.filter(a=>a.id!==b.dataset.removeAnn);
-    await saveKey('announcements'); render('announce');
+    await saveKey('announcements');
+    if(ann) await removeNotificationsFor(ann);
+    render('announce');
   }));
 
   document.querySelectorAll('[data-save-group]').forEach(b=>b.addEventListener('click', async ()=>{
