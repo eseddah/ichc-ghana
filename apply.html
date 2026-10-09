@@ -160,8 +160,8 @@
       <label class="check"><input type="checkbox" id="cAttend"> I will attend the programme sessions.</label>
       <label class="check"><input type="checkbox" id="cTalk"> I will stay in touch with my coordinator and reply to messages.</label>
       <label class="check"><input type="checkbox" id="cDo"> I will complete the activities and practice questions I'm given.</label>
+      <div id="captchaWrap" style="display:none; margin-top:20px;"><label style="font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);">One last check</label><div id="captchaBox" style="margin-top:8px;"></div></div>
     </section>
-    <div id="captchaWrap" style="display:none; margin-top:16px;"><label style="font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);">One last check</label><div id="captchaBox" style="margin-top:8px;"></div></div>
     <p class="error" id="errMsg" role="alert"></p>
     <div class="nav-row"><button type="button" class="btn ghost" id="backBtn">Back</button><button type="button" class="btn" id="nextBtn">Next</button><button type="button" class="btn" id="submitBtn" style="display:none;">Submit my application</button></div>
   </div>
@@ -377,6 +377,7 @@ function paintSteps(){
   $('backBtn').style.visibility = step===1 ? 'hidden' : 'visible';
   $('nextBtn').style.display = step===TOTAL ? 'none' : ''; $('submitBtn').style.display = step===TOTAL ? '' : 'none';
   $('errMsg').textContent = ''; window.scrollTo({top:0, behavior:'smooth'});
+  if(step === 6 && CAPTCHA_ON) renderCaptcha();
 }
 function validate(n){
   if(n===1){
@@ -403,12 +404,13 @@ paintSteps();
   }catch(x){}
 })();
 
-let CAPTCHA_ON = false, CAPTCHA_ID = null;
+let CAPTCHA_ON = false, CAPTCHA_ID = null, CAPTCHA_KEY = '';
+function renderCaptcha(){ if(CAPTCHA_ID !== null || !window.grecaptcha || !CAPTCHA_KEY) return; try{ CAPTCHA_ID = grecaptcha.render('captchaBox', { sitekey:CAPTCHA_KEY }); }catch(e){ console.warn('reCAPTCHA failed to start', e); } }
 (async function initCaptcha(){
   try{
     const set = await getPortalSettings(), key = String((set && set.recaptchaSiteKey) || '').trim(); if(!key) return;
     window.onCaptchaReady = function(){
-      try{ CAPTCHA_ID = grecaptcha.render('captchaBox', { sitekey:key }); CAPTCHA_ON = true; document.getElementById('captchaWrap').style.display = 'block'; }catch(e){ console.warn('reCAPTCHA failed to start', e); }
+      CAPTCHA_KEY = key; CAPTCHA_ON = true; document.getElementById('captchaWrap').style.display = 'block'; if(step === 6) renderCaptcha();
     };
     const sc = document.createElement('script'); sc.src = 'https://www.google.com/recaptcha/api.js?onload=onCaptchaReady&render=explicit'; sc.async = true; sc.defer = true; document.head.appendChild(sc);
   }catch(e){ console.warn('captcha setup skipped', e); }

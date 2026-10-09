@@ -538,15 +538,16 @@
   .np-field{margin-bottom:10px;} .np-field input{width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit; font-size:15px;}
   .np-err{color:#C0392B !important; font-size:13px !important; min-height:16px; margin:0 0 10px !important;}
 
-  .dl-bar{background:var(--navy-deep); color:#fff; text-align:center; padding:10px 14px; font-size:14px; font-weight:600; position:relative; z-index:60;}
-  .dl-bar #dlClock{display:inline-flex; gap:6px; margin-left:12px; vertical-align:middle;}
-  .dl-bar .dl-u{background:rgba(255,255,255,.12); border-radius:8px; padding:3px 8px; min-width:44px; display:inline-block; font-variant-numeric:tabular-nums;}
-  .dl-bar .dl-u b{color:var(--amber); font-size:16px;} .dl-bar .dl-u small{font-size:10px; opacity:.8; margin-left:2px; font-weight:600;}
-  .dl-bar.closed{background:#5B6670;}
+  .dl-box{display:inline-block; margin-top:18px; border:1.5px solid rgba(255,255,255,.4); background:rgba(255,255,255,.08); border-radius:10px; padding:12px 16px; color:#fff;}
+  .dl-box .dl-label{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.9; margin-bottom:8px;}
+  .dl-box .dl-clock{display:flex; gap:8px;}
+  .dl-box .dl-u{background:rgba(10,24,38,.55); border:1px solid rgba(255,255,255,.25); border-radius:6px; padding:6px 10px; min-width:58px; text-align:center; font-variant-numeric:tabular-nums;}
+  .dl-box .dl-u b{display:block; color:var(--amber); font-size:24px; line-height:1.1;} .dl-box .dl-u small{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
+  .dl-box.closed{border-color:rgba(255,255,255,.25); opacity:.9;} .dl-box.closed .dl-label{margin:0; letter-spacing:.04em; text-transform:none; font-size:14px;}
 </style>
 </head>
 <body>
-<div id="dlBar" class="dl-bar" style="display:none;" role="status" aria-live="polite"><span id="dlLabel"></span><span id="dlClock"></span></div>
+
 
 <a class="skip-link" href="#about">Skip to content</a>
 <div id="scrollBar"></div>
@@ -660,6 +661,7 @@
         <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">JOIN PROGRAMME NOW</button>
         <a href="#about" class="btn outline">Learn how it works</a>
       </div>
+      <div id="dlBox" class="dl-box" style="display:none;" role="status" aria-live="polite"><div id="dlLabel" class="dl-label"></div><div id="dlClock" class="dl-clock"></div></div>
       <div class="stats">
         <a href="#team" class="stat team-pill" style="text-decoration:none; color:inherit; cursor:pointer;"><span class="tp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17.2" cy="9" r="2.5"/><path d="M17.2 14.5c2.5 0 4 1.7 4 4.5"/></svg></span><span><b>Meet the coordinators</b><span>See their profiles</span></span></a>
       </div>
@@ -2712,19 +2714,21 @@ loadDeadlineFromPortal();
 </script>
 
 <script>
-// Live countdown to the application deadline (set by the Ambassador under Settings). Shows nothing until a future deadline is set.
+// Live countdown to the application deadline, shown under the JOIN PROGRAMME NOW button. While applications are open the button goes
+// straight to the application form; the name-and-email pop-up only appears when applications are closed.
+var APPS_OPEN = null;
 (function(){
-  var bar=document.getElementById('dlBar'), label=document.getElementById('dlLabel'), clock=document.getElementById('dlClock'), timer=null;
+  var box=document.getElementById('dlBox'), label=document.getElementById('dlLabel'), clock=document.getElementById('dlClock'), timer=null;
   function pad(n){ return String(n).padStart(2,'0'); }
-  function show(deadline, paused){
-    bar.style.display='block';
-    if(paused){ bar.classList.add('closed'); label.textContent='Applications are paused right now'; clock.innerHTML=''; return; }
+  function closed(msg){ box.style.display='inline-block'; box.classList.add('closed'); label.textContent=msg; clock.innerHTML=''; }
+  function run(deadline){
+    box.style.display='inline-block';
     function tick(){
       var ms=deadline-Date.now();
-      if(ms<=0){ bar.classList.add('closed'); label.textContent='Applications are now closed'; clock.innerHTML=''; clearInterval(timer); return; }
-      bar.classList.remove('closed'); label.textContent='Applications close in';
+      if(ms<=0){ APPS_OPEN=false; closed('Applications are now closed'); clearInterval(timer); return; }
+      box.classList.remove('closed'); label.textContent='Applications close in';
       var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), sec=Math.floor(ms%6e4/1e3);
-      clock.innerHTML='<span class="dl-u"><b>'+d+'</b><small>d</small></span><span class="dl-u"><b>'+pad(h)+'</b><small>h</small></span><span class="dl-u"><b>'+pad(m)+'</b><small>m</small></span><span class="dl-u"><b>'+pad(sec)+'</b><small>s</small></span>';
+      clock.innerHTML='<span class="dl-u"><b>'+d+'</b><small>days</small></span><span class="dl-u"><b>'+pad(h)+'</b><small>hours</small></span><span class="dl-u"><b>'+pad(m)+'</b><small>mins</small></span><span class="dl-u"><b>'+pad(sec)+'</b><small>secs</small></span>';
     }
     tick(); timer=setInterval(tick,1000);
   }
@@ -2734,12 +2738,18 @@ loadDeadlineFromPortal();
       if(typeof sbReady==='undefined' || !sbReady) return;
       var r=await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
       var set=(r.data&&r.data.value)||{}, dl=set.applicationDeadline?new Date(set.applicationDeadline).getTime():NaN;
-      if(set.applicationsClosed) return show(NaN,true);
-      if(isFinite(dl)) show(dl,false);
+      if(set.applicationsClosed){ APPS_OPEN=false; return closed('Applications are paused right now'); }
+      if(isFinite(dl) && Date.now()>dl){ APPS_OPEN=false; return closed('Applications are now closed'); }
+      APPS_OPEN=true;
+      if(isFinite(dl)) run(dl);
     }catch(e){ console.warn('Countdown skipped',e); }
   }
   init();
 })();
+document.addEventListener('click', function(e){
+  var b=e.target.closest && e.target.closest('#heroInterestBtn');
+  if(b && APPS_OPEN===true){ e.preventDefault(); e.stopImmediatePropagation(); window.location.href='apply.html'; }
+}, true);
 </script>
 <script>
 (function(){
