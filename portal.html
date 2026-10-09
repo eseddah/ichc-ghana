@@ -590,12 +590,18 @@
   .ob-mini{display:inline-block; width:60px; height:6px; background:rgba(15,36,56,.1); border-radius:99px; overflow:hidden; vertical-align:middle;} .ob-mini i{display:block; height:100%; background:var(--teal);}
   .ob-step{display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--line); font-size:14px;} .ob-step b{font-size:15px;}
   .ob-tick{flex:none; width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:#fff;} .ob-tick.on{background:var(--teal); border-color:var(--teal);}
+
+  .push-bell{position:fixed; left:16px; bottom:18px; width:50px; height:50px; border-radius:50%; border:3px solid #fff; background:var(--navy-deep); color:#fff; font-size:22px; cursor:pointer; z-index:1090; box-shadow:0 8px 22px rgba(10,24,38,.4); display:flex; align-items:center; justify-content:center; padding:0;}
+  .push-bell em{position:absolute; top:-4px; right:-4px; width:20px; height:20px; border-radius:50%; background:#C0392B; color:#fff; font-size:13px; font-style:normal; font-weight:800; display:flex; align-items:center; justify-content:center;}
+  .push-bell i{position:absolute; bottom:2px; right:2px; width:12px; height:12px; border-radius:50%; background:#2ecc71; border:2px solid #fff;}
+  .push-panel{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.55); display:flex; align-items:flex-end; justify-content:flex-start; padding:16px;}
+  .push-card{background:#fff; border-radius:16px; padding:18px; width:min(360px,100%); margin-bottom:64px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
-  try{ await OneSignal.init({ appId:'c711029f-212c-4c50-8498-ea78aecbb153', serviceWorkerPath:'OneSignalSDKWorker.js', notifyButton:{ enable:false }, welcomeNotification:{ disable:true } }); }catch(e){ console.warn('OneSignal init failed', e); }
+  try{ await OneSignal.init({ appId:'c711029f-212c-4c50-8498-ea78aecbb153', serviceWorkerPath:'OneSignalSDKWorker.js', notifyButton:{ enable:false }, welcomeNotification:{ disable:true } }); window.__OS = OneSignal; }catch(e){ console.warn('OneSignal init failed', e); window.__OS_ERR = String(e && e.message || e); }
 });
 </script>
 </head>
@@ -2382,7 +2388,7 @@ function showApp(){
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
   // push notifications: link this device to the signed-in person and ask once for permission
-  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); if(OS.Notifications && OS.Notifications.permission === false && OS.Slidedown) await OS.Slidedown.promptPush(); }catch(e){ console.warn('push setup skipped', e); } }); }catch(e){}
+  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); } initPushUi(); }); }catch(e){}
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -3964,6 +3970,46 @@ function wireApplicantMsg(){
   });
 }
 
+
+// ---- App notifications (web push): a visible bell with an on/off state and a button to turn them on ----
+function pushState(){
+  const OS = window.__OS, supported = 'Notification' in window && !!OS;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  let opted = false; try{ opted = !!(OS && OS.User && OS.User.PushSubscription && OS.User.PushSubscription.optedIn); }catch(e){}
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone && !matchMedia('(display-mode: standalone)').matches;
+  return { supported, perm, on: perm==='granted' && opted, ios };
+}
+function paintBell(){
+  let b = document.getElementById('pushBell');
+  if(!b){ b = document.createElement('button'); b.id = 'pushBell'; b.type = 'button'; b.setAttribute('aria-label','App notifications'); b.addEventListener('click', openPushPanel); document.body.appendChild(b); }
+  const st = pushState(); b.className = 'push-bell' + (st.on ? ' on' : ''); b.title = st.on ? 'App notifications are on' : 'Turn on app notifications';
+  b.innerHTML = '&#128276;' + (st.on ? '<i></i>' : '<em>!</em>');
+}
+function openPushPanel(){
+  const old = document.getElementById('pushPanel'); if(old){ old.remove(); return; }
+  const st = pushState(), o = document.createElement('div'); o.id = 'pushPanel'; o.className = 'push-panel';
+  let msg, btn = '';
+  if(window.__OS_ERR || !st.supported){ msg = st.ios ? 'On an iPhone or iPad, tap the Share button, choose <b>Add to Home Screen</b>, then open the portal from your home screen and come back here to turn notifications on.' : 'Notifications are not available in this browser, or they could not start. Try Chrome, Edge, Firefox or Safari, and make sure you are using the official portal address.'; }
+  else if(st.perm === 'denied'){ msg = 'Notifications are <b>blocked</b> in your browser. Tap the lock icon next to the address bar, set <b>Notifications</b> to <b>Allow</b>, then refresh this page.'; }
+  else if(st.on){ msg = '&#10003; App notifications are <b>on</b>. You will get announcements and alerts on this device, even when the portal is closed.'; }
+  else { msg = 'Get announcements, alerts and updates the moment they are posted, even when the portal is closed.'; btn = '<button class="btn teal" id="pushGo" type="button">Turn on notifications</button>'; }
+  o.innerHTML = `<div class="push-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="font-size:16px;">App notifications</b><button id="pushX" type="button" aria-label="Close" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button></div><p style="margin:0 0 12px; font-size:14px; line-height:1.5;">${msg}</p>${btn}</div>`;
+  document.body.appendChild(o);
+  o.querySelector('#pushX').addEventListener('click', ()=>o.remove());
+  o.addEventListener('click', e=>{ if(e.target===o) o.remove(); });
+  const go = o.querySelector('#pushGo');
+  if(go) go.addEventListener('click', async ()=>{
+    go.disabled = true; go.textContent = 'Asking your browser…';
+    try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
+    o.remove(); paintBell(); openPushPanel();
+  });
+}
+function initPushUi(){
+  paintBell();
+  const st = pushState(), seenKey = 'ichc_push_prompted';
+  if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
+  setTimeout(paintBell, 6000);
+}
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
