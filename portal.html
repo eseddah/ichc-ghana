@@ -596,6 +596,31 @@
   .push-bell i{position:absolute; bottom:2px; right:2px; width:12px; height:12px; border-radius:50%; background:#2ecc71; border:2px solid #fff;}
   .push-panel{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.55); display:flex; align-items:flex-end; justify-content:flex-start; padding:16px;}
   .push-card{background:#fff; border-radius:16px; padding:18px; width:min(360px,100%); margin-bottom:64px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
+
+  /* ---- Daily practice (streak, XP, level, weekly ranking) ---- */
+  .lr-stats{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px;}
+  .lr-pill{flex:1 1 150px; display:flex; align-items:center; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:999px; padding:12px 20px 12px 14px; box-shadow:0 2px 0 var(--line);}
+  .lr-pill .n{font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:var(--navy-deep); line-height:1;}
+  .lr-pill .l{font-size:12px; color:var(--muted); margin-top:3px;}
+  .lr-pill .ic{width:34px; height:34px; border-radius:50%; background:var(--navy-deep); color:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
+  .lr-pill.hot .ic{background:var(--amber); color:var(--navy-deep);}
+  .lr-week{display:flex; gap:8px; margin:14px 0 4px;}
+  .lr-day{flex:1; text-align:center; font-size:12px; color:var(--muted);}
+  .lr-day i{display:block; height:8px; border-radius:99px; background:var(--line); margin-bottom:6px;}
+  .lr-day.on i{background:var(--teal);} .lr-day.today i{outline:2px solid var(--amber); outline-offset:1px;}
+  .lr-bar{height:10px; background:var(--chalk); border-radius:99px; overflow:hidden; margin-top:8px;}
+  .lr-bar b{display:block; height:100%; background:var(--amber); border-radius:99px; transition:width .4s ease;}
+  .lr-q{font-size:17px; line-height:1.5; margin:6px 0 16px; color:var(--navy-deep); font-weight:500;}
+  .lr-opt{display:block; width:100%; text-align:left; padding:13px 16px; margin-bottom:9px; border-radius:12px; border:1.5px solid var(--line); background:var(--paper); font-size:15px; cursor:pointer; color:var(--ink);}
+  .lr-opt:hover:not(:disabled){border-color:var(--amber);}
+  .lr-opt.correct{border-color:var(--teal-deep); background:rgba(31,138,112,.09);}
+  .lr-opt.wrong{border-color:#B3261E; background:rgba(179,38,30,.07);}
+  .lr-fb{margin:12px 0; padding:12px 14px; border-radius:12px; font-size:14px; line-height:1.55;}
+  .lr-fb.ok{background:rgba(31,138,112,.1); color:var(--teal-deep);} .lr-fb.no{background:rgba(179,38,30,.08); color:#8f2019;}
+  .lr-rank{display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:999px; margin-bottom:8px; border:1px solid var(--line); background:var(--paper);}
+  .lr-rank.me{background:rgba(227,154,59,.14); border-color:var(--amber);}
+  .lr-rank .pos{width:26px; font-weight:700; color:var(--muted); text-align:center;} .lr-rank .nm{flex:1; font-weight:500;} .lr-rank .xp{font-weight:600; color:var(--navy-deep);}
+  @media (prefers-reduced-motion:reduce){.lr-bar b{transition:none;}}
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -2585,6 +2610,7 @@ function closeDrawer(){
 })();
 // Small line icons for the section list — purely visual.
 const TAB_ICONS = {
+  learn:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   applications:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
   people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.5 0 4 1.7 4 4.5"/>',
@@ -2624,7 +2650,7 @@ function buildTabs(){
   const tabsFor = {
     ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
+    student:[['welcome','Welcome'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -5125,6 +5151,7 @@ function coordinatorView(tab){
 }
 
 function studentView(tab){
+  if(tab==='learn') return '<div id="learnRoot"></div>';
   if(tab==='welcome'){
     const myRecord = DB.students.find(s=>s.id===ME.id);
     const upcomingSession = DB.callsheets
@@ -5661,6 +5688,7 @@ function examsView(){
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='welcome') wireOnboarding();
+  if(tab==='learn') wireLearn();
   if(tab==='onboarding') wireOnboardingSetup();
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
@@ -6545,6 +6573,167 @@ function wireHandlers(tab){
   }
   await resolveGoogleSession();
 })();
+
+// ---------------------------------------------------------------------------
+// Daily practice: 5 questions a day, streak, XP, levels, mistake review, weekly group ranking.
+// Progress is stored per student under its own key (learn:<id>) so nobody's save can overwrite another's.
+// ---------------------------------------------------------------------------
+const LEARN_BANK = [
+  ['b1','How many moles are in 36 g of water (Mr = 18)?',['0.5','1','2','18'],2,'n = m ÷ Mr = 36 ÷ 18 = 2 mol.'],
+  ['b2','Which atom has the largest radius?',['Cl','Al','Mg','Na'],3,'Across a period the nuclear charge rises and radius shrinks, so sodium (far left) is largest.'],
+  ['b3','What is the oxidation state of Mn in KMnO₄?',['+2','+4','+6','+7'],3,'K is +1 and four O are −8, so Mn = +7.'],
+  ['b4','What is the pH of 0.01 M HCl?',['1','2','7','12'],1,'HCl is a strong acid: [H⁺] = 10⁻² M, so pH = 2.'],
+  ['b5','What is the shape of an NH₃ molecule?',['Trigonal planar','Tetrahedral','Trigonal pyramidal','Linear'],2,'Three bond pairs and one lone pair around N give a trigonal pyramidal shape.'],
+  ['b6','2H₂ + O₂ → 2H₂O. With 4 mol H₂ and 1 mol O₂, which is limiting?',['H₂','O₂','Neither','Both'],1,'1 mol O₂ needs only 2 mol H₂, so O₂ runs out first.'],
+  ['b7','At constant pressure, doubling the absolute temperature of a gas does what to its volume?',['Halves it','Doubles it','Quadruples it','No change'],1,"Charles's law: V ∝ T at constant pressure."],
+  ['b8','Which has the highest first ionisation energy?',['Na','Mg','Cl','Ar'],3,'Ionisation energy rises across a period and is highest for the noble gas.'],
+  ['b9','What is the hybridisation of each carbon in ethene (C₂H₄)?',['sp','sp²','sp³','sp³d'],1,'Each carbon forms three σ bonds plus one π bond, which is sp².'],
+  ['b10','What is the conjugate base of H₂SO₄?',['SO₄²⁻','HSO₄⁻','H₃SO₄⁺','OH⁻'],1,'Remove one H⁺ from H₂SO₄ to get HSO₄⁻.'],
+  ['b11','How many electrons does an Fe³⁺ ion have?',['26','23','29','3'],1,'Fe has 26 electrons; losing 3 leaves 23.'],
+  ['b12','N₂ + 3H₂ ⇌ 2NH₃ (exothermic). Raising the pressure shifts equilibrium...',['To the right','To the left','Nowhere','Only if heated'],0,'The right side has fewer gas moles (2 vs 4), so higher pressure favours it.'],
+  ['b13','What is the IUPAC name of CH₃CH₂CH₂OH?',['Ethanol','Propan-1-ol','Propan-2-ol','Butan-1-ol'],1,'Three carbons with the OH on carbon 1.'],
+  ['b14','What is the molar mass of CaCO₃ (Ca 40, C 12, O 16)?',['68','84','100','116'],2,'40 + 12 + 3×16 = 100 g/mol.'],
+  ['b15','Which bond is the most polar?',['C–H','N–H','O–H','F–H'],3,'Fluorine is the most electronegative, so H–F has the largest difference.'],
+  ['b16','What is the concentration of 4 g NaOH (Mr = 40) in 500 mL of solution?',['0.1 M','0.2 M','0.4 M','2 M'],1,'4 ÷ 40 = 0.1 mol in 0.5 L, so 0.2 M.']
+];
+const LEARN_LEVELS = [['Bronze',0],['Silver',300],['Gold',800],['Platinum',1500]];
+const LEARN_PER_DAY = 5;
+let LEARN = null; // { data, qs, i, picked, right, startedXp }
+
+const lrDay = (d)=>{ const x = d || new Date(); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); };
+const lrShift = (ds, n)=>{ const d = new Date(ds+'T12:00:00'); d.setDate(d.getDate()+n); return lrDay(d); };
+function lrPool(){
+  const mine = (DB.quizzes||[]).filter(q=>q.coordinatorId===myCoordinatorId() && q.options && q.options.length>1)
+    .map(q=>['q:'+q.id, q.question, q.options, q.correctIndex, '']);
+  return LEARN_BANK.concat(mine);
+}
+function lrSeeded(arr, seed){
+  let h = 0; for(const c of seed) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ h = (h*1664525 + 1013904223) >>> 0; const j = h % (i+1); [a[i],a[j]] = [a[j],a[i]]; }
+  return a;
+}
+function lrStreak(days){
+  // Walks back from today. Up to two missed days a month are covered automatically ("streak freeze").
+  let streak = 0, d = lrDay(), used = {};
+  if(!(days[d] && days[d].done)) d = lrShift(d,-1);
+  for(let guard=0; guard<400; guard++){
+    if(days[d] && days[d].done){ streak++; }
+    else {
+      const m = d.slice(0,7); used[m] = (used[m]||0);
+      if(used[m] >= 2 || !Object.keys(days).some(k=>k<d && days[k].done)) break;
+      used[m]++;
+    }
+    d = lrShift(d,-1);
+  }
+  return streak;
+}
+const lrTotalXp = (days)=>Object.values(days).reduce((s,x)=>s+(x.xp||0),0);
+function lrWeekStart(){ const d = new Date(); const back = (d.getDay()+6)%7; d.setDate(d.getDate()-back); return lrDay(d); }
+const lrWeekXp = (days)=>{ const w = lrWeekStart(); return Object.keys(days).filter(k=>k>=w).reduce((s,k)=>s+(days[k].xp||0),0); };
+function lrLevel(xp){
+  let i = 0; LEARN_LEVELS.forEach((l,k)=>{ if(xp>=l[1]) i = k; });
+  const next = LEARN_LEVELS[i+1];
+  return { name:LEARN_LEVELS[i][0], next: next ? next[0] : null, pct: next ? Math.round((xp-LEARN_LEVELS[i][1])/(next[1]-LEARN_LEVELS[i][1])*100) : 100, toGo: next ? next[1]-xp : 0 };
+}
+async function lrSave(){ LEARN.data.updated = Date.now(); await sSet('learn:'+ME.id, LEARN.data, true); }
+function lrBuildSession(){
+  const data = LEARN.data, pool = lrPool(), byId = Object.fromEntries(pool.map(q=>[q[0],q]));
+  const due = Object.keys(data.wrong).filter(id=>byId[id] && data.wrong[id] <= lrDay()).map(id=>byId[id]).slice(0,2);
+  const rest = lrSeeded(pool.filter(q=>!due.includes(q)), lrDay()+ME.id);
+  LEARN.qs = due.concat(rest).slice(0, LEARN_PER_DAY); LEARN.i = 0; LEARN.picked = null; LEARN.right = 0;
+}
+async function wireLearn(){
+  const root = document.getElementById('learnRoot'); if(!root) return;
+  root.innerHTML = '<div class="empty">Loading your progress…</div>';
+  const saved = await sGet('learn:'+ME.id, true);
+  LEARN = { data: saved && saved.days ? saved : { days:{}, wrong:{} } };
+  if(!LEARN.data.wrong) LEARN.data.wrong = {};
+  lrBuildSession();
+  lrPaint(root);
+  lrRanking(root);
+}
+function lrPaint(root){
+  root = root || document.getElementById('learnRoot'); if(!root) return;
+  const { data } = LEARN, today_ = lrDay(), t = data.days[today_] || {};
+  const xp = lrTotalXp(data.days), lv = lrLevel(xp), streak = lrStreak(data.days);
+  const wk = [...Array(7)].map((_,k)=>lrShift(lrWeekStart(),k));
+  const names = ['M','T','W','T','F','S','S'];
+  const bolt = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>';
+  const star = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9 6.6 19.8l1.1-6.1L3.2 9.4l6.1-.8z"/></svg>';
+  let main;
+  if(t.done && !LEARN.review){
+    main = `<div class="card"><h3 style="margin:0 0 6px;">Today's practice is done</h3>
+      <p class="note" style="margin:0 0 14px;">You got ${t.correct} of ${t.total} right and earned ${t.xp} XP. Come back tomorrow to keep your streak going.</p>
+      <button class="btn secondary small" id="lrAgain">Practise your mistakes</button></div>`;
+  } else {
+    const q = LEARN.qs[LEARN.i], done = LEARN.picked !== null;
+    main = `<div class="card">
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted);"><span>Question ${LEARN.i+1} of ${LEARN.qs.length}</span><span>${LEARN.right} correct</span></div>
+      <div class="lr-bar"><b style="width:${Math.round(LEARN.i/LEARN.qs.length*100)}%"></b></div>
+      <div class="lr-q" style="margin-top:16px;">${escapeHtml(q[1])}</div>
+      ${q[2].map((o,k)=>`<button class="lr-opt${done ? (k===q[3]?' correct':(k===LEARN.picked?' wrong':'')) : ''}" data-lr-pick="${k}" ${done?'disabled':''}>${escapeHtml(o)}</button>`).join('')}
+      ${done ? `<div class="lr-fb ${LEARN.picked===q[3]?'ok':'no'}"><b>${LEARN.picked===q[3]?'Correct.':'Not quite.'}</b> ${escapeHtml(q[4]||'')}</div>
+        <button class="btn amber" id="lrNext">${LEARN.i+1<LEARN.qs.length?'Next question':'Finish'}</button>` : ''}
+    </div>`;
+  }
+  root.innerHTML = `
+    <div class="section-title"><div><h2>Daily practice</h2><p>Five questions a day. Short sessions done daily beat long ones done rarely.</p></div></div>
+    <div class="lr-stats">
+      <div class="lr-pill ${streak?'hot':''}"><span class="ic">${bolt}</span><div><div class="n">${streak}</div><div class="l">day streak</div></div></div>
+      <div class="lr-pill"><span class="ic">${star}</span><div><div class="n">${xp}</div><div class="l">total XP</div></div></div>
+      <div class="lr-pill"><div style="flex:1;"><div class="n">${lv.name}</div><div class="l">${lv.next ? lv.toGo+' XP to '+lv.next : 'Top level reached'}</div><div class="lr-bar" style="margin-top:6px;"><b style="width:${lv.pct}%"></b></div></div></div>
+    </div>
+    <div class="card" style="margin-bottom:18px;"><b>This week</b>
+      <div class="lr-week">${wk.map((d,k)=>`<div class="lr-day${data.days[d]&&data.days[d].done?' on':''}${d===today_?' today':''}"><i></i>${names[k]}</div>`).join('')}</div>
+      <div class="note" style="margin:6px 0 0;">Miss a day and your streak survives: two missed days a month are covered automatically.</div></div>
+    ${main}
+    <div id="lrRankBox" style="margin-top:22px;"></div>`;
+  root.querySelectorAll('[data-lr-pick]').forEach(b=>b.addEventListener('click', ()=>lrAnswer(parseInt(b.dataset.lrPick,10))));
+  const nx = root.querySelector('#lrNext'); if(nx) nx.addEventListener('click', lrNext);
+  const ag = root.querySelector('#lrAgain'); if(ag) ag.addEventListener('click', lrExtra);
+  if(LEARN.rankHtml) document.getElementById('lrRankBox').innerHTML = LEARN.rankHtml;
+}
+async function lrAnswer(k){
+  const q = LEARN.qs[LEARN.i]; if(LEARN.picked !== null) return;
+  LEARN.picked = k;
+  const ok = k === q[3], d = lrDay();
+  const day = LEARN.data.days[d] = LEARN.data.days[d] || { xp:0, correct:0, total:0, done:false };
+  if(!LEARN.review) day.total++;
+  if(ok){ if(!LEARN.review) day.correct++; day.xp += LEARN.review ? 5 : 10; LEARN.right++; delete LEARN.data.wrong[q[0]]; }
+  else { LEARN.data.wrong[q[0]] = lrShift(d,2); }
+  lrPaint();
+}
+async function lrNext(){
+  if(LEARN.i+1 < LEARN.qs.length){ LEARN.i++; LEARN.picked = null; lrPaint(); return; }
+  const day = LEARN.data.days[lrDay()];
+  if(!LEARN.review){ day.done = true; day.xp += 5 + (day.correct/day.total >= 0.8 ? 10 : 0); }
+  LEARN.review = false;
+  await lrSave(); lrBuildSession(); lrPaint(); lrRanking();
+}
+function lrExtra(){
+  const byId = Object.fromEntries(lrPool().map(q=>[q[0],q]));
+  const wrong = Object.keys(LEARN.data.wrong).map(id=>byId[id]).filter(Boolean).slice(0,LEARN_PER_DAY);
+  if(!wrong.length){ alert('No mistakes to review right now. Nice work.'); return; }
+  LEARN.review = true; LEARN.qs = wrong; LEARN.i = 0; LEARN.picked = null; LEARN.right = 0;
+  lrPaint();
+}
+async function lrRanking(root){
+  const box = document.getElementById('lrRankBox'); if(!box || !sbReady) return;
+  try{
+    const { data, error } = await sb.from('ichc_kv').select('key,value').like('key','learn:%');
+    if(error) throw error;
+    const mineCo = myCoordinatorId();
+    const group = DB.students.filter(s=>s.coordinatorId===mineCo);
+    const wkXp = {}; (data||[]).forEach(r=>{ wkXp[r.key.slice(6)] = lrWeekXp((r.value&&r.value.days)||{}); });
+    const rows = group.map(s=>({ id:s.id, name:(s.name||'Student').split(' ')[0], xp: s.id===ME.id ? lrWeekXp(LEARN.data.days) : (wkXp[s.id]||0) }))
+      .sort((a,b)=>b.xp-a.xp || a.name.localeCompare(b.name));
+    if(rows.length < 2){ LEARN.rankHtml = ''; box.innerHTML = ''; return; }
+    LEARN.rankHtml = `<div class="section-title"><div><h2>Your group this week</h2><p>Weekly XP among students with your coordinator. It resets every Monday.</p></div></div>` +
+      rows.map((r,i)=>`<div class="lr-rank${r.id===ME.id?' me':''}"><span class="pos">${i+1}</span><span class="nm">${escapeHtml(r.name)}${r.id===ME.id?' (you)':''}</span><span class="xp">${r.xp} XP</span></div>`).join('');
+    box.innerHTML = LEARN.rankHtml;
+  }catch(e){ console.error('Ranking failed', e); }
+}
 </script>
 </body>
 </html>
