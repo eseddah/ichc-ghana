@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IChC Outreach Program — Ghana</title>
+<title>Chemistry Competition Prep — Ghana</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
@@ -758,7 +758,7 @@ OneSignalDeferred.push(async function(OneSignal){
     <div style="max-width:560px; width:100%;">
       <div class="hexlogo" style="width:120px; margin:0 auto 18px; color:var(--navy-deep);"></div>
       <h1 style="text-align:center; font-size:26px; margin:0 0 6px;">Verify a certificate</h1>
-      <p style="text-align:center; color:var(--muted); font-size:14px; margin:0 0 26px; line-height:1.6;">Enter the certificate ID printed on the certificate, or found under its QR code, to confirm it was genuinely issued by the IChC Outreach Program — Ghana Chapter.</p>
+      <p style="text-align:center; color:var(--muted); font-size:14px; margin:0 0 26px; line-height:1.6;">Enter the certificate ID printed on the certificate, or found under its QR code, to confirm it was genuinely issued by the Chemistry Competition Prep — Ghana Chapter.</p>
       <div class="card" style="display:flex; gap:10px; margin-bottom:22px;">
         <input id="verifyCodeInput" placeholder="e.g. ABCD1234" style="text-transform:uppercase;">
         <button class="btn amber" id="verifyCodeBtn" style="white-space:nowrap;">Verify</button>
@@ -805,7 +805,7 @@ OneSignalDeferred.push(async function(OneSignal){
       <div class="wrap" id="alertBanner"></div>
       <main><div class="wrap" id="screen"></div></main>
       <div id="updateToast"></div>
-      <footer>IChC Outreach Program · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a></footer>
+      <footer>Chemistry Competition Prep · Ghana Chapter — built with care for every student chasing a spot on the international bench. · <a href="?verify" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">Verify a certificate</a></footer>
     </div>
   </div>
 </div>
@@ -2000,11 +2000,11 @@ async function notifyApplicantDecision({app, decision, reason}){
   const s = DB.settings || {};
   const wantsSms = (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone;
   const title = decision==='accepted'
-    ? `You're in! Your IChC Outreach Program application was accepted`
-    : `Update on your IChC Outreach Program application`;
+    ? `You're in! Your ${programName()} application was accepted`
+    : `Update on your ${programName()} application`;
   const bodyLines = decision==='accepted'
     ? [`Hi ${app.name}, great news — your application has been accepted and your student portal is now switched on.`, `Sign in with the Google account for ${app.email} to confirm your place, watch the short orientation video and meet your coordinator. The official WhatsApp group invitation comes during onboarding.`]
-    : [`Hi ${app.name}, thank you for applying to the IChC Outreach Program.`, `We're unable to move forward with your application at this time.`];
+    : [`Hi ${app.name}, thank you for applying to ${programName()}.`, `We're unable to move forward with your application at this time.`];
   if(reason) bodyLines.push(reason);
   const body = bodyLines.join(' ');
 
@@ -2025,7 +2025,7 @@ async function notifyEmailNotFound(email, name){
   const s = DB.settings || {};
   if(!s.emailjsPublicKey || !s.emailjsServiceId || !s.emailjsTemplateId) return;
   try{ if(localStorage.getItem(notFoundEmailKey(email))) return; }catch(e){}
-  const title = "We couldn't find your account — IChC Outreach Program";
+  const title = "We couldn't find your account — " + programName();
   const body = [
     `Hi ${name}, thanks for trying to sign in with Google.`,
     `This email address isn't on our roster yet, so we couldn't log you in automatically.`,
@@ -2034,7 +2034,7 @@ async function notifyEmailNotFound(email, name){
   ].join(' ');
   queueEmailSend({
     service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
-    template_params: { to_email:email, to_name:name, from_name:'IChC Outreach Program', subject:title, message:body }
+    template_params: { to_email:email, to_name:name, from_name:programName(), subject:title, message:body }
   });
   try{ localStorage.setItem(notFoundEmailKey(email), '1'); }catch(e){}
 }
@@ -4735,7 +4735,7 @@ function ambassadorView(tab){
     <div class="hero amb">
       <div class="eyebrow">Ambassador desk</div>
       <h1>Welcome back, ${escapeHtml(ME.name)}.</h1>
-      <p>The International Chemistry Competition brings together some of the sharpest young chemists on the planet — and the IChC Outreach Program Ghana exists so that a student in Accra, Kumasi or Tamale has just as fair a shot at that stage as anyone else. This is programme command central: the one place where every coordinator's call sheet, every student's question, and every announcement lands. Your job is to keep that pipeline moving.</p>
+      <p>The International Chemistry Competition brings together some of the sharpest young chemists on the planet — and ${escapeHtml(programName())} exists so that a student in Accra, Kumasi or Tamale has just as fair a shot at that stage as anyone else. This is programme command central: the one place where every coordinator's call sheet, every student's question, and every announcement lands. Your job is to keep that pipeline moving.</p>
     </div>
     ${activeSessions.length ? `<div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
       <span style="width:9px; height:9px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:6px;"></span>
@@ -5163,7 +5163,7 @@ function studentView(tab){
     <div class="hero stud">
       <div class="eyebrow">Your space</div>
       <h1>Welcome, ${escapeHtml(ME.name)}.</h1>
-      <p>You made it into the IChC Outreach Program Ghana — Ghana's pathway toward the International Chemistry Competition. Someone looked at what you've got and decided it was worth investing in. From here, expect a steady rhythm: practice questions, structured competition prep, and a mentor genuinely in your corner.</p>
+      <p>You made it into ${escapeHtml(programName())} — Ghana's pathway toward the International Chemistry Competition. Someone looked at what you've got and decided it was worth investing in. From here, expect a steady rhythm: practice questions, structured competition prep, and a mentor genuinely in your corner.</p>
     </div>
 
     ${onboardingCardHtml()}
@@ -6293,7 +6293,10 @@ function wireHandlers(tab){
     const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
     const reason = reasonInp ? reasonInp.value.trim() : '';
     if(DB.students.some(s=>s.email && s.email.toLowerCase()===app.email.toLowerCase())){
-      alert('A student with this email already exists.');
+      if(!confirm('A student with this email is already in the programme. Remove this application without sending another acceptance message?')) return;
+      await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+      render('applications');
+      return;
     } else {
       DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();

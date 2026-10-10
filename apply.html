@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Apply — Chemistry Competition Prep</title>
-<meta name="description" content="Apply to Chemistry Competition Prep — Ghana's pathway to the International Chemistry Competition, run by the Local Ambassador, IChC.">
+<meta name="description" content="Apply to Chemistry Competition Prep — Ghana's pathway to the International Chemistry Competition, run by the IChC Local Ambassador for Ghana.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
@@ -127,10 +127,10 @@
   <div class="card" id="formCard">
     <section class="sec" data-sec="1"><h2 class="sec-h">1. About you</h2>
       <div class="field"><label>Full name</label><input id="fName" placeholder="e.g. Ama Owusu" autocomplete="name"></div>
-      <div class="field"><label>Email <span class="req">(you'll sign in to the portal with this email)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
+      <div class="field"><label>Email <span class="req">(use your Google account email, you'll sign in to the portal with it)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
       <div class="field"><label>Phone number <span class="req">(required, so a coordinator can reach you)</span></label><input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000" autocomplete="tel"></div>
       <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates</label>
-      <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="14-17">14-17</button><button type="button" class="chip" data-age="18-21">18-21</button><button type="button" class="chip" data-age="21-24">21-24</button></div></div>
+      <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="14-17">14-17</button><button type="button" class="chip" data-age="18-21">18-21</button><button type="button" class="chip" data-age="22-24">22-24</button></div></div>
     </section>
     <section class="sec hidden" data-sec="2"><h2 class="sec-h">2. School</h2>
       <div class="field"><label>School name</label><input id="fSchool" placeholder="e.g. Presec Legon"></div>
@@ -150,7 +150,7 @@
       <div class="field" id="otherBox" style="display:none; margin-top:14px;"><label>Type your prospect</label><input id="fOtherInterest" maxlength="50" placeholder="e.g. Polymer chemistry, Forensic chemistry"></div>
     </section>
     <section class="sec hidden" data-sec="5"><h2 class="sec-h">5. Why you want to join</h2>
-      <div class="field"><label>Your motivation <span class="req">(at least a few sentences)</span></label><textarea id="fMessage" rows="6" placeholder="Why do you want to join, and what do you hope to get out of it?"></textarea></div>
+      <div class="field"><label>Your motivation <span class="req">(a few sentences, at least 40 characters)</span></label><textarea id="fMessage" rows="6" placeholder="Why do you want to join, and what do you hope to get out of it?"></textarea></div>
     </section>
     <section class="sec hidden" data-sec="6"><h2 class="sec-h">6. Weekly availability and commitment</h2>
       <div class="field"><label>Days you could usually join a session</label><div class="chip-wrap" id="dayChips"><button type="button" class="chip" data-day="Mon">Mon</button><button type="button" class="chip" data-day="Tue">Tue</button><button type="button" class="chip" data-day="Wed">Wed</button><button type="button" class="chip" data-day="Thu">Thu</button><button type="button" class="chip" data-day="Fri">Fri</button><button type="button" class="chip" data-day="Sat">Sat</button><button type="button" class="chip" data-day="Sun">Sun</button></div></div>
@@ -170,7 +170,7 @@
 
 <div class="wrap hidden" id="closedScreen">
   <div class="card done"><div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">&#9201;</div>
-    <h2 style="font-size:24px; margin:0 0 10px;">Applications are paused</h2>
+    <h2 id="closedTitle" style="font-size:24px; margin:0 0 10px;">Applications are paused</h2>
     <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">We aren't taking applications right now. Please check back soon.</p></div>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
@@ -180,7 +180,7 @@
     <h2 style="font-size:24px; margin:0 0 10px;">Application received</h2>
     <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:440px; margin:0 auto;">Thank you for applying. <span id="mailNote">We're sending a confirmation email to your inbox. Check your spam folder if you don't see it.</span></p>
     <div class="track" id="doneTrack"></div>
-    <p style="color:var(--muted); font-size:13.5px; line-height:1.6; max-width:440px; margin:14px auto 0;">If you're accepted, your student portal is switched on. Sign in with the same email you applied with, confirm your place and watch the short orientation video. The official WhatsApp group invitation comes during onboarding.</p>
+    <p style="color:var(--muted); font-size:13.5px; line-height:1.6; max-width:440px; margin:14px auto 0;">If you're accepted, your student portal is switched on. Sign in to the portal with the Google account for the email you applied with, confirm your place and watch the short orientation video. The official WhatsApp group invitation comes during onboarding.</p>
   </div>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
@@ -270,6 +270,8 @@ function applyDeadlineState(){
   if(applicationsAreClosed()){
     document.getElementById('formCard').closest('.wrap').classList.add('hidden');
     const c = document.getElementById('closedScreen'); if(c) c.classList.remove('hidden');
+    const t = document.getElementById('closedTitle');
+    if(t && isFinite(PORTAL_DEADLINE) && Date.now() > PORTAL_DEADLINE){ t.textContent = 'Applications have closed'; const p = t.nextElementSibling; if(p) p.textContent = 'The application deadline has passed. Follow our page for the next intake.'; }
   }
 }
 applyDeadlineState();
@@ -439,7 +441,7 @@ $('submitBtn').addEventListener('click', async ()=>{
     $('errMsg').textContent = (err && err.message) || 'Something went wrong saving your application. Please try again.';
     return;
   }
-  try{ localStorage.setItem('ichc_applied', JSON.stringify({ id:savedId, token:savedToken, email, name:app.name })); }catch(x){}
+  try{ localStorage.setItem('ichc_applicant', JSON.stringify({ id:savedId, token:savedToken, email, name:app.name })); }catch(x){}
   $('formCard').closest('.wrap').classList.add('hidden'); $('doneScreen').classList.remove('hidden');
   $('doneTrack').innerHTML = STAGES.map((st,i)=>`<span class="${i===0?'now':''}">${st}</span>`).join('');
   window.scrollTo({top:0});
@@ -526,41 +528,6 @@ async function renderApplicationStatusBanner(){
   });
 }
 renderApplicationStatusBanner();
-
-// ---- Interest list (shown once applications are closed) ----
-(function(){
-  if(location.hash==='#interestCard') setTimeout(function(){ var c=document.getElementById('interestCard'); if(c && !c.closest('.hidden')) c.scrollIntoView({behavior:'smooth',block:'center'}); },500);
-  const btn = document.getElementById('iBtn'); if(!btn) return;
-  btn.addEventListener('click', async ()=>{
-    const err = document.getElementById('iErr'); err.textContent = '';
-    const name = document.getElementById('iName').value.trim();
-    const email = document.getElementById('iEmail').value.trim().toLowerCase();
-    const phone = document.getElementById('iPhone').value.trim();
-    if(!name) return err.textContent = 'Please enter your name.';
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err.textContent = 'Please enter a valid email address.';
-    if(!sbReady) return err.textContent = 'Not connected right now — please try again shortly.';
-    btn.disabled = true; btn.textContent = 'Saving…';
-    try{
-      // Already on the list (or already applied)? Treat it as success without adding a copy.
-      let exists = false;
-      try{
-        const { data } = await sb.from('ichc_kv').select('value').eq('key','applications:list').maybeSingle();
-        exists = Array.isArray(data && data.value) && data.value.some(x => String(x.email||'').toLowerCase() === email);
-      }catch(e){}
-      if(!exists){
-        const item = { id: uid(), status: 'interested', name, email, phone, date: today() };
-        const { error } = await sb.rpc('append_kv_item', { p_key:'applications:list', p_item:item });
-        if(error) throw error;
-      }
-      document.getElementById('interestFormBox').classList.add('hidden');
-      document.getElementById('interestDone').classList.remove('hidden');
-    }catch(e){
-      console.error(e);
-      err.textContent = 'Something went wrong — please check your connection and try again.';
-      btn.disabled = false; btn.textContent = 'Notify me';
-    }
-  });
-})();
 </script>
 </body>
 </html>
