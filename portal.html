@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chemistry Competition Prep — Ghana</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
@@ -31,11 +31,11 @@
     margin:0;
     background:var(--chalk);
     color:var(--ink);
-    font-family:'IBM Plex Sans', sans-serif;
+    font-family:'Plus Jakarta Sans', sans-serif;
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3,.display{
-    font-family:'Fraunces', serif;
+    font-family:'Sora', sans-serif;
     font-weight:600;
     letter-spacing:-0.01em;
     color:var(--navy-deep);
@@ -63,7 +63,7 @@
   .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; box-shadow:none;}
   input, textarea, select{
     width:100%; padding:11px 13px; border-radius:10px; border:1.5px solid var(--line);
-    background:var(--paper); font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; color:var(--ink);
+    background:var(--paper); font-family:'Plus Jakarta Sans', sans-serif; font-size:14.5px; color:var(--ink);
   }
   input:focus, textarea:focus, select:focus{outline:2px solid var(--amber); outline-offset:1px; border-color:var(--amber);}
   label{font-size:12.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:6px;}
@@ -119,7 +119,7 @@
 
   
   .hexlogo svg{display:block;}
-  .hexlogo text{font-family:'Fraunces', serif; font-weight:700; fill:var(--navy-deep);}
+  .hexlogo text{font-family:'Sora', sans-serif; font-weight:700; fill:var(--navy-deep);}
 
   
   #onboarding{min-height:100vh;}
@@ -142,10 +142,10 @@
   .onb-hero-brand{display:flex; align-items:center; gap:12px; margin-bottom:52px;}
   .onb-hero-brand .hexlogo{width:44px; color:var(--amber);}
   .onb-hero-brand .hexlogo text{fill:var(--chalk);}
-  .onb-hero-brand .name{font-family:'Fraunces',serif; font-weight:700; font-size:18px; line-height:1.25; color:var(--chalk);}
-  .onb-hero-brand .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:rgba(246,244,238,.55);}
+  .onb-hero-brand .name{font-family:'Sora',sans-serif; font-weight:700; font-size:18px; line-height:1.25; color:var(--chalk);}
+  .onb-hero-brand .name small{display:block; font-family:'Plus Jakarta Sans'; font-weight:500; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:rgba(246,244,238,.55);}
   .onb-hero-eyebrow{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--amber); margin-bottom:12px;}
-  .onb-hero h1{font-family:'Fraunces',serif; font-size:38px; font-weight:700; line-height:1.12; margin:0 0 14px; color:var(--chalk);}
+  .onb-hero h1{font-family:'Sora',sans-serif; font-size:38px; font-weight:700; line-height:1.12; margin:0 0 14px; color:var(--chalk);}
   .onb-hero p.lead{font-size:15px; color:rgba(246,244,238,.78); line-height:1.65; max-width:330px; margin:0 0 36px;}
   .onb-hero-feats{display:flex; gap:24px; flex-wrap:wrap; position:relative; z-index:2;}
   .onb-hero-feat{display:flex; align-items:center; gap:9px; font-size:13px;}
@@ -160,7 +160,7 @@
   .onb-back{display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--navy-deep); text-decoration:none; margin-bottom:22px;}
   .onb-back:hover{color:var(--teal-deep);}
   .onb-panel-eyebrow{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--amber-deep); margin-bottom:8px;}
-  .onb-panel-card h1{font-family:'Fraunces',serif; font-size:27px; margin:0 0 6px; color:var(--navy-deep);}
+  .onb-panel-card h1{font-family:'Sora',sans-serif; font-size:27px; margin:0 0 6px; color:var(--navy-deep);}
   .onb-panel-card .sub{color:var(--muted); font-size:14.5px; margin:0 0 22px;}
   .onb-divider{display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em;}
   .onb-divider::before, .onb-divider::after{content:''; flex:1; height:1px; background:var(--line);}
@@ -169,7 +169,7 @@
   .onb-side-card .ic{width:38px; height:38px; border-radius:10px; flex:none; display:flex; align-items:center; justify-content:center; background:rgba(20,105,86,.1); color:var(--teal-deep);}
   .onb-side-card .ic svg{width:18px; height:18px;}
   .onb-side-card .tx{flex:1; min-width:0;}
-  .onb-side-card .tx b{display:block; font-size:14px; color:var(--navy-deep); font-family:'Fraunces',serif; font-weight:600;}
+  .onb-side-card .tx b{display:block; font-size:14px; color:var(--navy-deep); font-family:'Sora',sans-serif; font-weight:600;}
   .onb-side-card .tx span{display:block; font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4;}
   .onb-side-card .go{flex:none; color:var(--muted); display:flex;}
   @media(max-width:860px){
@@ -186,7 +186,7 @@
   }
   .role-card:hover{border-color:var(--amber); transform:translateY(-2px);}
   .role-card.active{border-color:var(--navy-deep); background:var(--navy-deep); color:var(--chalk);}
-  .role-card .ring{width:42px; height:42px; margin:0 auto 10px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:18px;}
+  .role-card .ring{width:42px; height:42px; margin:0 auto 10px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-weight:700; font-size:18px;}
   .role-card .rname{font-weight:600; font-size:14.5px;}
   #coordPickWrap{margin-top:4px;}
 
@@ -205,7 +205,7 @@
   .portal-pick-icon.coord{background:rgba(31,138,112,.12); color:var(--teal-deep);}
   .portal-pick-icon.amb{background:rgba(15,36,56,.08); color:var(--navy-deep);}
   .portal-pick-text{flex:1; min-width:0;}
-  .portal-pick-title{display:block; font-weight:600; font-size:15.5px; color:var(--navy-deep); font-family:'Fraunces',serif;}
+  .portal-pick-title{display:block; font-weight:600; font-size:15.5px; color:var(--navy-deep); font-family:'Sora',sans-serif;}
   .portal-pick-sub{display:block; font-size:13px; color:var(--muted); margin-top:2px;}
   .portal-pick-chev{flex:none; color:var(--muted); display:flex;}
   .onb-note{text-align:center; font-size:12.5px; color:var(--muted); line-height:1.6; margin:14px 0 0;}
@@ -228,8 +228,8 @@
     padding:20px 14px; overflow-y:auto;
   }
   .sidebar-brand{display:flex; align-items:center; gap:10px; text-decoration:none; padding:2px 8px 18px; margin-bottom:12px; border-bottom:1px solid var(--line); flex:none;}
-  .sidebar-brand .name{font-family:'Fraunces',serif; font-weight:600; font-size:14px; line-height:1.2; color:var(--navy-deep);}
-  .sidebar-brand .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
+  .sidebar-brand .name{font-family:'Sora',sans-serif; font-weight:600; font-size:14px; line-height:1.2; color:var(--navy-deep);}
+  .sidebar-brand .name small{display:block; font-family:'Plus Jakarta Sans'; font-weight:500; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
   .main-col{margin-left:236px; min-width:0; display:flex; flex-direction:column; min-height:100vh;}
 
   .topbar{
@@ -238,14 +238,14 @@
   }
   .topbar-inner{display:flex; align-items:center; justify-content:flex-end; padding:14px 28px; margin:0 auto;}
   .brandmini{display:flex; align-items:center; gap:10px;}
-  .brandmini .name{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.1;}
-  .brandmini .name small{display:block; font-family:'IBM Plex Sans'; font-weight:500; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
+  .brandmini .name{font-family:'Sora',sans-serif; font-weight:600; font-size:15.5px; line-height:1.1;}
+  .brandmini .name small{display:block; font-family:'Plus Jakarta Sans'; font-weight:500; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em;}
   .whoami{display:flex; align-items:center; gap:11px;}
   .whoami-text{display:flex; flex-direction:column; line-height:1.35; text-align:right;}
   .whoami .uname{font-size:13px; font-weight:600; color:var(--navy-deep);}
   .switchbtn{font-size:11.5px; color:var(--muted); text-decoration:underline; background:none; border:none; cursor:pointer; padding:0; margin-top:1px;}
   .avatar-circle{width:36px; height:36px; border-radius:50%; flex:none; object-fit:cover; border:1.5px solid var(--line); background:var(--navy-deep);}
-  .avatar-fallback{display:flex; align-items:center; justify-content:center; color:var(--chalk); font-family:'Fraunces',serif; font-weight:700; font-size:14px;}
+  .avatar-fallback{display:flex; align-items:center; justify-content:center; color:var(--chalk); font-family:'Sora',sans-serif; font-weight:700; font-size:14px;}
 
   .tabs{display:flex; flex-direction:column; gap:2px; overflow-x:visible; padding:0; max-width:none; margin:0; flex:1;}
   .tab{
@@ -315,7 +315,7 @@
   .grid2{display:grid; grid-template-columns:2fr 1fr; gap:22px;}
   .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px;}
   .stat{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
-  .stat .n{font-family:'Fraunces',serif; font-size:30px; font-weight:700; color:var(--navy-deep);}
+  .stat .n{font-family:'Sora',sans-serif; font-size:30px; font-weight:700; color:var(--navy-deep);}
   .stat .l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px;}
 
   .section-title{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
@@ -441,7 +441,7 @@
 
   /* fingerprint / face unlock */
   .pk-box{border:1.5px solid rgba(31,138,112,.35); background:linear-gradient(135deg, rgba(31,138,112,.09), rgba(227,154,59,.07)); border-radius:var(--radius); padding:16px 18px; margin-bottom:18px;}
-  .pk-title{font-family:'Fraunces',serif; font-weight:600; font-size:17px; color:var(--navy-deep);}
+  .pk-title{font-family:'Sora',sans-serif; font-weight:600; font-size:17px; color:var(--navy-deep);}
   .pk-sub{font-size:13px; color:var(--muted); margin:3px 0 12px; line-height:1.5;}
   .pk-roles{display:flex; flex-wrap:wrap; gap:8px;}
   .pk-role{gap:8px;}
@@ -506,7 +506,7 @@
   .mc-card .mc-svg{width:210px; max-width:70%; margin:0 auto; display:block; animation:mcBob 3s ease-in-out infinite;}
   .mc-bubble{position:relative; background:#fff; color:#0A1826; border-radius:16px; padding:12px 14px; margin:2px 0 6px; font-size:14.5px; line-height:1.4; box-shadow:0 6px 18px rgba(0,0,0,.2);}
   .mc-bubble:after{content:""; position:absolute; bottom:-8px; left:50%; margin-left:-9px; border:9px solid transparent; border-bottom:0; border-top-color:#fff;}
-  .mc-bubble b{display:block; font-family:'Fraunces',serif; font-size:19px; margin-bottom:2px;}
+  .mc-bubble b{display:block; font-family:'Sora',sans-serif; font-size:19px; margin-bottom:2px;}
   .mc-bub{position:absolute; border-radius:50%; background:rgba(255,255,255,.18); animation:mcRise 6s linear infinite;}
   .mc-go{margin-top:12px; background:var(--amber); color:#0A1826; border:none; border-radius:999px; padding:10px 22px; font-weight:700; font-size:14px; cursor:pointer;}
   .mc-dock{position:fixed; right:16px; bottom:18px; width:62px; height:62px; border-radius:50%; border:3px solid #fff; background:radial-gradient(circle at 50% 30%, #2aa88a, #14506a); box-shadow:0 8px 22px rgba(10,24,38,.4); cursor:pointer; padding:0; z-index:1100; opacity:0; pointer-events:none; overflow:hidden;}
@@ -600,7 +600,7 @@
   /* ---- Daily practice (streak, XP, level, weekly ranking) ---- */
   .lr-stats{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px;}
   .lr-pill{flex:1 1 150px; display:flex; align-items:center; gap:12px; background:var(--paper); border:1px solid var(--line); border-radius:999px; padding:12px 20px 12px 14px; box-shadow:0 2px 0 var(--line);}
-  .lr-pill .n{font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:var(--navy-deep); line-height:1;}
+  .lr-pill .n{font-family:'Sora',sans-serif; font-weight:600; font-size:22px; color:var(--navy-deep); line-height:1;}
   .lr-pill .l{font-size:12px; color:var(--muted); margin-top:3px;}
   .lr-pill .ic{width:34px; height:34px; border-radius:50%; background:var(--navy-deep); color:var(--amber); display:flex; align-items:center; justify-content:center; flex:none;}
   .lr-pill.hot .ic{background:var(--amber); color:var(--navy-deep);}
@@ -621,6 +621,212 @@
   .lr-rank.me{background:rgba(227,154,59,.14); border-color:var(--amber);}
   .lr-rank .pos{width:26px; font-weight:700; color:var(--muted); text-align:center;} .lr-rank .nm{flex:1; font-weight:500;} .lr-rank .xp{font-weight:600; color:var(--navy-deep);}
   @media (prefers-reduced-motion:reduce){.lr-bar b{transition:none;}}
+
+  /* =====================================================================
+     REDESIGN: bold flat colour, chunky controls, real motion. No glow, glass or sparkle.
+     ===================================================================== */
+  :root{
+    --navy:#5B3DF5; --navy-deep:#16123F; --chalk:#F5F3FF; --paper:#FFFFFF;
+    --amber:#FFC93C; --amber-deep:#E5A400; --teal:#10B981; --teal-deep:#0A8460;
+    --ink:#1D1A3F; --line:#E2DEF6; --muted:#6E6B93; --radius:20px;
+    --coral:#FF6B6B; --sky:#38BDF8; --lilac:#ECE8FF; --mint:#D8F5E8; --butter:#FFF2C2; --peach:#FFE2DB;
+  }
+  body{
+    background:var(--chalk);
+    background-image:radial-gradient(#DDD7F7 1.2px, transparent 1.2px); background-size:26px 26px;
+    font-family:'Plus Jakarta Sans', sans-serif; color:var(--ink);
+  }
+  h1,h2,h3,.display{font-family:'Sora', sans-serif; font-weight:700; letter-spacing:-0.02em; color:var(--navy-deep);}
+  ::selection{background:var(--amber); color:var(--navy-deep);}
+
+  /* ---- shell ---- */
+  .sidebar{background:var(--navy-deep); border-right:0; padding:22px 14px;}
+  .sidebar-brand{border-bottom:1px solid rgba(255,255,255,.14);}
+  .sidebar-brand .name{color:#fff; font-family:'Sora',sans-serif; font-weight:700;}
+  .sidebar-brand .name small{color:#A9A4E0;}
+  .tab{color:#B9B4EE; border-radius:14px; padding:12px 14px; font-weight:700; font-size:14px; transition:background .15s ease, color .15s ease, transform .15s ease;}
+  .tab:hover{background:rgba(255,255,255,.08); color:#fff; transform:translateX(2px);}
+  .tab.active{background:var(--navy); color:#fff; box-shadow:0 4px 0 rgba(0,0,0,.28);}
+  .tab-ic{width:20px; height:20px; flex:none;}
+  .tab-badge{background:var(--amber); color:var(--navy-deep); font-weight:800;}
+  .topbar{background:rgba(245,243,255,.94); backdrop-filter:none; border-bottom:2px solid var(--line);}
+  .whoami .uname{color:var(--navy-deep); font-weight:800;}
+  .avatar-circle{border:2px solid var(--navy-deep); background:var(--navy);}
+  .main-col{background:transparent;}
+
+  /* ---- buttons: chunky, pressable ---- */
+  .btn{border-radius:14px; border:2px solid var(--navy-deep); background:var(--navy); background-image:none; color:#fff; font-weight:800; font-size:15px; padding:12px 20px; box-shadow:0 4px 0 var(--navy-deep); transition:transform .12s ease, box-shadow .12s ease, background .15s ease;}
+  .btn:hover{filter:none; transform:translateY(-1px); box-shadow:0 5px 0 var(--navy-deep);}
+  .btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--navy-deep);}
+  .btn.secondary{background:#fff; color:var(--navy-deep);}
+  .btn.amber{background:var(--amber); color:var(--navy-deep); border-color:var(--navy-deep);}
+  .btn.teal{background:var(--teal); color:#fff; border-color:var(--navy-deep);}
+  .btn.ghost{background:transparent; border:2px solid var(--line); color:var(--muted); box-shadow:none;}
+  .btn.ghost:hover{border-color:var(--navy); color:var(--navy); transform:none; box-shadow:none;}
+  .btn.small{padding:8px 14px; font-size:13px; border-radius:12px; box-shadow:0 3px 0 var(--navy-deep);}
+  .btn.ghost.small{box-shadow:none;}
+  .btn:disabled{opacity:.5; box-shadow:none; transform:none;}
+
+  /* ---- surfaces ---- */
+  .card{background:#fff; border:2px solid var(--line); border-radius:var(--radius); box-shadow:0 4px 0 var(--line); padding:22px;}
+  .item{background:#fff; border:2px solid var(--line); border-radius:16px; box-shadow:none; padding:16px 18px;}
+  .item::before{display:none;}
+  .item:hover{transform:translateY(-1px); border-color:var(--navy); box-shadow:0 4px 0 var(--navy);}
+  .item-title{font-weight:700;}
+  .empty{background:#fff; border:2px dashed #CFC8F2; border-radius:var(--radius); color:var(--muted);}
+  .section-title h2{font-size:21px; padding-bottom:0;}
+  .section-title h2::after{display:none;}
+  .badge{border-radius:999px; font-weight:800;}
+  .badge.stud{background:var(--butter); color:#7A5600;}
+  .badge.coord{background:var(--mint); color:var(--teal-deep);}
+  .badge.amb{background:var(--lilac); color:var(--navy);}
+  input,select,textarea{font-family:inherit; font-size:15px; color:var(--ink); background:#fff; border:2px solid var(--line); border-radius:12px; padding:11px 13px; transition:border-color .15s ease, box-shadow .15s ease;}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--navy); box-shadow:0 0 0 3px var(--lilac);}
+  .field label{font-weight:700; font-size:12.5px; color:var(--navy-deep);}
+
+  /* ---- hero: flat colour block with flat shapes ---- */
+  .hero{border-radius:28px; padding:30px 32px; margin-bottom:22px; box-shadow:0 6px 0 rgba(22,18,63,.18); border:2px solid var(--navy-deep);}
+  .hero::before{content:''; position:absolute; width:210px; height:210px; right:-50px; top:-70px; border-radius:50%; background:var(--amber); opacity:1; box-shadow:none; pointer-events:none;}
+  .hero::after{content:''; position:absolute; width:120px; height:120px; right:120px; bottom:-60px; border-radius:50%; border:0; background:var(--coral); box-shadow:none; pointer-events:none;}
+  .hero.stud{background:var(--navy); color:#fff;}
+  .hero.coord{background:#0A8460; color:#fff;}
+  .hero.amb{background:var(--navy-deep); color:#fff;}
+  .hero h1{color:#fff; font-size:34px; line-height:1.1;}
+  .hero p{color:#E9E5FF; max-width:560px;}
+  .hero .eyebrow{background:rgba(255,255,255,.16); color:#fff; font-weight:800;}
+  .hero.stud .eyebrow{background:rgba(255,255,255,.18); color:#fff;}
+  .hero h1,.hero p,.hero .eyebrow{position:relative; z-index:1;}
+
+  /* ---- stat tiles: solid colour, big numbers ---- */
+  .stat-row{grid-template-columns:repeat(4,1fr);}
+  .stat{border:2px solid var(--navy-deep); border-radius:18px; box-shadow:0 4px 0 var(--navy-deep); padding:16px 18px;}
+  .stat::after{display:none;}
+  .stat:nth-child(4n+1){background:var(--lilac);} .stat:nth-child(4n+2){background:var(--butter);}
+  .stat:nth-child(4n+3){background:var(--mint);} .stat:nth-child(4n+4){background:var(--peach);}
+  .stat:hover{transform:translateY(-2px); box-shadow:0 6px 0 var(--navy-deep);}
+  .stat .n{background:none; -webkit-background-clip:initial; background-clip:initial; color:var(--navy-deep); font-family:'Sora',sans-serif; font-size:30px; font-weight:800;}
+  .stat .l{color:var(--navy-deep); opacity:.75; font-weight:700;}
+  @media(max-width:700px){ .stat-row{grid-template-columns:repeat(2,1fr);} .hero{padding:24px 20px;} .hero h1{font-size:26px;} }
+
+  /* ---- sub navigation pills ---- */
+  .subnav,.rm-subnav{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 20px;}
+  .rm-subnav.tight{margin:0 0 16px;}
+  .pill{font-family:inherit; font-weight:800; font-size:13.5px; color:var(--navy-deep); background:#fff; border:2px solid var(--line); border-radius:999px; padding:8px 16px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:transform .12s ease, background .15s ease, border-color .15s ease;}
+  .pill:hover{border-color:var(--navy); transform:translateY(-1px);}
+  .pill.on{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep); box-shadow:0 3px 0 var(--navy);}
+  .pill i{font-style:normal; font-size:11px; font-weight:800; background:var(--amber); color:var(--navy-deep); border-radius:999px; padding:1px 7px;}
+  #screen > *{animation:rmUp .38s cubic-bezier(.2,.7,.2,1) both;}
+  #screen > *:nth-child(2){animation-delay:.04s;} #screen > *:nth-child(3){animation-delay:.08s;} #screen > *:nth-child(n+4){animation-delay:.12s;}
+
+  /* =====================================================================
+     ROADMAP
+     ===================================================================== */
+  .rm-kicker{font-size:11.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--navy);}
+  .rm-kicker.light{color:rgba(255,255,255,.85);}
+  .rm-pagehead{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin:6px 0 18px;}
+  .rm-pagehead h2{margin:4px 0 4px; font-size:26px;}
+  .rm-pagehead p{margin:0; color:var(--muted); max-width:560px; font-size:14.5px;}
+  .rm-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .rm-note{background:var(--butter); border:2px solid var(--amber); color:#6B4A00; border-radius:14px; padding:10px 14px; margin:0 0 16px; font-size:14px; font-weight:600;}
+  .rm-skel{display:grid; gap:12px;} .rm-skel i{display:block; height:84px; border-radius:18px; background:linear-gradient(90deg,#ECE8FF 25%,#F7F5FF 50%,#ECE8FF 75%); background-size:200% 100%; animation:rmShimmer 1.2s linear infinite;}
+  @keyframes rmShimmer{to{background-position:-200% 0;}}
+
+  /* daily card */
+  .rm-daily{display:flex; gap:20px; align-items:center; flex-wrap:wrap; background:var(--butter); border:2px solid var(--navy-deep); border-radius:24px; box-shadow:0 5px 0 var(--navy-deep); padding:20px 22px; margin:0 0 16px;}
+  .rm-streak{display:flex; align-items:center; gap:10px; min-width:110px;}
+  .rm-streak .fl{width:52px; height:52px; border-radius:50%; background:#fff; border:2px solid var(--navy-deep); display:flex; align-items:center; justify-content:center; color:#B7B2D6;}
+  .rm-streak.hot .fl{color:var(--coral); animation:rmWiggle 2.4s ease-in-out infinite;}
+  .rm-streak b{display:block; font-family:'Sora',sans-serif; font-size:28px; line-height:1; color:var(--navy-deep);}
+  .rm-streak small{font-size:12px; font-weight:700; color:var(--muted);}
+  @keyframes rmWiggle{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-4deg)}}
+  .rm-daily-m{flex:1 1 240px; min-width:0;}
+  .rm-daily-m h3{margin:2px 0 4px; font-size:18px;} .rm-daily-m p{margin:0 0 10px; font-size:14px; color:#4B4672;}
+  .rm-dots{display:flex; gap:8px;} .rm-dots i{width:22px; height:22px; border-radius:50%; background:#fff; border:2px solid var(--navy-deep); display:block; transition:background .3s ease, transform .3s ease;}
+  .rm-dots i.on{background:var(--teal); transform:scale(1.08);}
+  .rm-daily-r{display:flex; flex-direction:column; gap:10px; align-items:stretch; min-width:190px;}
+  .rm-level{font-size:12.5px; font-weight:800; color:var(--navy-deep);} .rm-level small{display:block; margin-top:4px; font-weight:600; color:var(--muted);}
+  .rm-level .rm-bar{margin-top:6px;}
+  .rm-board{background:#fff; border:2px solid var(--line); border-radius:18px; padding:14px 18px; margin:0 0 18px;}
+  .rm-rank{display:flex; align-items:center; gap:12px; padding:7px 0; border-bottom:1px solid #EFEBFF; font-size:14px; font-weight:600;}
+  .rm-rank:last-child{border-bottom:0;} .rm-rank .pos{width:26px; height:26px; border-radius:50%; background:var(--lilac); color:var(--navy); font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center;}
+  .rm-rank .nm{flex:1;} .rm-rank .xp{font-weight:800; color:var(--navy-deep);} .rm-rank.me{background:var(--butter); border-radius:10px; padding-left:8px; padding-right:8px;}
+  .rm-rank:nth-child(2) .pos{background:var(--amber); color:var(--navy-deep);}
+
+  /* the winding path */
+  .rm-mapwrap{display:flex; justify-content:center; padding:10px 0 30px;}
+  .rm-map{position:relative; flex:none;}
+  .rm-path{position:absolute; left:0; top:0; overflow:visible;}
+  .rm-path path{fill:none; stroke-linecap:round; stroke-width:12;}
+  .rm-path .base{stroke:#D8D2F5; stroke-dasharray:1.4 3.2; stroke-width:10;}
+  .rm-path .drawn{stroke:var(--navy); stroke-dasharray:0 100; animation:rmDraw 1.5s .2s cubic-bezier(.3,.7,.2,1) forwards;}
+  @keyframes rmDraw{to{stroke-dasharray:var(--x) 100;}}
+  .rm-n{position:absolute; width:80px; height:80px; animation:rmPopIn .5s calc(var(--i) * .07s + .1s) cubic-bezier(.3,1.4,.5,1) both;}
+  @keyframes rmPopIn{from{opacity:0; transform:scale(.4) translateY(14px);}to{opacity:1; transform:none;}}
+  .rm-bt{position:relative; width:80px; height:80px; border-radius:50%; border:3px solid var(--navy-deep); background:var(--hue); color:#fff; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; box-shadow:0 7px 0 var(--navy-deep); transition:transform .12s ease, box-shadow .12s ease;}
+  .rm-bt:hover{transform:translateY(-2px); box-shadow:0 9px 0 var(--navy-deep);}
+  .rm-bt:active{transform:translateY(6px); box-shadow:0 1px 0 var(--navy-deep);}
+  .rm-bt .ic{display:flex; align-items:center; justify-content:center; position:relative; z-index:1;}
+  .rm-bt .num{font-family:'Sora',sans-serif; font-weight:800; font-size:28px;}
+  .rm-nring{position:absolute; inset:-10px; width:calc(100% + 20px); height:calc(100% + 20px); transform:rotate(-90deg); pointer-events:none;}
+  .rm-nring circle{fill:none; stroke-width:5; stroke-linecap:round;} .rm-nring .bg{stroke:rgba(22,18,63,.12);}
+  .rm-nring .fg{stroke:var(--teal-deep); stroke-dasharray:calc(var(--p) * 1px) 100; transition:stroke-dasharray 1s ease;}
+  .rm-n.now .rm-bt{background:var(--amber); color:var(--navy-deep);}
+  .rm-n.done .rm-bt{background:var(--teal);}
+  .rm-n.open .rm-bt{background:var(--hue);}
+  .rm-n.prev .rm-bt{background:var(--lilac); color:var(--navy);}
+  .rm-n.lock .rm-bt{background:#D9D5EC; color:#8A86B0; border-color:#8A86B0; box-shadow:0 7px 0 #8A86B0; cursor:not-allowed;}
+  .rm-n.mock .rm-bt{background:var(--coral);}
+  .rm-bubble{position:absolute; left:50%; top:-40px; transform:translateX(-50%); background:#fff; color:var(--navy-deep); border:2px solid var(--navy-deep); border-radius:12px; padding:4px 12px; font-size:11.5px; font-weight:800; letter-spacing:.08em; white-space:nowrap; animation:rmBob 1.4s ease-in-out infinite;}
+  .rm-bubble::after{content:''; position:absolute; left:50%; bottom:-7px; width:10px; height:10px; background:#fff; border-right:2px solid var(--navy-deep); border-bottom:2px solid var(--navy-deep); transform:translateX(-50%) rotate(45deg);}
+  @keyframes rmBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-6px)}}
+  .rm-lab{position:absolute; top:50%; transform:translateY(-50%); width:150px; cursor:pointer;}
+  .rm-lab.r{left:96px; text-align:left;} .rm-lab.l{right:96px; text-align:right;}
+  .rm-lab b{display:block; font-family:'Sora',sans-serif; font-size:14px; line-height:1.25; color:var(--navy-deep);}
+  .rm-lab small{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-top:2px;}
+  .rm-meta{display:inline-block; margin-top:5px; font-size:11.5px; font-weight:800; color:var(--navy); background:var(--lilac); border-radius:999px; padding:2px 9px;}
+  .rm-n.lock .rm-lab b{color:var(--muted);}
+  .rm-n.done .rm-meta{background:var(--mint); color:var(--teal-deep);}
+
+  /* section page */
+  .rm-shead{display:flex; align-items:center; gap:20px; background:var(--hue); color:#fff; border:2px solid var(--navy-deep); border-radius:26px; box-shadow:0 6px 0 var(--navy-deep); padding:24px 28px; margin:0 0 20px; position:relative; overflow:hidden;}
+  .rm-shead::after{content:''; position:absolute; right:-40px; bottom:-60px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,.16); pointer-events:none;}
+  .rm-shead h2{color:#fff; font-size:26px; margin:4px 0 6px;} .rm-shead p{margin:0; color:rgba(255,255,255,.92); max-width:560px; font-size:14px;}
+  .rm-shead .rm-chip{background:rgba(255,255,255,.2); color:#fff;}
+  .rm-ring{flex:none;} .rm-ring-bg{fill:none; stroke:#E4DFF8; stroke-width:6;}
+  .rm-ring-fg{fill:none; stroke:var(--teal); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);}
+  .rm-ring-t{font-size:15px; font-weight:800; fill:var(--navy-deep); font-family:'Sora',sans-serif;}
+  .rm-ring.on-dark .rm-ring-bg{stroke:rgba(255,255,255,.3);} .rm-ring.on-dark .rm-ring-fg{stroke:#fff;} .rm-ring.on-dark .rm-ring-t{fill:#fff;}
+  .rm-bar{height:10px; background:#E9E5FA; border-radius:99px; overflow:hidden;}
+  .rm-bar b{display:block; height:100%; width:0; background:var(--teal); border-radius:99px; transition:width .9s cubic-bezier(.2,.7,.2,1);}
+  .rm-level .rm-bar b{background:var(--navy);}
+  .rm-starts{display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;}
+  .rm-q{font-size:17px; line-height:1.6; margin:14px 0; font-weight:600;}
+  .rm-opt{display:flex; gap:12px; width:100%; text-align:left; background:#fff; border:2px solid var(--line); border-radius:14px; padding:13px 15px; margin:9px 0; font:inherit; font-weight:600; cursor:pointer; color:var(--ink); transition:transform .12s ease, border-color .12s ease, background .12s ease;}
+  .rm-opt:hover:not(:disabled){border-color:var(--navy); transform:translateY(-1px);}
+  .rm-opt:disabled{cursor:default;} .rm-opt .k{font-weight:800; color:var(--navy); min-width:18px;}
+  .rm-opt.correct{border-color:var(--teal); background:var(--mint); animation:rmPop .35s ease both;}
+  .rm-opt.wrong{border-color:#E5484D; background:#FFE5E5; animation:rmShake .35s ease both;}
+  @keyframes rmShake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .rm-fb{border-radius:14px; padding:13px 15px; margin:12px 0; font-size:14.5px; line-height:1.55;}
+  .rm-fb.ok{background:var(--mint);} .rm-fb.no{background:#FFE5E5;}
+  .rm-chip{display:inline-block; border-radius:999px; padding:3px 11px; font-size:11.5px; font-weight:800; background:var(--lilac); color:var(--navy); margin-right:5px;}
+  .rm-chip.on{background:var(--mint); color:var(--teal-deep);} .rm-chip.bad{background:#FFE0E0; color:#C2242B;}
+  .rm-pill{display:inline-block; border-radius:999px; padding:4px 12px; font-size:11.5px; font-weight:800; border:2px solid var(--navy-deep); box-shadow:0 2px 0 var(--navy-deep);}
+  .rm-pill.done{background:var(--teal); color:#fff;} .rm-pill.review{background:var(--lilac); color:var(--navy-deep);} .rm-pill.lock{background:#E7E3F5; color:#6E6B93; border-color:#B7B2D6; box-shadow:0 2px 0 #B7B2D6;}
+  .rm-badges{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+  .rm-badge{display:inline-block; border-radius:999px; padding:7px 16px; font-size:13px; font-weight:800; background:var(--amber); color:var(--navy-deep); border:2px solid var(--navy-deep); box-shadow:0 3px 0 var(--navy-deep);}
+  .rm-badge.muted{background:#E7E3F5; border-color:#B7B2D6; box-shadow:0 3px 0 #B7B2D6; color:#6E6B93;}
+  .rm-done{text-align:center;}
+  .rm-pop{animation:rmPop .5s ease both;} .rm-win{animation:rmUp .4s ease both;}
+  @keyframes rmUp{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
+  @keyframes rmPop{0%{opacity:0; transform:scale(.7);}70%{transform:scale(1.06);}100%{opacity:1; transform:scale(1);}}
+  .rm-sched{margin:0 0 20px;} .rm-sched-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid #EFEBFF;}
+  .rm-sched-row .nm{flex:1 1 220px; font-size:14px; font-weight:600;} .rm-sched-row input[type=date]{width:auto;}
+  .rm-stats{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px;} .rm-stats .stat{min-width:150px;}
+  .rm-prog{display:flex; gap:14px; align-items:center; flex-wrap:wrap;} .rm-prog-name{flex:1 1 160px;} .rm-prog-bar{flex:2 1 240px;}
+  .item-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} .rm-path .drawn{stroke-dasharray:var(--x) 100;} }
+  @media (max-width:560px){ .rm-shead{flex-direction:column; align-items:flex-start; padding:20px;} .rm-daily{padding:16px;} .rm-daily-r{width:100%;} }
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -1619,7 +1825,7 @@ async function markTabSeen(tab){
   }));
   await Promise.all([...legacy].map(k=>saveKey(k)));
 }
-function renderNavBadges(){
+function renderNavBadgesLegacy(){
   if(!ME) return;
   document.querySelectorAll('#tabs .tab[data-tab]').forEach(el=>{
     const n = tabUnreadCount(el.dataset.tab);
@@ -1757,6 +1963,7 @@ function pollsCoordinatorView(){
       <div class="field" style="margin:0;"><label>Option 3 (optional)</label><input id="pollOpt3" placeholder="Option"></div>
       <div class="field" style="margin:0;"><label>Option 4 (optional)</label><input id="pollOpt4" placeholder="Option"></div>
     </div>
+    <div class="field" style="margin:10px 0 0; max-width:320px;"><label>Roadmap section</label>${rmTopicSelect('pollTopic','')}</div>
     <button class="btn teal small" id="addPollBtn">Post poll</button>
   </div>
   <div class="list">
@@ -1826,6 +2033,7 @@ function quizzesCoordinatorView(){
     <div class="field" style="max-width:200px;"><label>Correct option</label>
       <select id="quizCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
     </div>
+    <div class="field" style="max-width:320px;"><label>Roadmap section</label>${rmTopicSelect('quizTopic','')}</div>
     <button class="btn teal small" id="addQuizBtn">Post quiz question</button>
   </div>
   <div class="list">
@@ -1895,6 +2103,7 @@ function practiceQuestionSection(role){
     <div class="card" style="margin-bottom:18px;">
       <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="pracQ" rows="3" placeholder="Write the practice question here"></textarea></div>
       <div class="field" style="margin:0 0 10px;"><label>Hint / answer (optional, shown separately)</label><input id="pracA" placeholder="Optional hint or worked answer"></div>
+      <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('pracTopic','')}</div>
       <button class="btn teal small" id="addPracBtn">Post practice question</button>
     </div>
     <div class="list">
@@ -2611,6 +2820,7 @@ function closeDrawer(){
 // Small line icons for the section list — purely visual.
 const TAB_ICONS = {
   learn:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  roadmap:'<path d="M5 21V4"/><path d="M5 5h11l-2 3.5 2 3.5H5"/><circle cx="5" cy="21" r="1"/>',
   overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   applications:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
   people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.5 0 4 1.7 4 4.5"/>',
@@ -2646,11 +2856,11 @@ function tabIconSvg(k){
   const d = TAB_ICONS[k] || '<circle cx="12" cy="12" r="3"/>';
   return `<svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 }
-function buildTabs(){
+function buildTabsLegacy(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
+    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -2715,7 +2925,7 @@ function restoreFormState(container, state){
     }
   }
 }
-function render(tab){
+function renderLegacy(tab){
   stopExamRuntime();
   currentTab = tab;
   const s = document.getElementById('screen');
@@ -2725,6 +2935,7 @@ function render(tab){
   else if(tab==='settings') html = settingsView();
   else if(tab==='library') html = libraryView();
   else if(tab==='exams') html = examsView();
+  else if(tab==='roadmap') html = '<div id="rmRoot">'+rmHtmlSync()+'</div>';
   else if(tab==='mock') html = '<div id="mockRoot"></div>';
   else if(tab==='chat') html = chatView();
   else if(tab==='applications') html = applicationsView();
@@ -4726,43 +4937,32 @@ async function syncPublicDirectory(){
 
 function ambassadorView(tab){
   if(tab==='overview'){
-    const totalPosts = DB.materials.length + DB.callsheets.length + DB.practice.length + DB.exams.length;
     const activeSessions = DB.callsheets.filter(c=>sessionStatus(c)==='Active');
-    const upcomingSessions = DB.callsheets.filter(c=>sessionStatus(c)==='Upcoming');
     const studentsStarted = DB.students.filter(s=>s.started).length;
     const studentsAssigned = DB.students.filter(s=>s.coordinatorId).length;
+    const recent = combinedFeed().slice(0,6);
+    const first = String(ME.name||'').trim().split(/\s+/)[0];
     return `
     <div class="hero amb">
       <div class="eyebrow">Ambassador desk</div>
-      <h1>Welcome back, ${escapeHtml(ME.name)}.</h1>
-      <p>The International Chemistry Competition brings together some of the sharpest young chemists on the planet — and ${escapeHtml(programName())} exists so that a student in Accra, Kumasi or Tamale has just as fair a shot at that stage as anyone else. This is programme command central: the one place where every coordinator's call sheet, every student's question, and every announcement lands. Your job is to keep that pipeline moving.</p>
+      <h1>Hi ${escapeHtml(first)}.</h1>
+      <p>${DB.students.length} students across ${DB.coordinators.length} coordinators. Here is what needs you today.</p>
     </div>
-    ${activeSessions.length ? `<div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
-      <span style="width:9px; height:9px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:6px;"></span>
-      <b style="color:var(--teal-deep);">${activeSessions.length} session${activeSessions.length===1?'':'s'} active right now</b> — ${activeSessions.map(c=>escapeHtml(c.title)).join(', ')}
-    </div>` : ''}
-    ${DB.applications.length ? `<div class="card" style="margin-bottom:14px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${DB.applications.length} new application${DB.applications.length===1?'':'s'}</b> waiting — check the <b>Applications</b> tab.</div>` : ''}
+    ${DB.applications.length ? `<div class="card" style="margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;"><span><b>${DB.applications.length} new application${DB.applications.length===1?'':'s'}</b> waiting for a decision</span><button class="btn amber small" type="button" data-go-tab="applications">Review</button></div>` : ''}
+    ${activeSessions.length ? `<div class="card" style="margin-bottom:14px;"><b>${activeSessions.length} session${activeSessions.length===1?'':'s'} live right now:</b> ${activeSessions.map(c=>escapeHtml(c.title)).join(', ')}</div>` : ''}
     <div class="stat-row">
-      <div class="stat"><div class="n">${DB.coordinators.length}</div><div class="l">Coordinators</div></div>
       <div class="stat"><div class="n">${DB.students.length}</div><div class="l">Students</div></div>
+      <div class="stat"><div class="n">${DB.coordinators.length}</div><div class="l">Coordinators</div></div>
       <div class="stat"><div class="n">${studentsAssigned}</div><div class="l">Assigned</div></div>
       <div class="stat"><div class="n">${studentsStarted}</div><div class="l">Programme started</div></div>
     </div>
-    <div class="stat-row">
-      <div class="stat"><div class="n">${activeSessions.length}</div><div class="l" style="color:var(--teal-deep);">Active now</div></div>
-      <div class="stat"><div class="n">${upcomingSessions.length}</div><div class="l">Upcoming</div></div>
-      <div class="stat"><div class="n">${totalPosts}</div><div class="l">Resources posted</div></div>
-      <div class="stat"><div class="n">${DB.comments.length}</div><div class="l">Conversations</div></div>
-    </div>
-    <div class="section-title" style="margin-top:10px;"><div><h2>The four pillars</h2></div></div>
-    <div class="grid2" style="margin-bottom:6px;">
-      <div class="card"><b>Practice questions.</b> A steady drip of real, exam‑style chemistry problems, so competition thinking becomes second nature.</div>
-      <div class="card"><b>Competition prep.</b> Structured sessions and call sheets that map onto how the IChC is actually marked and timed.</div>
-      <div class="card"><b>Mentorship.</b> Coordinators giving students someone to ask "is this normal to find hard?"</div>
-      <div class="card"><b>Community.</b> A cohort of Ghanaian students who know each other's names, not just each other's scores.</div>
-    </div>
-
-    <div class="section-title" style="margin-top:30px;"><div><h2>Public profile</h2><p>Shown as the Local Ambassador on the public website's "Meet the team" section.</p></div></div>
+    <div class="card" style="margin-bottom:24px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;"><span><b>Roadmap.</b> Release dates, question bank and how every section is going.</span><button class="btn small" type="button" data-go-tab="roadmap">Open roadmap</button></div>
+    <div class="section-title"><div><h2>Recent activity</h2></div><button class="btn ghost small" type="button" data-go-tab="feed">See all</button></div>
+    <div class="list">${recent.length ? recent.map(feedItem).join('') : `<div class="empty">Nothing has been posted yet. As coordinators publish sessions and resources, they appear here.</div>`}</div>`;
+  }
+  if(tab==='profile'){
+    return `
+    <div class="section-title"><div><h2>Public profile</h2><p>Shown as the Local Ambassador on the public website's "Meet the team" section.</p></div></div>
     <div class="card" id="ambProfileEditCard">
       ${(()=>{ const p = DB.ambassadorProfiles[ME.email.toLowerCase()] || {}; return `
       <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
@@ -4998,21 +5198,26 @@ async function refreshMeFromDB(){
 function coordinatorView(tab){
   if(tab==='space'){
     const upcoming = DB.callsheets.filter(c=>c.coordinatorId===ME.id && !c.cancelled && (sessionStatus(c)==='Upcoming' || sessionStatus(c)==='Active')).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
-    const me = DB.coordinators.find(c=>c.id===ME.id) || {};
+    const first = String(ME.name||'').trim().split(/\s+/)[0];
+    const testsPosted = DB.polls.filter(p=>p.coordinatorId===ME.id).length + DB.quizzes.filter(q=>q.coordinatorId===ME.id).length + DB.exams.filter(e=>e.coordinatorId===ME.id).length + DB.practice.filter(p=>p.coordinatorId===ME.id).length;
     return `
     <div class="hero coord">
       <div class="eyebrow">Coordinator space</div>
-      <h1>Good to see you, ${escapeHtml(ME.name)}.</h1>
-      <p>Every student you're guiding is training for the same stage: the International Chemistry Competition. You're the person they message the night before a mock exam, and that matters more than any of us usually say. This space is for keeping your group moving — post the call sheet, drop the reading, set the week's practice question, and answer the questions that come back. Everything you publish here reaches your students immediately and stays visible to the Ambassador desk, so nothing you do goes unseen.</p>
+      <h1>Hi ${escapeHtml(first)}.</h1>
+      <p>${myStudents().length} student${myStudents().length===1?'':'s'} counting on you. Here is where things stand.</p>
     </div>
     <div class="stat-row">
       <div class="stat"><div class="n">${myStudents().length}</div><div class="l">My students</div></div>
+      <div class="stat"><div class="n">${DB.callsheets.filter(c=>c.coordinatorId===ME.id).length}</div><div class="l">Sessions</div></div>
+      <div class="stat"><div class="n">${testsPosted}</div><div class="l">Tests and polls posted</div></div>
       <div class="stat"><div class="n">${DB.materials.filter(m=>m.coordinatorId===ME.id).length}</div><div class="l">Materials posted</div></div>
-      <div class="stat"><div class="n">${DB.callsheets.filter(c=>c.coordinatorId===ME.id).length}</div><div class="l">Call sheets</div></div>
-      <div class="stat"><div class="n">${DB.practice.filter(p=>p.coordinatorId===ME.id).length}</div><div class="l">Practice questions</div></div>
     </div>
     ${upcoming ? `<div class="card" style="margin-bottom:26px;"><b>Next up:</b> ${escapeHtml(upcoming.title)} — ${fmtSessionTime(upcoming)} ${sessionStatusBadge(upcoming)}</div>` : `<div class="empty" style="margin-bottom:26px;">No upcoming call sheet — head to <b>Call sheets</b> to set your next session.</div>`}
-
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;"><span><b>Roadmap.</b> Questions, tests and resources for each section, and how your students are doing.</span><button class="btn small" type="button" data-go-tab="roadmap">Open roadmap</button></div>`;
+  }
+  if(tab==='profile'){
+    const me = DB.coordinators.find(c=>c.id===ME.id) || {};
+    return `
     <div class="section-title"><div><h2>Public profile</h2><p>Shown on the "Meet the team" section of the public website — your photo and bio are optional, but help students and parents put a face to the programme.</p></div></div>
     <div class="card" id="profileEditCard">
       <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
@@ -5128,6 +5333,7 @@ function coordinatorView(tab){
       <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="matTitle" placeholder="e.g. Acid–base equilibria cheat sheet"></div>
       <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="matDesc" rows="2" placeholder="What it covers and how to use it"></textarea></div>
       <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="matLink" placeholder="Drive / PDF link"></div>
+      <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('matTopic','')}</div>
       <button class="btn teal small" id="addMatBtn">Post material</button>
     </div>
     <div class="list">
@@ -5154,55 +5360,42 @@ function studentView(tab){
   if(tab==='learn') return '<div id="learnRoot"></div>';
   if(tab==='welcome'){
     const myRecord = DB.students.find(s=>s.id===ME.id);
-    const upcomingSession = DB.callsheets
-      .filter(c=>c.coordinatorId===myCoordinatorId() && sessionStatus(c)==='Upcoming')
-      .sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''))[0];
-    const activeSession = DB.callsheets
-      .filter(c=>c.coordinatorId===myCoordinatorId() && sessionStatus(c)==='Active')[0];
+    const calls = DB.callsheets.filter(c=>c.coordinatorId===myCoordinatorId()).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
+    const activeSession = calls.filter(c=>sessionStatus(c)==='Active')[0];
+    const first = String(ME.name||'').trim().split(/\s+/)[0];
     return `
     <div class="hero stud">
       <div class="eyebrow">Your space</div>
-      <h1>Welcome, ${escapeHtml(ME.name)}.</h1>
-      <p>You made it into ${escapeHtml(programName())} — Ghana's pathway toward the International Chemistry Competition. Someone looked at what you've got and decided it was worth investing in. From here, expect a steady rhythm: practice questions, structured competition prep, and a mentor genuinely in your corner.</p>
+      <h1>Hey ${escapeHtml(first)}, ready to train?</h1>
+      <p>You are in ${escapeHtml(programName())}, Ghana's pathway to the International Chemistry Competition. Your coordinator, your roadmap and your daily practice are all right here.</p>
     </div>
 
     ${onboardingCardHtml()}
     ${studentCoordinatorCard()}
 
     ${activeSession ? `
-    <div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:rgba(31,138,112,.06);">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-        <span style="width:10px; height:10px; border-radius:50%; background:var(--teal); display:inline-block;"></span>
-        <b style="color:var(--teal-deep);">Session active now</b>
-      </div>
-      <div style="font-size:15px; font-weight:600;">${escapeHtml(activeSession.title)}</div>
+    <div class="card" style="margin-bottom:16px; border-color:var(--teal-deep); background:var(--mint);">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;"><span style="width:10px; height:10px; border-radius:50%; background:var(--teal); display:inline-block;"></span><b style="color:var(--teal-deep);">Session live now</b></div>
+      <div style="font-size:15px; font-weight:700;">${escapeHtml(activeSession.title)}</div>
       <div style="font-size:13px; color:var(--muted); margin:4px 0 8px;">${fmtSessionTime(activeSession)}</div>
-      ${activeSession.link ? `<a href="${escapeHtml(activeSession.link.startsWith('http')?activeSession.link:'https://'+activeSession.link)}" target="_blank" rel="noopener" class="btn teal small">Join session →</a>` : ''}
-    </div>` : upcomingSession ? `
-    <div class="card" style="margin-bottom:16px; border-color:var(--line);">
-      <div style="font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:6px;">Next session</div>
-      <div style="font-size:15px; font-weight:600;">${escapeHtml(upcomingSession.title)}</div>
-      <div style="font-size:13px; color:var(--muted); margin-top:4px;">${fmtSessionTime(upcomingSession)}</div>
+      ${activeSession.link ? `<a href="${escapeHtml(activeSession.link.startsWith('http')?activeSession.link:'https://'+activeSession.link)}" target="_blank" rel="noopener" class="btn teal small">Join session</a>` : ''}
     </div>` : ''}
 
-    <div class="grid2" style="margin-bottom:14px; align-items:start;">
-      <div class="card">
-        <div style="font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:12px;">Application status</div>
-        ${applicationStageStepper(myRecord)}
-      </div>
-      <div class="card">
-        <div style="font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:10px;">Your programme</div>
-        <div style="margin-bottom:8px;"><b>Coordinator:</b> ${escapeHtml(coordName(myCoordinatorId()))}${myCoordinatorId() ? ` · ${presenceBadge((DB.coordinators.find(c=>c.id===myCoordinatorId())||{}).email)}` : '<span style="color:var(--muted);"> — not assigned yet</span>'}</div>
-        ${myRecord && myRecord.group ? `<div style="margin-bottom:8px;"><b>Group:</b> ${escapeHtml(myRecord.group)}</div>` : ''}
-        <div><b>Status:</b> <span class="badge stud">${escapeHtml(myStudentStatus())}</span></div>
-      </div>
+    <div id="rmRoot">${rmHtmlSync()}</div>
+
+    <div class="section-title" style="margin-top:34px;"><div><h2>Sessions</h2><p>Your coordinator's schedule. Status updates automatically.</p></div></div>
+    <div class="list" style="margin-bottom:26px;">
+      ${calls.length ? calls.map(c=>`
+        <div class="item">
+          <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
+          <div class="item-meta" style="margin-bottom:6px;">${fmtSessionTime(c)}</div>
+          <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Join: ${linkifyUrl(c.link)}`:''}</div>
+        </div>`).join('') : `<div class="empty">No sessions scheduled yet. Your coordinator will post one soon.</div>`}
     </div>
 
-    <div class="grid2">
-      <div class="card"><b>Practice questions.</b> A new one dropped regularly — attempt it before you see the hint.</div>
-      <div class="card"><b>Competition prep.</b> Sessions built around how the actual IChC paper is timed and marked.</div>
-      <div class="card"><b>Mentorship.</b> Your coordinator is one message away — use "Ask a question."</div>
-      <div class="card"><b>Community.</b> You're one of a cohort chasing the same goal — you're not alone.</div>
+    <div class="card">
+      <div style="font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; font-weight:800; color:var(--muted); margin-bottom:12px;">Application status</div>
+      ${applicationStageStepper(myRecord)}
     </div>`;
   }
   if(tab==='hub'){
@@ -5308,6 +5501,7 @@ function libraryView(){
     <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="libTitle" placeholder="e.g. IChC Official Syllabus 2026"></div>
     <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="libDesc" rows="2" placeholder="What it is and why it's useful"></textarea></div>
     <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="libLink" placeholder="Drive / PDF link"></div>
+    <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('libTopic','')}</div>
     <button class="btn amber small" id="addLibBtn">Add to library</button>
   </div>` : ''}
   <div class="list">
@@ -5323,6 +5517,7 @@ function libraryView(){
         <div class="item-body" style="margin-top:6px;">
           <textarea data-libfield="body" data-lib-id="${l.id}" rows="2" placeholder="Description">${escapeHtml(l.body||'')}</textarea>
         </div>
+        <div class="item-body" style="margin-top:6px; display:flex; align-items:center; gap:8px;"><span style="font-size:12.5px; color:var(--muted);">Roadmap section</span>${rmTopicSelect('', rmTopicOf(l), 'data-libfield="topic" data-lib-id="'+l.id+'"')}</div>
         <div class="item-actions">
           <button class="btn teal small" data-save-lib="${l.id}">Save</button>
           <button class="btn ghost small" data-remove-lib="${l.id}">Remove</button>
@@ -5602,6 +5797,7 @@ function examsManageView(){
     <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
       <div class="field" style="margin:0;"><label>Title</label><input id="examTitle" placeholder="e.g. Week 6 timed mock — Kinetics"></div>
       <div class="field" style="margin:0;"><label>Subject / topic</label><input id="examSubject" placeholder="e.g. Reaction kinetics"></div>
+      <div class="field" style="margin:0;"><label>Roadmap section</label>${rmTopicSelect('examTopic','')}</div>
       <div class="field" style="margin:0;"><label>Time limit (minutes)</label><input id="examTime" type="number" min="1" value="60"></div>
       <div class="field" style="margin:0;"><label>Total marks</label><input id="examMarks" type="number" min="1" max="300" value="50"></div>
     </div>
@@ -5689,12 +5885,13 @@ function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='welcome') wireOnboarding();
   if(tab==='learn') wireLearn();
+  if(tab==='roadmap' || tab==='welcome') wireRoadmap();
   if(tab==='onboarding') wireOnboardingSetup();
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
   if(tab==='personalemail') wirePersonalEmail();
   if(tab==='people' || tab==='students') wireAccess(tab);
-  if(tab==='mock') wireMock();
+  if(tab==='mock' || window.RM_HOSTED==='mock') wireMock();
   if(tab==='chat') wireChat();
   if(tab==='smslog') wireSmsResend();
   if(tab==='emaillog') wireEmailLog();
@@ -5795,7 +5992,7 @@ function wireHandlers(tab){
     const options = [q('pollOpt1').value.trim(), q('pollOpt2').value.trim(), q('pollOpt3').value.trim(), q('pollOpt4').value.trim()].filter(Boolean);
     if(!question) return alert('Add a question.');
     if(options.length<2) return alert('Add at least two options.');
-    DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, date:today(), ts:Date.now()});
+    DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, topic:(q('pollTopic')&&q('pollTopic').value)||'', date:today(), ts:Date.now()});
     await saveKey('polls');
     render('practice');
   });
@@ -5835,7 +6032,7 @@ function wireHandlers(tab){
     if(filled.length<2) return alert('Add at least two options.');
     const options = filled.map(o=>o.text);
     const correctIndex = filled.findIndex(o=>o.i===letterIndex);
-    DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, date:today(), ts:Date.now()});
+    DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, topic:(q('quizTopic')&&q('quizTopic').value)||'', date:today(), ts:Date.now()});
     await saveKey('quizzes');
     render('practice');
   });
@@ -6140,7 +6337,7 @@ function wireHandlers(tab){
   if(q('addMatBtn')) q('addMatBtn').addEventListener('click', async ()=>{
     const title=q('matTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('matDesc').value.trim();
-    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), topic:(q('matTopic')&&q('matTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('materials'); await syncPublicDirectory(); render('materials');
     await notifyBroadcast({title:`New material: ${title}`, body:body||'A new resource was just posted.', coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -6151,7 +6348,7 @@ function wireHandlers(tab){
 
   if(q('addPracBtn')) q('addPracBtn').addEventListener('click', async ()=>{
     const question=q('pracQ').value.trim(); if(!question) return alert('Question required.');
-    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), topic:(q('pracTopic')&&q('pracTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('practice'); render('practice');
     await notifyBroadcast({title:'New practice question posted', body:question, coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -6265,7 +6462,7 @@ function wireHandlers(tab){
   if(q('addLibBtn')) q('addLibBtn').addEventListener('click', async ()=>{
     const title=q('libTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('libDesc').value.trim();
-    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), topic:(q('libTopic')&&q('libTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('library'); render('library');
     await notifyBroadcast({title:`New resource in the library: ${title}`, body:body||'A new resource was just added to the library.', coordinatorId:null, author:ME.name, role:ME.role});
   });
@@ -6344,7 +6541,7 @@ function wireHandlers(tab){
     render('applications');
   }));
 
-  if(tab==='exams'){
+  if(tab==='exams' || window.RM_HOSTED==='exams'){
     if(q('examBeginBtn')) q('examBeginBtn').addEventListener('click', async ()=>{
       if(!q('examAckCheck').checked) return alert('Please tick the box confirming you\'ve read the protocol.');
       const examId = q('examBeginBtn').dataset.examId;
@@ -6374,7 +6571,7 @@ function wireHandlers(tab){
       const timeLimitMin = Math.max(1, parseInt(q('examTime').value,10)||60);
       const protocol = q('examProtocol').value.trim();
       const coordinatorId = ME.role==='ambassador' ? null : ME.id;
-      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, totalMarks:(parseInt(q('examMarks').value,10)||null), protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
+      DB.exams.push({ id:uid(), coordinatorId, title, subject, topic:(q('examTopic')&&q('examTopic').value)||'', timeLimitMin, totalMarks:(parseInt(q('examMarks').value,10)||null), protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
       await saveKey('exams'); render('exams');
       await notifyBroadcast({title:`New exam posted: ${title}`, body:`${timeLimitMin} minutes · one attempt · opens now.`, coordinatorId, author:ME.name, role:ME.role});
     });
@@ -6737,6 +6934,701 @@ async function lrRanking(root){
     box.innerHTML = LEARN.rankHtml;
   }catch(e){ console.error('Ranking failed', e); }
 }
+
+
+// ===========================================================================
+// SHELL v2: fewer tabs, no duplication.
+//  - Every role gets a short list of top tabs; same-purpose legacy screens live as sub-tabs of one top tab.
+//  - Practice, quizzes, polls, weekly question, exams, materials, library, mock and the old "Daily practice"
+//    all live inside the Roadmap (students: on the Home page under their coordinator's details).
+// ===========================================================================
+const NAV = {
+  student:[
+    { k:'welcome', l:'Home', ic:'home', host:true },
+    { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['ask','Ask your coordinator']] },
+    { k:'inbox', l:'Inbox', ic:'notifications', subs:[['announce','Announcements'],['notifications','Notifications']] },
+    { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
+  ],
+  coordinator:[
+    { k:'space', l:'Home', ic:'home', subs:[['space','Overview'],['students','My students'],['calls','Sessions'],['profile','My profile']] },
+    { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
+    { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['messages','Student messages']] },
+    { k:'inbox', l:'Inbox', ic:'notifications', subs:[['alerts','Alerts'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] },
+    { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
+  ],
+  ambassador:[
+    { k:'overview', l:'Overview', ic:'home', subs:[['overview','Overview'],['feed','Activity']] },
+    { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
+    { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
+    { k:'people', l:'People', ic:'people', subs:[['people','People'],['load','Coordinator load']] },
+    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
+    { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge']] },
+    { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
+    { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
+  ]
+};
+Object.assign(TAB_ICONS, {
+  home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13V10"/><path d="M10 20.5v-6h4v6"/>',
+  roadmap:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5"/>'
+});
+const RM_HOSTED_KEYS = ['practice','exams','materials','library','mock','learn','hub','roadmap'];
+const SUBSEL = {};
+window.RM_HOSTED = '';
+
+function navTop(tab){
+  const nav = NAV[ME.role]; if(!nav) return null;
+  let top = nav.find(t=>!t.subs && t.k===tab);
+  if(top) return { top, sub:null };
+  top = nav.find(t=>t.subs && t.subs.some(s=>s[0]===tab));
+  if(top) return { top, sub:tab };
+  top = nav.find(t=>t.subs && t.k===tab);
+  if(top) return { top, sub: SUBSEL[top.k] || top.subs[0][0] };
+  if(RM_HOSTED_KEYS.includes(tab)){ rmFromLegacy(tab); return { top:nav.find(t=>t.host), sub:null, hosted:tab }; }
+  return null;
+}
+function setNavActive(k){
+  document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===k));
+}
+function render(tab){
+  if(!ME || !NAV[ME.role]) return renderLegacy(tab);
+  const r = navTop(tab);
+  if(!r) return renderLegacy(tab);
+  setNavActive(r.top.k);
+  if(r.top.host){
+    window.RM_HOSTED = rmHostedKey();
+    renderLegacy(ME.role==='student' ? 'welcome' : 'roadmap');
+    currentTab = window.RM_HOSTED || (ME.role==='student' ? 'welcome' : 'roadmap');
+  } else {
+    window.RM_HOSTED = '';
+    SUBSEL[r.top.k] = r.sub;
+    renderLegacy(r.sub);
+    currentTab = r.sub;
+    shellSubnav(r.top, r.sub);
+  }
+  shellPolish();
+  const seen = window.RM_HOSTED || r.sub;
+  if(seen){ try{ markTabSeen(seen).then(renderNavBadges); }catch(e){} }
+}
+function shellSubnav(top, sub){
+  const s = document.getElementById('screen'); if(!s || !top.subs || top.subs.length<2) return;
+  s.insertAdjacentHTML('afterbegin', `<div class="subnav">${top.subs.map(([k,l])=>{ const n = tabUnreadCount(k); return `<button type="button" class="pill${k===sub?' on':''}" data-sub="${k}">${escapeHtml(l)}${n?`<i>${n>99?'99+':n}</i>`:''}</button>`; }).join('')}</div>`);
+  s.querySelectorAll('.subnav [data-sub]').forEach(b=>b.addEventListener('click', ()=>render(b.dataset.sub)));
+}
+// count-up on stat tiles + staggered entrance are CSS/JS only; they never change what the numbers say
+function shellPolish(){
+  const s = document.getElementById('screen'); if(!s) return;
+  s.querySelectorAll('.stat .n').forEach(el=>{
+    const raw = el.textContent.trim();
+    if(!/^\d{1,6}$/.test(raw) || el.dataset.counted) return;
+    el.dataset.counted = '1';
+    const target = parseInt(raw,10); if(target<2) return;
+    const t0 = performance.now(), dur = 700;
+    const tick = (t)=>{ const p = Math.min(1,(t-t0)/dur); el.textContent = String(Math.round(target*(1-Math.pow(1-p,3)))); if(p<1) requestAnimationFrame(tick); else el.textContent = String(target); };
+    el.textContent = '0'; requestAnimationFrame(tick);
+  });
+  if(typeof rmFit==='function') rmFit();
+}
+function navCount(t){
+  let keys = (t.subs||[]).map(s=>s[0]);
+  if(t.host) keys = keys.concat(['exams','practice','materials','library']);
+  return [...new Set(keys)].reduce((a,k)=>a+tabUnreadCount(k),0);
+}
+function renderNavBadges(){
+  if(!ME || !NAV[ME.role]) return;
+  NAV[ME.role].forEach(t=>{
+    const el = document.querySelector('#tabs .tab[data-tab="'+t.k+'"]'); if(!el) return;
+    const n = navCount(t); let dot = el.querySelector('.tab-badge');
+    if(n>0){ if(!dot){ dot = document.createElement('span'); dot.className = 'tab-badge'; el.appendChild(dot); } dot.textContent = n>99 ? '99+' : String(n); }
+    else if(dot) dot.remove();
+  });
+}
+function buildTabs(){
+  const nav = NAV[ME.role], el = document.getElementById('tabs');
+  el.innerHTML = nav.map((t,i)=>`<div class="tab${i===0?' active':''}" data-tab="${t.k}"><span class="tab-label">${tabIconSvg(t.ic)}<span>${t.l}</span></span></div>`).join('');
+  el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>{
+    closeDrawer(); window.scrollTo({top:0, behavior:'smooth'});
+    const top = nav.find(x=>x.k===t.dataset.tab);
+    if(top.host){ RM.view = 'home'; RM.sess = null; RM.note = ''; }
+    render(top.k); renderNavBadges();
+  }));
+  render(nav[0].k); renderNavBadges();
+}
+// any element can jump somewhere: <button data-go-tab="applications">
+document.addEventListener('click', (ev)=>{
+  const b = ev.target.closest && ev.target.closest('[data-go-tab]'); if(!b || !ME) return;
+  ev.preventDefault(); const k = b.dataset.goTab;
+  if(k==='roadmap' || k==='welcome'){ RM.view = 'home'; RM.sess = null; }
+  if(b.dataset.goSection){ RM.view = 'section'; RM.topic = b.dataset.goSection; RM.tab = ME.role==='student' ? 'practice' : 'questions'; }
+  render(k); window.scrollTo({top:0, behavior:'smooth'});
+});
+
+// ===========================================================================
+// ROADMAP v2
+// ===========================================================================
+const RM_TOPICS = [
+  ['quant','Quantitative Chemistry'],['bonding','Structure and Bonding'],['thermo','Thermodynamics'],['equil','Equilibrium'],
+  ['acidbase','Acids, Bases and Solubility'],['kinetics','Kinetics and Research Paper Prep'],['electro','Electrochemistry'],
+  ['organic','Organic Reactivity and Research Prep'],['stereo','Stereochemistry and Aromaticity'],['spectro','Spectroscopy and Coordination Chemistry']
+];
+const RM_HUES = ['#5B3DF5','#FF6B6B','#12B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6','#F97316','#6366F1'];
+const rmTopicOf = (it)=> (it && it.topic && RM_TOPICS.some(t=>t[0]===it.topic)) ? it.topic : '';
+const rmEffTopic = (it, kind)=> rmTopicOf(it) || (kind==='library' ? '' : 'quant'); // older untagged posts belong to the first section
+function rmTopicSelect(id, value, attrs){
+  const v = value || ((id && RM.view==='section' && RM.topic) ? RM.topic : '');
+  return `<select ${id?`id="${id}"`:''} ${attrs||''}><option value="">Not tagged (general)</option>${RM_TOPICS.map(([k,t])=>`<option value="${k}"${v===k?' selected':''}>${escapeHtml(t)}</option>`).join('')}</select>`;
+}
+const RM = { view:'home', topic:null, tab:'practice', sub:'quizzes', ov:null, ovAt:0, board:null, note:'', busy:false, sess:null, err:'', mq:{ list:null, filter:'all', total:0, flagged:0, msg:'', busy:false }, prog:null, schedOpen:false };
+const rmStaff = ()=> !!ME && ME.role !== 'student';
+const rmDate = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }catch(e){ return d; } };
+const rmDateY = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
+const rmRoot = ()=> document.getElementById('rmRoot');
+const rmSec = (id)=> RM.ov && RM.ov.sections.find(s=>s.id===id);
+const rmFirst = ()=> String((ME && ME.name) || 'there').trim().split(/\s+/)[0];
+
+async function rmApi(action, payload){
+  if(!sbReady) throw new Error('offline');
+  const { data, error } = await sb.functions.invoke('roadmap', { body:{ action, ...(payload||{}) } });
+  if(error){ let m = ''; try{ const j = await error.context.json(); m = j.error || ''; }catch(e){} throw new Error(m || 'unavailable'); }
+  return data;
+}
+function rmErr(e){
+  const m = String((e && e.message) || e);
+  const map = { locked:'This section has not opened yet.', rate_limited:'Too many requests in a short time. Please wait a moment.', quota:'The AI is busy right now. Try again in a few minutes.', not_configured:'The AI is not configured yet.', forbidden:'You do not have permission to do that.', bad_options:'Check the options and the correct answer.', bad_answer:'The answer must be a number.', bad_dates:'Check the dates: each section must end on or after its own start.', bad_order:'Each section must start after the one before it.', offline:'You appear to be offline.' };
+  return map[m] || 'Something went wrong. Please try again.';
+}
+function rmCurrentId(){
+  const ov = RM.ov; if(!ov) return 'quant';
+  const s = ov.sections.find(x=>x.state==='current') || [...ov.sections].reverse().find(x=>x.open && x.state!=='locked') || ov.sections[0];
+  return s.id;
+}
+async function rmLoad(force){
+  if(!force && RM.ov && Date.now()-RM.ovAt < 20000) return RM.ov;
+  RM.ov = await rmApi('overview'); RM.ovAt = Date.now(); return RM.ov;
+}
+async function rmLoadBoard(){
+  if(ME.role!=='student') return;
+  try{ RM.board = await rmApi('board'); }catch(e){ RM.board = { rows:[] }; }
+  const box = document.getElementById('rmBoard'); if(box) box.innerHTML = rmBoardHtml();
+}
+
+// ---------- state <-> legacy tab keys ----------
+function rmFromLegacy(tab){
+  if(tab==='mock'){ RM.view = 'mock'; return; }
+  if(tab==='library'){ if(!(RM.view==='section' && RM.tab==='resources')) RM.view = 'library'; return; }
+  if(tab==='learn'){ RM.view = 'home'; RM.sess = null; return; }
+  if(tab==='hub' || tab==='roadmap'){ if(RM.view==='mock' || RM.view==='library') RM.view = 'home'; return; }
+  if(!RM.topic) RM.topic = rmCurrentId();
+  RM.view = 'section';
+  if(tab==='exams'){ RM.tab = 'tests'; RM.sub = 'exams'; }
+  else if(tab==='practice'){ RM.tab = 'tests'; if(RM.sub==='exams') RM.sub = (typeof practiceSubTab!=='undefined' && practiceSubTab) || 'quizzes'; }
+  else if(tab==='materials'){ RM.tab = 'resources'; }
+}
+function rmHostedKey(){
+  if(RM.view==='mock') return 'mock';
+  if(RM.view==='library') return 'library';
+  if(RM.view==='section'){
+    if(RM.tab==='tests') return RM.sub==='exams' ? 'exams' : 'practice';
+    if(RM.tab==='resources' && rmStaff()) return ME.role==='coordinator' ? 'materials' : 'library';
+  }
+  return '';
+}
+const rmFull = ()=> render(ME.role==='student' ? 'welcome' : 'roadmap');
+
+// older screens (quizzes, polls, exams, materials...) listed only for the open section
+function rmScoped(kindMap, fn){
+  const saved = {};
+  Object.keys(kindMap).forEach(k=>{ saved[k] = DB[k]; DB[k] = (DB[k]||[]).filter(it=>rmEffTopic(it, kindMap[k])===RM.topic); });
+  try{ return fn(); } finally { Object.keys(saved).forEach(k=>{ DB[k] = saved[k]; }); }
+}
+const RM_KINDS = { exams:'exam', quizzes:'quiz', polls:'poll', practice:'practice', materials:'material', library:'library' };
+
+// ---------- HTML ----------
+function rmHtmlSync(){
+  if(!RM.ov) return '<div class="rm-skel"><i></i><i></i><i></i></div>';
+  if(RM.view==='mock') return `<div style="margin:0 0 14px;"><button class="btn ghost small" type="button" data-rm-home>&larr; Roadmap</button></div><div id="mockRoot"></div>`;
+  if(RM.view==='library') return `<div style="margin:0 0 14px;"><button class="btn ghost small" type="button" data-rm-home>&larr; Roadmap</button></div>${libraryView()}`;
+  if(RM.view==='daily') return rmDailyScreen();
+  if(RM.view==='section' && rmSec(RM.topic)) return rmSectionHtml();
+  RM.view = 'home'; return rmHomeHtml();
+}
+const rmFlame = '<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="M12.5 2c.4 3-1.2 4.6-2.6 6.2C8.6 9.700 7 11.400 7 14a5 5 0 0 0 10 0c0-1.800-.7-3-1.600-4.200-.4 1-1 1.600-1.800 1.800.5-3.400-.4-6.500-1.100-9.600z"/></svg>';
+const rmLockIc = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const rmCheckIc = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg>';
+const rmCupIc = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.500 20h7"/></svg>';
+const rmBookIc = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5zM19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z"/></svg>';
+
+function rmRing(pct, size, cls){
+  const r = 26, c = 2*Math.PI*r;
+  return `<svg class="rm-ring ${cls||''}" width="${size}" height="${size}" viewBox="0 0 64 64" aria-label="${pct}% complete"><circle cx="32" cy="32" r="${r}" class="rm-ring-bg"/><circle cx="32" cy="32" r="${r}" class="rm-ring-fg" data-pct="${pct}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${c.toFixed(2)}" transform="rotate(-90 32 32)"/><text x="32" y="36.500" text-anchor="middle" class="rm-ring-t">${pct}%</text></svg>`;
+}
+function rmAnimate(root){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    root.querySelectorAll('.rm-ring-fg').forEach(el=>{
+      const c = parseFloat(el.getAttribute('stroke-dasharray')), p = Math.max(0, Math.min(100, parseFloat(el.dataset.pct)||0));
+      el.style.strokeDashoffset = (c*(1-p/100)).toFixed(2);
+    });
+    root.querySelectorAll('.rm-bar b[data-w]').forEach(el=>{ el.style.width = el.dataset.w + '%'; });
+  }));
+}
+function rmFit(){
+  const m = document.querySelector('.rm-map'); if(!m || !m.parentElement) return;
+  const w = m.parentElement.clientWidth; if(!w) return;
+  m.style.zoom = String(Math.min(1, w/360));
+}
+
+// ----- Daily 5 (student) -----
+function rmDailyCard(){
+  const ov = RM.ov, cur = rmSec(rmCurrentId()), lv = ov.level || { name:'Bronze', next:'Silver', toGo:300, pct:0 };
+  const dots = [...Array(ov.dailyGoal)].map((_,i)=>`<i class="${i<ov.todayCount?'on':''}"></i>`).join('');
+  const done = ov.todayCount >= ov.dailyGoal;
+  return `<div class="rm-daily">
+    <div class="rm-streak ${ov.streak?'hot':''}"><span class="fl">${rmFlame}</span><div><b>${ov.streak}</b><small>day streak</small></div></div>
+    <div class="rm-daily-m">
+      <div class="rm-kicker">Daily 5</div>
+      <h3>${done ? 'Daily goal done. Keep the streak alive tomorrow.' : 'Five questions. Five minutes.'}</h3>
+      <p>Today's set comes from <b>${escapeHtml(cur.title)}</b>.</p>
+      <div class="rm-dots" aria-label="${Math.min(ov.todayCount,ov.dailyGoal)} of ${ov.dailyGoal} done today">${dots}</div>
+    </div>
+    <div class="rm-daily-r">
+      <button class="btn amber" type="button" data-rm-daily ${RM.busy?'disabled':''}>${done?'Practise more':'Start Daily 5'}</button>
+      <div class="rm-level"><span>${escapeHtml(lv.name)} &middot; ${ov.xp||0} XP</span><div class="rm-bar"><b data-w="${lv.pct}" style="width:0"></b></div><small>${lv.next ? lv.toGo+' XP to '+escapeHtml(lv.next) : 'Top level'}</small></div>
+    </div>
+  </div>
+  ${RM.err ? `<div class="rm-note">${escapeHtml(RM.err)}</div>` : ''}
+  <div id="rmBoard">${RM.board ? rmBoardHtml() : ''}</div>`;
+}
+function rmBoardHtml(){
+  const rows = (RM.board && RM.board.rows) || [];
+  if(rows.length < 2) return '';
+  return `<div class="rm-board"><div class="rm-kicker">Your group this week</div>${rows.slice(0,6).map((r,i)=>`<div class="rm-rank${r.me?' me':''}"><span class="pos">${i+1}</span><span class="nm">${escapeHtml(r.name)}${r.me?' (you)':''}</span><span class="xp">${r.xp} XP</span></div>`).join('')}</div>`;
+}
+
+// ----- the winding path -----
+function rmMapHtml(){
+  const ov = RM.ov, staff = rmStaff();
+  const nodes = ov.sections.map((s,i)=>({ ...s, i })).concat([{ id:'__mock', mock:true, i:ov.sections.length }]);
+  const W = 340, GAP = 138, TOP = 62, n = nodes.length, H = TOP*2 + (n-1)*GAP;
+  const pts = nodes.map((_,i)=>({ x: Math.round(W/2 + 80*Math.sin(i*1.15)), y: TOP + i*GAP }));
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for(let i=1;i<n;i++){ const a = pts[i-1], b = pts[i], k = GAP*0.55; d += ` C ${a.x} ${a.y+k}, ${b.x} ${b.y-k}, ${b.x} ${b.y}`; }
+  const lastOpen = Math.max(0, ov.sections.reduce((m,s,i)=> (s.state!=='locked' ? i : m), 0));
+  const frac = Math.round(100 * lastOpen / (n-1));
+  const cur = rmCurrentId();
+  const html = nodes.map((s,i)=>{
+    const p = pts[i], right = p.x < W/2, hue = RM_HUES[i % RM_HUES.length];
+    let cls, icon, label, sub, extra = '';
+    if(s.mock){
+      cls = 'mock'; icon = rmCupIc; label = 'Final mock competition';
+      sub = 'Timed, auto-marked, ranked'; extra = '';
+    } else {
+      const locked = s.state==='locked' && !staff;
+      const isCur = s.id===cur && s.state!=='locked';
+      cls = locked ? 'lock' : staff ? (s.state==='locked' ? 'prev' : isCur ? 'now' : 'open') : s.complete ? 'done' : isCur ? 'now' : 'open';
+      icon = locked ? rmLockIc : (!staff && s.complete) ? rmCheckIc : `<span class="num">${i+1}</span>`;
+      label = s.title;
+      sub = locked ? `Opens ${rmDate(s.start)}` : `${rmDate(s.start)} &ndash; ${rmDate(s.end)}`;
+      if(staff){
+        const coh = ov.cohort && ov.cohort[s.id];
+        extra = `<span class="rm-meta">${s.total} question${s.total===1?'':'s'}${coh?` &middot; ${coh.complete}/${coh.students} complete`:''}</span>`;
+      } else if(!locked){
+        extra = `<span class="rm-meta">${s.complete ? 'Completed' : s.pct+'% done'}${s.accuracy!=null?' &middot; '+s.accuracy+'% correct':''}</span>`;
+      }
+    }
+    const ring = (!staff && !s.mock && s.state!=='locked') ? `<svg class="rm-nring" viewBox="0 0 80 80"><circle cx="40" cy="40" r="37" class="bg"/><circle cx="40" cy="40" r="37" class="fg" pathLength="100" data-p="${s.pct}" style="--p:${s.pct}"/></svg>` : '';
+    const bubble = (cls==='now') ? `<span class="rm-bubble">${staff ? 'LIVE' : (s.pct>0 ? 'CONTINUE' : 'START')}</span>` : '';
+    return `<div class="rm-n ${cls}" style="left:${p.x-40}px; top:${p.y-40}px; --hue:${hue}; --i:${i};">
+      ${bubble}
+      <button type="button" class="rm-bt" data-rm-open="${s.id}" aria-label="${escapeHtml(label)}">${ring}<span class="ic">${icon}</span></button>
+      <div class="rm-lab ${right?'r':'l'}" data-rm-open="${s.id}"><b>${escapeHtml(label)}</b><small>${sub}</small>${extra}</div>
+    </div>`;
+  }).join('');
+  return `<div class="rm-mapwrap"><div class="rm-map" style="width:${W}px; height:${H}px;">
+    <svg class="rm-path" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <path d="${d}" class="base" pathLength="100"/>
+      <path d="${d}" class="drawn" pathLength="100" style="--x:${frac}"/>
+    </svg>${html}</div></div>`;
+}
+function rmHomeHtml(){
+  const staff = rmStaff(), ov = RM.ov;
+  const head = staff
+    ? `<div class="rm-pagehead"><div><div class="rm-kicker">Roadmap</div><h2>Ten topics, one calendar</h2><p>You regulate the roadmap. Open any section to manage its questions, tests and resources, and to see how your students are doing.</p></div>
+        <div class="rm-actions"><button class="btn secondary small" type="button" data-rm-go="library">Resource library</button><button class="btn secondary small" type="button" data-rm-go="mock">Mock results</button>${ME.role==='ambassador'?`<button class="btn secondary small" type="button" data-rm-sched-toggle>${RM.schedOpen?'Hide schedule':'Schedule'}</button>`:''}</div></div>`
+    : `<div class="rm-pagehead"><div><div class="rm-kicker">Your roadmap</div><h2>Ten topics, one calendar</h2><p>A section opens on its date and stays open. Finish each one before the next arrives.</p></div>
+        <div class="rm-actions"><button class="btn secondary small" type="button" data-rm-go="library">Resource library</button></div></div>`;
+  return `${head}${RM.note ? `<div class="rm-note">${escapeHtml(RM.note)}</div>` : ''}${staff ? '' : rmDailyCard()}${ME.role==='ambassador' && RM.schedOpen ? rmScheduleHtml() : ''}${rmMapHtml()}`;
+}
+function rmScheduleHtml(){
+  const ov = RM.ov, cur = ov.sections.find(s=>s.state==='current');
+  return `<div class="card rm-sched">
+    <h3 style="margin:0 0 2px; font-size:16px;">Schedule and reminders</h3><p class="note" style="margin:0 0 8px;">Students see a section on its start date and keep it open afterwards.</p>
+    ${ov.sections.map(s=>`<div class="rm-sched-row"><span class="nm">${escapeHtml(s.title)}</span><input type="date" data-rm-start="${s.id}" value="${s.start}"><span>to</span><input type="date" data-rm-end="${s.id}" value="${s.end}"></div>`).join('')}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center;">
+      <button class="btn teal small" type="button" data-rm-sched-save>Save dates</button>
+      ${cur ? `<span class="note" style="margin:0 0 0 8px;">Cohort not ready? Extend <b>${escapeHtml(cur.title)}</b> by</span>
+      <select id="rmShiftDays"><option value="2">2 days</option><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option></select>
+      <button class="btn amber small" type="button" data-rm-sched-shift="${cur.id}">Extend and shift later sections</button>` : ''}
+    </div>
+    <label class="eb-check" style="margin-top:14px; display:block;"><input type="checkbox" id="rmRemind" ${ov.remindersOn?'checked':''}> Send a daily practice reminder (push, around 4 pm) to students who have not practised that day</label>
+    <p class="note" style="margin:6px 0 0;">Reminders reach students who have allowed notifications on this portal.</p>
+  </div>`;
+}
+
+// ----- section page -----
+function rmSectionHtml(){
+  const s = rmSec(RM.topic), staff = rmStaff(), i = RM_TOPICS.findIndex(t=>t[0]===s.id), hue = RM_HUES[i % RM_HUES.length];
+  const tabs = staff ? [['questions','Questions'],['tests','Tests & exams'],['resources','Resources'],['students','Students']] : [['practice','Practice'],['learn','Learn'],['tests','Tests & exams']];
+  if(!tabs.some(t=>t[0]===RM.tab)) RM.tab = tabs[0][0];
+  let body;
+  if(RM.tab==='tests') body = rmTestsHtml(s);
+  else if(RM.tab==='resources') body = staff ? rmStaffResourcesHtml(s) : rmLearnHtml(s);
+  else if(RM.tab==='learn') body = rmLearnHtml(s);
+  else if(RM.tab==='questions') body = rmManageHtml(s);
+  else if(RM.tab==='students') body = '<div id="rmProgRoot"><div class="rm-skel"><i></i><i></i></div></div>';
+  else body = rmPracticeHtml(s);
+  const chips = staff ? `<span class="rm-chip">${s.total} question${s.total===1?'':'s'}</span>${s.reqTotal?`<span class="rm-chip">${s.reqTotal} in the coordinator set</span>`:''}${(RM.ov.cohort&&RM.ov.cohort[s.id])?`<span class="rm-chip">${RM.ov.cohort[s.id].complete}/${RM.ov.cohort[s.id].students} students complete</span>`:''}` : '';
+  return `
+  <div style="margin:0 0 12px;"><button class="btn ghost small" type="button" data-rm-home>&larr; Roadmap</button></div>
+  <div class="rm-shead" style="--hue:${hue}">
+    <div style="min-width:0; flex:1;">
+      <div class="rm-kicker light">Section ${i+1} of 10 &middot; ${rmDate(s.start)} &ndash; ${rmDateY(s.end)}</div>
+      <h2>${escapeHtml(s.title)}</h2>
+      <p>${escapeHtml(s.focus.charAt(0).toUpperCase()+s.focus.slice(1))}.</p>
+      ${chips ? `<div style="margin-top:10px;">${chips}</div>` : ''}
+    </div>
+    ${staff ? '' : rmRing(s.pct, 92, 'on-dark')}
+  </div>
+  <div class="rm-subnav">${tabs.map(([k,l])=>`<button class="pill${RM.tab===k?' on':''}" type="button" data-rm-tab="${k}">${l}</button>`).join('')}</div>
+  <div class="rm-body">${body}</div>`;
+}
+function rmPracticeHtml(s){
+  if(RM.sess) return rmSessionHtml();
+  const ov = RM.ov, practice = Math.max(0, s.solved - s.reqSolved);
+  const bar = (label, done, total)=>`<div style="margin:12px 0;"><div style="display:flex; justify-content:space-between; font-size:13.5px;"><span>${label}</span><span style="color:var(--muted);">${done} of ${total}</span></div><div class="rm-bar"><b data-w="${total?Math.min(100,Math.round(100*done/total)):0}" style="width:0"></b></div></div>`;
+  return `
+  <div class="card">
+    <h3 style="margin:0 0 4px; font-size:17px;">Your progress in this section</h3>
+    <p class="note" style="margin:0 0 6px;">${s.complete ? 'Section complete. Keep practising to stay sharp.' : 'Finish the coordinator set and solve '+ov.practiceGoal+' practice questions to complete this section.'}</p>
+    ${s.reqTotal ? bar('Coordinator set', Math.min(s.reqSolved, s.reqTotal), s.reqTotal) : ''}
+    ${bar('Practice questions solved', Math.min(practice, ov.practiceGoal), ov.practiceGoal)}
+    <p class="note" style="margin:8px 0 0;">${s.attempts ? `${s.attempts} answers so far &middot; ${s.accuracy}% correct` : 'No answers yet. Your first set takes about ten minutes.'}${s.total?` &middot; ${s.total} questions in this section`:''}</p>
+  </div>
+  ${RM.err ? `<div class="rm-note" style="margin-top:14px;">${escapeHtml(RM.err)}</div>` : ''}
+  <div class="rm-starts">
+    <button class="btn amber" type="button" data-rm-start-mode="mixed" ${RM.busy?'disabled':''}>Start a set of 10</button>
+    ${s.reqTotal ? `<button class="btn secondary" type="button" data-rm-start-mode="coordinator" ${RM.busy?'disabled':''}>Coordinator set (${Math.max(0,s.reqTotal-s.reqSolved)} left)</button>` : ''}
+    <button class="btn secondary" type="button" data-rm-start-mode="feed" ${RM.busy?'disabled':''}>Practice feed</button>
+  </div>
+  ${s.total===0 ? '<div class="empty" style="margin-top:14px;">No practice questions have been added to this section yet. Your coordinator will add them soon.</div>' : ''}`;
+}
+async function rmStart(mode, n, view){
+  if(RM.busy) return; RM.busy = true; RM.err = '';
+  if(view==='daily'){ RM.view = 'daily'; RM.topic = rmCurrentId(); }
+  rmPaint();
+  try{
+    const r = await rmApi('practice', { topic:RM.topic, mode:mode==='daily'?'daily':mode, n });
+    if(!r.questions || !r.questions.length){ RM.err = r.solvedAll ? 'You have solved every question available here. New ones are added regularly.' : 'There are no questions of that kind yet.'; if(view==='daily') RM.view = 'home'; }
+    else RM.sess = { mode, qs:r.questions, i:0, res:null, right:0, answered:0, review:!!r.review, busy:false, reported:false, daily:view==='daily' };
+  }catch(e){ RM.err = rmErr(e); if(view==='daily') RM.view = 'home'; }
+  RM.busy = false; rmPaint();
+}
+function rmDailyScreen(){
+  return `<div style="margin:0 0 12px;"><button class="btn ghost small" type="button" data-rm-quit>&larr; Roadmap</button></div>${RM.sess ? rmSessionHtml() : '<div class="rm-skel"><i></i><i></i></div>'}`;
+}
+function rmSessionHtml(){
+  const S = RM.sess, sec = rmSec(RM.topic);
+  if(S.done) return rmSummaryHtml();
+  const q = S.qs[S.i], r = S.res;
+  const src = q.required || q.source==='coordinator' ? 'Coordinator set' : 'Practice feed';
+  let input;
+  if(q.type==='mcq'){
+    input = (q.options||[]).map((o,k)=>{
+      let c = '';
+      if(r){ if(o.i===r.correctIndexShown) c = ' correct'; else if(o.i===S.picked) c = ' wrong'; }
+      return `<button class="rm-opt${c}" type="button" data-rm-pick="${o.i}" ${r||S.busy?'disabled':''}><span class="k">${'ABCDEF'[k]}</span><span>${escapeHtml(o.t)}</span></button>`;
+    }).join('');
+  } else {
+    input = `<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;"><input id="rmNum" inputmode="decimal" autocomplete="off" placeholder="Your answer" style="max-width:220px;" ${r?'disabled':''} value="${r?escapeHtml(String(S.given||'')):''}">${q.unit?`<span>${escapeHtml(q.unit)}</span>`:''}${r?'':`<button class="btn teal small" type="button" data-rm-check ${S.busy?'disabled':''}>Check</button>`}</div>`;
+  }
+  const fb = r ? `<div class="rm-fb ${r.correct?'ok':'no'} rm-win"><b>${r.correct?'Correct.':'Not quite.'}</b>${(!r.correct && q.type==='num') ? ` The answer is <b>${escapeHtml(r.answer)}</b>.` : ''} ${escapeHtml(r.explanation||'')}</div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button class="btn amber" type="button" data-rm-next>${S.i+1<S.qs.length?'Next question':'Finish'}</button>${S.reported?'<span class="note" style="margin:0;">Thanks, we will review this question.</span>':'<button class="btn ghost small" type="button" data-rm-report>Report a problem with this question</button>'}</div>` : '';
+  return `<div class="card rm-win">
+    <div style="display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--muted); flex-wrap:wrap;"><span>${S.daily?'Daily 5 &middot; ':''}${sec?escapeHtml(sec.title)+' &middot; ':''}Question ${S.i+1} of ${S.qs.length}${S.review?' &middot; revision':''}</span><span><span class="rm-chip">${src}</span><span class="rm-chip">${escapeHtml(q.tier)}</span></span></div>
+    <div class="rm-bar" style="margin-top:8px;"><b data-w="${Math.round(100*S.i/S.qs.length)}" style="width:${Math.round(100*S.i/S.qs.length)}%"></b></div>
+    <div class="rm-q">${escapeHtml(q.text).replace(/\n/g,'<br>')}</div>
+    ${input}
+    ${fb}
+  </div>
+  ${S.daily ? '' : '<div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-quit>Leave this set</button></div>'}`;
+}
+const RM_LINES = {
+  high:['Sharp work. Accuracy like this wins competition rounds.','That is the standard we are aiming for. Keep stacking sets.','Clean set. Read the explanations anyway; they teach the shortcuts.'],
+  mid:['Solid set. Go back over the ones you missed and they become strengths.','You are building the habit that matters. One more set tomorrow.','Good progress. The questions you got wrong are the most useful ones.'],
+  low:['Every wrong answer is a free lesson. Read the explanations and go again.','Hard questions are the point. This is how the instincts get built.','Do not judge a set by its score. Judge it by what you now understand.']
+};
+function rmSummaryHtml(){
+  const S = RM.sess, pct = S.answered ? Math.round(100*S.right/S.answered) : 0, ov = RM.ov;
+  const pool = pct>=80 ? RM_LINES.high : pct>=50 ? RM_LINES.mid : RM_LINES.low;
+  const line = pool[(ov.streak + S.right) % pool.length], goalHit = ov.todayCount >= ov.dailyGoal;
+  return `<div class="card rm-win rm-done">
+    <div style="display:flex; justify-content:center; margin:6px 0 8px;">${rmRing(pct, 128)}</div>
+    <h3 style="margin:0 0 4px;">${S.right} of ${S.answered} correct</h3>
+    <p style="margin:0 auto 14px; max-width:460px;">${escapeHtml(line)}</p>
+    <div class="rm-badges">${ov.streak ? `<span class="rm-badge rm-pop">${ov.streak}-day streak</span>` : ''}${goalHit ? '<span class="rm-badge rm-pop" style="animation-delay:.15s">Daily goal done</span>' : `<span class="rm-badge muted">${ov.dailyGoal-ov.todayCount} more for today's goal</span>`}${S.right?`<span class="rm-badge rm-pop" style="animation-delay:.3s">+${S.right*10} XP</span>`:''}</div>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;"><button class="btn amber" type="button" data-rm-start-mode="${S.daily?'daily':S.mode}">Another set</button><button class="btn secondary" type="button" data-rm-end>${S.daily?'Back to roadmap':'Back to section'}</button></div>
+  </div>`;
+}
+async function rmAnswer(given){
+  const S = RM.sess; if(!S || S.res || S.busy) return;
+  const q = S.qs[S.i];
+  if(q.type==='num' && !String(given).trim()) return;
+  S.busy = true; S.picked = q.type==='mcq' ? given : null; S.given = given; rmPaint();
+  try{
+    const r = await rmApi('answer', { questionId:q.id, given });
+    S.answered++; if(r.correct) S.right++;
+    if(q.type==='mcq'){ const o = (q.options||[]).find(x=>x.t===r.answer); r.correctIndexShown = o ? o.i : -1; }
+    S.res = r; RM.ov.streak = r.streak; RM.ov.todayCount = r.todayCount;
+  }catch(e){ S.picked = null; alert(rmErr(e)); }
+  S.busy = false; rmPaint();
+}
+async function rmReport(){
+  const S = RM.sess; if(!S || S.reported) return;
+  try{ await rmApi('report', { questionId:S.qs[S.i].id }); S.reported = true; }catch(e){ alert(rmErr(e)); }
+  rmPaint();
+}
+async function rmFinish(){
+  const daily = RM.sess && RM.sess.daily;
+  RM.sess = null; if(daily || RM.view==='daily') RM.view = 'home';
+  try{ await rmLoad(true); }catch(e){}
+  rmPaint();
+  if(RM.view==='home') rmLoadBoard();
+}
+
+// ----- student: learn -----
+function rmMine(item){
+  if(ME.role==='ambassador') return true;
+  const c = ME.role==='coordinator' ? ME.id : myCoordinatorId();
+  return !item.coordinatorId || item.coordinatorId===c;
+}
+function rmItem(title, meta, body, link){
+  return `<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(title)}</span><span class="item-meta">${meta||''}</span></div><div class="item-body">${linkify(body||'')} ${link?`<br>${linkifyUrl(link)}`:''}</div></div>`;
+}
+function rmLearnHtml(s){
+  const lib = (DB.library||[]).filter(l=>rmTopicOf(l)===s.id), mats = (DB.materials||[]).filter(m=>rmEffTopic(m,'material')===s.id && rmMine(m));
+  return `<div class="section-title"><div><h2>Learn</h2><p>Library items and your coordinator's materials for ${escapeHtml(s.title)}.</p></div></div>
+  <div class="list">${lib.length||mats.length ? lib.map(l=>rmItem(l.title, fmtDate(l.date), l.body, l.link)).join('') + mats.map(m=>rmItem(m.title, 'From your coordinator &middot; '+fmtDate(m.date), m.body, m.link)).join('') : '<div class="empty">Nothing is tagged to this section yet. Check the general resource library from the roadmap page.</div>'}</div>`;
+}
+
+// ----- tests & exams (existing screens, listed for this section only) -----
+function rmTestsHtml(s){
+  const staff = rmStaff(), isC = ME.role==='coordinator';
+  const subs = ME.role==='ambassador' ? [['exams','Exams']] : [['quizzes','Quizzes'],['polls','Polls'],['practice','Weekly question'],['exams','Exams']];
+  if(!subs.some(x=>x[0]===RM.sub)) RM.sub = subs[0][0];
+  const cnt = (k)=> k==='exams' ? (DB.exams||[]).filter(x=>rmEffTopic(x,'exam')===s.id && rmMine(x)).length : (DB[k]||[]).filter(x=>rmEffTopic(x,'quiz')===s.id && rmMine(x)).length;
+  const nav = `<div class="rm-subnav tight">${subs.map(([k,l])=>`<button class="pill${RM.sub===k?' on':''}" type="button" data-rm-sub="${k}">${l}${cnt(k)?`<i>${cnt(k)}</i>`:''}</button>`).join('')}</div>`;
+  const inner = rmScoped(RM_KINDS, ()=>{
+    if(RM.sub==='exams') return examsView();
+    if(RM.sub==='polls') return isC ? pollsCoordinatorView() : pollsStudentView();
+    if(RM.sub==='practice') return practiceQuestionSection(isC ? 'coordinator' : 'student');
+    return isC ? quizzesCoordinatorView() : quizzesStudentView();
+  });
+  return nav + inner;
+}
+function rmStaffResourcesHtml(s){
+  return rmScoped(RM_KINDS, ()=> (ME.role==='coordinator' ? coordinatorView('materials') + '<div style="height:18px"></div>' : '') + libraryView());
+}
+
+// ----- staff: question bank -----
+function rmManageHtml(s){
+  return `
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 4px; font-size:16px;">Add a question</h3>
+    <p class="note" style="margin:0 0 10px;">Tick "part of the coordinator set" to make it count towards completion. ${ME.role==='coordinator'?'Only your students see it.':'Everyone sees it.'}</p>
+    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field" style="margin:0;"><label>Type</label><select id="rmType"><option value="mcq">Multiple choice</option><option value="num">Numerical answer</option></select></div>
+      <div class="field" style="margin:0;"><label>Level</label><select id="rmTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
+    </div>
+    <div class="field" style="margin:10px 0;"><label>Question</label><textarea id="rmText" rows="3" placeholder="Write the question. Give every number the student needs."></textarea></div>
+    <div id="rmMcqBox"><div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">${'ABCD'.split('').map((l,i)=>`<div class="field" style="margin:0;"><label>Option ${l}${i>1?' (optional)':''}</label><input id="rmOpt${i}" placeholder="Option ${l}"></div>`).join('')}</div>
+      <div class="field" style="max-width:200px; margin:10px 0 0;"><label>Correct option</label><select id="rmCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div></div>
+    <div id="rmNumBox" class="hidden"><div class="grid2" style="grid-template-columns:1fr 1fr 1fr; gap:10px;">
+      <div class="field" style="margin:0;"><label>Answer (number)</label><input id="rmAns" inputmode="decimal" placeholder="e.g. 0.25"></div>
+      <div class="field" style="margin:0;"><label>Allowed error (%)</label><input id="rmTol" inputmode="decimal" value="2"></div>
+      <div class="field" style="margin:0;"><label>Unit</label><input id="rmUnit" placeholder="e.g. mol"></div></div></div>
+    <div class="field" style="margin:10px 0;"><label>Explanation (shown after the student answers)</label><input id="rmExp" placeholder="One or two lines with the key step"></div>
+    <label class="eb-check" style="display:block; margin-bottom:12px;"><input type="checkbox" id="rmReq" checked> Part of the coordinator set (required for completion)</label>
+    <button class="btn teal small" type="button" data-rm-add>Add question</button> <span id="rmAddMsg" class="note" style="margin-left:8px;"></span>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 4px; font-size:16px;">Generate practice questions with AI</h3>
+    <p class="note" style="margin:0 0 10px;">Each question is written, then solved again independently. Only the ones where both answers agree are added. Students can report any that still look wrong.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="field" style="margin:0;"><label>Level</label><select id="rmGenTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
+      <div class="field" style="margin:0;"><label>How many</label><select id="rmGenCount"><option value="10">10</option><option value="20">20</option></select></div>
+      <div class="field" style="margin:0; flex:1; min-width:200px;"><label>Focus (optional)</label><input id="rmGenFocus" placeholder="e.g. limiting reagent and percentage yield"></div>
+      <button class="btn amber small" type="button" data-rm-gen ${RM.mq.busy?'disabled':''}>${RM.mq.busy?'Writing and checking...':'Generate'}</button>
+    </div>
+    <p id="rmGenMsg" class="note" style="margin:8px 0 0;">${escapeHtml(RM.mq.msg||'')}</p>
+  </div>
+  <div class="rm-subnav tight" id="rmFilters"></div>
+  <div id="rmList"><div class="rm-skel"><i></i><i></i></div></div>`;
+}
+async function rmLoadList(more){
+  const M = RM.mq;
+  try{
+    const offset = more && M.list ? M.list.length : 0;
+    const r = await rmApi('q_list', { topic:RM.topic, filter:M.filter==='all'?'':M.filter, limit:60, offset });
+    M.list = more && M.list ? M.list.concat(r.questions) : r.questions; M.total = r.total; M.flagged = r.flagged;
+  }catch(e){ M.list = M.list || []; M.msg = rmErr(e); }
+  rmPaintList();
+}
+function rmPaintList(){
+  const box = document.getElementById('rmList'), fl = document.getElementById('rmFilters'); if(!box) return;
+  const M = RM.mq;
+  if(fl) fl.innerHTML = [['all','All'],['set','Coordinator set'],['ai','AI practice'],['flagged','Reported ('+M.flagged+')'],['mine','Mine']].map(([k,l])=>`<button class="pill${M.filter===k?' on':''}" type="button" data-rm-filter="${k}">${l}</button>`).join('');
+  const list = M.list || [];
+  const item = (q)=>{
+    const ans = q.qtype==='mcq' ? (q.options||[]).map((o,i)=>`<div style="margin:2px 0; ${i===q.answer_index?'color:var(--teal-deep); font-weight:700;':''}">${'ABCDEF'[i]}. ${escapeHtml(o)}${i===q.answer_index?' &#10003;':''}</div>`).join('') : `<div style="color:var(--teal-deep); font-weight:700;">Answer: ${escapeHtml(String(Number(q.answer_num)))} ${escapeHtml(q.unit||'')} <span style="color:var(--muted); font-weight:400;">(&plusmn;${Math.round(Number(q.tolerance)*1000)/10}%)</span></div>`;
+    return `<div class="item"><div class="item-head"><span class="item-title" style="font-weight:700;">${escapeHtml(q.body).replace(/\n/g,'<br>')}</span></div>
+      <div style="margin:6px 0;"><span class="rm-chip">${q.source==='ai'?'AI':'Set by coordinator'}</span><span class="rm-chip">${escapeHtml(q.tier)}</span><span class="rm-chip">${q.qtype==='mcq'?'Multiple choice':'Numerical'}</span>${q.required?'<span class="rm-chip on">Required</span>':''}${q.status==='flagged'?`<span class="rm-chip bad">Reported x${q.flags}</span>`:''}</div>
+      <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(q.explanation)}</div>`:''}</div>
+      <div class="item-actions">${q.status==='flagged'?`<button class="btn teal small" type="button" data-rm-q="approve" data-id="${q.id}">Keep it</button>`:''}<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
+  };
+  box.innerHTML = `<p class="note" style="margin:0 0 10px;">${M.total} question${M.total===1?'':'s'}${M.filter!=='all'?' in this view':' in this section'}${M.msg?' &middot; '+escapeHtml(M.msg):''}</p>` +
+    (list.length ? `<div class="list">${list.map(item).join('')}</div>${list.length<M.total?'<div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-more>Load more</button></div>':''}` : '<div class="empty">No questions here yet.</div>');
+}
+async function rmAddQuestion(){
+  const g = (id)=>document.getElementById(id), type = g('rmType').value, msg = g('rmAddMsg');
+  const payload = { topic:RM.topic, type, tier:g('rmTier').value, text:g('rmText').value.trim(), explanation:g('rmExp').value.trim(), required:g('rmReq').checked };
+  if(!payload.text){ msg.textContent = 'Write the question first.'; return; }
+  if(type==='mcq'){
+    const raw = [0,1,2,3].map(i=>g('rmOpt'+i).value.trim()), pick = parseInt(g('rmCorrect').value,10);
+    if(!raw[pick]){ msg.textContent = 'The correct option is empty.'; return; }
+    const kept = raw.map((t,i)=>({t,i})).filter(o=>o.t);
+    if(kept.length<2){ msg.textContent = 'Add at least two options.'; return; }
+    payload.options = kept.map(o=>o.t); payload.answerIndex = kept.findIndex(o=>o.i===pick);
+  } else {
+    payload.answer = g('rmAns').value.trim(); payload.tolerance = (parseFloat(g('rmTol').value)||2)/100; payload.unit = g('rmUnit').value.trim();
+    if(!payload.answer){ msg.textContent = 'Enter the numerical answer.'; return; }
+  }
+  msg.textContent = 'Saving...';
+  try{
+    await rmApi('q_add', payload);
+    ['rmText','rmExp','rmOpt0','rmOpt1','rmOpt2','rmOpt3','rmAns','rmUnit'].forEach(id=>{ const e = g(id); if(e) e.value = ''; });
+    msg.textContent = 'Added.'; await rmLoad(true); await rmLoadList(false);
+  }catch(e){ msg.textContent = rmErr(e); }
+}
+async function rmGenerate(){
+  const g = (id)=>document.getElementById(id), M = RM.mq;
+  if(M.busy) return; M.busy = true; M.msg = '';
+  const btn = document.querySelector('[data-rm-gen]'); if(btn){ btn.disabled = true; btn.textContent = 'Writing and checking...'; }
+  const out = g('rmGenMsg'); if(out) out.textContent = 'This can take up to a minute.';
+  try{
+    const r = await rmApi('generate', { topic:RM.topic, tier:g('rmGenTier').value, count:parseInt(g('rmGenCount').value,10), focus:g('rmGenFocus').value.trim() });
+    M.msg = r.added ? `Added ${r.added} verified question${r.added===1?'':'s'}${r.dropped?` (${r.dropped} dropped: failed the answer check or duplicated)`:''}.` : 'None passed the answer check this time. Try again.';
+    await rmLoad(true);
+  }catch(e){ M.msg = rmErr(e); }
+  M.busy = false; M.list = null; rmPaint();
+}
+async function rmQuestionOp(op, id, value){
+  try{ await rmApi('q_set', { id, op, value:!!value }); await rmLoadList(false); await rmLoad(true); }
+  catch(e){ alert(rmErr(e)); }
+}
+
+// ----- staff: student progress -----
+async function rmLoadProgress(){
+  const box = document.getElementById('rmProgRoot'); if(!box) return;
+  try{ RM.prog = await rmApi('progress', { topic:RM.topic }); }catch(e){ box.innerHTML = `<div class="empty">${escapeHtml(rmErr(e))}</div>`; return; }
+  const rows = RM.prog.rows, ov = RM.ov, now = Date.now();
+  const ago = (t)=>{ if(!t) return 'never'; const d = Math.floor((now - new Date(t).getTime())/86400000); return d<=0 ? 'today' : d===1 ? 'yesterday' : d+' days ago'; };
+  const idle = (r)=> !r.lastAt || (now - new Date(r.lastAt).getTime()) > 3*86400000;
+  box.innerHTML = `<div class="section-title"><div><h2>Students</h2><p>${ME.role==='coordinator'?'Your students':'All students'} in this section, lowest progress first.</p></div></div>
+    <div class="rm-stats"><div class="stat"><div class="n">${rows.filter(r=>r.complete).length}</div><div class="l">complete</div></div><div class="stat"><div class="n">${rows.filter(r=>!r.attempts).length}</div><div class="l">not started</div></div><div class="stat"><div class="n">${rows.filter(idle).length}</div><div class="l">no practice in 3 days</div></div></div>
+    <div class="list">${rows.length ? rows.map(r=>`<div class="item rm-prog"><div class="rm-prog-name"><b>${escapeHtml(r.name||'Student')}</b><div class="note" style="margin:0;">Last practised ${ago(r.lastAt)}</div></div><div class="rm-prog-bar"><div class="rm-bar"><b data-w="${r.pct}" style="width:0"></b></div><div class="note" style="margin:4px 0 0;">${r.pct}% &middot; set ${Math.min(r.reqSolved,r.reqTotal)}/${r.reqTotal} &middot; practice ${Math.min(Math.max(0,r.solved-r.reqSolved),ov.practiceGoal)}/${ov.practiceGoal}${r.accuracy!=null?' &middot; '+r.accuracy+'% correct':''}</div></div>${r.complete?'<span class="rm-pill done">Complete</span>':idle(r)?'<span class="rm-pill lock">Needs a nudge</span>':'<span class="rm-pill review">In progress</span>'}</div>`).join('') : '<div class="empty">No students to show.</div>'}</div>`;
+  rmAnimate(box);
+}
+
+// ---------- paint + wiring ----------
+function rmPaint(){
+  const root = rmRoot(); if(!root || !RM.ov) return;
+  if(rmHostedKey()){ return rmFull(); } // screens that need their own wiring repaint the whole page
+  root.innerHTML = rmHtmlSync();
+  rmAnimate(root); rmFit();
+  if(RM.view==='section'){
+    if(RM.tab==='questions'){ if(RM.mq.list===null) rmLoadList(false); else rmPaintList(); }
+    if(RM.tab==='students') rmLoadProgress();
+  }
+}
+async function wireRoadmap(){
+  let root = rmRoot(); if(!root) return;
+  root.onclick = rmClick; root.onchange = rmChange;
+  const needs = !RM.ov || Date.now()-RM.ovAt > 20000;
+  if(needs){
+    try{ await rmLoad(true); }
+    catch(e){ root = rmRoot(); if(root) root.innerHTML = `<div class="empty">${escapeHtml(rmErr(e))}<br><br><button class="btn small" id="rmRetry" type="button">Try again</button></div>`; const b = document.getElementById('rmRetry'); if(b) b.onclick = wireRoadmap; return; }
+    root = rmRoot(); if(!root) return;
+    if(RM.view==='section' && !rmSec(RM.topic)) RM.view = 'home';
+    if(rmHostedKey()){ rmFull(); return; }
+    root.innerHTML = rmHtmlSync(); rmAnimate(root); rmFit();
+    if(RM.view==='section'){ if(RM.tab==='questions') rmLoadList(false); if(RM.tab==='students') rmLoadProgress(); }
+  } else { rmAnimate(root); rmFit(); if(RM.view==='section'){ if(RM.tab==='questions'){ if(RM.mq.list===null) rmLoadList(false); else rmPaintList(); } if(RM.tab==='students') rmLoadProgress(); } }
+  if(RM.view==='home' && !rmStaff() && !RM.board) rmLoadBoard();
+  if(!window.__rmResize){ window.__rmResize = true; window.addEventListener('resize', rmFit); }
+}
+async function rmClick(ev){
+  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-sub],[data-rm-start-mode],[data-rm-daily],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-go],[data-rm-add],[data-rm-gen],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.rmOpen!==undefined){
+    if(d.rmOpen==='__mock'){ RM.view = 'mock'; return rmFull(); }
+    const s = rmSec(d.rmOpen); if(!s) return;
+    if(!s.open){ RM.note = `${s.title} opens on ${rmDateY(s.start)}. Finish the current section first.`; rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return; }
+    RM.note = ''; RM.view = 'section'; RM.topic = s.id; RM.tab = rmStaff() ? 'questions' : 'practice'; RM.sess = null; RM.err = '';
+    RM.mq = { list:null, filter:'all', total:0, flagged:0, msg:'', busy:false };
+    rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return;
+  }
+  if(d.rmHome!==undefined){ RM.view = 'home'; RM.sess = null; RM.note = ''; RM.err = ''; try{ await rmLoad(true); }catch(e){} return rmFull(); }
+  if(d.rmGo){ RM.view = d.rmGo; return rmFull(); }
+  if(d.rmTab){ RM.tab = d.rmTab; RM.sess = null; RM.err = ''; return rmFull(); }
+  if(d.rmSub){ RM.sub = d.rmSub; if(typeof practiceSubTab!=='undefined' && d.rmSub!=='exams') practiceSubTab = d.rmSub; return rmFull(); }
+  if(d.rmDaily!==undefined){ RM.sess = null; return rmStart('daily', 5, 'daily'); }
+  if(d.rmStartMode){ RM.sess = null; const m = d.rmStartMode; return rmStart(m, m==='daily'?5:10, m==='daily'?'daily':'section'); }
+  if(d.rmPick!==undefined) return rmAnswer(parseInt(d.rmPick,10));
+  if(d.rmCheck!==undefined){ const i = document.getElementById('rmNum'); return rmAnswer(i ? i.value : ''); }
+  if(d.rmNext!==undefined){
+    const S = RM.sess; if(!S) return;
+    if(S.i+1<S.qs.length){ S.i++; S.res = null; S.picked = null; S.given = ''; S.reported = false; rmPaint(); }
+    else { S.done = true; try{ await rmLoad(true); }catch(e){} rmPaint(); }
+    return;
+  }
+  if(d.rmReport!==undefined) return rmReport();
+  if(d.rmQuit!==undefined){ if(RM.sess && RM.sess.answered && !RM.sess.done && !confirm('Leave this set? Your answers so far are saved.')) return; return rmFinish(); }
+  if(d.rmEnd!==undefined) return rmFinish();
+  if(d.rmAdd!==undefined) return rmAddQuestion();
+  if(d.rmGen!==undefined) return rmGenerate();
+  if(d.rmFilter){ RM.mq.filter = d.rmFilter; RM.mq.list = null; rmPaintList(); return rmLoadList(false); }
+  if(d.rmQ){ if(d.rmQ==='delete' && !confirm('Delete this question for good?')) return; if(d.rmQ==='reject' && !confirm('Remove this question from practice?')) return; return rmQuestionOp(d.rmQ, d.id, d.value); }
+  if(d.rmMore!==undefined) return rmLoadList(true);
+  if(d.rmSchedToggle!==undefined){ RM.schedOpen = !RM.schedOpen; rmPaint(); return; }
+  if(d.rmSchedSave!==undefined){
+    const sections = RM.ov.sections.map(s=>({ id:s.id, start:(document.querySelector(`[data-rm-start="${s.id}"]`)||{}).value, end:(document.querySelector(`[data-rm-end="${s.id}"]`)||{}).value }));
+    try{ await rmApi('schedule_set', { sections }); await rmLoad(true); rmPaint(); alert('Schedule saved.'); }catch(e){ alert(rmErr(e)); }
+    return;
+  }
+  if(d.rmSchedShift){
+    const days = parseInt((document.getElementById('rmShiftDays')||{}).value,10)||3;
+    if(!confirm(`Extend this section by ${days} days and move every later section ${days} days later?`)) return;
+    try{ await rmApi('schedule_shift', { fromId:d.rmSchedShift, days }); await rmLoad(true); rmPaint(); }catch(e){ alert(rmErr(e)); }
+  }
+}
+async function rmChange(ev){
+  const t = ev.target;
+  if(t.id==='rmType'){ document.getElementById('rmMcqBox').classList.toggle('hidden', t.value!=='mcq'); document.getElementById('rmNumBox').classList.toggle('hidden', t.value!=='num'); }
+  if(t.id==='rmRemind'){ try{ await rmApi('schedule_set', { remindersOn:t.checked }); RM.ov.remindersOn = t.checked; }catch(e){ t.checked = !t.checked; alert(rmErr(e)); } }
+}
+document.addEventListener('keydown', (ev)=>{
+  const root = rmRoot(); if(!root || !root.contains(ev.target)) return;
+  if(ev.key==='Enter' && ev.target.id==='rmNum'){ ev.preventDefault(); rmAnswer(ev.target.value); }
+});
 </script>
 </body>
 </html>
