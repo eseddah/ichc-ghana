@@ -827,6 +827,16 @@
   .item-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} .rm-path .drawn{stroke-dasharray:var(--x) 100;} }
   @media (max-width:560px){ .rm-shead{flex-direction:column; align-items:flex-start; padding:20px;} .rm-daily{padding:16px;} .rm-daily-r{width:100%;} }
+
+  /* ---- contrast fixes: dark ink that ended up on the new dark sidebar ---- */
+  .sidebar .hexlogo{color:var(--amber) !important;}
+  .sidebar .hexlogo text{fill:#fff;}
+  .sidebar .pk-ctl{border-color:rgba(255,255,255,.28); color:#CFCBF5;}
+  .sidebar .pk-ctl b{color:#fff;}
+  .sidebar .pk-ctl button.pk-link{color:#8FE8C8;}
+  .sidebar .pk-ctl button.pk-link.danger{color:#FFB3AE;}
+  .sidebar .pk-ctl .btn{border-color:rgba(255,255,255,.55); box-shadow:0 3px 0 rgba(0,0,0,.35);}
+  .sidebar .pk-ctl .btn.secondary{color:var(--navy-deep);}
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -7070,7 +7080,7 @@ const RM_TOPICS = [
   ['acidbase','Acids, Bases and Solubility'],['kinetics','Kinetics and Research Paper Prep'],['electro','Electrochemistry'],
   ['organic','Organic Reactivity and Research Prep'],['stereo','Stereochemistry and Aromaticity'],['spectro','Spectroscopy and Coordination Chemistry']
 ];
-const RM_HUES = ['#5B3DF5','#FF6B6B','#12B981','#F59E0B','#0EA5E9','#EC4899','#8B5CF6','#14B8A6','#F97316','#6366F1'];
+const RM_HUES = ['#5B3DF5','#E5484D','#0A8460','#B45309','#0369A1','#C2185B','#6D28D9','#0F766E','#C2410C','#4338CA'];
 const rmTopicOf = (it)=> (it && it.topic && RM_TOPICS.some(t=>t[0]===it.topic)) ? it.topic : '';
 const rmEffTopic = (it, kind)=> rmTopicOf(it) || (kind==='library' ? '' : 'quant'); // older untagged posts belong to the first section
 function rmTopicSelect(id, value, attrs){
