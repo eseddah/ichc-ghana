@@ -621,73 +621,6 @@
   .lr-rank.me{background:rgba(227,154,59,.14); border-color:var(--amber);}
   .lr-rank .pos{width:26px; font-weight:700; color:var(--muted); text-align:center;} .lr-rank .nm{flex:1; font-weight:500;} .lr-rank .xp{font-weight:600; color:var(--navy-deep);}
   @media (prefers-reduced-motion:reduce){.lr-bar b{transition:none;}}
-
-  /* ---- Roadmap ---- */
-  .rm-note{background:#FFF6E5; border:1px solid #F0D9A8; color:#6B4A0F; border-radius:12px; padding:10px 14px; margin:0 0 16px; font-size:14px;}
-  .rm-stats{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 22px;}
-  .rm-stat{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 16px; min-width:140px;}
-  .rm-stat .n{font-size:20px; font-weight:700; color:var(--navy-deep); line-height:1.25;}
-  .rm-stat .l{font-size:12px; color:var(--muted); margin-top:2px;}
-  .rm-path{position:relative; margin-left:20px; padding-left:36px;}
-  .rm-path:before{content:''; position:absolute; left:17px; top:10px; bottom:10px; width:2px; background:var(--line);}
-  .rm-node{position:relative; margin:0 0 14px;}
-  .rm-dot{position:absolute; left:-36px; top:20px; width:36px; height:36px; border-radius:50%; background:#fff; border:2px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:var(--muted); z-index:1;}
-  .rm-node.current .rm-dot{background:var(--amber); border-color:var(--amber-deep); color:var(--navy-deep);}
-  .rm-node.done .rm-dot{background:var(--teal); border-color:var(--teal-deep); color:#fff;}
-  .rm-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; display:flex; gap:16px; align-items:center; justify-content:space-between; cursor:pointer; transition:transform .15s, box-shadow .15s;}
-  .rm-card:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(15,36,56,.10);}
-  .rm-node.current .rm-card{border-color:var(--amber-deep);}
-  .rm-node.locked .rm-card{background:#F1EFE8; cursor:default;}
-  .rm-node.locked .rm-card:hover{transform:none; box-shadow:none;}
-  .rm-node.locked .rm-title{color:var(--muted);}
-  .rm-card-main{min-width:0;}
-  .rm-title{font-size:17px; font-weight:700; color:var(--navy-deep);}
-  .rm-sub{font-size:12.5px; color:var(--muted); margin-top:2px;}
-  .rm-detail{font-size:13px; color:var(--ink); margin-top:2px;}
-  .rm-pill{display:inline-block; border-radius:999px; padding:3px 12px; font-size:11.5px; font-weight:700; letter-spacing:.02em; border:1px solid transparent; box-shadow:0 2px 0 rgba(15,36,56,.12);}
-  .rm-pill.now{background:var(--amber); color:var(--navy-deep); border-color:var(--amber-deep);}
-  .rm-pill.lock{background:#E7E3D6; color:#5B6670;}
-  .rm-pill.done{background:var(--teal); color:#fff; border-color:var(--teal-deep);}
-  .rm-pill.review{background:rgba(15,36,56,.08); color:var(--navy-deep);}
-  .rm-pill.prev{background:#fff; color:var(--navy-deep); border-color:var(--line);}
-  .rm-ring{flex:none;}
-  .rm-ring-bg{fill:none; stroke:#E9E5D8; stroke-width:6;}
-  .rm-ring-fg{fill:none; stroke:var(--teal); stroke-width:6; stroke-linecap:round; transition:stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1);}
-  .rm-ring-t{font-size:15px; font-weight:700; fill:var(--navy-deep);}
-  .rm-head{display:flex; gap:18px; align-items:center; justify-content:space-between; margin-bottom:14px;}
-  .rm-subnav{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px;}
-  .rm-bar{height:8px; background:#EFEBDD; border-radius:99px; overflow:hidden;}
-  .rm-bar b{display:block; height:100%; background:var(--teal); border-radius:99px; transition:width .6s;}
-  .rm-starts{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
-  .rm-q{font-size:17px; line-height:1.6; margin:14px 0;}
-  .rm-opt{display:flex; gap:12px; width:100%; text-align:left; background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; margin:8px 0; font:inherit; cursor:pointer; color:var(--ink);}
-  .rm-opt:hover:not(:disabled){border-color:var(--navy);}
-  .rm-opt:disabled{cursor:default;}
-  .rm-opt .k{font-weight:700; color:var(--muted); min-width:18px;}
-  .rm-opt.correct{border-color:var(--teal); background:rgba(31,138,112,.09);}
-  .rm-opt.wrong{border-color:#B3261E; background:rgba(179,38,30,.07);}
-  .rm-fb{border-radius:12px; padding:12px 14px; margin:12px 0; font-size:14.5px; line-height:1.55;}
-  .rm-fb.ok{background:rgba(31,138,112,.10);}
-  .rm-fb.no{background:rgba(179,38,30,.08);}
-  .rm-chip{display:inline-block; border-radius:999px; padding:2px 10px; font-size:11.5px; font-weight:600; background:rgba(15,36,56,.07); color:var(--navy-deep); margin-right:4px;}
-  .rm-chip.on{background:rgba(31,138,112,.14); color:var(--teal-deep);}
-  .rm-chip.bad{background:rgba(179,38,30,.12); color:#B3261E;}
-  .rm-badges{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
-  .rm-badge{display:inline-block; border-radius:999px; padding:6px 16px; font-size:13px; font-weight:700; background:var(--amber); color:var(--navy-deep); border:1px solid var(--amber-deep); box-shadow:0 2px 0 rgba(15,36,56,.14);}
-  .rm-badge.muted{background:#E7E3D6; color:#5B6670; border-color:transparent;}
-  .rm-pop{animation:rmPop .5s ease both;}
-  .rm-win{animation:rmUp .4s ease both;}
-  .rm-sched-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid #EFEBDD;}
-  .rm-sched-row .nm{flex:1 1 220px; font-size:14px;}
-  .rm-sched-row input[type=date]{width:auto;}
-  .rm-prog{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
-  .rm-prog-name{flex:1 1 160px;}
-  .rm-prog-bar{flex:2 1 240px;}
-  .item-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
-  @keyframes rmUp{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
-  @keyframes rmPop{0%{opacity:0; transform:scale(.7);}70%{transform:scale(1.06);}100%{opacity:1; transform:scale(1);}}
-  @media (prefers-reduced-motion: reduce){ .rm-win,.rm-pop{animation:none;} .rm-ring-fg,.rm-bar b{transition:none;} }
-  @media (max-width:560px){ .rm-path{margin-left:8px; padding-left:30px;} .rm-dot{left:-30px; width:30px; height:30px;} .rm-card{padding:14px;} .rm-head{flex-direction:column; align-items:flex-start;} }
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -1824,7 +1757,6 @@ function pollsCoordinatorView(){
       <div class="field" style="margin:0;"><label>Option 3 (optional)</label><input id="pollOpt3" placeholder="Option"></div>
       <div class="field" style="margin:0;"><label>Option 4 (optional)</label><input id="pollOpt4" placeholder="Option"></div>
     </div>
-    <div class="field" style="margin:10px 0 0; max-width:320px;"><label>Roadmap section</label>${rmTopicSelect('pollTopic','')}</div>
     <button class="btn teal small" id="addPollBtn">Post poll</button>
   </div>
   <div class="list">
@@ -1894,7 +1826,6 @@ function quizzesCoordinatorView(){
     <div class="field" style="max-width:200px;"><label>Correct option</label>
       <select id="quizCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
     </div>
-    <div class="field" style="max-width:320px;"><label>Roadmap section</label>${rmTopicSelect('quizTopic','')}</div>
     <button class="btn teal small" id="addQuizBtn">Post quiz question</button>
   </div>
   <div class="list">
@@ -1964,7 +1895,6 @@ function practiceQuestionSection(role){
     <div class="card" style="margin-bottom:18px;">
       <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea id="pracQ" rows="3" placeholder="Write the practice question here"></textarea></div>
       <div class="field" style="margin:0 0 10px;"><label>Hint / answer (optional, shown separately)</label><input id="pracA" placeholder="Optional hint or worked answer"></div>
-      <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('pracTopic','')}</div>
       <button class="btn teal small" id="addPracBtn">Post practice question</button>
     </div>
     <div class="list">
@@ -2681,7 +2611,6 @@ function closeDrawer(){
 // Small line icons for the section list — purely visual.
 const TAB_ICONS = {
   learn:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
-  roadmap:'<path d="M5 21V4"/><path d="M5 5h11l-2 3.5 2 3.5H5"/><circle cx="5" cy="21" r="1"/>',
   overview:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   applications:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>',
   people:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5c2.5 0 4 1.7 4 4.5"/>',
@@ -2719,9 +2648,9 @@ function tabIconSvg(k){
 }
 function buildTabs(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
-    coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
-    student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
+    ambassador:[['overview','Overview'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    coordinator:[['space','My space'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
+    student:[['welcome','Welcome'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
   const tabs = tabsFor[ME.role];
   const el = document.getElementById('tabs');
@@ -2796,7 +2725,6 @@ function render(tab){
   else if(tab==='settings') html = settingsView();
   else if(tab==='library') html = libraryView();
   else if(tab==='exams') html = examsView();
-  else if(tab==='roadmap') html = '<div id="rmRoot"></div>';
   else if(tab==='mock') html = '<div id="mockRoot"></div>';
   else if(tab==='chat') html = chatView();
   else if(tab==='applications') html = applicationsView();
@@ -5200,7 +5128,6 @@ function coordinatorView(tab){
       <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="matTitle" placeholder="e.g. Acid–base equilibria cheat sheet"></div>
       <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="matDesc" rows="2" placeholder="What it covers and how to use it"></textarea></div>
       <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="matLink" placeholder="Drive / PDF link"></div>
-      <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('matTopic','')}</div>
       <button class="btn teal small" id="addMatBtn">Post material</button>
     </div>
     <div class="list">
@@ -5381,7 +5308,6 @@ function libraryView(){
     <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="libTitle" placeholder="e.g. IChC Official Syllabus 2026"></div>
     <div class="field" style="margin:0 0 10px;"><label>Description</label><textarea id="libDesc" rows="2" placeholder="What it is and why it's useful"></textarea></div>
     <div class="field" style="margin:0 0 10px;"><label>Link (optional)</label><input id="libLink" placeholder="Drive / PDF link"></div>
-    <div class="field" style="margin:0 0 10px;"><label>Roadmap section</label>${rmTopicSelect('libTopic','')}</div>
     <button class="btn amber small" id="addLibBtn">Add to library</button>
   </div>` : ''}
   <div class="list">
@@ -5397,7 +5323,6 @@ function libraryView(){
         <div class="item-body" style="margin-top:6px;">
           <textarea data-libfield="body" data-lib-id="${l.id}" rows="2" placeholder="Description">${escapeHtml(l.body||'')}</textarea>
         </div>
-        <div class="item-body" style="margin-top:6px; display:flex; align-items:center; gap:8px;"><span style="font-size:12.5px; color:var(--muted);">Roadmap section</span>${rmTopicSelect('', rmTopicOf(l), 'data-libfield="topic" data-lib-id="'+l.id+'"')}</div>
         <div class="item-actions">
           <button class="btn teal small" data-save-lib="${l.id}">Save</button>
           <button class="btn ghost small" data-remove-lib="${l.id}">Remove</button>
@@ -5677,7 +5602,6 @@ function examsManageView(){
     <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
       <div class="field" style="margin:0;"><label>Title</label><input id="examTitle" placeholder="e.g. Week 6 timed mock — Kinetics"></div>
       <div class="field" style="margin:0;"><label>Subject / topic</label><input id="examSubject" placeholder="e.g. Reaction kinetics"></div>
-      <div class="field" style="margin:0;"><label>Roadmap section</label>${rmTopicSelect('examTopic','')}</div>
       <div class="field" style="margin:0;"><label>Time limit (minutes)</label><input id="examTime" type="number" min="1" value="60"></div>
       <div class="field" style="margin:0;"><label>Total marks</label><input id="examMarks" type="number" min="1" max="300" value="50"></div>
     </div>
@@ -5765,7 +5689,6 @@ function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='welcome') wireOnboarding();
   if(tab==='learn') wireLearn();
-  if(tab==='roadmap') wireRoadmap();
   if(tab==='onboarding') wireOnboardingSetup();
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
@@ -5872,7 +5795,7 @@ function wireHandlers(tab){
     const options = [q('pollOpt1').value.trim(), q('pollOpt2').value.trim(), q('pollOpt3').value.trim(), q('pollOpt4').value.trim()].filter(Boolean);
     if(!question) return alert('Add a question.');
     if(options.length<2) return alert('Add at least two options.');
-    DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, topic:(q('pollTopic')&&q('pollTopic').value)||'', date:today(), ts:Date.now()});
+    DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, date:today(), ts:Date.now()});
     await saveKey('polls');
     render('practice');
   });
@@ -5912,7 +5835,7 @@ function wireHandlers(tab){
     if(filled.length<2) return alert('Add at least two options.');
     const options = filled.map(o=>o.text);
     const correctIndex = filled.findIndex(o=>o.i===letterIndex);
-    DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, topic:(q('quizTopic')&&q('quizTopic').value)||'', date:today(), ts:Date.now()});
+    DB.quizzes.push({id:uid(), coordinatorId:ME.id, question, options, correctIndex, attempts:{}, date:today(), ts:Date.now()});
     await saveKey('quizzes');
     render('practice');
   });
@@ -6217,7 +6140,7 @@ function wireHandlers(tab){
   if(q('addMatBtn')) q('addMatBtn').addEventListener('click', async ()=>{
     const title=q('matTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('matDesc').value.trim();
-    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), topic:(q('matTopic')&&q('matTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.materials.push({id:uid(), coordinatorId:ME.id, title, body, link:q('matLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('materials'); await syncPublicDirectory(); render('materials');
     await notifyBroadcast({title:`New material: ${title}`, body:body||'A new resource was just posted.', coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -6228,7 +6151,7 @@ function wireHandlers(tab){
 
   if(q('addPracBtn')) q('addPracBtn').addEventListener('click', async ()=>{
     const question=q('pracQ').value.trim(); if(!question) return alert('Question required.');
-    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), topic:(q('pracTopic')&&q('pracTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('practice'); render('practice');
     await notifyBroadcast({title:'New practice question posted', body:question, coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -6342,7 +6265,7 @@ function wireHandlers(tab){
   if(q('addLibBtn')) q('addLibBtn').addEventListener('click', async ()=>{
     const title=q('libTitle').value.trim(); if(!title) return alert('Title required.');
     const body=q('libDesc').value.trim();
-    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), topic:(q('libTopic')&&q('libTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
+    DB.library.push({id:uid(), title, body, link:q('libLink').value.trim(), date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('library'); render('library');
     await notifyBroadcast({title:`New resource in the library: ${title}`, body:body||'A new resource was just added to the library.', coordinatorId:null, author:ME.name, role:ME.role});
   });
@@ -6451,7 +6374,7 @@ function wireHandlers(tab){
       const timeLimitMin = Math.max(1, parseInt(q('examTime').value,10)||60);
       const protocol = q('examProtocol').value.trim();
       const coordinatorId = ME.role==='ambassador' ? null : ME.id;
-      DB.exams.push({ id:uid(), coordinatorId, title, subject, topic:(q('examTopic')&&q('examTopic').value)||'', timeLimitMin, totalMarks:(parseInt(q('examMarks').value,10)||null), protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
+      DB.exams.push({ id:uid(), coordinatorId, title, subject, timeLimitMin, totalMarks:(parseInt(q('examMarks').value,10)||null), protocol, content, createdBy:ME.name, date:today(), seenBy:{[ME.id]:Date.now()} });
       await saveKey('exams'); render('exams');
       await notifyBroadcast({title:`New exam posted: ${title}`, body:`${timeLimitMin} minutes · one attempt · opens now.`, coordinatorId, author:ME.name, role:ME.role});
     });
@@ -6814,477 +6737,6 @@ async function lrRanking(root){
     box.innerHTML = LEARN.rankHtml;
   }catch(e){ console.error('Ranking failed', e); }
 }
-
-// ---------------------------------------------------------------------------
-// Roadmap: 10 topic sections released on a shared calendar. Questions, attempts and release dates live behind the
-// `roadmap` Supabase function (answers never reach a student's browser). Existing quizzes, polls, exams, materials,
-// practice questions and library items join a section through their "Roadmap section" tag.
-// ---------------------------------------------------------------------------
-const RM_TOPICS = [
-  ['quant','Quantitative Chemistry'],['bonding','Structure and Bonding'],['thermo','Thermodynamics'],['equil','Equilibrium'],
-  ['acidbase','Acids, Bases and Solubility'],['kinetics','Kinetics and Research Paper Prep'],['electro','Electrochemistry'],
-  ['organic','Organic Reactivity and Research Prep'],['stereo','Stereochemistry and Aromaticity'],['spectro','Spectroscopy and Coordination Chemistry']
-];
-const rmTitle = (id)=>{ const t = RM_TOPICS.find(x=>x[0]===id); return t ? t[1] : ''; };
-const rmTopicOf = (it)=> (it && it.topic && RM_TOPICS.some(t=>t[0]===it.topic)) ? it.topic : '';
-function rmTopicSelect(id, value, attrs){
-  return `<select ${id?`id="${id}"`:''} ${attrs||''}><option value="">Not tagged (general)</option>${RM_TOPICS.map(([k,t])=>`<option value="${k}"${value===k?' selected':''}>${escapeHtml(t)}</option>`).join('')}</select>`;
-}
-const RM = { view:'home', topic:null, tab:'practice', ov:null, note:'', busy:false, sess:null, mq:{ list:null, filter:'all', total:0, flagged:0, msg:'', busy:false }, prog:null, schedOpen:false };
-const rmStaff = ()=> ME && ME.role !== 'student';
-const rmDate = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }catch(e){ return d; } };
-const rmDateY = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
-
-async function rmApi(action, payload){
-  if(!sbReady) throw new Error('offline');
-  const { data, error } = await sb.functions.invoke('roadmap', { body:{ action, ...(payload||{}) } });
-  if(error){ let m = ''; try{ const j = await error.context.json(); m = j.error || ''; }catch(e){} throw new Error(m || 'unavailable'); }
-  return data;
-}
-function rmErr(e){
-  const m = String((e && e.message) || e);
-  if(m==='locked') return 'This section has not opened yet.';
-  if(m==='rate_limited') return 'Too many requests in a short time. Please wait a moment.';
-  if(m==='quota') return 'The AI is busy right now. Try again in a few minutes.';
-  if(m==='not_configured') return 'The AI is not configured yet.';
-  if(m==='forbidden') return 'You do not have permission to do that.';
-  if(m==='bad_options') return 'Check the options and the correct answer.';
-  if(m==='bad_answer') return 'The answer must be a number.';
-  if(m==='bad_dates' || m==='bad_order') return 'Check the dates: each section must start after the one before it, and end on or after its own start.';
-  if(m==='offline') return 'You appear to be offline.';
-  return 'Something went wrong. Please try again.';
-}
-const rmRoot = ()=> document.getElementById('rmRoot');
-const rmSec = (id)=> RM.ov && RM.ov.sections.find(s=>s.id===id);
-
-function rmRing(pct, size){
-  const r = 26, c = 2*Math.PI*r;
-  return `<svg class="rm-ring" width="${size}" height="${size}" viewBox="0 0 64 64" aria-label="${pct}% complete"><circle cx="32" cy="32" r="${r}" class="rm-ring-bg"/><circle cx="32" cy="32" r="${r}" class="rm-ring-fg" data-pct="${pct}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${c.toFixed(2)}" transform="rotate(-90 32 32)"/><text x="32" y="36.5" text-anchor="middle" class="rm-ring-t">${pct}%</text></svg>`;
-}
-function rmAnimate(root){
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    root.querySelectorAll('.rm-ring-fg').forEach(el=>{
-      const c = parseFloat(el.getAttribute('stroke-dasharray')), p = Math.max(0, Math.min(100, parseFloat(el.dataset.pct)||0));
-      el.style.strokeDashoffset = (c*(1-p/100)).toFixed(2);
-    });
-  }));
-}
-function rmPill(s){
-  if(s.complete) return '<span class="rm-pill done">Completed</span>';
-  if(s.state==='locked') return rmStaff() ? `<span class="rm-pill prev">Preview · opens ${rmDate(s.start)}</span>` : `<span class="rm-pill lock">Locked · opens ${rmDate(s.start)}</span>`;
-  if(s.state==='current') return '<span class="rm-pill now">Ongoing</span>';
-  return '<span class="rm-pill review">Open for review</span>';
-}
-const rmLock = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
-
-async function wireRoadmap(){
-  const root = rmRoot(); if(!root) return;
-  root.innerHTML = '<div class="empty">Loading the roadmap…</div>';
-  root.onclick = rmClick; root.onchange = rmChange;
-  try{ RM.ov = await rmApi('overview'); }
-  catch(e){ root.innerHTML = `<div class="empty">${escapeHtml(rmErr(e))}<br><br><button class="btn small" id="rmRetry" type="button">Try again</button></div>`; const b = document.getElementById('rmRetry'); if(b) b.onclick = wireRoadmap; return; }
-  if(RM.view==='section' && !rmSec(RM.topic)) RM.view = 'home';
-  rmPaint();
-}
-function rmPaint(){
-  const root = rmRoot(); if(!root || !RM.ov) return;
-  root.innerHTML = RM.view==='section' ? rmSectionHtml() : rmHomeHtml();
-  rmAnimate(root);
-  if(RM.view==='section') rmAfterSectionPaint();
-}
-
-// ---------- home ----------
-function rmHomeHtml(){
-  const ov = RM.ov, staff = rmStaff();
-  const cur = ov.sections.find(s=>s.state==='current') || ov.sections.find(s=>s.state==='past' && !s.complete) || ov.sections[0];
-  const stat = (n,l)=>`<div class="rm-stat"><div class="n">${n}</div><div class="l">${l}</div></div>`;
-  const goalPct = Math.min(100, Math.round(100*ov.todayCount/ov.dailyGoal));
-  const stats = `<div class="rm-stats">
-    ${stat(ov.streak, ov.streak===1?'day streak':'day streak')}
-    <div class="rm-stat"><div class="n">${Math.min(ov.todayCount, ov.dailyGoal)} / ${ov.dailyGoal}</div><div class="l">questions today</div><div class="rm-bar" style="margin-top:8px;"><b style="width:${goalPct}%"></b></div></div>
-    ${stat(escapeHtml(cur.title), 'current section')}
-  </div>`;
-  const nodes = ov.sections.map((s,i)=>{
-    const cls = s.complete ? 'done' : s.state==='locked' && !staff ? 'locked' : s.state==='current' ? 'current' : '';
-    const coh = staff && ov.cohort && ov.cohort[s.id] ? ov.cohort[s.id] : null;
-    const detail = (s.state==='locked' && !staff) ? `Opens on ${rmDateY(s.start)}`
-      : `${s.reqTotal ? `Coordinator set ${Math.min(s.reqSolved,s.reqTotal)} of ${s.reqTotal} · ` : ''}Practice ${Math.min(s.solved - s.reqSolved < 0 ? 0 : s.solved - s.reqSolved, ov.practiceGoal)} of ${ov.practiceGoal}${s.accuracy!=null?` · ${s.accuracy}% accuracy`:''}`;
-    return `<div class="rm-node ${cls}">
-      <div class="rm-dot">${s.complete ? '&#10003;' : (s.state==='locked' && !staff) ? rmLock : (i+1)}</div>
-      <div class="rm-card" data-rm-open="${s.id}" role="button" tabindex="0">
-        <div class="rm-card-main">
-          <div class="rm-title">${escapeHtml(s.title)}</div>
-          <div class="rm-sub">${rmDate(s.start)} – ${rmDate(s.end)} ${rmDateY(s.end).slice(-4)}</div>
-          <div style="margin:8px 0 6px;">${rmPill(s)}</div>
-          <div class="rm-detail">${escapeHtml(detail)}</div>
-          ${coh ? `<div class="rm-detail">${coh.complete} of ${coh.students} ${ME.role==='coordinator'?'of your ':''}students complete · ${coh.active} active</div>` : ''}
-        </div>
-        ${(s.state==='locked' && !staff) ? '' : rmRing(s.pct, 62)}
-      </div>
-    </div>`;
-  }).join('');
-  return `
-  <div class="section-title"><div><h2>Roadmap</h2><p>${staff ? 'Every section is open to you for preview. Students see a section when its date arrives.' : 'Ten topics, released on a shared calendar. Practise a little every day and finish each section before the next one opens.'}</p></div></div>
-  ${RM.note ? `<div class="rm-note">${escapeHtml(RM.note)}</div>` : ''}
-  ${stats}
-  <div class="rm-path">${nodes}</div>
-  ${ME.role==='ambassador' ? rmScheduleHtml() : ''}`;
-}
-function rmScheduleHtml(){
-  const ov = RM.ov, cur = ov.sections.find(s=>s.state==='current');
-  return `<div class="card" style="margin-top:26px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-      <div><h3 style="margin:0 0 2px; font-size:16px;">Schedule and reminders</h3><p class="note" style="margin:0;">Release dates for every section. Students see a section on its start date and keep it open afterwards.</p></div>
-      <button class="btn ghost small" type="button" data-rm-sched-toggle>${RM.schedOpen?'Hide':'Edit schedule'}</button>
-    </div>
-    ${RM.schedOpen ? `
-    <div style="margin-top:14px;">
-      ${ov.sections.map(s=>`<div class="rm-sched-row"><span class="nm">${escapeHtml(s.title)}</span><input type="date" data-rm-start="${s.id}" value="${s.start}"><span>to</span><input type="date" data-rm-end="${s.id}" value="${s.end}"></div>`).join('')}
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center;">
-        <button class="btn teal small" type="button" data-rm-sched-save>Save dates</button>
-        ${cur ? `<span class="note" style="margin:0 0 0 8px;">Cohort not ready? Extend <b>${escapeHtml(cur.title)}</b> by</span>
-        <select id="rmShiftDays"><option value="2">2 days</option><option value="3">3 days</option><option value="5">5 days</option><option value="7">7 days</option></select>
-        <button class="btn amber small" type="button" data-rm-sched-shift="${cur.id}">Extend and shift later sections</button>` : ''}
-      </div>
-      <label class="eb-check" style="margin-top:14px; display:block;"><input type="checkbox" id="rmRemind" ${ov.remindersOn?'checked':''}> Send a daily practice reminder (push, around 4 pm) to students who have not practised that day</label>
-      <p class="note" style="margin:6px 0 0;">Reminders reach students who have allowed notifications on this portal.</p>
-    </div>` : ''}
-  </div>`;
-}
-
-// ---------- section ----------
-function rmSectionHtml(){
-  const s = rmSec(RM.topic), staff = rmStaff();
-  const tabs = [['practice','Practice'],['resources','Resources'],['activities','Quizzes, polls & exams']].concat(staff ? [['manage','Manage questions'],['progress','Student progress']] : []);
-  const body = RM.tab==='resources' ? rmResourcesHtml(s) : RM.tab==='activities' ? rmActivitiesHtml(s) : RM.tab==='manage' && staff ? rmManageHtml(s) : RM.tab==='progress' && staff ? '<div id="rmProgRoot"><div class="empty">Loading progress…</div></div>' : rmPracticeHtml(s);
-  return `
-  <div style="margin:0 0 12px;"><button class="btn ghost small" type="button" data-rm-home>&larr; Roadmap</button></div>
-  <div class="card rm-head">
-    <div style="flex:1; min-width:0;">
-      <div style="margin-bottom:8px;">${rmPill(s)}</div>
-      <h2 style="margin:0 0 4px;">${escapeHtml(s.title)}</h2>
-      <p class="note" style="margin:0 0 6px;">${rmDateY(s.start)} to ${rmDateY(s.end)}</p>
-      <p class="note" style="margin:0; max-width:620px;">${escapeHtml(s.focus.charAt(0).toUpperCase()+s.focus.slice(1))}.</p>
-    </div>
-    ${rmRing(s.pct, 84)}
-  </div>
-  <div class="rm-subnav">${tabs.map(([k,l])=>`<button class="btn ${RM.tab===k?'amber':'ghost'} small" type="button" data-rm-tab="${k}">${l}</button>`).join('')}</div>
-  ${body}`;
-}
-function rmAfterSectionPaint(){
-  if(RM.tab==='manage' && RM.mq.list===null) rmLoadList(true);
-  if(RM.tab==='progress') rmLoadProgress();
-}
-
-function rmPracticeHtml(s){
-  if(RM.sess) return rmSessionHtml(s);
-  const ov = RM.ov, practice = Math.max(0, s.solved - s.reqSolved);
-  const bar = (label, done, total)=>`<div style="margin:12px 0;"><div style="display:flex; justify-content:space-between; font-size:13.5px;"><span>${label}</span><span style="color:var(--muted);">${done} of ${total}</span></div><div class="rm-bar"><b style="width:${total?Math.min(100,Math.round(100*done/total)):0}%"></b></div></div>`;
-  const done = s.complete;
-  return `
-  <div class="card">
-    <h3 style="margin:0 0 4px; font-size:17px;">Your progress</h3>
-    <p class="note" style="margin:0 0 6px;">${done ? 'Section complete. You can keep practising to stay sharp.' : 'Finish the coordinator set and solve '+ov.practiceGoal+' practice questions to complete this section.'}</p>
-    ${s.reqTotal ? bar('Coordinator set', Math.min(s.reqSolved, s.reqTotal), s.reqTotal) : ''}
-    ${bar('Practice questions solved', Math.min(practice, ov.practiceGoal), ov.practiceGoal)}
-    <p class="note" style="margin:8px 0 0;">${s.attempts ? `${s.attempts} answers so far · ${s.accuracy}% correct` : 'No answers yet. Your first set takes about ten minutes.'}${s.total?` · ${s.total} questions in this section`:''}</p>
-  </div>
-  ${RM.err ? `<div class="rm-note" style="margin-top:14px;">${escapeHtml(RM.err)}</div>` : ''}
-  <div class="rm-starts">
-    <button class="btn amber" type="button" data-rm-start-mode="mixed" ${RM.busy?'disabled':''}>Start a set of 10</button>
-    ${s.reqTotal ? `<button class="btn secondary" type="button" data-rm-start-mode="coordinator" ${RM.busy?'disabled':''}>Coordinator set (${Math.max(0,s.reqTotal-s.reqSolved)} left)</button>` : ''}
-    <button class="btn secondary" type="button" data-rm-start-mode="feed" ${RM.busy?'disabled':''}>Practice feed</button>
-  </div>
-  ${s.total===0 ? '<div class="empty" style="margin-top:14px;">No practice questions have been added to this section yet.'+(rmStaff()?' Use <b>Manage questions</b> to add or generate some.':' Your coordinator will add them soon.')+'</div>' : ''}`;
-}
-async function rmStart(mode){
-  if(RM.busy) return; RM.busy = true; RM.err = ''; rmPaint();
-  try{
-    const r = await rmApi('practice', { topic:RM.topic, mode, n:10 });
-    if(!r.questions || !r.questions.length){ RM.err = r.solvedAll ? 'You have solved every question available here. New ones are added regularly.' : 'There are no questions of that kind yet.'; }
-    else RM.sess = { mode, qs:r.questions, i:0, res:null, right:0, answered:0, review:!!r.review, busy:false, reported:false };
-  }catch(e){ RM.err = rmErr(e); }
-  RM.busy = false; rmPaint();
-}
-function rmSessionHtml(s){
-  const S = RM.sess;
-  if(S.done) return rmSummaryHtml(s);
-  const q = S.qs[S.i], r = S.res;
-  const src = q.required || q.source==='coordinator' ? 'Coordinator set' : 'Practice feed';
-  let input;
-  if(q.type==='mcq'){
-    input = (q.options||[]).map((o,k)=>{
-      let c = '';
-      if(r){ if(o.i===r.correctIndexShown) c = ' correct'; else if(o.i===S.picked) c = ' wrong'; }
-      return `<button class="rm-opt${c}" type="button" data-rm-pick="${o.i}" ${r||S.busy?'disabled':''}><span class="k">${'ABCDEF'[k]}</span><span>${escapeHtml(o.t)}</span></button>`;
-    }).join('');
-  } else {
-    input = `<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;"><input id="rmNum" inputmode="decimal" autocomplete="off" placeholder="Your answer" style="max-width:220px;" ${r?'disabled':''} value="${r?escapeHtml(String(S.given||'')):''}">${q.unit?`<span>${escapeHtml(q.unit)}</span>`:''}${r?'':`<button class="btn teal small" type="button" data-rm-check ${S.busy?'disabled':''}>Check</button>`}</div>`;
-  }
-  const fb = r ? `<div class="rm-fb ${r.correct?'ok':'no'} rm-win"><b>${r.correct?'Correct.':'Not quite.'}</b>${(!r.correct && q.type==='num') ? ` The answer is <b>${escapeHtml(r.answer)}</b>.` : ''} ${escapeHtml(r.explanation||'')}</div>
-    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button class="btn amber" type="button" data-rm-next>${S.i+1<S.qs.length?'Next question':'Finish set'}</button>${S.reported?'<span class="note" style="margin:0;">Thanks, we will review this question.</span>':'<button class="btn ghost small" type="button" data-rm-report>Report a problem with this question</button>'}</div>` : '';
-  return `<div class="card rm-win">
-    <div style="display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--muted); flex-wrap:wrap;"><span>Question ${S.i+1} of ${S.qs.length}${S.review?' · revision':''}</span><span><span class="rm-chip">${src}</span> <span class="rm-chip">${escapeHtml(q.tier)}</span></span></div>
-    <div class="rm-bar" style="margin-top:8px;"><b style="width:${Math.round(100*S.i/S.qs.length)}%"></b></div>
-    <div class="rm-q">${escapeHtml(q.text).replace(/\n/g,'<br>')}</div>
-    ${input}
-    ${fb}
-  </div>
-  <div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-quit>Leave this set</button></div>`;
-}
-async function rmAnswer(given){
-  const S = RM.sess; if(!S || S.res || S.busy) return;
-  const q = S.qs[S.i];
-  if(q.type==='num' && !String(given).trim()) return;
-  S.busy = true; S.picked = q.type==='mcq' ? given : null; S.given = given; rmPaint();
-  try{
-    const r = await rmApi('answer', { questionId:q.id, given });
-    S.answered++; if(r.correct) S.right++;
-    if(q.type==='mcq'){ const o = (q.options||[]).find(x=>x.t===r.answer); r.correctIndexShown = o ? o.i : -1; }
-    S.res = r; S.lastStreak = r.streak; RM.ov.streak = r.streak; RM.ov.todayCount = r.todayCount;
-  }catch(e){ S.picked = null; alert(rmErr(e)); }
-  S.busy = false; rmPaint();
-}
-async function rmReport(){
-  const S = RM.sess; if(!S || S.reported) return;
-  try{ await rmApi('report', { questionId:S.qs[S.i].id }); S.reported = true; }catch(e){ alert(rmErr(e)); }
-  rmPaint();
-}
-const RM_LINES = {
-  high:['Sharp work. Accuracy like this wins competition rounds.','That is the standard we are aiming for. Keep stacking sets.','Clean set. Read the explanations anyway; they teach the shortcuts.'],
-  mid:['Solid set. Go back over the ones you missed and they become strengths.','You are building the habit that matters. One more set tomorrow.','Good progress. The questions you got wrong are the most useful ones.'],
-  low:['Every wrong answer is a free lesson. Read the explanations and go again.','Hard questions are the point. This is how the instincts get built.','Do not judge a set by its score. Judge it by what you now understand.']
-};
-function rmSummaryHtml(s){
-  const S = RM.sess, pct = S.answered ? Math.round(100*S.right/S.answered) : 0, ov = RM.ov;
-  const pool = pct>=80 ? RM_LINES.high : pct>=50 ? RM_LINES.mid : RM_LINES.low;
-  const line = pool[(ov.streak + S.right) % pool.length];
-  const goalHit = ov.todayCount >= ov.dailyGoal;
-  return `<div class="card rm-win" style="text-align:center;">
-    <div style="display:flex; justify-content:center; margin:6px 0 8px;">${rmRing(pct, 120)}</div>
-    <h3 style="margin:0 0 4px;">${S.right} of ${S.answered} correct</h3>
-    <p style="margin:0 auto 14px; max-width:460px;">${escapeHtml(line)}</p>
-    <div class="rm-badges">
-      ${ov.streak ? `<span class="rm-badge rm-pop">${ov.streak}-day streak</span>` : ''}
-      ${goalHit ? '<span class="rm-badge rm-pop" style="animation-delay:.15s">Daily goal done</span>' : `<span class="rm-badge muted">${ov.dailyGoal-ov.todayCount} more for today's goal</span>`}
-    </div>
-    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;"><button class="btn amber" type="button" data-rm-start-mode="${S.mode}">Another set</button><button class="btn secondary" type="button" data-rm-end>Back to section</button></div>
-  </div>`;
-}
-async function rmFinishSession(){
-  try{ RM.ov = await rmApi('overview'); }catch(e){}
-  RM.sess = null; rmPaint();
-}
-
-// ---------- resources ----------
-function rmMine(item){
-  if(ME.role==='ambassador') return true;
-  const c = ME.role==='coordinator' ? ME.id : myCoordinatorId();
-  return !item.coordinatorId || item.coordinatorId===c;
-}
-function rmItem(title, meta, body, link){
-  return `<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(title)}</span><span class="item-meta">${meta||''}</span></div><div class="item-body">${linkify(body||'')} ${link?`<br>${linkifyUrl(link)}`:''}</div></div>`;
-}
-function rmResourcesHtml(s){
-  const lib = (DB.library||[]).filter(l=>rmTopicOf(l)===s.id), mats = (DB.materials||[]).filter(m=>rmTopicOf(m)===s.id && rmMine(m));
-  const gen = (DB.library||[]).filter(l=>!rmTopicOf(l));
-  return `
-  <div class="section-title"><div><h2>Resources for this section</h2><p>Library items and coordinator materials tagged to ${escapeHtml(s.title)}.</p></div></div>
-  <div class="list">${lib.length||mats.length ? lib.map(l=>rmItem(l.title, fmtDate(l.date), l.body, l.link)).join('') + mats.map(m=>rmItem(m.title, 'From your coordinator · '+fmtDate(m.date), m.body, m.link)).join('') : `<div class="empty">Nothing is tagged to this section yet.${ME.role==='ambassador'?' Choose a Roadmap section when you add or edit an item in the Resource library.':rmStaff()?' Choose this section in the Roadmap section field when you post a material.':''}</div>`}</div>
-  ${gen.length ? `<h3 style="font-size:15px; margin:24px 0 10px;">General resources</h3><div class="list">${gen.map(l=>rmItem(l.title, fmtDate(l.date), l.body, l.link)).join('')}</div>` : ''}`;
-}
-
-// ---------- quizzes, polls, exams, practice questions already in the portal ----------
-function rmGoTab(tab, sub){
-  if(sub) practiceSubTab = sub;
-  const t = document.querySelector('#tabs .tab[data-tab="'+tab+'"]'); if(t) t.click();
-}
-function rmActivitiesHtml(s){
-  const has = (tab)=> !!document.querySelector('#tabs .tab[data-tab="'+tab+'"]');
-  const quizzes = (DB.quizzes||[]).filter(x=>rmTopicOf(x)===s.id && rmMine(x)), polls = (DB.polls||[]).filter(x=>rmTopicOf(x)===s.id && rmMine(x));
-  const exams = (DB.exams||[]).filter(x=>rmTopicOf(x)===s.id && rmMine(x)), prac = (DB.practice||[]).filter(x=>rmTopicOf(x)===s.id && rmMine(x));
-  const block = (title, items, tab, sub, line)=> items.length ? `<div class="card" style="margin-bottom:14px;"><div style="display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap;"><h3 style="margin:0; font-size:16px;">${title} <span class="rm-chip">${items.length}</span></h3>${has(tab)?`<button class="btn teal small" type="button" data-rm-goto="${tab}" data-rm-sub="${sub||''}">Open</button>`:''}</div><ul style="margin:10px 0 0; padding-left:18px; color:var(--ink);">${items.slice(0,5).map(x=>`<li style="margin:4px 0;">${escapeHtml(line(x))}</li>`).join('')}</ul>${items.length>5?`<p class="note" style="margin:6px 0 0;">and ${items.length-5} more</p>`:''}</div>` : '';
-  const out = block('Quizzes', quizzes, 'practice', 'quizzes', x=>x.question) + block('Polls', polls, 'practice', 'polls', x=>x.question) + block('Exams', exams, 'exams', '', x=>x.title) + block('Practice questions', prac, 'practice', 'practice', x=>x.question);
-  return `
-  <div class="section-title"><div><h2>Quizzes, polls and exams</h2><p>Everything your coordinator has tagged to ${escapeHtml(s.title)}.</p></div></div>
-  ${out || `<div class="empty">Nothing is tagged to this section yet.${rmStaff()?' When you post a quiz, poll, exam or practice question, choose this section in the Roadmap section field.':' Your coordinator will add some soon.'}</div>`}`;
-}
-
-// ---------- staff: manage questions ----------
-function rmManageHtml(s){
-  const t = (id)=>id;
-  return `
-  <div class="card" style="margin-bottom:16px;">
-    <h3 style="margin:0 0 4px; font-size:16px;">Add a question</h3>
-    <p class="note" style="margin:0 0 10px;">Coordinator-set questions count towards section completion when ticked as part of the set. ${ME.role==='coordinator'?'Only your students see them.':'Everyone sees them.'}</p>
-    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-      <div class="field" style="margin:0;"><label>Type</label><select id="rmType"><option value="mcq">Multiple choice</option><option value="num">Numerical answer</option></select></div>
-      <div class="field" style="margin:0;"><label>Level</label><select id="rmTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
-    </div>
-    <div class="field" style="margin:10px 0;"><label>Question</label><textarea id="rmText" rows="3" placeholder="Write the question. Give every number the student needs."></textarea></div>
-    <div id="rmMcqBox">
-      <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
-        ${'ABCD'.split('').map((l,i)=>`<div class="field" style="margin:0;"><label>Option ${l}${i>1?' (optional)':''}</label><input id="rmOpt${i}" placeholder="Option ${l}"></div>`).join('')}
-      </div>
-      <div class="field" style="max-width:200px; margin:10px 0 0;"><label>Correct option</label><select id="rmCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
-    </div>
-    <div id="rmNumBox" class="hidden">
-      <div class="grid2" style="grid-template-columns:1fr 1fr 1fr; gap:10px;">
-        <div class="field" style="margin:0;"><label>Answer (number)</label><input id="rmAns" inputmode="decimal" placeholder="e.g. 0.25"></div>
-        <div class="field" style="margin:0;"><label>Allowed error (%)</label><input id="rmTol" inputmode="decimal" value="2"></div>
-        <div class="field" style="margin:0;"><label>Unit</label><input id="rmUnit" placeholder="e.g. mol"></div>
-      </div>
-    </div>
-    <div class="field" style="margin:10px 0;"><label>Explanation (shown after the student answers)</label><input id="rmExp" placeholder="One or two lines with the key step"></div>
-    <label class="eb-check" style="display:block; margin-bottom:12px;"><input type="checkbox" id="rmReq" checked> Part of the coordinator set (required for completion)</label>
-    <button class="btn teal small" type="button" data-rm-add>Add question</button> <span id="rmAddMsg" class="note" style="margin-left:8px;"></span>
-  </div>
-  <div class="card" style="margin-bottom:16px;">
-    <h3 style="margin:0 0 4px; font-size:16px;">Generate practice questions with AI</h3>
-    <p class="note" style="margin:0 0 10px;">Questions are written, then solved again independently. Only the ones where both answers agree are added. Students can report any that still look wrong.</p>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-      <div class="field" style="margin:0;"><label>Level</label><select id="rmGenTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
-      <div class="field" style="margin:0;"><label>How many</label><select id="rmGenCount"><option value="10">10</option><option value="20">20</option></select></div>
-      <div class="field" style="margin:0; flex:1; min-width:200px;"><label>Focus (optional)</label><input id="rmGenFocus" placeholder="e.g. limiting reagent and percentage yield"></div>
-      <button class="btn amber small" type="button" data-rm-gen ${RM.mq.busy?'disabled':''}>${RM.mq.busy?'Writing and checking…':'Generate'}</button>
-    </div>
-    <p id="rmGenMsg" class="note" style="margin:8px 0 0;">${escapeHtml(RM.mq.msg||'')}</p>
-  </div>
-  <div class="rm-subnav" id="rmFilters"></div>
-  <div id="rmList"><div class="empty">Loading questions…</div></div>`;
-}
-async function rmLoadList(reset, more){
-  const M = RM.mq;
-  try{
-    const offset = more && M.list ? M.list.length : 0;
-    const r = await rmApi('q_list', { topic:RM.topic, filter:M.filter==='all'?'':M.filter, limit:60, offset });
-    M.list = more && M.list ? M.list.concat(r.questions) : r.questions; M.total = r.total; M.flagged = r.flagged;
-  }catch(e){ M.list = M.list || []; M.msg = rmErr(e); }
-  rmPaintList();
-}
-function rmPaintList(){
-  const box = document.getElementById('rmList'), fl = document.getElementById('rmFilters'); if(!box) return;
-  const M = RM.mq;
-  if(fl) fl.innerHTML = [['all','All'],['set','Coordinator set'],['ai','AI practice'],['flagged','Reported ('+M.flagged+')'],['mine','Mine']].map(([k,l])=>`<button class="btn ${M.filter===k?'amber':'ghost'} small" type="button" data-rm-filter="${k}">${l}</button>`).join('');
-  const list = M.list || [];
-  const item = (q)=>{
-    const ans = q.qtype==='mcq' ? (q.options||[]).map((o,i)=>`<div style="margin:2px 0; ${i===q.answer_index?'color:var(--teal-deep); font-weight:600;':''}">${'ABCDEF'[i]}. ${escapeHtml(o)}${i===q.answer_index?' &#10003;':''}</div>`).join('') : `<div style="color:var(--teal-deep); font-weight:600;">Answer: ${escapeHtml(String(Number(q.answer_num)))} ${escapeHtml(q.unit||'')} <span style="color:var(--muted); font-weight:400;">(±${Math.round(Number(q.tolerance)*1000)/10}%)</span></div>`;
-    const own = q.created_by_me;
-    return `<div class="item"><div class="item-head"><span class="item-title" style="font-weight:600;">${escapeHtml(q.body).replace(/\n/g,'<br>')}</span></div>
-      <div style="margin:6px 0;"><span class="rm-chip">${q.source==='ai'?'AI':'Set by coordinator'}</span> <span class="rm-chip">${escapeHtml(q.tier)}</span> <span class="rm-chip">${q.qtype==='mcq'?'Multiple choice':'Numerical'}</span> ${q.required?'<span class="rm-chip on">Required</span>':''} ${q.status==='flagged'?`<span class="rm-chip bad">Reported ×${q.flags}</span>`:''}</div>
-      <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(q.explanation)}</div>`:''}</div>
-      <div class="item-actions">${q.status==='flagged'?`<button class="btn teal small" type="button" data-rm-q="approve" data-id="${q.id}">Keep it</button>`:''}<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
-  };
-  box.innerHTML = `<p class="note" style="margin:0 0 10px;">${M.total} question${M.total===1?'':'s'}${M.filter!=='all'?' in this view':' in this section'}${M.msg?' · '+escapeHtml(M.msg):''}</p>` +
-    (list.length ? `<div class="list">${list.map(item).join('')}</div>${list.length<M.total?'<div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-more>Load more</button></div>':''}` : '<div class="empty">No questions here yet.</div>');
-}
-async function rmAddQuestion(){
-  const g = (id)=>document.getElementById(id), type = g('rmType').value, msg = g('rmAddMsg');
-  const payload = { topic:RM.topic, type, tier:g('rmTier').value, text:g('rmText').value.trim(), explanation:g('rmExp').value.trim(), required:g('rmReq').checked };
-  if(!payload.text){ msg.textContent = 'Write the question first.'; return; }
-  if(type==='mcq'){
-    const raw = [0,1,2,3].map(i=>g('rmOpt'+i).value.trim()), pick = parseInt(g('rmCorrect').value,10);
-    if(!raw[pick]){ msg.textContent = 'The correct option is empty.'; return; }
-    const kept = raw.map((t,i)=>({t,i})).filter(o=>o.t);
-    if(kept.length<2){ msg.textContent = 'Add at least two options.'; return; }
-    payload.options = kept.map(o=>o.t); payload.answerIndex = kept.findIndex(o=>o.i===pick);
-  } else {
-    payload.answer = g('rmAns').value.trim(); payload.tolerance = (parseFloat(g('rmTol').value)||2)/100; payload.unit = g('rmUnit').value.trim();
-    if(!payload.answer){ msg.textContent = 'Enter the numerical answer.'; return; }
-  }
-  msg.textContent = 'Saving…';
-  try{
-    await rmApi('q_add', payload);
-    ['rmText','rmExp','rmOpt0','rmOpt1','rmOpt2','rmOpt3','rmAns','rmUnit'].forEach(id=>{ const e = g(id); if(e) e.value = ''; });
-    msg.textContent = 'Added.';
-    RM.ov = await rmApi('overview'); await rmLoadList(true);
-  }catch(e){ msg.textContent = rmErr(e); }
-}
-async function rmGenerate(){
-  const g = (id)=>document.getElementById(id), M = RM.mq;
-  if(M.busy) return; M.busy = true; M.msg = '';
-  const btn = document.querySelector('[data-rm-gen]'); if(btn){ btn.disabled = true; btn.textContent = 'Writing and checking…'; }
-  const out = g('rmGenMsg'); if(out) out.textContent = 'This can take up to a minute.';
-  try{
-    const r = await rmApi('generate', { topic:RM.topic, tier:g('rmGenTier').value, count:parseInt(g('rmGenCount').value,10), focus:g('rmGenFocus').value.trim() });
-    M.msg = r.added ? `Added ${r.added} verified question${r.added===1?'':'s'}${r.dropped?` (${r.dropped} dropped: failed the answer check or duplicated)`:''}.` : 'None passed the answer check this time. Try again.';
-    RM.ov = await rmApi('overview');
-  }catch(e){ M.msg = rmErr(e); }
-  M.busy = false; rmPaint();
-}
-async function rmQuestionOp(op, id, value){
-  try{ await rmApi('q_set', { id, op, value:!!value }); await rmLoadList(true); if(op==='required'||op==='delete'||op==='reject'){ RM.ov = await rmApi('overview'); } }
-  catch(e){ alert(rmErr(e)); }
-}
-
-// ---------- staff: student progress ----------
-async function rmLoadProgress(){
-  const box = document.getElementById('rmProgRoot'); if(!box) return;
-  try{ RM.prog = await rmApi('progress', { topic:RM.topic }); }catch(e){ box.innerHTML = `<div class="empty">${escapeHtml(rmErr(e))}</div>`; return; }
-  const rows = RM.prog.rows, ov = RM.ov, now = Date.now();
-  const ago = (t)=>{ if(!t) return 'never'; const d = Math.floor((now - new Date(t).getTime())/86400000); return d<=0 ? 'today' : d===1 ? 'yesterday' : d+' days ago'; };
-  const idle = (r)=> !r.lastAt || (now - new Date(r.lastAt).getTime()) > 3*86400000;
-  const done = rows.filter(r=>r.complete).length, notStarted = rows.filter(r=>!r.attempts).length;
-  box.innerHTML = `<div class="section-title"><div><h2>Student progress</h2><p>${ME.role==='coordinator'?'Your students':'All students'} in this section. Lowest progress first.</p></div></div>
-    <div class="rm-stats"><div class="rm-stat"><div class="n">${done}/${rows.length}</div><div class="l">complete</div></div><div class="rm-stat"><div class="n">${notStarted}</div><div class="l">not started</div></div><div class="rm-stat"><div class="n">${rows.filter(idle).length}</div><div class="l">no practice in 3 days</div></div></div>
-    <div class="list">${rows.length ? rows.map(r=>`<div class="item rm-prog"><div class="rm-prog-name"><b>${escapeHtml(r.name||'Student')}</b><div class="note" style="margin:0;">Last practised ${ago(r.lastAt)}</div></div><div class="rm-prog-bar"><div class="rm-bar"><b style="width:${r.pct}%"></b></div><div class="note" style="margin:4px 0 0;">${r.pct}% · set ${Math.min(r.reqSolved,r.reqTotal)}/${r.reqTotal} · practice ${Math.min(Math.max(0,r.solved-r.reqSolved),ov.practiceGoal)}/${ov.practiceGoal}${r.accuracy!=null?' · '+r.accuracy+'% correct':''}</div></div>${r.complete?'<span class="rm-pill done">Complete</span>':idle(r)?'<span class="rm-pill lock">Needs a nudge</span>':'<span class="rm-pill review">In progress</span>'}</div>`).join('') : '<div class="empty">No students to show.</div>'}</div>`;
-}
-
-// ---------- events ----------
-async function rmClick(ev){
-  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-start-mode],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-goto],[data-rm-add],[data-rm-gen],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift]');
-  if(!t) return;
-  const d = t.dataset;
-  if(d.rmOpen!==undefined){
-    const s = rmSec(d.rmOpen); if(!s) return;
-    if(!s.open){ RM.note = `${s.title} opens on ${rmDateY(s.start)}. Finish the current section first.`; rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return; }
-    RM.note = ''; RM.view = 'section'; RM.topic = s.id; RM.tab = 'practice'; RM.sess = null; RM.err = ''; RM.mq = { list:null, filter:'all', total:0, flagged:0, msg:'', busy:false };
-    rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return;
-  }
-  if(d.rmHome!==undefined){ RM.view = 'home'; RM.sess = null; RM.note = ''; try{ RM.ov = await rmApi('overview'); }catch(e){} rmPaint(); return; }
-  if(d.rmTab){ RM.tab = d.rmTab; RM.sess = null; RM.err = ''; rmPaint(); return; }
-  if(d.rmStartMode){ RM.sess = null; return rmStart(d.rmStartMode); }
-  if(d.rmPick!==undefined) return rmAnswer(parseInt(d.rmPick,10));
-  if(d.rmCheck!==undefined){ const i = document.getElementById('rmNum'); return rmAnswer(i ? i.value : ''); }
-  if(d.rmNext!==undefined){
-    const S = RM.sess; if(!S) return;
-    if(S.i+1<S.qs.length){ S.i++; S.res = null; S.picked = null; S.given = ''; S.reported = false; rmPaint(); }
-    else { S.done = true; try{ RM.ov = await rmApi('overview'); }catch(e){} rmPaint(); }
-    return;
-  }
-  if(d.rmReport!==undefined) return rmReport();
-  if(d.rmQuit!==undefined){ if(RM.sess && RM.sess.answered && !confirm('Leave this set? Your answers so far are saved.')) return; return rmFinishSession(); }
-  if(d.rmEnd!==undefined) return rmFinishSession();
-  if(d.rmGoto){ rmGoTab(d.rmGoto, d.rmSub||''); return; }
-  if(d.rmAdd!==undefined) return rmAddQuestion();
-  if(d.rmGen!==undefined) return rmGenerate();
-  if(d.rmFilter){ RM.mq.filter = d.rmFilter; RM.mq.list = null; rmPaintList(); return rmLoadList(true); }
-  if(d.rmQ){ if(d.rmQ==='delete' && !confirm('Delete this question for good?')) return; if(d.rmQ==='reject' && !confirm('Remove this question from practice?')) return; return rmQuestionOp(d.rmQ, d.id, d.value); }
-  if(d.rmMore!==undefined) return rmLoadList(false, true);
-  if(d.rmSchedToggle!==undefined){ RM.schedOpen = !RM.schedOpen; rmPaint(); return; }
-  if(d.rmSchedSave!==undefined){
-    const sections = RM.ov.sections.map(s=>({ id:s.id, start:(document.querySelector(`[data-rm-start="${s.id}"]`)||{}).value, end:(document.querySelector(`[data-rm-end="${s.id}"]`)||{}).value }));
-    try{ await rmApi('schedule_set', { sections }); RM.ov = await rmApi('overview'); rmPaint(); alert('Schedule saved.'); }catch(e){ alert(rmErr(e)); }
-    return;
-  }
-  if(d.rmSchedShift){
-    const days = parseInt((document.getElementById('rmShiftDays')||{}).value,10)||3;
-    if(!confirm(`Extend this section by ${days} days and move every later section ${days} days later?`)) return;
-    try{ await rmApi('schedule_shift', { fromId:d.rmSchedShift, days }); RM.ov = await rmApi('overview'); rmPaint(); }catch(e){ alert(rmErr(e)); }
-  }
-}
-async function rmChange(ev){
-  const t = ev.target;
-  if(t.id==='rmType'){ document.getElementById('rmMcqBox').classList.toggle('hidden', t.value!=='mcq'); document.getElementById('rmNumBox').classList.toggle('hidden', t.value!=='num'); }
-  if(t.id==='rmRemind'){
-    try{ await rmApi('schedule_set', { remindersOn:t.checked }); RM.ov.remindersOn = t.checked; }catch(e){ t.checked = !t.checked; alert(rmErr(e)); }
-  }
-}
-document.addEventListener('keydown', (ev)=>{
-  const root = rmRoot(); if(!root || !root.contains(ev.target)) return;
-  if(ev.key==='Enter' && ev.target.id==='rmNum'){ ev.preventDefault(); rmAnswer(ev.target.value); }
-  if((ev.key==='Enter'||ev.key===' ') && ev.target.matches && ev.target.matches('[data-rm-open]')){ ev.preventDefault(); ev.target.click(); }
-});
 </script>
 </body>
 </html>
