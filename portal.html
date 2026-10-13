@@ -882,58 +882,58 @@
   .xs-facts b{color:var(--navy-deep);}
 
   /* ---- full-screen exam player ---- */
-  .xp{position:fixed; inset:0; z-index:2000; background:var(--chalk); display:flex; flex-direction:column; color:var(--ink); font-family:'Plus Jakarta Sans',sans-serif; -webkit-user-select:none; user-select:none;}
-  .xp textarea{-webkit-user-select:text; user-select:text;}
-  .xp-top{background:var(--navy-deep); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex:none;}
-  .xp-brand{min-width:0;} .xp-brand b{display:block; font-family:'Sora',sans-serif; font-size:17px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .xp-brand span{font-size:12.5px; color:#C9C5F2;}
-  .xp-timer{display:flex; align-items:center; gap:12px; background:#fff; color:var(--navy-deep); border-radius:999px; padding:8px 22px; border:3px solid var(--amber); flex:none; transition:background .2s ease;}
-  .xp-time{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:30px; line-height:1; letter-spacing:.02em;}
-  .xp-timer small{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); max-width:70px; line-height:1.2;}
-  .xp-timer.warn{background:var(--butter);}
-  .xp-timer.crit{background:#FFE5E5; color:#B3261E; border-color:#E5484D; animation:xpPulse 1s ease-in-out infinite;}
+  .exmp{position:fixed; inset:0; z-index:2000; background:var(--chalk); display:flex; flex-direction:column; color:var(--ink); font-family:'Plus Jakarta Sans',sans-serif; -webkit-user-select:none; user-select:none;}
+  .exmp textarea{-webkit-user-select:text; user-select:text;}
+  .exmp-top{background:var(--navy-deep); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex:none;}
+  .exmp-brand{min-width:0;} .exmp-brand b{display:block; font-family:'Sora',sans-serif; font-size:17px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .exmp-brand span{font-size:12.5px; color:#C9C5F2;}
+  .exmp-timer{display:flex; align-items:center; gap:12px; background:#fff; color:var(--navy-deep); border-radius:999px; padding:8px 22px; border:3px solid var(--amber); flex:none; transition:background .2s ease;}
+  .exmp-time{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:30px; line-height:1; letter-spacing:.02em;}
+  .exmp-timer small{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); max-width:70px; line-height:1.2;}
+  .exmp-timer.warn{background:var(--butter);}
+  .exmp-timer.crit{background:#FFE5E5; color:#B3261E; border-color:#E5484D; animation:xpPulse 1s ease-in-out infinite;}
   @keyframes xpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-  .xp-bars{flex:none; background:#fff; border-bottom:2px solid var(--line);}
-  .xp-qbar{height:8px; background:#E9E5FA;} .xp-qbar i{display:block; height:100%; width:100%; background:var(--teal); transition:width .25s linear;}
-  .xp-pbar{height:4px; background:#E9E5FA;} .xp-pbar i{display:block; height:100%; background:var(--navy);}
-  .xp-body{flex:1; overflow:auto; padding:28px 20px; display:flex; justify-content:center; align-items:flex-start;}
-  .xp-card{width:100%; max-width:820px; background:#fff; border:2px solid var(--line); border-radius:24px; box-shadow:0 5px 0 var(--line); padding:28px 32px;}
-  .xp-card.xp-wide{max-width:900px;}
-  .xp-card h1{font-size:28px; margin:4px 0 8px;} .xp-card h3{font-size:16px; margin:22px 0 8px;}
-  .xp-kicker{font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--navy);}
-  .xp-lead{font-size:16px; color:#4B4672; margin:0 0 16px; line-height:1.55;}
-  .xp-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:16px 0 4px;}
-  .xp-cell{background:var(--lilac); border:2px solid var(--navy-deep); border-radius:14px; padding:10px 14px;}
-  .xp-cell small{display:block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--navy);}
-  .xp-cell b{display:block; font-size:15px; color:var(--navy-deep); margin-top:2px; font-family:'Sora',sans-serif;}
-  .xp-instr{font-size:15px; line-height:1.65; white-space:pre-wrap; background:#FAF9FF; border:2px solid var(--line); border-radius:14px; padding:14px 16px;}
-  .xp-rules{margin:0; padding-left:20px; font-size:14.5px; line-height:1.7;}
-  .xp-ack{display:flex; gap:10px; align-items:flex-start; margin:20px 0 0; text-transform:none; letter-spacing:0; font-size:14.5px; font-weight:600; color:var(--navy-deep); cursor:pointer;}
-  .xp-ack input{width:auto; margin-top:3px; accent-color:var(--navy);}
-  .xp-qmeta{display:flex; gap:8px; margin-bottom:14px;}
-  .xp-chip{display:inline-block; border-radius:999px; padding:4px 12px; font-size:12px; font-weight:800; background:var(--lilac); color:var(--navy);}
-  .xp-qtext{font-size:20px; line-height:1.65; white-space:pre-wrap; color:var(--navy-deep); font-weight:600; margin-bottom:20px;}
-  .xp-opts{display:flex; flex-direction:column; gap:10px;}
-  .xp-opt{display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#fff; border:2px solid var(--line); border-radius:16px; padding:14px 16px; font:inherit; font-size:16px; font-weight:600; color:var(--ink); cursor:pointer; transition:border-color .12s ease, background .12s ease, transform .12s ease;}
-  .xp-opt b{width:32px; height:32px; border-radius:50%; background:var(--lilac); color:var(--navy); display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-size:14px; flex:none;}
-  .xp-opt:hover{border-color:var(--navy); transform:translateY(-1px);}
-  .xp-opt.on{border-color:var(--navy); background:var(--lilac); box-shadow:0 3px 0 var(--navy);}
-  .xp-opt.on b{background:var(--navy); color:#fff;}
-  .xp-answer{font-size:16px; line-height:1.6; min-height:200px; resize:vertical;}
-  .xp-data{margin-top:18px; font-size:13.5px;} .xp-data summary{cursor:pointer; font-weight:800; color:var(--navy);} .xp-data div{margin-top:6px; color:#4B4672; line-height:1.55;}
-  .xp-foot{flex:none; background:#fff; border-top:2px solid var(--line); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
-  .xp-hint{font-size:13px; color:var(--muted);}
-  .xp-foot .btn:only-child{margin-left:auto;}
-  .xp-center{text-align:center; padding:30px 10px;}
-  .xp-tick{width:64px; height:64px; border-radius:50%; background:var(--teal); color:#fff; font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; border:3px solid var(--navy-deep);}
-  .xp-warnline{color:#8A4B00; font-weight:700; font-size:14px;}
-  .xp-modal{position:absolute; inset:0; background:rgba(22,18,63,.62); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5;}
-  .xp-modal-card{background:#fff; border:2px solid var(--navy-deep); border-radius:22px; box-shadow:0 6px 0 var(--navy-deep); padding:24px 26px; max-width:440px; width:100%;}
-  .xp-modal-card h3{margin:0 0 6px;} .xp-modal-card p{margin:0 0 18px; font-size:15.5px; line-height:1.55; color:var(--ink);}
-  .xp-modal-actions{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;}
+  .exmp-bars{flex:none; background:#fff; border-bottom:2px solid var(--line);}
+  .exmp-qbar{height:8px; background:#E9E5FA;} .exmp-qbar i{display:block; height:100%; width:100%; background:var(--teal); transition:width .25s linear;}
+  .exmp-pbar{height:4px; background:#E9E5FA;} .exmp-pbar i{display:block; height:100%; background:var(--navy);}
+  .exmp-body{flex:1; overflow:auto; padding:28px 20px; display:flex; justify-content:center; align-items:flex-start;}
+  .exmp-card{width:100%; max-width:820px; background:#fff; border:2px solid var(--line); border-radius:24px; box-shadow:0 5px 0 var(--line); padding:28px 32px;}
+  .exmp-card.exmp-wide{max-width:900px;}
+  .exmp-card h1{font-size:28px; margin:4px 0 8px;} .exmp-card h3{font-size:16px; margin:22px 0 8px;}
+  .exmp-kicker{font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--navy);}
+  .exmp-lead{font-size:16px; color:#4B4672; margin:0 0 16px; line-height:1.55;}
+  .exmp-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:16px 0 4px;}
+  .exmp-cell{background:var(--lilac); border:2px solid var(--navy-deep); border-radius:14px; padding:10px 14px;}
+  .exmp-cell small{display:block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--navy);}
+  .exmp-cell b{display:block; font-size:15px; color:var(--navy-deep); margin-top:2px; font-family:'Sora',sans-serif;}
+  .exmp-instr{font-size:15px; line-height:1.65; white-space:pre-wrap; background:#FAF9FF; border:2px solid var(--line); border-radius:14px; padding:14px 16px;}
+  .exmp-rules{margin:0; padding-left:20px; font-size:14.5px; line-height:1.7;}
+  .exmp-ack{display:flex; gap:10px; align-items:flex-start; margin:20px 0 0; text-transform:none; letter-spacing:0; font-size:14.5px; font-weight:600; color:var(--navy-deep); cursor:pointer;}
+  .exmp-ack input{width:auto; margin-top:3px; accent-color:var(--navy);}
+  .exmp-qmeta{display:flex; gap:8px; margin-bottom:14px;}
+  .exmp-chip{display:inline-block; border-radius:999px; padding:4px 12px; font-size:12px; font-weight:800; background:var(--lilac); color:var(--navy);}
+  .exmp-qtext{font-size:20px; line-height:1.65; white-space:pre-wrap; color:var(--navy-deep); font-weight:600; margin-bottom:20px;}
+  .exmp-opts{display:flex; flex-direction:column; gap:10px;}
+  .exmp-opt{display:flex; align-items:center; gap:14px; width:100%; text-align:left; background:#fff; border:2px solid var(--line); border-radius:16px; padding:14px 16px; font:inherit; font-size:16px; font-weight:600; color:var(--ink); cursor:pointer; transition:border-color .12s ease, background .12s ease, transform .12s ease;}
+  .exmp-opt b{width:32px; height:32px; border-radius:50%; background:var(--lilac); color:var(--navy); display:flex; align-items:center; justify-content:center; font-family:'Sora',sans-serif; font-size:14px; flex:none;}
+  .exmp-opt:hover{border-color:var(--navy); transform:translateY(-1px);}
+  .exmp-opt.on{border-color:var(--navy); background:var(--lilac); box-shadow:0 3px 0 var(--navy);}
+  .exmp-opt.on b{background:var(--navy); color:#fff;}
+  .exmp-answer{font-size:16px; line-height:1.6; min-height:200px; resize:vertical;}
+  .exmp-data{margin-top:18px; font-size:13.5px;} .exmp-data summary{cursor:pointer; font-weight:800; color:var(--navy);} .exmp-data div{margin-top:6px; color:#4B4672; line-height:1.55;}
+  .exmp-foot{flex:none; background:#fff; border-top:2px solid var(--line); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .exmp-hint{font-size:13px; color:var(--muted);}
+  .exmp-foot .btn:only-child{margin-left:auto;}
+  .exmp-center{text-align:center; padding:30px 10px;}
+  .exmp-tick{width:64px; height:64px; border-radius:50%; background:var(--teal); color:#fff; font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; border:3px solid var(--navy-deep);}
+  .exmp-warnline{color:#8A4B00; font-weight:700; font-size:14px;}
+  .exmp-modal{position:absolute; inset:0; background:rgba(22,18,63,.62); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5;}
+  .exmp-modal-card{background:#fff; border:2px solid var(--navy-deep); border-radius:22px; box-shadow:0 6px 0 var(--navy-deep); padding:24px 26px; max-width:440px; width:100%;}
+  .exmp-modal-card h3{margin:0 0 6px;} .exmp-modal-card p{margin:0 0 18px; font-size:15.5px; line-height:1.55; color:var(--ink);}
+  .exmp-modal-actions{display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;}
   @media (max-width:640px){
-    .xp-top{padding:12px 16px;} .xp-time{font-size:24px;} .xp-timer{padding:6px 14px;} .xp-timer small{display:none;}
-    .xp-card{padding:20px 18px; border-radius:20px;} .xp-qtext{font-size:18px;} .xp-foot{padding:12px 16px;} .xp-hint{display:none;}
+    .exmp-top{padding:12px 16px;} .exmp-time{font-size:24px;} .exmp-timer{padding:6px 14px;} .exmp-timer small{display:none;}
+    .exmp-card{padding:20px 18px; border-radius:20px;} .exmp-qtext{font-size:18px;} .exmp-foot{padding:12px 16px;} .exmp-hint{display:none;}
   }
 
   .exb-modes{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;}
@@ -6603,7 +6603,7 @@ function xpOpen(examId, preview){
   if(XP) return;
   const exam0 = DB.exams.find(e=>e.id===examId); if(!examIsV2(exam0)) return;
   const exam = preview ? { ...exam0, endAt:null } : exam0;
-  const el = document.createElement('div'); el.id = 'xpOverlay'; el.className = 'xp';
+  const el = document.createElement('div'); el.id = 'xpOverlay'; el.className = 'exmp';
   document.body.appendChild(el); document.body.style.overflow = 'hidden';
   XP = { exam, attempt:null, stage:'loading', el, preview:!!preview, timer:null, shown:-1, lastVis:0, fsGate:false };
   xpEnterFs();   // must run inside the click, before any await
@@ -6650,33 +6650,33 @@ function xpInfoGrid(){
   const mine = XP.preview ? [] : DB.examAttempts.filter(a=>a.examId===e.id && a.studentId===ME.id);
   const no = XP.attempt ? (XP.attempt.attemptNo||1) : mine.length + 1;
   const range = Math.min(...secs) === Math.max(...secs) ? fmtDur(secs[0]) : `${fmtDur(Math.min(...secs))} to ${fmtDur(Math.max(...secs))}`;
-  const cell = (k,v)=>`<div class="xp-cell"><small>${k}</small><b>${v}</b></div>`;
-  return `<div class="xp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${e.attempts||1}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
+  const cell = (k,v)=>`<div class="exmp-cell"><small>${k}</small><b>${v}</b></div>`;
+  return `<div class="exmp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${e.attempts||1}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
 }
 function xpShell(inner, foot){
   const e = XP.exam;
-  return `<div class="xp-top"><div class="xp-brand"><b>${escapeHtml(e.title)}</b><span>${XP.preview ? 'Preview mode: nothing is recorded' : escapeHtml(ME.name)}</span></div></div><div class="xp-body"><div class="xp-card xp-wide">${inner}</div></div>${foot ? `<div class="xp-foot">${foot}</div>` : ''}`;
+  return `<div class="exmp-top"><div class="exmp-brand"><b>${escapeHtml(e.title)}</b><span>${XP.preview ? 'Preview mode: nothing is recorded' : escapeHtml(ME.name)}</span></div></div><div class="exmp-body"><div class="exmp-card exmp-wide">${inner}</div></div>${foot ? `<div class="exmp-foot">${foot}</div>` : ''}`;
 }
 function xpPaint(){
   if(!XP || !XP.el) return;
   const e = XP.exam, el = XP.el;
-  if(XP.stage==='loading'){ el.innerHTML = xpShell('<div class="xp-center">Getting your exam ready…</div>'); return; }
-  if(XP.stage==='error'){ el.innerHTML = xpShell(`<div class="xp-center"><p>${escapeHtml(XP.msg||'Something went wrong.')}</p></div>`, '<button class="btn" data-xp="close">Back to exams</button>'); return; }
+  if(XP.stage==='loading'){ el.innerHTML = xpShell('<div class="exmp-center">Getting your exam ready…</div>'); return; }
+  if(XP.stage==='error'){ el.innerHTML = xpShell(`<div class="exmp-center"><p>${escapeHtml(XP.msg||'Something went wrong.')}</p></div>`, '<button class="btn" data-xp="close">Back to exams</button>'); return; }
   if(XP.stage==='instructions'){
     const a = XP.attempt;
     let body;
     if(a){
       const q = e.questions[a.qIndex], left = Math.max(0, q.timeSec - (Date.now()-Date.parse(a.qStartedAt))/1000);
-      body = `<div class="xp-kicker">Welcome back</div><h1>${escapeHtml(e.title)}</h1><p class="xp-lead">You are on question <b>${a.qIndex+1} of ${e.questions.length}</b>. The clock kept running while you were away, and there are about <b>${fmtDur(left)}</b> left on this question.</p>${xpInfoGrid()}`;
+      body = `<div class="exmp-kicker">Welcome back</div><h1>${escapeHtml(e.title)}</h1><p class="exmp-lead">You are on question <b>${a.qIndex+1} of ${e.questions.length}</b>. The clock kept running while you were away, and there are about <b>${fmtDur(left)}</b> left on this question.</p>${xpInfoGrid()}`;
       el.innerHTML = xpShell(body, '<button class="btn" data-xp="close">Back to exams</button><button class="btn amber" data-xp="begin">Continue exam →</button>');
       return;
     }
-    body = `<div class="xp-kicker">Exam instructions</div><h1>${escapeHtml(e.title)}</h1>${e.subject ? `<p class="xp-lead">${escapeHtml(e.subject)}</p>` : ''}${xpInfoGrid()}
-      <h3>Instructions from your examiner</h3><div class="xp-instr">${linkify(e.instructions || e.protocol || '')}</div>
-      ${e.dataLine ? `<h3>Data provided</h3><div class="xp-instr">${escapeHtml(e.dataLine)}</div>` : ''}
+    body = `<div class="exmp-kicker">Exam instructions</div><h1>${escapeHtml(e.title)}</h1>${e.subject ? `<p class="exmp-lead">${escapeHtml(e.subject)}</p>` : ''}${xpInfoGrid()}
+      <h3>Instructions from your examiner</h3><div class="exmp-instr">${linkify(e.instructions || e.protocol || '')}</div>
+      ${e.dataLine ? `<h3>Data provided</h3><div class="exmp-instr">${escapeHtml(e.dataLine)}</div>` : ''}
       <h3>How this exam works</h3>
-      <ul class="xp-rules"><li>You see <b>one question at a time</b>, and its timer starts the moment it appears.</li><li>When a timer reaches zero, your answer is saved and the <b>next question opens automatically</b>.</li><li>You <b>cannot go back</b> to an earlier question.</li><li>Stay in full screen. Leaving full screen or switching tabs is <b>recorded</b> and your examiner can see it.</li>${e.endAt ? '<li>The exam is submitted automatically at the closing time, even if you are not finished.</li>' : ''}<li>If your connection drops, keep going. Your answers are kept on this device and sent when you finish.</li></ul>
-      <label class="xp-ack"><input type="checkbox" id="xpAck"> I have read the instructions and I am ready to begin.</label>`;
+      <ul class="exmp-rules"><li>You see <b>one question at a time</b>, and its timer starts the moment it appears.</li><li>When a timer reaches zero, your answer is saved and the <b>next question opens automatically</b>.</li><li>You <b>cannot go back</b> to an earlier question.</li><li>Stay in full screen. Leaving full screen or switching tabs is <b>recorded</b> and your examiner can see it.</li>${e.endAt ? '<li>The exam is submitted automatically at the closing time, even if you are not finished.</li>' : ''}<li>If your connection drops, keep going. Your answers are kept on this device and sent when you finish.</li></ul>
+      <label class="exmp-ack"><input type="checkbox" id="xpAck"> I have read the instructions and I am ready to begin.</label>`;
     el.innerHTML = xpShell(body, '<button class="btn" data-xp="close">Cancel</button><button class="btn amber" data-xp="begin" id="xpBeginBtn" disabled>Begin exam →</button>');
     const ack = el.querySelector('#xpAck'); if(ack) ack.addEventListener('change', ()=>{ el.querySelector('#xpBeginBtn').disabled = !ack.checked; });
     return;
@@ -6685,7 +6685,7 @@ function xpPaint(){
   if(XP.stage==='done'){
     const a = XP.attempt, n = e.questions.length, answered = e.questions.filter(q=>a.answers[q.id]!==undefined && a.answers[q.id]!=='').length;
     const more = !XP.preview && examStatus(e)==='open' && (e.attempts||1) > (a.attemptNo||1);
-    el.innerHTML = xpShell(`<div class="xp-center"><div class="xp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="xp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${(e.attempts||1)-(a.attemptNo||1)} attempt${(e.attempts||1)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="xp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
+    el.innerHTML = xpShell(`<div class="exmp-center"><div class="exmp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="exmp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${(e.attempts||1)-(a.attemptNo||1)} attempt${(e.attempts||1)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="exmp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
   }
 }
 function xpPaintQuestion(){
@@ -6695,22 +6695,22 @@ function xpPaintQuestion(){
   const ans = a.answers[q.id];
   let input;
   if(q.type==='mcq'){
-    input = `<div class="xp-opts">${q.options.map((o,j)=>`<button type="button" class="xp-opt${Number(ans)===j && ans!==undefined && ans!=='' ?' on':''}" data-xp-opt="${j}"><b>${'ABCD'[j]}</b><span>${escapeHtml(chemify(o))}</span></button>`).join('')}</div>`;
+    input = `<div class="exmp-opts">${q.options.map((o,j)=>`<button type="button" class="exmp-opt${Number(ans)===j && ans!==undefined && ans!=='' ?' on':''}" data-xp-opt="${j}"><b>${'ABCD'[j]}</b><span>${escapeHtml(chemify(o))}</span></button>`).join('')}</div>`;
   } else {
-    input = `<textarea id="xpAnswer" class="xp-answer" rows="9" placeholder="${q.type==='short' ? 'Type your answer here' : 'Write your working and final answer here'}" spellcheck="false">${escapeHtml(ans||'')}</textarea>`;
+    input = `<textarea id="xpAnswer" class="exmp-answer" rows="9" placeholder="${q.type==='short' ? 'Type your answer here' : 'Write your working and final answer here'}" spellcheck="false">${escapeHtml(ans||'')}</textarea>`;
   }
-  el.innerHTML = `<div class="xp-top">
-      <div class="xp-brand"><b>${escapeHtml(e.title)}</b><span>Question ${i+1} of ${n}${XP.preview ? ' · preview' : ''}</span></div>
-      <div class="xp-timer" id="xpTimer"><span class="xp-time" id="xpTime">--:--</span><small>left on this question</small></div>
+  el.innerHTML = `<div class="exmp-top">
+      <div class="exmp-brand"><b>${escapeHtml(e.title)}</b><span>Question ${i+1} of ${n}${XP.preview ? ' · preview' : ''}</span></div>
+      <div class="exmp-timer" id="xpTimer"><span class="exmp-time" id="xpTime">--:--</span><small>left on this question</small></div>
     </div>
-    <div class="xp-bars"><div class="xp-qbar"><i id="xpQbar"></i></div><div class="xp-pbar"><i style="width:${Math.round(100*i/n)}%"></i></div></div>
-    <div class="xp-body"><div class="xp-card">
-      <div class="xp-qmeta"><span class="xp-chip">${EXAM_TYPE_LABEL[q.type]}</span><span class="xp-chip">${q.marks} mark${q.marks===1?'':'s'}</span></div>
-      <div class="xp-qtext">${linkify(chemify(q.text))}</div>
+    <div class="exmp-bars"><div class="exmp-qbar"><i id="xpQbar"></i></div><div class="exmp-pbar"><i style="width:${Math.round(100*i/n)}%"></i></div></div>
+    <div class="exmp-body"><div class="exmp-card">
+      <div class="exmp-qmeta"><span class="exmp-chip">${EXAM_TYPE_LABEL[q.type]}</span><span class="exmp-chip">${q.marks} mark${q.marks===1?'':'s'}</span></div>
+      <div class="exmp-qtext">${linkify(chemify(q.text))}</div>
       ${input}
-      ${e.dataLine ? `<details class="xp-data"><summary>Data sheet</summary><div>${escapeHtml(e.dataLine)}</div></details>` : ''}
+      ${e.dataLine ? `<details class="exmp-data"><summary>Data sheet</summary><div>${escapeHtml(e.dataLine)}</div></details>` : ''}
     </div></div>
-    <div class="xp-foot"><span class="xp-hint" id="xpNote">${a.tabSwitches||a.fsExits ? '⚠ Leaving the exam is recorded.' : 'You cannot go back to earlier questions.'}</span><button class="btn amber" data-xp="next">${i===n-1 ? 'Submit exam' : 'Next question →'}</button></div>`;
+    <div class="exmp-foot"><span class="exmp-hint" id="xpNote">${a.tabSwitches||a.fsExits ? '⚠ Leaving the exam is recorded.' : 'You cannot go back to earlier questions.'}</span><button class="btn amber" data-xp="next">${i===n-1 ? 'Submit exam' : 'Next question →'}</button></div>`;
   xpTick(true);
 }
 function xpTick(force){
@@ -6759,8 +6759,8 @@ async function xpBegin(){
 }
 function xpAskConfirm(msg, okLabel){
   return new Promise(res=>{
-    const m = document.createElement('div'); m.className = 'xp-modal';
-    m.innerHTML = `<div class="xp-modal-card"><p>${escapeHtml(msg)}</p><div class="xp-modal-actions"><button class="btn" data-m="no">Keep working</button><button class="btn amber" data-m="yes">${escapeHtml(okLabel)}</button></div></div>`;
+    const m = document.createElement('div'); m.className = 'exmp-modal';
+    m.innerHTML = `<div class="exmp-modal-card"><p>${escapeHtml(msg)}</p><div class="exmp-modal-actions"><button class="btn" data-m="no">Keep working</button><button class="btn amber" data-m="yes">${escapeHtml(okLabel)}</button></div></div>`;
     m.addEventListener('click', ev=>{ const b = ev.target.closest('button'); if(!b) return; m.remove(); if(XP) XP.modalResolve = null; res(b.dataset.m==='yes'); });
     XP.modalResolve = res;
     XP.el.appendChild(m);
@@ -6788,7 +6788,7 @@ async function xpFinish(auto){
   xpDropModal();
   clearInterval(XP.timer); window.onbeforeunload = null; XP.stage = 'finishing';
   if(!a.submittedAt) examFinishAttempt(a, new Date().toISOString(), auto, auto ? 'time' : '');
-  XP.el.innerHTML = xpShell('<div class="xp-center">Submitting your answers…</div>');
+  XP.el.innerHTML = xpShell('<div class="exmp-center">Submitting your answers…</div>');
   xpSaveLocal();
   let ok = false; for(let k=0; k<3 && !ok; k++){ ok = await xpSync(a); if(!ok) await new Promise(r=>setTimeout(r, 800*(k+1))); }
   if(!XP) return;
@@ -6800,13 +6800,13 @@ function xpClick(ev){
   const o = ev.target.closest('[data-xp-opt]');
   if(o && XP && XP.stage==='q'){
     const a = XP.attempt, q = XP.exam.questions[a.qIndex]; a.answers[q.id] = +o.dataset.xpOpt; xpSaveLocal();
-    XP.el.querySelectorAll('.xp-opt').forEach(b=>b.classList.toggle('on', b===o)); return;
+    XP.el.querySelectorAll('.exmp-opt').forEach(b=>b.classList.toggle('on', b===o)); return;
   }
   const b = ev.target.closest('[data-xp]'); if(!b || !XP) return;
   if(b.dataset.xp==='close') return xpClose();
   if(b.dataset.xp==='begin') return xpBegin();
   if(b.dataset.xp==='next') return xpNext();
-  if(b.dataset.xp==='fs'){ XP.fsGate = false; const g = XP.el.querySelector('.xp-gate'); if(g) g.remove(); xpEnterFs(); }
+  if(b.dataset.xp==='fs'){ XP.fsGate = false; const g = XP.el.querySelector('.exmp-gate'); if(g) g.remove(); xpEnterFs(); }
 }
 let xpSaveTimer = null;
 function xpInput(ev){
@@ -6818,7 +6818,7 @@ function xpKey(ev){
   if(!XP || XP.stage!=='q' || XP.busy) return;
   if(ev.target && (ev.target.tagName==='TEXTAREA' || ev.target.tagName==='INPUT')) return;
   const a = XP.attempt, q = XP.exam.questions[a.qIndex];
-  if(q.type==='mcq' && /^[a-dA-D]$/.test(ev.key)){ a.answers[q.id] = 'abcd'.indexOf(ev.key.toLowerCase()); xpSaveLocal(); XP.el.querySelectorAll('.xp-opt').forEach((b,j)=>b.classList.toggle('on', j===a.answers[q.id])); }
+  if(q.type==='mcq' && /^[a-dA-D]$/.test(ev.key)){ a.answers[q.id] = 'abcd'.indexOf(ev.key.toLowerCase()); xpSaveLocal(); XP.el.querySelectorAll('.exmp-opt').forEach((b,j)=>b.classList.toggle('on', j===a.answers[q.id])); }
 }
 function xpVis(){
   if(!XP || XP.stage!=='q' || XP.preview) return;
@@ -6832,8 +6832,8 @@ function xpFsChange(){
   if(xpInFs() || XP.fsGate) return;
   if(!XP.preview){ XP.attempt.fsExits = (XP.attempt.fsExits||0) + 1; xpSaveLocal(); xpSync(XP.attempt); }
   XP.fsGate = true;
-  const g = document.createElement('div'); g.className = 'xp-modal xp-gate';
-  g.innerHTML = '<div class="xp-modal-card"><h3>You left full screen</h3><p>Your timer is still running. Return to full screen to keep going.</p><div class="xp-modal-actions"><button class="btn amber" data-xp="fs">Return to full screen</button></div></div>';
+  const g = document.createElement('div'); g.className = 'exmp-modal exmp-gate';
+  g.innerHTML = '<div class="exmp-modal-card"><h3>You left full screen</h3><p>Your timer is still running. Return to full screen to keep going.</p><div class="exmp-modal-actions"><button class="btn amber" data-xp="fs">Return to full screen</button></div></div>';
   XP.el.appendChild(g);
 }
 
