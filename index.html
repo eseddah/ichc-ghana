@@ -927,10 +927,12 @@
       </div>
       <div class="timeline">
         <div class="tstep"><div class="num">1</div><div><h3>Apply</h3><p>Complete the short application form — no prior competition experience required, just genuine interest and a foundation in chemistry.</p></div></div>
-        <div class="tstep"><div class="num">2</div><div><h3>Get matched</h3><p>Accepted students are placed into a group with a coordinator, based on region and availability.</p></div></div>
-        <div class="tstep"><div class="num">3</div><div><h3>Train weekly</h3><p>Regular call sessions, fresh practice questions, and shared study materials — all tracked in one place.</p></div></div>
-        <div class="tstep"><div class="num">4</div><div><h3>Sit mock rounds</h3><p>Timed practice competitions that build exam stamina and reveal exactly where to focus next.</p></div></div>
-        <div class="tstep"><div class="num">5</div><div><h3>Compete</h3><p>The strongest-prepared students go forward to represent Ghana at the International Chemistry Competition.</p></div></div>
+        <div class="tstep"><div class="num">2</div><div><h3>Interview</h3><p>Every application is reviewed. Shortlisted applicants are invited to a short, friendly interview with the Ambassador and coordinators. The date, time and details arrive by email and text.</p></div></div>
+        <div class="tstep"><div class="num">3</div><div><h3>Onboard</h3><p>Accepted students get their portal, confirm their place and watch a short orientation video. That unlocks the roadmap and daily practice.</p></div></div>
+        <div class="tstep"><div class="num">4</div><div><h3>Get matched</h3><p>You meet your coordinator, placed with you by region and availability, and join the official WhatsApp group.</p></div></div>
+        <div class="tstep"><div class="num">5</div><div><h3>Train weekly</h3><p>Regular call sessions, fresh practice questions, and shared study materials — all tracked in one place.</p></div></div>
+        <div class="tstep"><div class="num">6</div><div><h3>Sit mock rounds</h3><p>Timed practice competitions that build exam stamina and reveal exactly where to focus next.</p></div></div>
+        <div class="tstep"><div class="num">7</div><div><h3>Compete</h3><p>The strongest-prepared students go forward to represent Ghana at the International Chemistry Competition.</p></div></div>
       </div>
     </div>
   </section>
@@ -1043,8 +1045,10 @@
       <details class="faqitem"><summary>Who can apply?</summary><p>Any student with a genuine interest in chemistry and a willingness to commit to weekly sessions. Prior competition experience isn't required.</p></details>
       <details class="faqitem"><summary>Is the programme free?</summary><p>Yes — the programme is run by volunteer coordinators and an ambassador, and does not charge students to participate.</p></details>
       <details class="faqitem"><summary>How much time does it take each week?</summary><p>Typically one structured call session plus a practice question to work through independently — coordinators share exact scheduling with their group.</p></details>
-      <details class="faqitem"><summary>How do I apply?</summary><p>Use the JOIN PROGRAMME NOW button on this page to open the application form. Accepted students are contacted by email with next steps and matched with a coordinator.</p></details>
-      <details class="faqitem"><summary>I was accepted — how do I access the portal?</summary><p>Sign in to the portal with the Google account for the email you applied with. If it doesn't work, email the Ambassador and they'll check your registration.</p></details>
+      <details class="faqitem"><summary>How do I apply?</summary><p>Use the JOIN PROGRAMME NOW button on this page to open the application form. It takes about five minutes.</p></details>
+      <details class="faqitem"><summary>What happens after I apply?</summary><p>First we email you to confirm we received your application. Then we review it. If you are shortlisted, we invite you to a short interview and send the date, time and details by email and text message. After the interview we let you know whether you are accepted.</p><p style="margin-top:10px;">If you are accepted, your student portal is switched on and you are guided through onboarding: confirm your place, watch a short orientation video (which unlocks your roadmap and daily practice), meet your coordinator and join the official WhatsApp group.</p></details>
+      <details class="faqitem"><summary>Is there an interview?</summary><p>Yes. Shortlisted applicants have a short, friendly conversation with the Ambassador and some of the coordinators, online, by phone or in person. It is a chance for us to get to know you and for you to ask your questions. Check your email and text messages (and your spam folder) for the details.</p></details>
+      <details class="faqitem"><summary>I was accepted — how do I access the portal?</summary><p>Your student portal is switched on when you are accepted after your interview. Being invited to an interview does not switch it on. Sign in with the Google account for the email you applied with. If it doesn't work after you have been accepted, email the Ambassador and they'll check your registration.</p></details>
     </div>
   </section>
 
@@ -1760,10 +1764,14 @@ async function renderApplicationStatusBanner(){
   try{ dismissed = JSON.parse(localStorage.getItem('ichc_banner_dismissed')||'[]'); }catch(e){}
   if(dismissed.includes(state.key)) return;
 
+  const iv = state.interview || {};
+  let ivWhen = ''; try{ if(iv.at) ivWhen = new Date(iv.at).toLocaleString('en-GB', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit' }); }catch(e){}
+  const ivLink = (iv.where && /^https?:\/\//i.test(iv.where)) ? ` <a href="${escapeHtml(iv.where)}" target="_blank" rel="noopener" style="color:inherit; font-weight:700; text-decoration:underline;">Open the meeting link</a>.` : '';
   const styles = {
-    pending:  { bg:'#FDF3E1', border:'#E7C179', fg:'#7A5416', text:`Your application is <b>in review</b> — the Ambassador will be in touch by email${applicant.name?`, ${escapeHtml(applicant.name)}`:''}.` },
-    accepted: { bg:'#E4F3EE', border:'#7FC4AE', fg:'#0F5A45', text:`🎉 Your application was <b>accepted</b>! Check your email for next steps.${state.reason?' — '+escapeHtml(state.reason):''}` },
-    declined: { bg:'#F6E9E7', border:'#D9A79C', fg:'#7A2E1F', text:`Your application <b>wasn't accepted</b> this round.${state.reason?' — '+escapeHtml(state.reason):''}` }
+    pending:   { bg:'#FDF3E1', border:'#E7C179', fg:'#7A5416', text:`Your application is <b>in review</b>. We'll be in touch by email or text${applicant.name?`, ${escapeHtml(applicant.name)}`:''}.` },
+    interview: { bg:'#EEEAFE', border:'#B9AEEF', fg:'#3B2A9E', text:`\u{1F4C5} You're invited to an <b>interview</b>${ivWhen?` on <b>${escapeHtml(ivWhen)}</b>`:''}${iv.mode?` (${escapeHtml(iv.mode)})`:''}. Check your email and text messages for the details, and reply to confirm.${ivLink}` },
+    accepted:  { bg:'#E4F3EE', border:'#7FC4AE', fg:'#0F5A45', text:`\u{1F389} You've been <b>accepted</b>! Your student portal is switched on: sign in with the Google account for the email you applied with, then confirm your place.${state.reason?' \u2014 '+escapeHtml(state.reason):''}` },
+    declined:  { bg:'#F6E9E7', border:'#D9A79C', fg:'#7A2E1F', text:`Your application <b>wasn't accepted</b> this round.${state.reason?' \u2014 '+escapeHtml(state.reason):''}` }
   };
   const st = styles[state.type];
   if(!st) return;

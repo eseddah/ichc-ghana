@@ -119,7 +119,7 @@
 <div class="wrap">
   <div class="top"><div class="hexlogo" style="width:120px; color:var(--navy-deep);"></div></div>
   <h1 class="title">Join Programme Now</h1>
-  <p class="sub">Applications are open. Fill in each section (about 5 minutes) and submit. We'll email you to confirm we received it. If you're accepted, we'll invite you to a short interview. After it, your student portal is switched on and you'll be guided through a short onboarding.</p>
+  <p class="sub">Applications are open. Fill in each section (about 5 minutes) and submit. We'll email you to confirm we received it. We review every application, and shortlisted applicants are invited to a short interview by email or text. If you're accepted after the interview, your student portal is switched on and you're guided through a short onboarding.</p>
 
   <div id="applyCountdown" style="display:none; background:var(--navy-deep); color:#fff; border-radius:12px; padding:10px 14px; margin:0 0 14px; font-size:14px; font-weight:600; text-align:center;"></div>
   <div class="stepper" id="stepper" aria-label="Application progress"></div>
@@ -127,9 +127,9 @@
   <div class="card" id="formCard">
     <section class="sec" data-sec="1"><h2 class="sec-h">1. About you</h2>
       <div class="field"><label>Full name</label><input id="fName" placeholder="e.g. Ama Owusu" autocomplete="name"></div>
-      <div class="field"><label>Email <span class="req">(use your Google account email, you'll sign in to the portal with it)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
-      <div class="field"><label>Phone number <span class="req">(required, so a coordinator can reach you)</span></label><input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000" autocomplete="tel"></div>
-      <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates</label>
+      <div class="field"><label>Email <span class="req">(use your Google account email: if you're accepted, you'll sign in to the student portal with it)</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
+      <div class="field"><label>Phone number <span class="req">(required, so we can reach you about your interview; a WhatsApp number is best)</span></label><input id="fPhone" type="tel" placeholder="e.g. +233 24 000 0000" autocomplete="tel"></div>
+      <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates, including my interview details</label>
       <div class="field" style="margin-top:14px;"><label>Age range</label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="14-17">14-17</button><button type="button" class="chip" data-age="18-21">18-21</button><button type="button" class="chip" data-age="22-24">22-24</button></div></div>
     </section>
     <section class="sec hidden" data-sec="2"><h2 class="sec-h">2. School</h2>
@@ -180,7 +180,7 @@
     <h2 style="font-size:24px; margin:0 0 10px;">Application received</h2>
     <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:440px; margin:0 auto;">Thank you for applying. <span id="mailNote">We're sending a confirmation email to your inbox. Check your spam folder if you don't see it.</span></p>
     <div class="track" id="doneTrack"></div>
-    <p style="color:var(--muted); font-size:13.5px; line-height:1.6; max-width:440px; margin:14px auto 0;">If you're accepted, we'll email you an invitation to a short interview, with the date, time and Google Meet link. After the interview, your student portal is switched on: sign in with the Google account for the email you applied with, confirm your place and watch the short orientation video. The official WhatsApp group invitation comes during onboarding.</p>
+    <p style="color:var(--muted); font-size:13.5px; line-height:1.6; max-width:440px; margin:14px auto 0;">What happens next: we review your application. If you are shortlisted, we invite you to a short interview and send the date, time and details by email and text (check your spam folder and keep your phone on). Your student portal is only switched on if you are accepted after the interview. Then you sign in with the Google account for the email you applied with, confirm your place and watch the short orientation video. That unlocks your roadmap and daily practice, and you then meet your coordinator and get the official WhatsApp group invitation.</p>
   </div>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
@@ -359,7 +359,7 @@ async function sendConfirmationEmail(name, email){
         service_id: s.emailjsServiceId, template_id: s.emailjsTemplateId, user_id: s.emailjsPublicKey,
         template_params: {
           to_email: email, to_name: name, from_name: programName(),
-          subject: 'We got your application', message: `Thanks for applying to ${programName()} — we'll be in touch by email once your application has been reviewed.`
+          subject: 'We got your application', message: `Thanks for applying to ${programName()}. We'll review your application, and shortlisted applicants are invited to a short interview by email or text. Keep an eye on your inbox and phone.`
         }
       })
     });
@@ -417,7 +417,7 @@ function renderCaptcha(){ if(CAPTCHA_ID !== null || !window.grecaptcha || !CAPTC
     const sc = document.createElement('script'); sc.src = 'https://www.google.com/recaptcha/api.js?onload=onCaptchaReady&render=explicit'; sc.async = true; sc.defer = true; document.head.appendChild(sc);
   }catch(e){ console.warn('captcha setup skipped', e); }
 })();
-const STAGES = ['Applied','Under review','Accepted','Interview','Pending confirmation','Onboarding','Completed'];
+const STAGES = ['Applied','In review','Interview','Accepted','Onboarding','Joined'];
 $('submitBtn').addEventListener('click', async ()=>{
   const btn = $('submitBtn'); const e = validate(6); if(e){ $('errMsg').textContent = e; return; }
   for(let n=1;n<6;n++){ const e2 = validate(n); if(e2){ step = n; paintSteps(); $('errMsg').textContent = e2; return; } }
@@ -505,10 +505,14 @@ async function renderApplicationStatusBanner(){
   try{ dismissed = JSON.parse(localStorage.getItem('ichc_banner_dismissed')||'[]'); }catch(e){}
   if(dismissed.includes(state.key)) return;
 
+  const iv = state.interview || {};
+  let ivWhen = ''; try{ if(iv.at) ivWhen = new Date(iv.at).toLocaleString('en-GB', { weekday:'long', day:'numeric', month:'long', hour:'numeric', minute:'2-digit' }); }catch(e){}
+  const ivLink = (iv.where && /^https?:\/\//i.test(iv.where)) ? ` <a href="${escapeHtml(iv.where)}" target="_blank" rel="noopener" style="color:inherit; font-weight:700; text-decoration:underline;">Open the meeting link</a>.` : '';
   const styles = {
-    pending:  { bg:'#FDF3E1', border:'#E7C179', fg:'#7A5416', text:`Your application is <b>in review</b> — the Ambassador will be in touch by email${applicant.name?`, ${escapeHtml(applicant.name)}`:''}.` },
-    accepted: { bg:'#E4F3EE', border:'#7FC4AE', fg:'#0F5A45', text:`🎉 Your application was <b>accepted</b>! Check your email for next steps.${state.reason?' — '+escapeHtml(state.reason):''}` },
-    declined: { bg:'#F6E9E7', border:'#D9A79C', fg:'#7A2E1F', text:`Your application <b>wasn't accepted</b> this round.${state.reason?' — '+escapeHtml(state.reason):''}` }
+    pending:   { bg:'#FDF3E1', border:'#E7C179', fg:'#7A5416', text:`Your application is <b>in review</b>. We'll be in touch by email or text${applicant.name?`, ${escapeHtml(applicant.name)}`:''}.` },
+    interview: { bg:'#EEEAFE', border:'#B9AEEF', fg:'#3B2A9E', text:`\u{1F4C5} You're invited to an <b>interview</b>${ivWhen?` on <b>${escapeHtml(ivWhen)}</b>`:''}${iv.mode?` (${escapeHtml(iv.mode)})`:''}. Check your email and text messages for the details, and reply to confirm.${ivLink}` },
+    accepted:  { bg:'#E4F3EE', border:'#7FC4AE', fg:'#0F5A45', text:`\u{1F389} You've been <b>accepted</b>! Your student portal is switched on: sign in with the Google account for the email you applied with, then confirm your place.${state.reason?' \u2014 '+escapeHtml(state.reason):''}` },
+    declined:  { bg:'#F6E9E7', border:'#D9A79C', fg:'#7A2E1F', text:`Your application <b>wasn't accepted</b> this round.${state.reason?' \u2014 '+escapeHtml(state.reason):''}` }
   };
   const st = styles[state.type];
   if(!st) return;
