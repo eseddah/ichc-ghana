@@ -959,6 +959,19 @@
   .int-sum{margin-top:8px; padding:10px 12px; background:var(--lilac); border-radius:12px; color:var(--navy-deep); line-height:1.6;}
   .ob-lockcard{border-color:var(--amber); background:var(--butter); margin-bottom:16px;}
   .ob-vblock video{display:block;}
+
+  .int-panelists{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px;}
+  .int-pick{display:flex; align-items:flex-start; gap:9px; margin:0; text-transform:none; letter-spacing:0; font-size:13.5px; color:var(--navy-deep); background:#fff; border:2px solid var(--line); border-radius:14px; padding:8px 12px; cursor:pointer;}
+  .int-pick:has(input:checked){border-color:var(--navy); background:var(--lilac);}
+  .int-pick input{width:auto; margin-top:3px; flex:none; accent-color:var(--navy);}
+  .int-pick span{display:flex; flex-direction:column; min-width:0;}
+  .int-pick small{font-size:11.5px; color:var(--muted); font-weight:500;}
+  .int-wa{margin-top:10px; padding-top:10px; border-top:2px dashed rgba(59,42,158,.25);}
+  .int-wa-h{font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--navy);}
+  .int-wa-sub{font-size:12.5px; color:var(--muted); margin:2px 0 6px;}
+  .int-wa-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-bottom:6px;}
+  .int-wa-st{font-size:12px; color:var(--teal-deep); font-weight:700;}
+  .int-past{margin-top:10px; padding:8px 12px; border-radius:12px; background:var(--butter); border:2px solid var(--amber); color:#6B4A00; font-size:13px; font-weight:700;}
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -2347,18 +2360,21 @@ async function dispatchAlertNotifications(alert){
 async function notifyApplicantDecision({app, decision, reason}){
   const s = DB.settings || {};
   const wantsSms = (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone;
-  const title = decision==='accepted'
-    ? `You're in! Your ${programName()} application was accepted`
-    : `Update on your ${programName()} application`;
-  const bodyLines = decision==='accepted'
-    ? [`Hi ${app.name}, great news — your application has been accepted and your student portal is now switched on.`, `Sign in with the Google account for ${app.email} to confirm your place, watch the short orientation video and meet your coordinator. The official WhatsApp group invitation comes during onboarding.`]
-    : [`Hi ${app.name}, thank you for applying to ${programName()}.`, `We're unable to move forward with your application at this time.`];
-  if(reason) bodyLines.push(reason);
-  const body = bodyLines.join(' ');
-
-  if(app.email) dispatchEmails([{ email:app.email, name:app.name, id:app.id, role:'applicant' }], { subject:title, body, author:ME.name, kind:'decision' });
+  const accepted = decision === 'accepted', after = app.interview ? ' after your interview' : '', first = intvFirst(app.name);
+  const title = accepted ? `You're in! Your ${programName()} application was accepted` : `Update on your ${programName()} application`;
+  // the email template already says "Hi <first name>", so the email body does not repeat the greeting
+  const mail = accepted
+    ? [`Great news: your application has been accepted${after}, and your student portal is now switched on.`, `Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video. When you confirm the video, your roadmap and daily practice unlock, and you then meet your coordinator and get the official WhatsApp group invitation.`]
+    : [`Thank you for applying to ${programName()}${app.interview ? ' and for taking the time to interview with us' : ''}.`, `We're unable to move forward with your application at this time.`];
+  const sms = accepted
+    ? `Hi ${first}, great news: your ${programName()} application has been accepted${after} and your student portal is switched on. Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video.`
+    : `Hi ${first}, thank you for applying to ${programName()}. We're unable to move forward with your application at this time.`;
+  if(reason){ mail.push(reason); }
+  // the portal link only goes to people who now have a portal: never to a declined applicant
+  if(app.email) dispatchEmails([{ email:app.email, name:app.name, id:app.id, role:'applicant' }], { subject:title, body:mail.join('\n\n'), author:ME.name, kind:'decision', noPortalLink:!accepted });
   if(s.webhookUrl && app.phone && wantsSms){
-    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message:withPortalLink(body),
+    const text = reason ? sms + ' ' + reason : sms;
+    queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:title, message: accepted ? withPortalLink(text) : text,
       recipientId:app.id, recipientRole:'applicant', studentCoordinatorId:null });
   }
 }
@@ -4647,6 +4663,7 @@ function applicationStages(student){
   return [
     { label:'Application Submitted', done:true },
     { label:'Under Review', done:true },
+    ...((student && student.interviewed) ? [{ label:'Interview', done:true }] : []),
     { label:'Accepted', done:inRoster },
     { label:'Coordinator Assigned', done:hasCoord },
     { label:'Programme Started', done:started }
@@ -5682,7 +5699,10 @@ const INTV = { open:{}, draft:{} };
 const INTV_NOTES = 'Please be ready 10 minutes early with a stable internet connection (or phone signal). Have your school name and a few words about why you want to join ready. No preparation or notes are needed.';
 function intvDefaults(a){
   const i = a.interview || {};
-  return { at: i.at ? toLocalInput(new Date(i.at)) : '', mode: i.mode || 'Online (video call)', where: i.where || '', panel: i.panel || '', minutes: i.minutes || '', notes: i.notes || INTV_NOTES, email: true, sms: !!a.phone };
+  return { at: i.at ? toLocalInput(new Date(i.at)) : '', mode: i.mode || 'Online (video call)', where: i.where || '',
+    panelIds: Array.isArray(i.panelIds) ? i.panelIds.slice() : [], selfPanel: i.selfPanel !== undefined ? !!i.selfPanel : true,
+    panelExtra: i.panelExtra !== undefined ? i.panelExtra : (i.panelIds ? '' : (i.panel || '')),
+    minutes: i.minutes || '', notes: i.notes || INTV_NOTES, email: true, sms: !!a.phone, wa: !!i.wa };
 }
 function intvWhen(d, long){
   const o = long ? { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'numeric', minute:'2-digit' } : { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' };
@@ -5702,35 +5722,87 @@ function appActionBtn(kind, a){
   if(kind === 'accept') return `<button type="button" class="btn teal small app-act" data-approve-app="${a.id}" title="Accept and switch on their student portal. Do this after the interview.">${ic}<span>Accept</span></button>`;
   return `<button type="button" class="btn ghost small app-act app-decline" data-decline-app="${a.id}" title="Decline this application">${ic}<span>Decline</span></button>`;
 }
+const intvFirst = (n)=> String(n||'').trim().split(/\s+/)[0] || 'there';
+function intvPanelNames(panelIds, selfPanel, extra){
+  const names = [];
+  if(selfPanel) names.push(`${ME.name} (Ambassador)`);
+  (panelIds||[]).forEach(id=>{ const c = (DB.coordinators||[]).find(x=>x.id===id); if(c) names.push(c.name); });
+  String(extra||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean).forEach(x=>names.push(x));
+  return names;
+}
+// One wording, used for the email, the text message and the WhatsApp message to the applicant.
+function intvMessageLines(a, i, greet){
+  const L = [];
+  if(greet) L.push(`Hi ${intvFirst(a.name)},`, '');
+  L.push(`Thank you for applying to ${programName()}. We would like to invite you to an interview.`, '',
+    `When: ${intvWhen(new Date(i.at), true)} (${intvZone()})`, `How: ${i.mode}`, `Where / link: ${i.where}`);
+  if(i.panel) L.push(`Panel: ${i.panel}`);
+  if(i.minutes) L.push(`Time needed: about ${i.minutes} minutes`);
+  if(i.notes) L.push('', 'What to prepare:', i.notes);
+  L.push('', 'Please reply to confirm that you can attend, or tell us early if you need a different time.', '',
+    'This is an invitation to an interview only. Your place in the programme and your student portal will be confirmed after the interview.');
+  return L;
+}
+function panelWaMessage(a, c){
+  const i = a.interview, who = [a.level, a.school].filter(Boolean).join(', ');
+  const L = [`Hello ${intvFirst(c.name)}, you are on the interview panel for ${programName()}.`, '',
+    `Applicant: ${a.name}${who ? ' (' + who + ')' : ''}`, `When: ${intvWhen(new Date(i.at), true)} (${intvZone()})`, `How: ${i.mode}`, `Where / link: ${i.where}`];
+  if(i.minutes) L.push(`Time: about ${i.minutes} minutes`);
+  const others = intvPanelNames(i.panelIds, i.selfPanel, i.panelExtra).filter(n=>n !== c.name);
+  if(others.length) L.push(`Also on the panel: ${others.join(', ')}`);
+  L.push('', 'Please reply to confirm that you can make it. Thank you!', `${ME.name}, Programme Ambassador`);
+  return L.join('\n');
+}
+function applicantWaMessage(a){ return intvMessageLines(a, a.interview, true).concat(['', `${ME.name}, Programme Ambassador`]).join('\n'); }
 function interviewSummaryHtml(a){
   const i = a.interview; if(!i || !i.at) return '';
+  const past = a.stage === 'Interview invited' && new Date(i.at).getTime() < Date.now();
   const sentVia = [i.email ? 'email' : '', i.sms ? 'text' : ''].filter(Boolean).join(' and ');
-  return `<div class="item-body int-sum"><b>Interview:</b> ${escapeHtml(intvWhen(new Date(i.at), true))} · ${escapeHtml(i.mode||'')}${i.where ? ' · ' + linkify(i.where) : ''}${i.panel ? '<br><b>Panel:</b> ' + escapeHtml(i.panel) : ''}${i.minutes ? ' · about ' + escapeHtml(String(i.minutes)) + ' min' : ''}<br><span style="color:var(--muted); font-size:12.5px;">Details sent${sentVia ? ' by ' + sentVia : ''} on ${escapeHtml(fmtDate(new Date(i.sentAt||Date.now()).toISOString().slice(0,10)))}. They have no portal access yet.</span></div>`;
+  const notified = i.panelNotified || {}, stamp = ts=>new Date(ts).toLocaleString('en-GB', { weekday:'short', hour:'numeric', minute:'2-digit' });
+  const coords = (i.panelIds||[]).map(id=>(DB.coordinators||[]).find(c=>c.id===id)).filter(Boolean);
+  const panelRows = coords.map(c=>{
+    const href = waLink(c.phone, panelWaMessage(a, c));
+    return `<div class="int-wa-row">${href ? `<a class="wa-btn" href="${href}" target="_blank" rel="noopener" data-panel-wa="${a.id}" data-coord="${c.id}">${WA_ICON}${escapeHtml(c.name)}</a>` : `<span class="note">${escapeHtml(c.name)}: no WhatsApp number on file</span>`}${notified[c.id] ? `<span class="int-wa-st">Opened ${escapeHtml(stamp(notified[c.id]))}</span>` : ''}</div>`;
+  }).join('');
+  const aHref = a.phone ? waLink(a.phone, applicantWaMessage(a)) : '';
+  return `<div class="item-body int-sum"><b>Interview:</b> ${escapeHtml(intvWhen(new Date(i.at), true))} · ${escapeHtml(i.mode||'')}${i.where ? ' · ' + linkify(i.where) : ''}${i.panel ? '<br><b>Panel:</b> ' + escapeHtml(i.panel) : ''}${i.minutes ? ' · about ' + escapeHtml(String(i.minutes)) + ' min' : ''}
+    <br><span style="color:var(--muted); font-size:12.5px;">${sentVia ? 'Details sent to the applicant by ' + sentVia + ' on ' + escapeHtml(fmtDate(new Date(i.sentAt||Date.now()).toISOString().slice(0,10))) + '. ' : ''}They have no portal access yet.</span>
+    ${(coords.length || aHref) ? `<div class="int-wa"><div class="int-wa-h">WhatsApp: you send these yourself</div>${coords.length ? `<div class="int-wa-sub">Invite the panel: tap a name, WhatsApp opens with the message ready, then press send.</div>${panelRows}` : ''}${aHref ? `<div class="int-wa-sub" style="margin-top:8px;">The applicant:</div><div class="int-wa-row"><a class="wa-btn" href="${aHref}" target="_blank" rel="noopener" data-applicant-wa="${a.id}">${WA_ICON}Message ${escapeHtml(intvFirst(a.name))}</a>${i.applicantWaAt ? `<span class="int-wa-st">Opened ${escapeHtml(stamp(i.applicantWaAt))}</span>` : ''}</div>` : ''}</div>` : ''}
+    ${past ? '<div class="int-past">The interview time has passed. Accept or decline this applicant below.</div>' : ''}</div>`;
 }
 function interviewPanelHtml(a){
   const d = INTV.draft[a.id] || (INTV.draft[a.id] = intvDefaults(a)), s = DB.settings || {}, id = a.id;
-  const f = (k, label, input)=>`<div class="field" style="margin:0;"><label>${label}</label>${input}</div>`;
+  const f = (label, input)=>`<div class="field" style="margin:0;"><label>${label}</label>${input}</div>`;
   const inp = (k, type, ph)=>`<input type="${type}" data-intf="${k}" data-intid="${id}" value="${escapeHtml(d[k]||'')}" placeholder="${escapeHtml(ph||'')}">`;
   const modes = ['Online (video call)','Phone call','In person'].map(m=>`<option${d.mode===m?' selected':''}>${m}</option>`).join('');
   const canSms = !!(s.webhookUrl && a.phone);
+  const coords = (DB.coordinators||[]).filter(c=>c && c.name);
+  const picks = coords.length ? coords.map(c=>`<label class="int-pick"><input type="checkbox" data-intpanel="${c.id}" data-intid="${id}"${(d.panelIds||[]).includes(c.id)?' checked':''}><span><b>${escapeHtml(c.name)}</b><small>${escapeHtml([c.subject, c.region].filter(Boolean).join(' · '))}${c.phone ? '' : ' · no WhatsApp number'}</small></span></label>`).join('') : '<span class="note">No coordinators on the roster yet.</span>';
   return `<div class="int-panel">
-    <div class="int-title">${APP_IC.interview}<b>Interview invitation for ${escapeHtml(a.name)}</b></div>
-    <p class="note" style="margin:2px 0 10px;">This only sends the interview details. ${escapeHtml(a.name.split(' ')[0] || 'They')} gets <b>no portal access</b> until you accept them after the interview.</p>
+    <div class="int-title">${APP_IC.interview}<b>Interview for ${escapeHtml(a.name)}</b></div>
+    <p class="note" style="margin:2px 0 10px;">${escapeHtml(intvFirst(a.name))} gets the details by email, text or WhatsApp and has <b>no portal access</b> until you accept them after the interview. You invite the panel coordinators on WhatsApp after saving.</p>
     <div class="exb-grid">
-      ${f('at','Date and time', inp('at','datetime-local'))}
-      ${f('mode','How', `<select data-intf="mode" data-intid="${id}">${modes}</select>`)}
-      ${f('minutes','About how long (minutes)', inp('minutes','number','e.g. 15'))}
+      ${f('Date and time', inp('at','datetime-local'))}
+      ${f('How', `<select data-intf="mode" data-intid="${id}">${modes}</select>`)}
+      ${f('About how long (minutes)', inp('minutes','number','e.g. 15'))}
     </div>
-    <div class="exb-grid" style="margin-top:10px;">
-      ${f('where','Meeting link or venue', inp('where','text','Zoom or Meet link, or the address'))}
-      ${f('panel','Panelists', inp('panel','text','Names of the panel members'))}
+    <div class="field" style="margin:10px 0 0;"><label>Meeting link or venue</label>${inp('where','text','Zoom or Meet link, or the address')}</div>
+    <div class="field" style="margin:10px 0 0;"><label>Interview panel: tick the coordinators who will interview</label>
+      <div class="int-panelists">
+        <label class="int-pick"><input type="checkbox" data-intf="selfPanel" data-intid="${id}"${d.selfPanel?' checked':''}><span><b>Me (Ambassador)</b><small>${escapeHtml(ME.name||'')}</small></span></label>
+        ${picks}
+      </div>
+      <input type="text" data-intf="panelExtra" data-intid="${id}" value="${escapeHtml(d.panelExtra||'')}" placeholder="Other panelists (optional), e.g. a guest examiner" style="margin-top:8px;">
     </div>
-    <div class="field" style="margin:10px 0 0;"><label>What to prepare and any instructions</label><textarea rows="3" data-intf="notes" data-intid="${id}">${escapeHtml(d.notes||'')}</textarea></div>
-    <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px 18px;">
-      <label class="eb-check" style="margin:0;"><input type="checkbox" data-intf="email" data-intid="${id}"${d.email?' checked':''}${a.email?'':' disabled'}> Send by email${a.email ? ' (' + escapeHtml(a.email) + ')' : ' (no email on file)'}</label>
-      <label class="eb-check" style="margin:0;"><input type="checkbox" data-intf="sms" data-intid="${id}"${d.sms && canSms?' checked':''}${canSms?'':' disabled'}> Send by text${a.phone ? (canSms ? ' (' + escapeHtml(a.phone) + ')' : ' (text sending is not connected)') : ' (no phone number on file)'}</label>
+    <div class="field" style="margin:10px 0 0;"><label>What the applicant should prepare, and any instructions</label><textarea rows="3" data-intf="notes" data-intid="${id}">${escapeHtml(d.notes||'')}</textarea></div>
+    <div class="field" style="margin:10px 0 0;"><label>Send the details to ${escapeHtml(intvFirst(a.name))} by</label>
+      <div style="display:flex; flex-wrap:wrap; gap:6px 18px;">
+        <label class="eb-check" style="margin:0;"><input type="checkbox" data-intf="email" data-intid="${id}"${d.email && a.email?' checked':''}${a.email?'':' disabled'}> Email${a.email ? ' (' + escapeHtml(a.email) + ')' : ' (none on file)'}</label>
+        <label class="eb-check" style="margin:0;"><input type="checkbox" data-intf="sms" data-intid="${id}"${d.sms && canSms?' checked':''}${canSms?'':' disabled'}> Text${a.phone ? (canSms ? ' (' + escapeHtml(a.phone) + ')' : ' (text sending is not connected)') : ' (no phone on file)'}</label>
+        <label class="eb-check" style="margin:0;"><input type="checkbox" data-intf="wa" data-intid="${id}"${d.wa && a.phone?' checked':''}${a.phone?'':' disabled'}> WhatsApp (you send it yourself after saving)</label>
+      </div>
     </div>
-    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button type="button" class="btn amber small app-act" data-send-interview="${id}">${APP_IC.interview}<span>Send interview details</span></button><button type="button" class="btn ghost small" data-cancel-interview="${id}">Cancel</button></div>
+    <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"><button type="button" class="btn amber small app-act" data-send-interview="${id}">${APP_IC.interview}<span>Save and send the details</span></button><button type="button" class="btn ghost small" data-cancel-interview="${id}">Cancel</button></div>
   </div>`;
 }
 async function sendInterviewInvite(id, btn){
@@ -5738,21 +5810,23 @@ async function sendInterviewInvite(id, btn){
   const d = INTV.draft[id] || intvDefaults(a), s = DB.settings || {};
   if(!d.at) return alert('Choose the interview date and time.');
   const when = new Date(d.at); if(isNaN(when)) return alert('That date and time is not valid.');
-  if(!String(d.where||'').trim()) return alert('Add the meeting link or the venue so the applicant knows where to go.');
-  const viaEmail = !!(d.email && a.email), viaSms = !!(d.sms && s.webhookUrl && a.phone);
-  if(!viaEmail && !viaSms) return alert('Choose at least one way to send the details: email or text message.');
+  if(!String(d.where||'').trim()) return alert('Add the meeting link or the venue so everyone knows where to go.');
+  const viaEmail = !!(d.email && a.email), viaSms = !!(d.sms && s.webhookUrl && a.phone), viaWa = !!(d.wa && a.phone);
+  if(!viaEmail && !viaSms && !viaWa) return alert('Choose at least one way to send the details to the applicant: email, text message or WhatsApp.');
   if(btn) btn.disabled = true;
-  const interview = { at:when.toISOString(), mode:d.mode, where:String(d.where).trim(), panel:String(d.panel||'').trim(), minutes:d.minutes||'', notes:String(d.notes||'').trim(), sentAt:Date.now(), by:ME.name, email:viaEmail, sms:viaSms };
+  const names = intvPanelNames(d.panelIds, d.selfPanel, d.panelExtra), prev = a.interview || {};
+  const same = prev.at === when.toISOString() && prev.where === String(d.where).trim() && prev.mode === d.mode;   // a changed time/link means the panel must be told again
+  const interview = { at:when.toISOString(), mode:d.mode, where:String(d.where).trim(), panel:names.join(', '), panelIds:(d.panelIds||[]).slice(), selfPanel:!!d.selfPanel, panelExtra:String(d.panelExtra||'').trim(),
+    minutes:d.minutes||'', notes:String(d.notes||'').trim(), sentAt:Date.now(), by:ME.name, email:viaEmail, sms:viaSms, wa:viaWa,
+    panelNotified: same ? (prev.panelNotified || {}) : {}, applicantWaAt: same ? prev.applicantWaAt : undefined };
   const saved = await mutateApplications(list=>list.map(x=>x.id===id ? Object.assign({}, x, { stage:'Interview invited', interview }) : x));
   if(!saved){ alert('Could not save the interview: the database refused the change. Nothing was sent to the applicant. Please try again.'); render('applications'); return; }
-  const first = String(a.name||'').trim().split(/\s+/)[0] || 'there', zone = intvZone();
-  const lines = [`Hi ${first},`, '', `Thank you for applying to ${programName()}. We would like to invite you to an interview.`, '',
-    `When: ${intvWhen(when, true)} (${zone})`, `How: ${interview.mode}`, `Where / link: ${interview.where}`];
-  if(interview.panel) lines.push(`Panel: ${interview.panel}`);
-  if(interview.minutes) lines.push(`Time needed: about ${interview.minutes} minutes`);
-  if(interview.notes) lines.push('', 'What to prepare:', interview.notes);
-  lines.push('', 'Please reply to confirm that you can attend, or tell us early if you need a different time.', '', 'This is an invitation to an interview only. Your place in the programme and your student portal will be confirmed after the interview.', '', `${ME.name}`, 'Programme Ambassador');
-  if(viaEmail) dispatchEmails([{ email:a.email, name:a.name, id:a.id, role:'applicant' }], { subject:`Your interview for ${programName()}: ${intvWhen(when, false)}`, body:lines.join('\n'), author:ME.name, kind:'interview', noPortalLink:true });
+  const first = intvFirst(a.name), zone = intvZone();
+  if(viaEmail){
+    // the email template already greets the person by name, so the body starts straight with the invitation
+    const body = intvMessageLines(a, interview, false).concat(['', ME.name, 'Programme Ambassador']).join('\n');
+    dispatchEmails([{ email:a.email, name:a.name, id:a.id, role:'applicant' }], { subject:`Your interview for ${programName()}: ${intvWhen(when, false)}`, body, author:ME.name, kind:'interview', noPortalLink:true });
+  }
   if(viaSms){
     const sms = `Hi ${first}, you are invited to your ${programName()} interview: ${intvWhen(when, false)} (${zone}), ${interview.mode}. ${interview.where}.${interview.panel ? ' Panel: ' + interview.panel + '.' : ''} Please reply to confirm.`;
     queueSmsSend(s.webhookUrl, { to:a.phone, name:a.name, from:ME.name, subject:'Interview invitation', message:sms, recipientId:a.id, recipientRole:'applicant', studentCoordinatorId:null });
@@ -5767,7 +5841,7 @@ function applicationsView(){
   const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
-  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the details go out by email or text, with no portal access), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
+  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining emails (and texts, if they opted in) the applicant automatically.</p></div></div>
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
     ${sorted.length ? sorted.map(a=>`
@@ -7698,6 +7772,19 @@ function wireHandlers(tab){
     el.addEventListener('input', save); el.addEventListener('change', save);
   });
   document.querySelectorAll('[data-cancel-interview]').forEach(b=>b.addEventListener('click', ()=>{ delete INTV.open[b.dataset.cancelInterview]; render('applications'); }));
+  document.querySelectorAll('[data-intpanel]').forEach(el=>el.addEventListener('change', ()=>{
+    const id = el.dataset.intid, d = INTV.draft[id] = INTV.draft[id] || {}, cid = el.dataset.intpanel;
+    d.panelIds = (d.panelIds || []).filter(x=>x !== cid); if(el.checked) d.panelIds.push(cid);
+  }));
+  // WhatsApp opens in a new tab with the message ready; once the ambassador has tapped it we note that, so nobody is forgotten
+  const markWa = (id, patch)=>setTimeout(async ()=>{
+    await mutateApplications(list=>list.map(x=>x.id===id && x.interview ? Object.assign({}, x, { interview:Object.assign({}, x.interview, patch(x.interview)) }) : x));
+    render('applications');
+  }, 800);
+  document.querySelectorAll('[data-panel-wa]').forEach(el=>el.addEventListener('click', ()=>{
+    const cid = el.dataset.coord; markWa(el.dataset.panelWa, iv=>({ panelNotified:Object.assign({}, iv.panelNotified, { [cid]: Date.now() }) }));
+  }));
+  document.querySelectorAll('[data-applicant-wa]').forEach(el=>el.addEventListener('click', ()=>markWa(el.dataset.applicantWa, ()=>({ applicantWaAt: Date.now() }))));
   document.querySelectorAll('[data-send-interview]').forEach(b=>b.addEventListener('click', ()=>sendInterviewInvite(b.dataset.sendInterview, b)));
   document.querySelectorAll('[data-approve-app]').forEach(b=>b.addEventListener('click', async ()=>{
     const app = DB.applications.find(a=>a.id===b.dataset.approveApp);
@@ -7711,7 +7798,7 @@ function wireHandlers(tab){
       render('applications');
       return;
     } else {
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
     }
     await notifyApplicantDecision({app, decision:'accepted', reason});
