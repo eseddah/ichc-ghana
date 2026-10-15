@@ -2774,6 +2774,7 @@ function showApp(){
   renderPasskeyCtl();
   if(ME.role==='student'){ onbPreload().then(()=>buildTabs(), ()=>buildTabs()); } else { buildTabs(); }
   startPresenceLoop();
+  if(ME.role==='ambassador'){ syncPublicDirectory().catch(e=>console.warn('Directory sync skipped', e)); } // keeps the public Ghana map current
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
   // push notifications: link this device to the signed-in person and ask once for permission
