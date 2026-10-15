@@ -340,6 +340,15 @@
   .ha-bar{height:10px; border-radius:99px; background:#EEE9DA; overflow:hidden; margin-top:16px;} .ha-bar i{display:block; width:72%; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--amber),var(--teal));} .ha-cap{font-size:12px; font-weight:700; color:var(--muted); margin-top:7px;}
   .ha-chip{position:absolute; background:#fff; color:var(--ink); border-radius:12px; padding:10px 14px; box-shadow:0 18px 34px -16px rgba(0,0,0,.55); font-size:12px; line-height:1.35; border-left:4px solid var(--amber);} .ha-chip b{display:block; font-size:13px; font-weight:900; color:var(--navy-deep);} .ha-chip span{color:var(--muted);}
   .ha-chip.c1{left:-18px; bottom:6px;} .ha-chip.c2{right:-6px; top:-4px; border-left-color:var(--teal);} .ha-note{position:absolute; left:0; right:0; bottom:-6px; text-align:center; font-size:11.5px; color:rgba(246,244,238,.55);}
+
+  /* Ghana region map (hero) */
+  .gh-inner{padding:18px 20px 18px;} .gh-head b{display:block; font-size:15px; font-weight:900; color:var(--navy-deep);} .gh-head small{display:block; font-size:12px; color:var(--muted); margin-top:2px;}
+  .gh-mapwrap{display:flex; justify-content:center; margin:10px 0 6px;} #ghMap{width:100%; max-width:300px; height:auto; max-height:400px; overflow:visible;}
+  .gh-r{fill:#E7E3D6; stroke:#fff; stroke-width:1.6; stroke-linejoin:round; cursor:pointer; transition:filter .15s, opacity .15s;} .gh-r:hover,.gh-r.sel{filter:brightness(.93); stroke:#0F2438; stroke-width:1.8;}
+  .gh-r.has-s{fill:#1F8A70;} .gh-r.has-c{fill:#E39A3B;} .gh-r.has-s.has-c{fill:url(#ghBoth);}
+  .gh-legend{display:flex; justify-content:center; flex-wrap:wrap; gap:6px 16px; font-size:12px; font-weight:700; color:var(--muted);} .gh-legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px;}
+  .gh-legend .lg-s{background:#1F8A70;} .gh-legend .lg-c{background:#E39A3B;} .gh-legend .lg-b{background:repeating-linear-gradient(45deg,#1F8A70 0 3px,#E39A3B 3px 6px);}
+  .gh-readout{text-align:center; font-size:12.5px; font-weight:700; color:var(--navy-deep); margin-top:10px; min-height:18px;}
   @media(max-width:900px){ .hero .wrap{display:block;} .hero-art{display:none;} section{padding:60px 0;} }
   #chemist{background:radial-gradient(circle at 12% 0%, rgba(31,138,112,.22), transparent 45%), radial-gradient(circle at 92% 100%, rgba(227,154,59,.16), transparent 45%), linear-gradient(160deg,var(--navy),var(--navy-deep));}
   #chemist .section-head h2{color:#fff;} .chemist-card{background:rgba(246,244,238,.08); border:1px solid rgba(246,244,238,.22); box-shadow:0 24px 50px -28px rgba(0,0,0,.6);}
@@ -665,21 +674,16 @@
       <div class="stats">
         <a href="#team" class="stat team-pill" style="text-decoration:none; color:inherit; cursor:pointer;"><span class="tp-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17.2" cy="9" r="2.5"/><path d="M17.2 14.5c2.5 0 4 1.7 4 4.5"/></svg></span><span><b>Meet the coordinators</b><span>See their profiles</span></span></a>
       </div>
-      <div class="hero-art" aria-hidden="true">
+      <div class="hero-art">
         <div class="ha-win">
-          <div class="ha-bar-top"><span class="ha-dots"><i></i><i></i><i></i></span><span class="ha-url">portal &middot; practice</span></div>
-          <div class="ha-inner">
-            <div class="ha-who"><span class="ha-ava">S</span><span class="ha-who-t"><b>Weekly practice</b><small>Question 3 of 5</small></span><span class="ha-pill ha-pill-teal">Acids &amp; bases</span></div>
-            <p class="ha-q">Which 0.1 M solution has the lowest pH?</p>
-            <div class="ha-opt"><span class="ha-key">A</span>NaOH</div>
-            <div class="ha-opt"><span class="ha-key">B</span>Pure water</div>
-            <div class="ha-opt ok"><span class="ha-key">C</span>HCl<span class="ha-tick">&#10003;</span></div>
-            <div class="ha-opt"><span class="ha-key">D</span>NaCl</div>
-            <div class="ha-prog"><span class="ha-track"><i style="width:60%"></i></span><small>3 / 5 done</small></div>
+          <div class="ha-bar-top"><span class="ha-dots"><i></i><i></i><i></i></span><span class="ha-url">our reach &middot; Ghana</span></div>
+          <div class="ha-inner gh-inner">
+            <div class="gh-head"><b>Where our students &amp; coordinators are</b><small>Regions only &mdash; no personal details are shown.</small></div>
+            <div class="gh-mapwrap"><svg id="ghMap" viewBox="0 0 305 435" role="img" aria-label="Map of Ghana showing the regions that have students and coordinators"><defs><pattern id="ghBoth" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#1F8A70"/><rect width="4.5" height="9" fill="#E39A3B"/></pattern></defs><path class="gh-r" data-region="upper-west" data-name="Upper West" d="M29.7,16.5 L85.8,16.5 L89.1,52.8 L85.8,85.8 L36.3,95.7 L23.1,56.1Z"/><path class="gh-r" data-region="upper-east" data-name="Upper East" d="M85.8,16.5 L158.4,6.6 L211.2,6.6 L231.0,16.5 L221.1,42.9 L145.2,49.5 L89.1,52.8Z"/><path class="gh-r" data-region="north-east" data-name="North East" d="M221.1,42.9 L231.0,16.5 L247.5,49.5 L244.2,82.5 L158.4,85.8 L141.9,69.3 L145.2,49.5Z"/><path class="gh-r" data-region="northern" data-name="Northern" d="M244.2,82.5 L257.4,148.5 L227.7,181.5 L211.2,214.5 L194.7,198.0 L191.4,171.6 L171.6,128.7 L158.4,85.8Z"/><path class="gh-r" data-region="savannah" data-name="Savannah" d="M141.9,69.3 L158.4,85.8 L171.6,128.7 L191.4,171.6 L194.7,198.0 L151.8,214.5 L92.4,198.0 L39.6,207.9 L36.3,168.3 L49.5,135.3 L36.3,95.7 L85.8,85.8 L89.1,52.8 L145.2,49.5Z"/><path class="gh-r" data-region="bono" data-name="Bono" d="M19.8,283.8 L33.0,254.1 L39.6,207.9 L92.4,198.0 L85.8,234.3 L82.5,270.6 L39.6,270.6Z"/><path class="gh-r" data-region="bono-east" data-name="Bono East" d="M194.7,198.0 L151.8,214.5 L92.4,198.0 L85.8,234.3 L82.5,270.6 L125.4,257.4 L161.7,254.1 L207.9,240.9 L211.2,214.5Z"/><path class="gh-r" data-region="ahafo" data-name="Ahafo" d="M82.5,270.6 L39.6,270.6 L46.2,297.0 L72.6,313.5Z"/><path class="gh-r" data-region="ashanti" data-name="Ashanti" d="M89.1,349.8 L118.8,346.5 L145.2,346.5 L148.5,320.1 L155.1,287.1 L161.7,254.1 L125.4,257.4 L82.5,270.6 L72.6,313.5 L69.3,343.2Z"/><path class="gh-r" data-region="western-north" data-name="Western North" d="M16.5,343.2 L23.1,313.5 L19.8,283.8 L39.6,270.6 L46.2,297.0 L72.6,313.5 L69.3,343.2Z"/><path class="gh-r" data-region="western" data-name="Western" d="M6.6,404.6 L19.8,409.2 L52.8,420.4 L79.2,429.7 L85.8,425.7 L110.9,411.2 L92.4,372.9 L89.1,349.8 L69.3,343.2 L16.5,343.2Z"/><path class="gh-r" data-region="central" data-name="Central" d="M188.1,379.5 L151.8,398.0 L125.4,409.2 L110.9,411.2 L92.4,372.9 L89.1,349.8 L118.8,346.5 L145.2,346.5 L171.6,353.1 L194.7,359.7Z"/><path class="gh-r" data-region="eastern" data-name="Eastern" d="M194.7,359.7 L171.6,353.1 L145.2,346.5 L148.5,320.1 L155.1,287.1 L161.7,254.1 L207.9,240.9 L217.8,260.7 L221.1,280.5 L221.1,300.3 L224.4,330.0 L211.2,339.9Z"/><path class="gh-r" data-region="greater-accra" data-name="Greater Accra" d="M260.7,361.0 L217.8,372.9 L188.1,379.5 L194.7,359.7 L211.2,339.9 L224.4,330.0 L247.5,346.5Z"/><path class="gh-r" data-region="volta" data-name="Volta" d="M264.0,260.7 L260.7,287.1 L264.0,313.5 L280.5,330.0 L297.0,339.9 L280.5,354.4 L260.7,361.0 L247.5,346.5 L224.4,330.0 L221.1,300.3 L221.1,280.5 L217.8,260.7Z"/><path class="gh-r" data-region="oti" data-name="Oti" d="M257.4,148.5 L257.4,194.7 L260.7,240.9 L264.0,260.7 L217.8,260.7 L207.9,240.9 L211.2,214.5 L227.7,181.5Z"/></svg></div>
+            <div class="gh-legend"><span><i class="lg-s"></i>Students</span><span><i class="lg-c"></i>Coordinators</span><span><i class="lg-b"></i>Both</span></div>
+            <div class="gh-readout" id="ghReadout" aria-live="polite">Tap a region to see who is there.</div>
           </div>
         </div>
-        <div class="ha-chip c1"><span class="ha-cico">&#128222;</span><span><b>Call session</b><em>This week, with your coordinator</em></span></div>
-        <div class="ha-note">A preview of the student portal</div>
       </div>
     </div>
   </section>
@@ -1168,6 +1172,24 @@ function safePhotoUrl(u){ return (typeof u==='string' && /^(https?:\/\/|data:ima
 function teamAvatarHtml(m){ const letter=(m.name||'?').trim().charAt(0).toUpperCase()||'?'; const photo=safePhotoUrl(m.photo);
   return `<div class="pavatar" data-letter="${escapeHtml(letter)}">${photo?`<img src="${escapeHtml(photo)}" alt="${escapeHtml(m.name)}" loading="lazy" referrerpolicy="no-referrer">`:escapeHtml(letter)}</div>`; }
 function wirePhotoFallbacks(root){ root.querySelectorAll('.pavatar img').forEach(img=>img.addEventListener('error',()=>{ const box=img.parentNode; box.textContent=box.getAttribute('data-letter')||'?'; },{once:true})); }
+
+// ---- Ghana region map (hero) ----
+// Only region-level presence ("students here", "coordinators here") ever reaches this page — no names, counts or contact details.
+function renderGhanaMap(dir){
+  const svg=document.getElementById('ghMap'); if(!svg) return;
+  const rp=(dir&&dir.regionPresence)||{}, S=new Set(rp.students||[]), C=new Set(rp.coordinators||[]);
+  const readout=document.getElementById('ghReadout');
+  svg.querySelectorAll('.gh-r').forEach(p=>{
+    const k=p.dataset.region; p.classList.toggle('has-s',S.has(k)); p.classList.toggle('has-c',C.has(k));
+    const who=S.has(k)&&C.has(k)?'Students & coordinators':S.has(k)?'Students':C.has(k)?'Coordinators':'No one yet';
+    p.dataset.who=who; const t=p.querySelector('title')||p.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')); t.textContent=p.dataset.name+' — '+who;
+  });
+  if(svg.dataset.wired) return; svg.dataset.wired='1';
+  const show=p=>{ svg.querySelectorAll('.gh-r.sel').forEach(x=>x.classList.remove('sel')); p.classList.add('sel'); if(readout) readout.textContent=p.dataset.name+': '+p.dataset.who; };
+  svg.addEventListener('click',e=>{ const p=e.target.closest('.gh-r'); if(p) show(p); });
+  svg.addEventListener('mouseover',e=>{ const p=e.target.closest('.gh-r'); if(p) show(p); });
+}
+renderGhanaMap(null);
 function renderTeam(dir){
   const grid=document.getElementById('teamGrid'); if(!grid) return;
   const amb=Object.assign({},TEAM_AMBASSADOR_DEFAULT); const a=dir&&dir.ambassador;
@@ -1216,6 +1238,7 @@ async function loadStatsAndTeam(){
     const cArr = (dir && dir.coordinators) ? dir.coordinators : [];
 
     renderTeam(dir);
+    renderGhanaMap(dir);
   }catch(e){
     console.error('Failed to load live programme data', e);
   }
@@ -1846,8 +1869,11 @@ renderAnnouncementPopup();
 // WhatsApp link and email connections use) so the Ambassador can move the
 // deadline without editing this file. Falls back to this default until the
 // Ambassador sets one from the portal.
-let APPLICATION_DEADLINE = new Date('2026-09-30T23:59:59Z');
+// No hard-coded fallback: until the Ambassador's settings load (or if no deadline is set) the site must not assume applications are closed.
+let APPLICATION_DEADLINE = null;
+let APPS_PAUSED = false;
 function fmtDeadlineDate(d){
+  if(!d) return '';
   return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' });
 }
 // ---- System status banner ----
@@ -1870,6 +1896,8 @@ async function loadDeadlineFromPortal(){
     if(!sbReady) return;
     const { data } = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
     const s = (data && data.value) || {};
+    APPS_PAUSED = !!s.applicationsClosed;
+    APPLICATION_DEADLINE = null;
     if(s.applicationDeadline){
       const d = new Date(s.applicationDeadline);
       if(!isNaN(d.getTime())) APPLICATION_DEADLINE = d;
@@ -1888,22 +1916,28 @@ async function loadDeadlineFromPortal(){
 // people who bookmarked the page earlier) sees the portal is shut, rather
 // than a form that silently rejects them on submit.
 let applicationsClosed = false;
-function closeApplicationPortal(){
-  if(applicationsClosed) return;
-  applicationsClosed = true;
-
-  // Hero + nav CTAs: stop linking to the closed form, relabel, and grey out.
+function setApplyButtonState(closed){
+  applicationsClosed = closed;
   const navBtn = document.getElementById('navApplyBtn');
-  if(navBtn){
+  if(!navBtn) return;
+  if(closed){
     navBtn.textContent = 'Applications closed';
     navBtn.removeAttribute('href');
     navBtn.style.pointerEvents = 'none';
     navBtn.style.opacity = '.55';
+  }else{
+    // Re-open: restore the normal "Join now" link (this runs whenever the Ambassador's settings say applications are open).
+    navBtn.textContent = 'Join now';
+    navBtn.setAttribute('href', 'apply.html');
+    navBtn.style.pointerEvents = '';
+    navBtn.style.opacity = '';
   }
 }
+function closeApplicationPortal(){ setApplyButtonState(true); }
 
 function tickCountdown(){
-  if((APPLICATION_DEADLINE - new Date()) <= 0) closeApplicationPortal();
+  const closed = APPS_PAUSED || (APPLICATION_DEADLINE instanceof Date && (APPLICATION_DEADLINE - new Date()) <= 0);
+  if(closed !== applicationsClosed) setApplyButtonState(closed);
 }
 tickCountdown();
 setInterval(tickCountdown, 30000);

@@ -5152,8 +5152,44 @@ function startPresenceLoop(){
   }, 30000);
 }
 function myStudentStatus(){ const s = DB.students.find(s=>s.id===ME.id); return s ? s.status : 'Accepted'; }
+// Turns free-text region/town entries ("Accra", "kumasi", "Greater Accra Region") into one of Ghana's 16 region keys.
+// Only these keys are ever published for the public map — never names, counts or contact details.
+const GH_REGION_ALIASES = {
+  'greater-accra':['greater accra','accra','tema','madina','kasoa','ga east','ga west','ashaiman','teshie','nungua','dansoman','osu','legon','adenta','spintex','kaneshie'],
+  'ashanti':['ashanti','kumasi','obuasi','ejisu','mampong','konongo','bekwai','offinso','suame'],
+  'western':['western','takoradi','sekondi','tarkwa','axim','prestea','shama','half assini'],
+  'western-north':['western north','sefwi','wiawso','bibiani','juaboso','enchi'],
+  'central':['central','cape coast','winneba','swedru','kasoa central','assin','elmina','mankessim','dunkwa','twifo'],
+  'eastern':['eastern','koforidua','nsawam','akim','oda','kyebi','nkawkaw','suhum','kwahu','akosombo','aburi','akuapem','mpraeso'],
+  'volta':['volta','ho','keta','aflao','hohoe','sogakope','anloga','kpando'],
+  'oti':['oti','dambai','jasikan','nkwanta','kadjebi','krachi'],
+  'northern':['northern','tamale','yendi','savelugu','bimbilla','tolon','kumbungu','saboba'],
+  'savannah':['savannah','savanna','damongo','bole','salaga','buipe','sawla'],
+  'north-east':['north east','nalerigu','walewale','gambaga','bunkpurugu','chereponi','yunyoo'],
+  'upper-east':['upper east','bolgatanga','bawku','navrongo','bongo','zebilla','sandema'],
+  'upper-west':['upper west','wa','tumu','lawra','jirapa','nandom'],
+  'bono':['bono','sunyani','berekum','dormaa','wenchi','japekrom'],
+  'bono-east':['bono east','techiman','kintampo','atebubu','nkoranza','yeji'],
+  'ahafo':['ahafo','goaso','kenyasi','bechem','hwidiem']
+};
+function ghanaRegionKey(text){
+  const t = ' ' + String(text||'').toLowerCase().replace(/\b(region|regional|municipal|district|metropolis|metro|city|town)\b/g,' ').replace(/[^a-z ]+/g,' ').replace(/\s+/g,' ').trim() + ' ';
+  if(t.trim()==='') return null;
+  let best = null, bestLen = 0;
+  for(const [key, list] of Object.entries(GH_REGION_ALIASES)){
+    for(const a of list){
+      if(t.includes(' ' + a + ' ') && a.length > bestLen){ best = key; bestLen = a.length; }
+    }
+  }
+  return best;
+}
 async function syncPublicDirectory(){
   const regions = new Set(DB.coordinators.map(c=>c.region).filter(Boolean));
+  // Region-level presence only, for the public Ghana map (no names, counts or contacts).
+  const regionPresence = {
+    students: [...new Set(DB.students.map(s=>ghanaRegionKey(s.region)).filter(Boolean))],
+    coordinators: [...new Set(DB.coordinators.map(c=>ghanaRegionKey(c.region)).filter(Boolean))]
+  };
   // Prefer whichever ambassador profile has actually been filled in — in the
   // common case of one ambassador, that's simply the only entry present.
   const ambProfile = Object.values(DB.ambassadorProfiles||{}).find(p=>p && (p.bio||p.photo)) || null;
@@ -5163,6 +5199,7 @@ async function syncPublicDirectory(){
     regionCount: regions.size || DB.coordinators.length,
     materialsCount: DB.materials.length,
     sessionsCount: DB.callsheets.length,
+    regionPresence,
     coordinators: DB.coordinators.map(c => ({ name: c.name, subject: c.subject||'', region: c.region||'', bio: c.bio||'', photo: c.photo||'' })),
     ambassador: ambProfile ? { name: ambProfile.name||'', bio: ambProfile.bio||'', photo: ambProfile.photo||'' } : null
   };
