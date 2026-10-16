@@ -1,106 +1,51 @@
-// Supabase Edge Function: submit-application
+// Supabase Edge Function: send-push
+// Sends a web push (OneSignal) to the ambassador when a student requests an exam retake.
+// The recipient is fixed on the server, so callers cannot push to anyone else.
 //
-// What this does:
-//   1. Receives the applicant's form data + their reCAPTCHA token.
-//   2. Asks Google "was this token really solved by a human?" — this check
-//      happens here, on Supabase's server, so it CANNOT be skipped by
-//      someone bypassing your webpage's JavaScript.
-//   3. Only if Google says yes, writes the application into your database
-//      using the SERVICE ROLE key (a powerful key that only lives here on
-//      the server, never in the browser).
-//
-// Your webpage (apply.html) no longer writes to the database directly —
-// it calls this function instead.
+// Secrets to set (Supabase > Edge Functions > Secrets):
+//   ONESIGNAL_REST_API_KEY      your OneSignal REST API key
+//   AMBASSADOR_EXTERNAL_IDS     the ambassador's portal id, e.g. amb-yourname@gmail.com (lowercase). Comma-separate for several.
+// Optional: ONESIGNAL_APP_ID (defaults to the portal's app id), PORTAL_URL (opened when the notification is tapped)
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.112.3";
+const APP_ID = Deno.env.get("ONESIGNAL_APP_ID") ?? "c711029f-212c-4c50-8498-ea78aecbb153";
+const API_KEY = Deno.env.get("ONESIGNAL_REST_API_KEY");
+const RECIPIENTS = (Deno.env.get("AMBASSADOR_EXTERNAL_IDS") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+const PORTAL_URL = Deno.env.get("PORTAL_URL");
 
-const corsHeaders = {
+const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+const clip = (v: unknown, n: number) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+const json = (b: unknown, status = 200) =>
+  new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed." }, 405);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ error: "POST only" }, 405);
+  if (!API_KEY || !RECIPIENTS.length) return json({ error: "Push is not configured" }, 500);
 
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "Invalid request body." }, 400);
-  }
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { return json({ error: "Bad JSON" }, 400); }
+  if (body.kind !== "retake_request") return json({ error: "Unsupported kind" }, 400);
 
-  const { recaptchaToken, application } = body || {};
-  if (!recaptchaToken) return json({ error: "Missing reCAPTCHA token." }, 400);
-  if (!application) return json({ error: "Missing application data." }, 400);
+  const student = clip(body.studentName, 60) || "A student";
+  const exam = clip(body.examTitle, 80) || "an exam";
+  const reason = clip(body.reason, 140);
 
-  // --- 1. Verify the token with Google (this is the part a browser can't fake) ---
-  const secret = Deno.env.get("RECAPTCHA_SECRET_KEY");
-  if (!secret) return json({ error: "Server misconfigured: RECAPTCHA_SECRET_KEY not set." }, 500);
-
-  const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+  const res = await fetch("https://api.onesignal.com/notifications?c=push", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(recaptchaToken)}`,
+    headers: { "Content-Type": "application/json", Authorization: `Key ${API_KEY}` },
+    body: JSON.stringify({
+      app_id: APP_ID,
+      target_channel: "push",
+      include_aliases: { external_id: RECIPIENTS },
+      headings: { en: "Retake request" },
+      contents: { en: `${student} asked to retake ${exam}.${reason ? " " + reason : ""}` },
+      ...(PORTAL_URL ? { url: PORTAL_URL } : {}),
+    }),
   });
-  const verifyData = await verifyRes.json();
-  if (!verifyData.success) {
-    return json({ error: "reCAPTCHA verification failed. Please try again." }, 400);
-  }
-
-  // --- 2. Basic validation of the fields (same checks the page already did) ---
-  const { name, email, phone, notifySms, school, region, ageRange, howHeard, message } = application;
-  if (!name || typeof name !== "string") return json({ error: "Name is required." }, 400);
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Valid email is required." }, 400);
-  if (!phone || typeof phone !== "string") return json({ error: "Phone number is required." }, 400);
-  if (!ageRange || typeof ageRange !== "string") return json({ error: "Age range is required." }, 400);
-  if (!message || typeof message !== "string") return json({ error: "Message is required." }, 400);
-
-  // --- 3. Write to the database using the SERVICE ROLE key (server-side only) ---
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  try {
-    const { data, error: readErr } = await supabase
-      .from("ichc_kv")
-      .select("value")
-      .eq("key", "applications:list")
-      .maybeSingle();
-    if (readErr) throw readErr;
-
-    const list = (data && data.value) || [];
-    list.push({
-      id: crypto.randomUUID(),
-      name: String(name).trim(),
-      email: String(email).trim().toLowerCase(),
-      phone: String(phone).trim(),
-      notifySms: !!notifySms,
-      school: school ? String(school).trim() : "",
-      region: region ? String(region) : "",
-      ageRange,
-      howHeard: howHeard ? String(howHeard) : "",
-      message: String(message).trim(),
-      date: new Date().toISOString().slice(0, 10),
-    });
-
-    const { error: writeErr } = await supabase
-      .from("ichc_kv")
-      .upsert({ key: "applications:list", value: list });
-    if (writeErr) throw writeErr;
-
-    return json({ ok: true });
-  } catch (e) {
-    console.error("submit-application error:", e);
-    return json({ error: "Something went wrong saving your application. Please try again." }, 500);
-  }
+  const out = await res.text();
+  return json({ ok: res.ok, status: res.status, detail: res.ok ? undefined : out.slice(0, 300) }, res.ok ? 200 : 502);
 });

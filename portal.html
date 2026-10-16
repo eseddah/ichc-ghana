@@ -927,6 +927,8 @@
   .exmp-center{text-align:center; padding:30px 10px;}
   .exmp-tick{width:64px; height:64px; border-radius:50%; background:var(--teal); color:#fff; font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; border:3px solid var(--navy-deep);}
   .exmp-warnline{color:#8A4B00; font-weight:700; font-size:14px;}
+  .exmp.exmp-locked > *:not(.exmp-gate){visibility:hidden;}
+  .exmp-gate{background:#16123F !important;}
   .exmp-modal{position:absolute; inset:0; background:rgba(22,18,63,.62); display:flex; align-items:center; justify-content:center; padding:20px; z-index:5;}
   .exmp-modal-card{background:#fff; border:2px solid var(--navy-deep); border-radius:22px; box-shadow:0 6px 0 var(--navy-deep); padding:24px 26px; max-width:440px; width:100%;}
   .exmp-modal-card h3{margin:0 0 6px;} .exmp-modal-card p{margin:0 0 18px; font-size:15.5px; line-height:1.55; color:var(--ink);}
@@ -1216,7 +1218,7 @@ window.addEventListener('unhandledrejection', (e)=>{ console.error('Unhandled pr
 const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
 
-let DB = { coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], examKeys:[], examKeysLoaded:false, attendance:[], progressNotes:[], alerts:[], loungePosts:[], polls:[], quizzes:[], presence:{}, certificates:[] };
+let DB = { examRetakes:[], coordinators:[], students:[], announcements:[], materials:[], callsheets:[], practice:[], comments:[], notifications:[], settings:{}, library:[], applications:[], applicationDecisions:[], exams:[], examAttempts:[], examKeys:[], examKeysLoaded:false, attendance:[], progressNotes:[], alerts:[], loungePosts:[], polls:[], quizzes:[], presence:{}, certificates:[] };
 let ME = null; // {id, name, email, phone, notifyEmail, notifySms, role, coordinatorId}
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -1254,7 +1256,7 @@ async function loadDB(){
     coordinators, students, announcements, materials, callsheets, practice,
     comments, notifications, library, applications, applicationDecisions,
     exams, examAttempts, attendance, progressNotes, loungePosts, polls,
-    quizzes, alerts, settings, certificates, smsLog, ambassadorProfiles
+    quizzes, alerts, settings, certificates, smsLog, ambassadorProfiles, examRetakes
   ] = await Promise.all([
     sGet('roster:coordinators', true),
     sGet('roster:students', true),
@@ -1278,7 +1280,8 @@ async function loadDB(){
     sGet('settings:notify', true),
     loadCertificates(),
     sGet('sms:log', true),
-    sGet('ambassador:profiles', true)
+    sGet('ambassador:profiles', true),
+    sGet('posts:examRetakes', true)
   ]);
   DB.coordinators = coordinators || [];
   DB.students      = students || [];
@@ -1299,10 +1302,11 @@ async function loadDB(){
   DB.polls         = polls || [];
   DB.quizzes       = quizzes || [];
   DB.alerts        = alerts || [];
-  DB.settings      = settings || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'2026-09-30T23:59:59Z', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
+  DB.settings      = settings || { emailjsPublicKey:'', emailjsServiceId:'', emailjsTemplateId:'', webhookUrl:'', aiWebhookUrl:'', applicationDeadline:'', programName:'Chemistry Competition Prep', systemStatus:'operational', systemStatusMessage:'' };
   DB.certificates  = certificates || [];
   DB.smsLog        = smsLog || [];
   DB.ambassadorProfiles = ambassadorProfiles || {};
+  DB.examRetakes = Array.isArray(examRetakes) ? examRetakes : [];
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
@@ -1375,7 +1379,7 @@ const KEY_MAP = {
   applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', examKeys:'posts:examKeys', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
   alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log',
-  ambassadorProfiles:'ambassador:profiles'
+  ambassadorProfiles:'ambassador:profiles', examRetakes:'posts:examRetakes'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -1616,7 +1620,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], load:['students','coordinators']
+  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -1653,6 +1657,7 @@ async function pollLive(force){
     if(changed.includes('students') || changed.includes('coordinators')) await refreshMeFromDB();
     if(changed.includes('alerts')){ renderAlertBanner(); renderUpdateToast(); }
     if(changed.includes('announcements')) renderUpdateToast();
+    if(changed.includes('examRetakes') && window.examRetakeRefresh) examRetakeRefresh();
     if(changed.length) renderNavBadges();
     const needsRender = (changed.length && LIVE_RERENDER_TABS.has(currentTab));
     if(currentTab && needsRender) renderOrDefer(currentTab);
@@ -5973,9 +5978,9 @@ function notificationsView(){
 function settingsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can manage notification connections.</div>`;
   const s = DB.settings || {};
-  const deadlineIso = s.applicationDeadline || '2026-09-30T23:59:59Z';
+  const deadlineIso = s.applicationDeadline || '';
   const deadlineInputValue = deadlineIso.replace(/Z$/,'').slice(0,16);
-  const deadlineDisplay = (()=>{ const d = new Date(deadlineIso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' }); })();
+  const deadlineDisplay = (()=>{ const d = new Date(deadlineIso); return isNaN(d.getTime()) ? 'no deadline (applications stay open)' : d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Accra' }); })();
   return `
   <div class="section-title"><div><h2>Programme identity & status</h2><p>The name here appears on the dashboard header, footer, and the application form/site — change it once, it updates everywhere. The status banner shows on every dashboard and the public site until you set it back to Operational.</p></div></div>
   <div class="card" style="margin-bottom:24px;">
@@ -6190,7 +6195,7 @@ function examRunningScreen(exam, attempt){
 // attempt limits, an instructions screen, an open/close window, and a full-screen player.
 // Exams posted before this update (no "questions" list) keep working through the old flow above.
 // =====================================================================================
-const EXAM_BUILD = 'r7 · 13 Oct';
+const EXAM_BUILD = 'r8 · 16 Oct';
 const EXAM_MAX_Q = 40;
 const EXAM_TYPE_LABEL = { mcq:'Multiple choice', short:'Short answer', structured:'Structured', calc:'Calculation', theory:'Theory' };
 const EXAM_LABEL_TO_TYPE = { 'multiple choice':'mcq', 'short answer':'short', 'structured':'structured', 'calculation':'calc', 'theory':'theory' };
@@ -6200,9 +6205,22 @@ const EXAM_TOPICS = ['Stoichiometry','Atomic structure & periodic table','Bondin
 const EXB_DEFAULT_INSTR = 'Read each question carefully. Every question has its own countdown and the exam moves on by itself when the time is up. You cannot go back to a question once you have moved on. No calculator, notes or outside help unless your coordinator says so.';
 
 const examIsV2 = (e)=> !!e && Array.isArray(e.questions) && e.questions.length > 0;
+// A student's own device clock must not decide when an exam opens, so this follows the server's clock when it can be read.
+let EX_CLOCK_OFF = 0;
+function exNow(){ return Date.now() + EX_CLOCK_OFF; }
+async function exSyncClock(){
+  try{
+    const t0 = Date.now();
+    const r = await fetch(SUPABASE_CONFIG.url + '/rest/v1/', { method:'HEAD', headers:{ apikey:SUPABASE_CONFIG.anonKey }, cache:'no-store' });
+    const h = r.headers.get('date'); if(!h) return;
+    const srv = Date.parse(h); if(!isFinite(srv)) return;
+    const off = srv - (t0 + Date.now())/2;
+    EX_CLOCK_OFF = Math.abs(off) > 2000 ? off : 0;
+  }catch(err){}
+}
 function examStatus(e, now){
-  now = now || Date.now();
-  const s = e.startAt ? Date.parse(e.startAt) : 0, en = e.endAt ? Date.parse(e.endAt) : Infinity;
+  now = now || exNow();
+  const s = e.startAt ? Date.parse(e.startAt) : Infinity, en = e.endAt ? Date.parse(e.endAt) : Infinity;
   return now < s ? 'upcoming' : now >= en ? 'closed' : 'open';
 }
 function fmtDur(sec){
@@ -6426,6 +6444,11 @@ function examManageItem(e){
       </div>
       <button type="button" class="btn teal small" style="margin-top:10px;" data-save-sched="${e.id}">Save changes</button>
     </details>
+    <details class="exb-sched"><summary>Edit instructions</summary>
+      <div class="field" style="margin:10px 0 0;"><textarea rows="5" data-instr-for="${e.id}">${escapeHtml(e.instructions || e.protocol || '')}</textarea></div>
+      <p class="note" style="margin:6px 0 0;">You can change these any time, even after the exam is posted. Students who have already started keep what they saw.</p>
+      <button type="button" class="btn teal small" style="margin-top:10px;" data-save-instr="${e.id}">Save instructions</button>
+    </details>
     <details class="exb-review" data-review="${e.id}" style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; color:var(--teal-deep); font-weight:600;">View attempts and answers (${atts.length})</summary><div class="exb-review-body" style="margin-top:10px;"></div></details>
     <div class="item-actions"><button class="btn secondary small" data-preview-exam="${e.id}">Preview as a student</button><button class="btn ghost small" data-remove-exam="${e.id}">Remove exam</button></div>
   </div>`;
@@ -6487,6 +6510,7 @@ function examsManageView(){
   return `
   <div class="section-title"><div><h2>Exams <span class="exb-build" title="If this tag is missing or different on another device, that device is showing an older copy of the portal.">build ${EXAM_BUILD}</span></h2><p>${ME.role==='ambassador' ? 'Build and schedule timed online exams. As Ambassador you can oversee or remove any exam in the programme.' : 'Build and schedule timed online exams for your students.'}</p></div></div>
   <div id="exbRoot">
+  <div id="exRetakeBox">${exRetakePanelHtml()}</div>
   <div class="card" style="margin-bottom:18px;">
     <div class="exb-step"><b class="n">1</b><h3>Exam details</h3></div>
     <div class="exb-grid">
@@ -6653,6 +6677,9 @@ function exbOnClick(ev){
   if(d.ebRefine) return exbRefine(d.ebRefine);
   if(t.id==='addExamBtn') return exbPost();
   if(d.saveSched) return examSaveSchedule(d.saveSched);
+  if(d.saveInstr) return examSaveInstructions(d.saveInstr);
+  if(d.retakeOk) return examDecideRetake(d.retakeOk, 'approved');
+  if(d.retakeNo) return examDecideRetake(d.retakeNo, 'declined');
   if(d.saveAtt2) return examSaveAttempt2(d.saveAtt2);
   if(d.previewExam) return xpOpen(d.previewExam, true);
   if(d.previewLegacy) return xpPreviewLegacy(d.previewLegacy);
@@ -6831,6 +6858,59 @@ async function exbRefine(kind){
   finally{ exbWorkStop(); exbBusy(false); }
 }
 
+// ---------------------------------------------------------------- retakes, instructions edits, push
+function examRetakesOf(examId, studentId){ return (DB.examRetakes||[]).filter(r=>r.examId===examId && r.studentId===studentId); }
+function examAttemptsFor(e, studentId){ return (e.attempts||1) + examRetakesOf(e.id, studentId).filter(r=>r.status==='approved').length; }
+async function examPatch(id, fn){
+  const fresh = await sharedRead('exams'); const base = Array.isArray(fresh) ? fresh : DB.exams;
+  const x = base.find(y=>y.id===id); if(!x) return false;
+  fn(x); DB.exams = base; return await saveKey('exams');
+}
+async function examSaveInstructions(id){
+  const box = document.querySelector(`[data-instr-for="${id}"]`), btn = document.querySelector(`[data-save-instr="${id}"]`); if(!box) return;
+  const v = box.value.trim(); if(!v) return alert('The instructions cannot be empty.');
+  if(btn){ btn.disabled = true; btn.textContent = 'Saving...'; }
+  const ok = await examPatch(id, x=>{ x.instructions = v; x.instructionsEditedAt = new Date().toISOString(); });
+  if(btn){ btn.disabled = false; btn.textContent = ok ? 'Saved. Students see this when they open the exam' : 'Could not save, try again'; setTimeout(()=>{ if(btn) btn.textContent = 'Save instructions'; }, 2600); }
+}
+async function examPushAmbassador(payload){
+  try{ const { error } = await sb.functions.invoke('send-push', { body:payload }); return !error; }catch(err){ return false; }
+}
+async function examRequestRetake(examId){
+  const e = DB.exams.find(x=>x.id===examId); if(!e) return;
+  if(examRetakesOf(examId, ME.id).some(r=>r.status==='pending')) return alert('You already have a request waiting.');
+  const reason = prompt('Tell your ambassador briefly what happened (for example, "my internet dropped" or "I logged out by mistake"):');
+  if(reason === null) return;
+  const req = { id:uid(), examId, examTitle:e.title, studentId:ME.id, studentName:ME.name, coordinatorId:e.coordinatorId||null, reason:String(reason).trim().slice(0,300), requestedAt:new Date().toISOString(), status:'pending' };
+  const ok = await appendShared('examRetakes', req);
+  if(ok === false) return alert('We could not send your request. Check your connection and try again.');
+  const pushed = await examPushAmbassador({ kind:'retake_request', examTitle:e.title, studentName:ME.name, reason:req.reason });
+  alert(pushed ? 'Your ambassador has been notified.' : 'Your request was sent. Your ambassador will see it in the portal.');
+  render('exams');
+}
+async function examDecideRetake(id, status){
+  const fresh = await sharedRead('examRetakes'); const base = Array.isArray(fresh) ? fresh : DB.examRetakes;
+  const r = base.find(x=>x.id===id); if(!r || r.status!=='pending') { DB.examRetakes = base; return examRetakeRefresh(); }
+  r.status = status; r.decidedAt = new Date().toISOString(); r.decidedBy = ME.name;
+  DB.examRetakes = base; await saveKey('examRetakes'); examRetakeRefresh();
+}
+function exRetakePanelHtml(){
+  const mineExam = (ex)=> ME.role==='ambassador' || (ex && ex.coordinatorId===ME.id);
+  const list = (DB.examRetakes||[]).filter(r=>mineExam(DB.exams.find(x=>x.id===r.examId)));
+  const pend = list.filter(r=>r.status==='pending').sort((a,b)=>String(a.requestedAt).localeCompare(String(b.requestedAt)));
+  if(!pend.length) return '';
+  return `<div class="card" style="margin-bottom:18px; border:1.5px solid var(--amber);"><h3 style="margin:0 0 4px; font-size:16px;">Retake requests (${pend.length})</h3><p class="note" style="margin:0 0 10px;">Approving gives that student one extra attempt. If the exam has already closed, move its closing time first.</p>${pend.map(r=>{
+    const ex = DB.exams.find(x=>x.id===r.examId), used = DB.examAttempts.filter(a=>a.examId===r.examId && a.studentId===r.studentId).length;
+    const closed = ex && examStatus(ex)==='closed';
+    return `<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(r.studentName)}</span><span class="item-meta">${escapeHtml(r.examTitle||'')} · ${escapeHtml(fmtDateTime(r.requestedAt))}</span></div><div class="item-body">${r.reason ? escapeHtml(r.reason) : '<i>No reason given</i>'}<br><small style="color:var(--muted);">${used} attempt${used===1?'':'s'} used${closed ? ' · this exam has closed' : ''}</small></div><div class="item-actions"><button type="button" class="btn teal small" data-retake-ok="${r.id}">Allow retake</button><button type="button" class="btn ghost small" data-retake-no="${r.id}">Decline</button></div></div>`;
+  }).join('')}</div>`;
+}
+function examRetakeRefresh(){
+  if(XP) return;
+  if(ME.role==='student'){ if(currentTab==='exams') render('exams'); return; }
+  const b = document.getElementById('exRetakeBox'); if(b) b.innerHTML = exRetakePanelHtml();
+}
+
 // ---------------------------------------------------------------- student: exam list
 let examListTimer = null;
 function studentExamsBlock(){
@@ -6856,7 +6936,7 @@ function studentExamsBlock(){
         <div class="item-actions"><button class="btn teal small" data-start-exam="${e.id}">Start exam →</button></div>
       </div>`;
     }
-    const st = examStatus(e, now), running = mine.find(a=>!a.submittedAt), left = Math.max(0, (e.attempts||1) - mine.length);
+    const st = examStatus(e, now), running = mine.find(a=>!a.submittedAt), left = Math.max(0, examAttemptsFor(e, ME.id) - mine.length);
     const tot = e.questions.reduce((n,q)=>n+q.timeSec,0);
     const badge = running ? '<span class="badge stud">In progress</span>' : st==='open' ? '<span class="badge coord">Open now</span>' : st==='upcoming' ? '<span class="badge stud">Opens soon</span>' : '<span class="badge amb">Closed</span>';
     let action;
@@ -6865,13 +6945,21 @@ function studentExamsBlock(){
     else if(st==='upcoming') action = `<span class="item-meta">Opens ${escapeHtml(fmtDateTime(e.startAt))}</span>`;
     else if(st==='open') action = '<span class="item-meta">You have used all your attempts.</span>';
     else action = '<span class="item-meta">This exam has closed.</span>';
+    const rts = examRetakesOf(e.id, ME.id).sort((a,b)=>String(a.requestedAt).localeCompare(String(b.requestedAt))), lastRt = rts[rts.length-1], pendRt = rts.find(r=>r.status==='pending');
+    let rtHtml = '';
+    if(pendRt) rtHtml = '<div class="item-meta" style="margin-top:8px;">Retake requested. Your ambassador has been notified and will decide soon.</div>';
+    else {
+      if(lastRt && lastRt.status==='declined') rtHtml += '<div class="item-meta" style="margin-top:8px;">Your last retake request was not approved.</div>';
+      if(lastRt && lastRt.status==='approved' && left>0) rtHtml += '<div class="item-meta" style="margin-top:8px;">Retake approved. You have another attempt.</div>';
+      if(!running && left===0 && mine.some(a=>a.submittedAt) && st!=='upcoming') rtHtml += '<div style="margin-top:8px;"><button type="button" class="btn secondary small" data-request-retake="'+e.id+'">Request a retake</button></div>';
+    }
     const past = mine.filter(a=>a.submittedAt).map(a=>`<div class="item-meta" style="margin-top:4px;">Attempt ${a.attemptNo||1}: submitted ${escapeHtml(fmtDateTime(a.submittedAt))}${a.autoSubmitted?' (auto-submitted)':''}${a.score ? ' · <b>Score: '+escapeHtml(String(a.score))+'</b>' : ''}${a.feedback ? ' · Feedback: '+linkify(a.feedback) : ''}</div>`).join('');
     return `<div class="item">
       <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span>${badge}</div>
       <div class="item-body">${escapeHtml(e.subject||'')}${e.subject?' · ':''}${e.questions.length} questions · ${e.totalMarks} marks · about ${fmtDur(tot)} in total${e.coordinatorId===null?' · Programme-wide':''}</div>
-      <div class="xs-facts"><span>Opens <b>${escapeHtml(fmtDateTime(e.startAt))}</b></span><span>Closes <b>${escapeHtml(fmtDateTime(e.endAt))}</b></span><span>Attempts <b>${mine.length} of ${e.attempts||1}</b> used</span></div>
+      <div class="xs-facts"><span>Opens <b>${escapeHtml(fmtDateTime(e.startAt))}</b></span><span>Closes <b>${escapeHtml(fmtDateTime(e.endAt))}</b></span><span>Attempts <b>${mine.length} of ${examAttemptsFor(e, ME.id)}</b> used</span></div>
       ${past}
-      <div class="item-actions">${action}</div>
+      <div class="item-actions">${action}</div>${rtHtml}
     </div>`;
   }).join('') : `<div class="empty">No exams posted yet. Your coordinator will post one when it's time.</div>`}
   </div>`;
@@ -6930,8 +7018,10 @@ function exbCrash(err, where){
   const guard = (fn, where)=> function(ev){ try{ const r = fn(ev); if(r && r.catch) r.catch(err=>exbCrash(err, where)); }catch(err){ exbCrash(err, where); } };
   document.addEventListener('click', guard(ev=>{
     if(inRoot(ev)) return exbOnClick(ev);
+    const rq = ev.target && ev.target.closest && ev.target.closest('[data-request-retake]');
+    if(rq) return examRequestRetake(rq.dataset.requestRetake);
     const b = ev.target && ev.target.closest && ev.target.closest('[data-open-exam]');
-    if(b) return xpOpen(b.dataset.openExam, false);
+    if(b){ exSyncClock(); return xpOpen(b.dataset.openExam, false); }
   }, 'click'));
   document.addEventListener('input', guard(ev=>{ if(inRoot(ev)) exbOnInput(ev); }, 'input'));
   document.addEventListener('change', guard(ev=>{ if(inRoot(ev)) exbOnInput(ev); }, 'change'));
@@ -6955,8 +7045,9 @@ function xpMergeLocal(a){
 async function xpSync(a){ if(!a || (XP && XP.preview)) return true; try{ return (await appendShared('examAttempts', a)) !== false; }catch(e){ return false; } }
 function xpFsSupported(){ const el = document.documentElement; return !!(el.requestFullscreen || el.webkitRequestFullscreen); }
 function xpInFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-function xpEnterFs(){ const el = XP && XP.el; if(!el) return; try{ const f = el.requestFullscreen || el.webkitRequestFullscreen; if(f){ const p = f.call(el); if(p && p.catch) p.catch(()=>{}); } }catch(e){} }
-function xpExitFs(){ try{ if(xpInFs()){ const f = document.exitFullscreen || document.webkitExitFullscreen; const p = f.call(document); if(p && p.catch) p.catch(()=>{}); } }catch(e){} }
+function xpKbLock(on){ try{ const k = navigator.keyboard; if(!k) return; if(on && k.lock) k.lock(['Escape','F11']).catch(()=>{}); else if(!on && k.unlock) k.unlock(); }catch(e){} }
+function xpEnterFs(){ const el = XP && XP.el; if(!el) return; try{ const f = el.requestFullscreen || el.webkitRequestFullscreen; if(f){ const p = f.call(el); if(p && p.then) p.then(()=>{ if(XP && !XP.preview) xpKbLock(true); }).catch(()=>{}); else if(XP && !XP.preview) xpKbLock(true); } }catch(e){} }
+function xpExitFs(){ xpKbLock(false); try{ if(xpInFs()){ const f = document.exitFullscreen || document.webkitExitFullscreen; const p = f.call(document); if(p && p.catch) p.catch(()=>{}); } }catch(e){} }
 
 function xpOpen(examId, preview){
   if(XP) return;
@@ -6974,6 +7065,9 @@ function xpOpen(examId, preview){
   xpPaint();
   (async()=>{
     if(!preview){
+      await exSyncClock();
+      if(!XP) return;
+      // Browsers with no full-screen support (e.g. iPhone Safari) take the exam normally; leaving the page is still recorded.
       try{ const fresh = await sharedRead('examAttempts'); if(Array.isArray(fresh)) DB.examAttempts = fresh; }catch(e){}
       if(!XP) return;
       const mine = DB.examAttempts.filter(a=>a.examId===exam.id && a.studentId===ME.id);
@@ -6986,7 +7080,7 @@ function xpOpen(examId, preview){
         const st = examStatus(exam);
         if(st==='upcoming'){ XP.stage = 'error'; XP.msg = 'This exam opens ' + fmtDateTime(exam.startAt) + '.'; return xpPaint(); }
         if(st==='closed'){ XP.stage = 'error'; XP.msg = 'This exam has closed.'; return xpPaint(); }
-        if(mine.length >= (exam.attempts||1)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
+        if(mine.length >= examAttemptsFor(exam, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
       }
     }
     XP.stage = 'instructions'; xpPaint();
@@ -7010,7 +7104,7 @@ function xpInfoGrid(){
   const no = XP.attempt ? (XP.attempt.attemptNo||1) : mine.length + 1;
   const range = Math.min(...secs) === Math.max(...secs) ? fmtDur(secs[0]) : `${fmtDur(Math.min(...secs))} to ${fmtDur(Math.max(...secs))}`;
   const cell = (k,v)=>`<div class="exmp-cell"><small>${k}</small><b>${v}</b></div>`;
-  return `<div class="exmp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${e.attempts||1}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
+  return `<div class="exmp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${XP.preview ? (e.attempts||1) : examAttemptsFor(e, ME.id)}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
 }
 function xpShell(inner, foot){
   const e = XP.exam;
@@ -7027,7 +7121,7 @@ function xpPaint(){
     if(a){
       const q = e.questions[a.qIndex], left = Math.max(0, q.timeSec - (Date.now()-Date.parse(a.qStartedAt))/1000);
       body = `<div class="exmp-kicker">Welcome back</div><h1>${escapeHtml(e.title)}</h1><p class="exmp-lead">You are on question <b>${a.qIndex+1} of ${e.questions.length}</b>. The clock kept running while you were away, and there are about <b>${fmtDur(left)}</b> left on this question.</p>${xpInfoGrid()}`;
-      el.innerHTML = xpShell(body, '<button class="btn" data-xp="close">Back to exams</button><button class="btn amber" data-xp="begin">Continue exam →</button>');
+      el.innerHTML = xpShell(body, '<button class="btn amber" data-xp="begin">Continue exam →</button>');
       return;
     }
     body = `<div class="exmp-kicker">Exam instructions</div><h1>${escapeHtml(e.title)}</h1>${e.subject ? `<p class="exmp-lead">${escapeHtml(e.subject)}</p>` : ''}${xpInfoGrid()}
@@ -7043,8 +7137,8 @@ function xpPaint(){
   if(XP.stage==='q'){ xpPaintQuestion(); return; }
   if(XP.stage==='done'){
     const a = XP.attempt, n = e.questions.length, answered = e.questions.filter(q=>a.answers[q.id]!==undefined && a.answers[q.id]!=='').length;
-    const more = !XP.preview && examStatus(e)==='open' && (e.attempts||1) > (a.attemptNo||1);
-    el.innerHTML = xpShell(`<div class="exmp-center"><div class="exmp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="exmp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${(e.attempts||1)-(a.attemptNo||1)} attempt${(e.attempts||1)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="exmp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
+    const more = !XP.preview && examStatus(e)==='open' && examAttemptsFor(e, ME.id) > (a.attemptNo||1);
+    el.innerHTML = xpShell(`<div class="exmp-center"><div class="exmp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="exmp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${examAttemptsFor(e, ME.id)-(a.attemptNo||1)} attempt${examAttemptsFor(e, ME.id)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="exmp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
   }
 }
 function xpPaintQuestion(){
@@ -7074,6 +7168,7 @@ function xpPaintQuestion(){
 }
 function xpTick(force){
   if(!XP || XP.stage!=='q') return;
+  if(xpFsSupported() && !xpInFs() && !XP.fsGate) xpFsChange();
   const e = XP.exam, a = XP.attempt, now = Date.now();
   const before = a.qIndex;
   if(examCatchUp(e, a, now)){ xpFinish(true); return; }
@@ -7099,7 +7194,7 @@ async function xpBegin(){
       if(open){ xpMergeLocal(open); XP.attempt = open; }
       else {
         if(examStatus(e) !== 'open'){ XP.stage = 'error'; XP.msg = 'This exam is not open right now.'; return xpPaint(); }
-        if(mine.length >= (e.attempts||1)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
+        if(mine.length >= examAttemptsFor(e, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
         const iso = new Date().toISOString();
         XP.attempt = { id:uid(), v:2, examId:e.id, studentId:ME.id, studentName:ME.name, attemptNo:mine.length+1, startedAt:iso, qIndex:0, qStartedAt:iso, answers:{}, tabSwitches:0, fsExits:0, submittedAt:null };
         await xpSync(XP.attempt);
@@ -7156,6 +7251,7 @@ async function xpFinish(auto){
   XP.stage = 'done'; xpExitFs(); xpPaint();
 }
 function xpClick(ev){
+  if(XP && XP.fsGate && !ev.target.closest('[data-xp="close"]')){ xpEnterFs(); return; }
   const o = ev.target.closest('[data-xp-opt]');
   if(o && XP && XP.stage==='q'){
     const a = XP.attempt, q = XP.exam.questions[a.qIndex]; a.answers[q.id] = +o.dataset.xpOpt; xpSaveLocal();
@@ -7165,7 +7261,7 @@ function xpClick(ev){
   if(b.dataset.xp==='close') return xpClose();
   if(b.dataset.xp==='begin') return xpBegin();
   if(b.dataset.xp==='next') return xpNext();
-  if(b.dataset.xp==='fs'){ XP.fsGate = false; const g = XP.el.querySelector('.exmp-gate'); if(g) g.remove(); xpEnterFs(); }
+  if(b.dataset.xp==='fs'){ xpEnterFs(); return; }
 }
 let xpSaveTimer = null;
 function xpInput(ev){
@@ -7174,6 +7270,7 @@ function xpInput(ev){
   clearTimeout(xpSaveTimer); xpSaveTimer = setTimeout(xpSaveLocal, 300);
 }
 function xpKey(ev){
+  if(XP && XP.stage==='q' && !XP.preview && (ev.key==='Escape' || ev.key==='F11')) ev.preventDefault();
   if(!XP || XP.stage!=='q' || XP.busy) return;
   if(ev.target && (ev.target.tagName==='TEXTAREA' || ev.target.tagName==='INPUT')) return;
   const a = XP.attempt, q = XP.exam.questions[a.qIndex];
@@ -7186,14 +7283,20 @@ function xpVis(){
     if(Date.now() - XP.lastVis > 10000){ XP.lastVis = Date.now(); xpSync(a); }
   } else { const n = document.getElementById('xpNote'); if(n) n.textContent = '⚠ Leaving the exam is recorded.'; }
 }
-function xpFsChange(){
-  if(!XP || XP.stage!=='q' || !xpFsSupported()) return;
-  if(xpInFs() || XP.fsGate) return;
-  if(!XP.preview){ XP.attempt.fsExits = (XP.attempt.fsExits||0) + 1; xpSaveLocal(); xpSync(XP.attempt); }
-  XP.fsGate = true;
+function xpUngate(){ if(!XP || !XP.el) return; XP.fsGate = false; XP.el.classList.remove('exmp-locked'); const g = XP.el.querySelector('.exmp-gate'); if(g) g.remove(); }
+function xpGate(){
+  if(!XP || !XP.el || XP.el.querySelector('.exmp-gate')) return;
+  XP.el.classList.add('exmp-locked');
   const g = document.createElement('div'); g.className = 'exmp-modal exmp-gate';
-  g.innerHTML = '<div class="exmp-modal-card"><h3>You left full screen</h3><p>Your timer is still running. Return to full screen to keep going.</p><div class="exmp-modal-actions"><button class="btn amber" data-xp="fs">Return to full screen</button></div></div>';
+  g.innerHTML = '<div class="exmp-modal-card"><h3>The exam must stay in full screen</h3><p>Your questions are hidden and your timer is still running. Return to full screen to carry on.' + (XP.preview ? '' : ' Leaving full screen is recorded for your examiner.') + '</p><div class="exmp-modal-actions"><button class="btn amber" data-xp="fs">Return to full screen</button>' + (XP.preview ? '<button class="btn" data-xp="close">Exit preview</button>' : '') + '</div></div>';
   XP.el.appendChild(g);
+}
+function xpFsChange(){
+  if(!XP || !xpFsSupported()) return;
+  if(xpInFs()){ if(XP.fsGate) xpUngate(); return; }
+  if(XP.stage!=='q' || XP.fsGate) return;
+  if(!XP.preview){ XP.attempt.fsExits = (XP.attempt.fsExits||0) + 1; xpSaveLocal(); xpSync(XP.attempt); }
+  XP.fsGate = true; xpGate();
 }
 
 function wireHandlers(tab){
