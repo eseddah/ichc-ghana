@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script>if(!window.supabase){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"><\/script>');}</script>
+<script>if(!window.supabase){document.write('<script src="https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.js"><\/script>');}</script>
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -871,13 +873,22 @@
   .exb-key{margin-top:10px;} .exb-key summary{cursor:pointer; font-size:12.5px; font-weight:700; color:var(--navy);} .exb-key textarea{margin-top:8px;}
   .exb-addbar{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;}
   .exb-sched summary{cursor:pointer; font-size:13px; font-weight:700; color:var(--navy);}
-  .exb-att{border:2px solid var(--line); border-radius:14px; padding:10px 14px; margin-bottom:10px; background:#fff;}
-  .exb-flag{font-size:12.5px; color:#8A4B00; font-weight:700; margin-top:4px;}
-  .exb-ans-list{margin-top:8px; display:flex; flex-direction:column; gap:8px;}
-  .exb-ans{font-size:13.5px; border-left:3px solid var(--lilac); padding-left:10px;}
-  .exb-ans-q{color:var(--muted);}
-  .exb-ok{color:var(--teal-deep); font-weight:800;} .exb-bad{color:#B3261E; font-weight:700;}
-  .exb-key-line{color:var(--muted); font-size:12.5px;}
+  .exb-att{border:2px solid #C9D1DB; border-radius:16px; padding:20px 22px; margin-bottom:20px; background:#fff; font-size:17px; line-height:1.55; color:#10243A;}
+  .exb-att-head{display:flex; justify-content:space-between; gap:10px 18px; flex-wrap:wrap; align-items:baseline;}
+  .exb-att-name{font-size:22px; font-weight:800;}
+  .exb-att-state{font-size:16px; font-weight:700; color:#33465A; margin-top:4px;}
+  .exb-flag{font-size:16.5px; color:#8A4B00; font-weight:800; margin-top:10px;}
+  .exb-ans-list{margin-top:14px; display:flex; flex-direction:column; gap:22px;}
+  .exb-ans{font-size:17px; border-left:5px solid var(--navy); padding:2px 0 2px 16px;}
+  .exb-ans-no{font-size:19px; font-weight:800;}
+  .exb-ans-q{display:block; font-weight:700; margin:3px 0 8px;}
+  .exb-ans-label{font-weight:800; font-size:15.5px; color:#33465A; margin-top:6px;}
+  .exb-ok{color:#0B6B4F; font-weight:800;} .exb-bad{color:#A5190F; font-weight:800;}
+  .exb-key-line{color:#33465A; font-size:16.5px; font-weight:700;}
+  .exb-mark-row{margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:17px; font-weight:800;}
+  .exb-lab{display:block; font-size:16px; font-weight:800; margin-bottom:6px;}
+  .exb-att input[type=number], .exb-att input[type=text], .exb-att input:not([type]){font-size:18px; font-weight:700; padding:11px 13px;}
+  .exb-score-row{margin-top:20px; display:grid; gap:14px; max-width:620px;}
   .xs-facts{display:flex; flex-wrap:wrap; gap:4px 18px; font-size:13px; color:var(--muted); margin-top:6px;}
   .xs-facts b{color:var(--navy-deep);}
 
@@ -920,6 +931,17 @@
   .exmp-opt.on{border-color:var(--navy); background:var(--lilac); box-shadow:0 3px 0 var(--navy);}
   .exmp-opt.on b{background:var(--navy); color:#fff;}
   .exmp-answer{font-size:16px; line-height:1.6; min-height:200px; resize:vertical;}
+  .exb-result{margin-top:12px; padding:16px 18px; border-radius:14px; background:#EAF6F1; border:2px solid #BFE3D3; color:#10302A; font-size:17px; line-height:1.55;}
+  .exb-result b{font-size:19px;} .exb-result .fb{margin-top:8px; font-size:16.5px; font-weight:600;}
+  .exr-stu{border:2px solid #C9D1DB; border-radius:14px; padding:16px 18px; margin-top:14px; background:#fff; font-size:17px; line-height:1.55; color:#10243A;}
+  .exr-stu .top{display:flex; flex-direction:column; gap:4px;} .exr-name{font-size:20px; font-weight:800;} .exr-final{font-size:18px; font-weight:800;}
+  .exmp-photo{margin-top:16px; border:2px dashed var(--line); border-radius:16px; padding:14px 16px; background:#FBFAF5; color:#1d1b3a;}
+  .exmp-photo-h{display:flex; flex-direction:column; gap:2px; margin-bottom:10px;} .exmp-photo-h b{font-size:14.5px;} .exmp-photo-h span{font-size:13px; opacity:.75;}
+  .exmp-phs{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;} .exmp-phs:empty{display:none;}
+  .exmp-ph{position:relative; width:92px; height:92px; border-radius:12px; overflow:hidden; border:2px solid var(--line); background:#fff;} .exmp-ph img{width:100%; height:100%; object-fit:cover; display:block;}
+  .exmp-ph button{position:absolute; top:4px; right:4px; width:24px; height:24px; border-radius:50%; border:0; background:rgba(22,18,63,.85); color:#fff; font-size:15px; line-height:1; cursor:pointer;}
+  .exmp-ph.up{display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; opacity:.7;}
+  .exmp-phstat{font-size:12.5px; margin-left:10px;} .exmp-phstat.err{color:#b3261e; font-weight:700;}
   .exmp-data{margin-top:18px; font-size:13.5px;} .exmp-data summary{cursor:pointer; font-weight:800; color:var(--navy);} .exmp-data div{margin-top:6px; color:#4B4672; line-height:1.55;}
   .exmp-foot{flex:none; background:#fff; border-top:2px solid var(--line); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
   .exmp-hint{font-size:13px; color:var(--muted);}
@@ -1614,7 +1636,7 @@ function stopRealtimeSync(){
 }
 
 // Which shared records each screen depends on, besides the always-fresh "hot" ones.
-const HOT_POLL_PROPS = ['comments','notifications','alerts','announcements'];
+const HOT_POLL_PROPS = ['comments','notifications','alerts','announcements','examRetakes'];
 const TAB_POLL_PROPS = {
   people:['students','coordinators','applications'], students:['students'], space:['students','callsheets','materials','practice'],
   calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
@@ -1926,11 +1948,11 @@ function tabSources(tab){
       // Own posts are stamped seen at creation time (see the push sites below),
       // so this only ever counts exams that arrived from someone else.
       if(ME.role==='student') return [{items:DB.exams.filter(e=>e.coordinatorId===null || e.coordinatorId===myCoordinatorId()), field:'seenBy', save:'exams'}];
-      if(ME.role==='coordinator') return [{items:DB.exams.filter(e=>e.coordinatorId===null), field:'seenBy', save:'exams'}];
+      if(ME.role==='coordinator') return [{items:DB.exams.filter(e=>e.coordinatorId===null), field:'seenBy', save:'exams'}, {items:exRetakesPending(), field:'seenBy', save:'examRetakes'}];
+      if(ME.role==='ambassador') return [{items:exRetakesPending(), field:'seenBy', save:'examRetakes'}];
       return [];
     case 'notifications': {
-      const items = ME.role==='ambassador' ? DB.notifications
-        : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id);
+      const items = DB.notifications.filter(notifVisible);
       const sources = [{items:items.filter(afterCutoff), field:'seenBy', save:'notifications'}];
       if(ME.role==='student') sources.push({items:myAlerts(), field:'views', save:'alerts'}); // rendered inline here for students
       return sources;
@@ -2450,7 +2472,7 @@ function initOnboarding(){
 async function handleGoogleSignIn(ev){
   const picks = document.querySelectorAll('.portal-pick');
   const msg = document.getElementById('googleMsg');
-  if(!sbReady){ msg.textContent = 'Sign-in isn\'t connected yet — check back shortly.'; return; }
+  if(!sbReady){ msg.textContent = 'We could not connect just now. Check your internet connection and try again.'; return; }
   const clickedRole = ev.currentTarget.dataset.role;
   // This flag is the ONLY thing that authorizes an automatic sign-in — in
   // resolveGoogleSession() and in boot()'s cached-session check. No click
@@ -3034,10 +3056,12 @@ function buildTabsLegacy(){
     render(t.dataset.tab);
     await markTabSeen(t.dataset.tab);
     renderNavBadges();
+    if(typeof examRetakeAlert==='function') examRetakeAlert();
   }));
   render(tabs[0][0]);
   markTabSeen(tabs[0][0]).then(renderNavBadges);
   renderNavBadges();
+  setTimeout(()=>{ if(typeof examRetakeAlert==='function') examRetakeAlert(); }, 800);
 }
 // Identifies an input/select/textarea so its typed value can survive a re-render.
 // Prefers a plain id (used by the freeform "add coordinator/student" boxes); falls
@@ -5954,10 +5978,15 @@ function channelStatus(){
   const smsOn = !!s.webhookUrl;
   return {emailOn, smsOn};
 }
+function notifVisible(n){
+  if(!ME) return false;
+  if(ME.role==='ambassador') return true;
+  if(Array.isArray(n.toIds)) return n.toIds.includes(ME.id);
+  return !n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id;
+}
 function notificationsView(){
   const {emailOn, smsOn} = channelStatus();
-  const mine = ME.role==='ambassador' ? DB.notifications
-    : DB.notifications.filter(n=>!n.coordinatorId || n.coordinatorId===myCoordinatorId() || n.coordinatorId===ME.id);
+  const mine = DB.notifications.filter(notifVisible);
   const sorted = [...mine].filter(afterCutoff).sort((a,b)=>b.ts-a.ts);
   return `
   ${ME.role==='student' ? alertsSectionForStudentHtml() : ''}
@@ -5971,7 +6000,7 @@ function notificationsView(){
     ${sorted.length ? sorted.map(n=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(n.title)}</span><span class="item-meta">${fmtDate(n.date)}</span></div>
-        <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>${linkPreviewCard()}
+        <div class="item-body">${linkify(n.body)} <span style="color:var(--muted);">— ${escapeHtml(n.author)} (${n.role})</span></div>${linkPreviewCard()}${n.link ? `<div class="item-actions"><button type="button" class="btn teal small" data-goto-tab="${escapeHtml(n.link)}">${ME.role==='student' ? 'See my result' : ME.role==='coordinator' ? 'Check results' : 'Open'}</button></div>` : ''}
       </div>`).join('') : `<div class="empty">Nothing sent yet. Announcements and group messages will appear here the moment they go out.</div>`}
   </div>`;
 }
@@ -6124,6 +6153,39 @@ function examRemainingSec(exam, attempt){
 function examAttemptsFor(examId){
   return DB.examAttempts.filter(a=>a.examId===examId);
 }
+function examLegacyPhotoRender(){
+  const box = document.getElementById('examPhotos'); if(!box || !EXAM_CTX || !EXAM_CTX.attempt) return;
+  const list = EXAM_CTX.attempt.photos || [];
+  box.innerHTML = list.map((u,i)=>`<div class="exmp-ph"><img src="${escapeHtml(u)}" alt="Your work, photo ${i+1}"><button type="button" data-exam-photo-del="${i}" aria-label="Remove photo">\u00d7</button></div>`).join('') + (EXAM_CTX.upCount ? '<div class="exmp-ph up">Uploading...</div>' : '');
+  box.querySelectorAll('[data-exam-photo-del]').forEach(b=>b.addEventListener('click', async ()=>{
+    list.splice(+b.dataset.examPhotoDel, 1); examLegacyPhotoRender();
+    if(EXAM_CTX.mode==='running') await saveKey('examAttempts');
+  }));
+}
+async function examLegacyPhotoPick(ev){
+  if(!EXAM_CTX || !EXAM_CTX.attempt) return;
+  const files = Array.from(ev.target.files||[]); ev.target.value = '';
+  const a = EXAM_CTX.attempt, setMsg = (t,err)=>{ const m = document.getElementById('examPhotoMsg'); if(m){ m.textContent = t; m.className = 'exmp-phstat' + (err ? ' err' : ''); } };
+  a.photos = a.photos || [];
+  const room = 4 - a.photos.length - (EXAM_CTX.upCount||0);
+  if(room <= 0) return setMsg('You can add up to 4 photos.', true);
+  for(const f of files.slice(0, room)){
+    EXAM_CTX.upCount = (EXAM_CTX.upCount||0) + 1; setMsg(''); examLegacyPhotoRender();
+    try{
+      if(!/^image\//.test(f.type||'image/jpeg')) throw new Error('That file is not a picture.');
+      if(EXAM_CTX.mode!=='running'){ a.photos.push(URL.createObjectURL(f)); }
+      else {
+        const blob = await compressImageFile(f, 1600, 0.82);
+        const path = `exam-work/${a.examId}/${String(ME.id).replace(/[^a-z0-9_-]/gi,'')}-${a.id}-${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}.jpg`;
+        const { error } = await sb.storage.from(PROFILE_PHOTO_BUCKET).upload(path, blob, { contentType:'image/jpeg', upsert:false });
+        if(error) throw error;
+        a.photos.push(sb.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl);
+        await saveKey('examAttempts');
+      }
+    }catch(err){ setMsg('That photo did not upload: ' + (err && err.message ? err.message : 'please try again') + '.', true); }
+    EXAM_CTX.upCount = Math.max(0, (EXAM_CTX.upCount||1) - 1); examLegacyPhotoRender();
+  }
+}
 async function finalizeExamAttempt(attempt, exam, {autoSubmitted}){
   const box = document.getElementById('examAnswerBox');
   attempt.answer = box ? box.value.trim() : (attempt.draft || '');
@@ -6147,7 +6209,7 @@ function startExamRuntime(exam, attempt){
     if(box){ attempt.draft = box.value; await saveKey('examAttempts'); }
   }, 20000);
   examVisHandler = ()=>{
-    if(document.hidden && currentTab==='exams'){
+    if(document.hidden && currentTab==='exams' && !(window.examPickUntil && Date.now() < window.examPickUntil)){
       attempt.tabSwitches = (attempt.tabSwitches||0) + 1;
       saveKey('examAttempts');
       const note = document.getElementById('examIntegrityNote');
@@ -6186,7 +6248,8 @@ function examRunningScreen(exam, attempt){
     <details style="margin-bottom:14px;"><summary style="cursor:pointer; font-size:12.5px; color:var(--muted);">Protocol reminder</summary><p style="font-size:13px; color:var(--muted); margin-top:6px;">${linkify(exam.protocol||'')}</p></details>
     <div class="item" style="margin-bottom:14px; background:rgba(15,36,56,.02);"><div class="item-body" style="white-space:pre-wrap;">${linkify(chemify(exam.content))}</div></div>
     <div class="field" style="margin:0 0 12px;"><label>Your answer</label><textarea id="examAnswerBox" rows="12" placeholder="Write your full working and final answer here">${escapeHtml(attempt.draft||'')}</textarea></div>
-    <div style="font-size:12px; color:var(--muted); margin-bottom:12px;" id="examIntegrityNote">${attempt.tabSwitches?`⚠ You've left this tab ${attempt.tabSwitches} time(s) — this is recorded.`:'Stay on this tab — leaving it is recorded.'}</div>
+    <div class="exmp-photo" style="margin:0 0 14px;"><div class="exmp-photo-h"><b>Balanced equations and written working</b><span>Write your solution on paper, then take a clear photo of it and upload it. You can add up to 4 photos.</span></div><div class="exmp-phs" id="examPhotos">${(attempt.photos||[]).map((u,i)=>`<div class="exmp-ph"><img src="${escapeHtml(u)}" alt="Your work, photo ${i+1}"><button type="button" data-exam-photo-del="${i}" aria-label="Remove photo">\u00d7</button></div>`).join('')}</div><input id="examPhotoIn" type="file" accept="image/*" multiple hidden><button type="button" class="btn secondary small" id="examPhotoBtn">Take or choose a photo</button><span class="exmp-phstat" id="examPhotoMsg"></span></div>
+        <div style="font-size:12px; color:var(--muted); margin-bottom:12px;" id="examIntegrityNote">${attempt.tabSwitches?`⚠ You've left this tab ${attempt.tabSwitches} time(s) — this is recorded.`:'Stay on this tab — leaving it is recorded.'}</div>
     <button class="btn teal" id="examSubmitBtn">Submit final answer</button>
   </div>`;
 }
@@ -6195,7 +6258,7 @@ function examRunningScreen(exam, attempt){
 // attempt limits, an instructions screen, an open/close window, and a full-screen player.
 // Exams posted before this update (no "questions" list) keep working through the old flow above.
 // =====================================================================================
-const EXAM_BUILD = 'r8 · 16 Oct';
+const EXAM_BUILD = 'r10 · 17 Oct';
 const EXAM_MAX_Q = 40;
 const EXAM_TYPE_LABEL = { mcq:'Multiple choice', short:'Short answer', structured:'Structured', calc:'Calculation', theory:'Theory' };
 const EXAM_LABEL_TO_TYPE = { 'multiple choice':'mcq', 'short answer':'short', 'structured':'structured', 'calculation':'calc', 'theory':'theory' };
@@ -6425,6 +6488,7 @@ function examManageItem(e){
           ${atts.length ? atts.map(a=>`<div style="border:1px solid var(--line); border-radius:10px; padding:10px 12px;">
             <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;"><b style="font-size:13.5px;">${escapeHtml(a.studentName)}</b><span style="font-size:12px; color:var(--muted);">${a.submittedAt ? 'Submitted '+fmtDate(a.submittedAt.slice(0,10)) : 'In progress'}${a.autoSubmitted?' · auto-submitted':''}${a.tabSwitches?' · ⚠ left tab '+a.tabSwitches+'x':''}</span></div>
             ${a.answer ? `<div style="font-size:13.5px; color:#39424D; margin-top:6px; white-space:pre-wrap;">${escapeHtml(a.answer)}</div>` : ''}
+            ${(a.photos||[]).length ? `<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">${a.photos.map((u,j)=>`<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${escapeHtml(u)}" alt="Student work ${j+1}" style="width:120px; height:120px; object-fit:cover; border-radius:10px; border:1.5px solid var(--line);"></a>`).join('')}</div>` : ''}
             <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;"><input data-score-for="${a.id}" value="${escapeHtml(a.score||'')}" placeholder="Score" style="max-width:90px;"><input data-feedback-for="${a.id}" value="${escapeHtml(a.feedback||'')}" placeholder="Feedback" style="flex:1; min-width:160px;"><button class="btn teal small" data-save-attempt="${a.id}">Save</button></div>
           </div>`).join('') : '<div style="font-size:13px; color:var(--muted);">No attempts yet.</div>'}
         </div></details>
@@ -6449,7 +6513,8 @@ function examManageItem(e){
       <p class="note" style="margin:6px 0 0;">You can change these any time, even after the exam is posted. Students who have already started keep what they saw.</p>
       <button type="button" class="btn teal small" style="margin-top:10px;" data-save-instr="${e.id}">Save instructions</button>
     </details>
-    <details class="exb-review" data-review="${e.id}" style="margin-top:8px;"><summary style="cursor:pointer; font-size:13px; color:var(--teal-deep); font-weight:600;">View attempts and answers (${atts.length})</summary><div class="exb-review-body" style="margin-top:10px;"></div></details>
+    <details class="exb-review" data-review="${e.id}" style="margin-top:8px;"><summary style="cursor:pointer; font-size:17px; color:var(--teal-deep); font-weight:800;">Review answers and give marks, ${atts.length} ${atts.length===1 ? 'attempt' : 'attempts'}</summary><div class="exb-review-body" style="margin-top:10px;"></div></details>
+    ${examResultsBlockHtml(e)}
     <div class="item-actions"><button class="btn secondary small" data-preview-exam="${e.id}">Preview as a student</button><button class="btn ghost small" data-remove-exam="${e.id}">Remove exam</button></div>
   </div>`;
 }
@@ -6457,31 +6522,49 @@ function examReviewHtml(e){
   const keyRow = (DB.examKeys||[]).find(k=>k.id===e.id);
   const keys = keyRow ? keyRow.keys : {};
   const atts = DB.examAttempts.filter(a=>a.examId===e.id).sort((a,b)=>String(a.studentName).localeCompare(String(b.studentName)) || (a.attemptNo||1)-(b.attemptNo||1));
-  if(!atts.length) return '<div style="font-size:13px; color:var(--muted);">No attempts yet.</div>';
+  if(!atts.length) return '<div style="font-size:17px; font-weight:700;">No student has taken this exam yet.</div>';
   const closed = examStatus(e) === 'closed';
   return atts.map(a=>{
     let got = 0, tot = 0;
     e.questions.forEach(q=>{ if(q.type==='mcq' && keys[q.id]){ tot += q.marks; if(a.answers && a.answers[q.id] !== undefined && Number(a.answers[q.id]) === keys[q.id].correct) got += q.marks; } });
-    const state = a.submittedAt ? ('Submitted '+fmtDateTime(a.submittedAt)+(a.autoSubmitted ? (a.autoReason==='window' ? ' · closed at end time' : ' · timed out') : '')) : (closed ? 'Not submitted (exam closed)' : 'In progress (question '+((a.qIndex||0)+1)+' of '+e.questions.length+')');
-    const flags = [a.tabSwitches ? `left the tab ${a.tabSwitches}x` : '', a.fsExits ? `left full screen ${a.fsExits}x` : ''].filter(Boolean).join(' · ');
+    const state = a.submittedAt
+      ? 'Handed in on ' + fmtDateTime(a.submittedAt) + (a.autoSubmitted ? (a.autoReason==='window' ? '. It was closed automatically at the end time.' : '. It was closed automatically when the time ran out.') : '.')
+      : (closed ? 'Never handed in. The exam closed before this student finished.' : 'Still writing, now on question ' + ((a.qIndex||0)+1) + ' of ' + e.questions.length + '.');
+    const tabs = a.tabSwitches||0, fsx = a.fsExits||0, bits = [];
+    if(tabs) bits.push('left the browser tab ' + tabs + (tabs===1 ? ' time' : ' times'));
+    if(fsx) bits.push('left full screen ' + fsx + (fsx===1 ? ' time' : ' times'));
+    const flags = bits.length ? 'Watch this: this student ' + bits.join(' and ') + '.' : '';
     const rows = e.questions.map((q,i)=>{
       const k = keys[q.id] || {}; const ans = a.answers ? a.answers[q.id] : undefined;
+      const blank = (ans===undefined || ans==='');
       let shown, verdict = '';
       if(q.type==='mcq'){
-        shown = (ans===undefined || ans==='') ? '<i>No answer</i>' : `${'ABCD'[ans]}) ${escapeHtml(q.options[ans]||'')}`;
-        if(k.correct !== undefined){ verdict = (ans!==undefined && ans!=='' && Number(ans)===k.correct) ? '<span class="exb-ok">correct</span>' : `<span class="exb-bad">correct answer: ${'ABCD'[k.correct]}) ${escapeHtml(q.options[k.correct]||'')}</span>`; }
+        shown = blank ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml(q.options[ans]||'')}`;
+        if(k.correct !== undefined){ verdict = (!blank && Number(ans)===k.correct) ? '<span class="exb-ok">This answer is correct.</span>' : `<span class="exb-bad">This answer is wrong. The right answer is option ${'ABCD'[k.correct]}: ${escapeHtml(q.options[k.correct]||'')}.</span>`; }
       } else {
-        shown = (ans===undefined || ans==='') ? '<i>No answer</i>' : `<span style="white-space:pre-wrap;">${escapeHtml(ans)}</span>`;
-        if(k.answer) verdict = `<span class="exb-key-line">Model answer: ${escapeHtml(k.answer)}${k.scheme ? ' · '+escapeHtml(k.scheme) : ''}</span>`;
+        const ph = (a.photos && a.photos[q.id]) || [];
+        shown = blank ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(ans)}</span>`;
+        if(ph.length) shown += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">${ph.map((u,j)=>`<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${escapeHtml(u)}" alt="Student work, photo ${j+1}" style="width:150px; height:150px; object-fit:cover; border-radius:10px; border:2px solid #C9D1DB;"></a>`).join('')}</div>`;
+        if(k.answer) verdict = `<span class="exb-key-line">Model answer: ${escapeHtml(k.answer)}${k.scheme ? ' Marking guide: ' + escapeHtml(k.scheme) : ''}</span>`;
       }
-      return `<div class="exb-ans"><b>Q${i+1}</b> <span class="exb-ans-q">${escapeHtml(q.text.slice(0,90))}${q.text.length>90?'…':''}</span><div>${shown}</div>${verdict ? `<div>${verdict}</div>` : ''}</div>`;
-    }).join('');
+      const mk = q.type!=='mcq' ? `<div class="exb-mark-row"><label for="mk-${a.id}-${q.id}">Marks for this question</label><input id="mk-${a.id}-${q.id}" type="number" min="0" max="${q.marks}" step="0.5" data-mark-att="${a.id}" data-mark-q="${q.id}" value="${a.marks && a.marks[q.id]!==undefined ? escapeHtml(String(a.marks[q.id])) : ''}" style="width:96px;"><span>out of ${q.marks}</span></div>` : '';
+      return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(q.text)}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${verdict ? `<div style="margin-top:8px;">${verdict}</div>` : ''}${mk}</div>`;
+    }).join('') + ((!a.answers && a.answer) ? `<div class="exb-ans"><div class="exb-ans-no">Written answer</div><div style="white-space:pre-wrap;">${escapeHtml(a.answer)}</div></div>` : '');
+    const manualSum = e.questions.reduce((n,q)=> n + (q.type!=='mcq' && a.marks && isFinite(parseFloat(a.marks[q.id])) ? parseFloat(a.marks[q.id]) : 0), 0);
+    const hasMarks = !!(a.marks && Object.keys(a.marks).length);
+    const totalVal = (a.score!==undefined && String(a.score).trim()!=='') ? String(a.score) : (hasMarks ? String(got + manualSum) : '');
+    const scoredNow = String(a.score||'').trim() !== '';
     return `<div class="exb-att">
-      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;"><b style="font-size:13.5px;">${escapeHtml(a.studentName)} · attempt ${a.attemptNo||1}</b><span style="font-size:12px; color:var(--muted);">${escapeHtml(state)}</span></div>
-      ${flags ? `<div class="exb-flag">⚠ ${escapeHtml(flags)}</div>` : ''}
-      ${tot ? `<div style="font-size:13px; margin-top:4px;">Auto-marked multiple choice: <b>${got} / ${tot}</b></div>` : ''}
-      <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:12.5px; font-weight:700;">Answers</summary><div class="exb-ans-list">${rows}</div></details>
-      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;"><input data-score-for="${a.id}" value="${escapeHtml(a.score||'')}" placeholder="Score (of ${e.totalMarks})" style="max-width:130px;"><input data-feedback-for="${a.id}" value="${escapeHtml(a.feedback||'')}" placeholder="Feedback" style="flex:1; min-width:160px;"><button class="btn teal small" data-save-att2="${a.id}">Save</button></div>
+      <div class="exb-att-head"><span class="exb-att-name">${escapeHtml(a.studentName)}, attempt ${a.attemptNo||1}</span><span class="${scoredNow ? 'exb-ok' : 'exb-bad'}">${scoredNow ? 'Marks saved' : 'Not marked yet'}</span></div>
+      <div class="exb-att-state">${escapeHtml(state)}</div>
+      ${flags ? `<div class="exb-flag">${escapeHtml(flags)}</div>` : ''}
+      ${tot ? `<div style="font-size:18px; font-weight:800; margin-top:12px;">Multiple choice score: ${got} out of ${tot}. These were marked automatically.</div>` : ''}
+      <details style="margin-top:14px;"><summary style="cursor:pointer; font-size:17px; font-weight:800; color:var(--navy);">Show this student's answers</summary><div class="exb-ans-list">${rows}</div></details>
+      <div class="exb-score-row">
+        <div><label class="exb-lab" for="sc-${a.id}">Total score out of ${e.totalMarks}</label><input id="sc-${a.id}" data-score-for="${a.id}" value="${escapeHtml(totalVal)}" style="width:100%; max-width:220px;"></div>
+        <div><label class="exb-lab" for="fb-${a.id}">Comment for the student</label><input id="fb-${a.id}" data-feedback-for="${a.id}" value="${escapeHtml(a.feedback||'')}" style="width:100%;"></div>
+        <div><button class="btn teal" data-save-att2="${a.id}">Save marks for ${escapeHtml(String(a.studentName).split(' ')[0])}</button></div>
+      </div>
     </div>`;
   }).join('');
 }
@@ -6511,6 +6594,8 @@ function examsManageView(){
   <div class="section-title"><div><h2>Exams <span class="exb-build" title="If this tag is missing or different on another device, that device is showing an older copy of the portal.">build ${EXAM_BUILD}</span></h2><p>${ME.role==='ambassador' ? 'Build and schedule timed online exams. As Ambassador you can oversee or remove any exam in the programme.' : 'Build and schedule timed online exams for your students.'}</p></div></div>
   <div id="exbRoot">
   <div id="exRetakeBox">${exRetakePanelHtml()}</div>
+  ${coordResultsHtml()}
+  ${examReleasePanelHtml()}
   <div class="card" style="margin-bottom:18px;">
     <div class="exb-step"><b class="n">1</b><h3>Exam details</h3></div>
     <div class="exb-grid">
@@ -6678,6 +6763,8 @@ function exbOnClick(ev){
   if(t.id==='addExamBtn') return exbPost();
   if(d.saveSched) return examSaveSchedule(d.saveSched);
   if(d.saveInstr) return examSaveInstructions(d.saveInstr);
+  if(d.releaseResults) return examReleaseResults(d.releaseResults);
+  if(d.withdrawResults) return examWithdrawResults(d.withdrawResults);
   if(d.retakeOk) return examDecideRetake(d.retakeOk, 'approved');
   if(d.retakeNo) return examDecideRetake(d.retakeNo, 'declined');
   if(d.saveAtt2) return examSaveAttempt2(d.saveAtt2);
@@ -6693,7 +6780,7 @@ function exbOnToggle(ev){
   const d = ev.target; if(!d || !d.matches || !d.matches('details.exb-review') || !d.open) return;
   const e = DB.exams.find(x=>x.id===d.dataset.review); if(!e) return;
   const body = d.querySelector('.exb-review-body'); if(!body) return;
-  body.innerHTML = '<div style="font-size:13px; color:var(--muted);">Loading answers…</div>';
+  body.innerHTML = '<div style=\"font-size:17px; font-weight:700;\">Loading the answers, please wait.</div>';
   (async()=>{
     try{ const fresh = await sharedRead('examAttempts'); if(Array.isArray(fresh)) DB.examAttempts = fresh; }catch(err){}
     try{ if(!DB.examKeysLoaded){ const k = await sharedRead('examKeys'); if(Array.isArray(k)){ DB.examKeys = k; DB.examKeysLoaded = true; } } }catch(err){}
@@ -6707,10 +6794,21 @@ function examToast(msg){
 }
 async function examSaveAttempt2(id){
   const a = DB.examAttempts.find(x=>x.id===id); if(!a) return;
+  const e = DB.exams.find(x=>x.id===a.examId);
   const sc = document.querySelector(`[data-score-for="${id}"]`), fb = document.querySelector(`[data-feedback-for="${id}"]`);
-  a.score = sc ? sc.value.trim() : a.score; a.feedback = fb ? fb.value.trim() : a.feedback;
+  const marks = {};
+  for(const inp of document.querySelectorAll(`[data-mark-att="${id}"]`)){
+    const raw = inp.value.trim(); if(raw==='') continue;
+    const n = Number(raw), q = e && e.questions.find(x=>x.id===inp.dataset.markQ), max = q ? Number(q.marks) : Infinity;
+    if(!isFinite(n) || n < 0 || n > max){ inp.focus(); return alert('Marks must be a number from 0 to ' + max + '.'); }
+    marks[inp.dataset.markQ] = n;
+  }
+  const total = sc ? sc.value.trim() : '';
+  if(total !== '' && !isFinite(Number(total)) && !/^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/.test(total)) return alert('The total should be a number, for example 42.');
+  a.marks = marks; a.score = total; a.feedback = fb ? fb.value.trim() : (a.feedback||'');
+  a.scoredAt = new Date().toISOString(); a.scoredBy = ME.name;
   const ok = await appendShared('examAttempts', a);
-  examToast(ok === false ? 'Could not save. Try again.' : '✓ Saved');
+  examToast(ok === false ? 'Could not save. Try again.' : (e && e.resultsReleasedAt ? 'Saved. Students and coordinators can already see this.' : 'Saved'));
 }
 async function examSaveSchedule(id){
   const e = DB.exams.find(x=>x.id===id); if(!e) return;
@@ -6858,9 +6956,154 @@ async function exbRefine(kind){
   finally{ exbWorkStop(); exbBusy(false); }
 }
 
+// ---------------------------------------------------------------- results: scoring helpers, release, coordinator view
+function examScoreNum(a){ const n = parseFloat(String(a && a.score!==undefined && a.score!==null ? a.score : '').trim()); return isFinite(n) ? n : null; }
+function examScoreText(e, a){
+  const s = String(a.score===undefined||a.score===null ? '' : a.score).trim(); if(s==='') return '';
+  if(/^\d+(\.\d+)?$/.test(s)){ const t = Number(e.totalMarks)||0; return t ? `${s} out of ${t}, which is ${Math.round(Number(s)/t*100)} percent` : s; }
+  return s.replace('/', ' out of ');
+}
+function examBestAttempt(e, studentId){
+  const subs = DB.examAttempts.filter(a=>a.examId===e.id && a.studentId===studentId && a.submittedAt);
+  if(!subs.length) return null;
+  const scored = subs.filter(a=>examScoreNum(a)!==null);
+  if(scored.length) return scored.sort((x,y)=>examScoreNum(y)-examScoreNum(x) || (y.attemptNo||1)-(x.attemptNo||1))[0];
+  return subs.sort((x,y)=>(y.attemptNo||1)-(x.attemptNo||1))[0];
+}
+// The student's own input for each question, exactly as they gave it (no answer key, no marking scheme).
+function examAnswerRowsHtml(e, a){
+  if(!examIsV2(e) || !a.answers){
+    return `<div class="exb-ans"><div class="exb-ans-no">Written answer</div><div style="white-space:pre-wrap;">${a.answer ? escapeHtml(a.answer) : 'No answer given.'}</div></div>`;
+  }
+  return e.questions.map((q,i)=>{
+    const ans = a.answers[q.id], ph = (a.photos && a.photos[q.id]) || [];
+    let shown;
+    if(q.type==='mcq') shown = (ans===undefined || ans==='') ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml((q.options||[])[ans]||'')}`;
+    else {
+      shown = (ans===undefined || ans==='') ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(ans)}</span>`;
+      if(ph.length) shown += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">${ph.map((u,j)=>`<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${escapeHtml(u)}" alt="Student work, photo ${j+1}" style="width:150px; height:150px; object-fit:cover; border-radius:10px; border:2px solid #C9D1DB;"></a>`).join('')}</div>`;
+    }
+    const mk = (q.type!=='mcq' && a.marks && a.marks[q.id]!==undefined) ? `<div class="exb-mark-row">Marks for this question: ${escapeHtml(String(a.marks[q.id]))} out of ${q.marks}</div>` : '';
+    return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(q.text)}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${mk}</div>`;
+  }).join('');
+}
+function examResultsBlockHtml(e){
+  const subs = DB.examAttempts.filter(a=>a.examId===e.id && a.submittedAt);
+  const sids = [...new Set(subs.map(a=>a.studentId))];
+  const scored = sids.filter(sid=>{ const b = examBestAttempt(e, sid); return b && examScoreNum(b)!==null; }).length;
+  if(e.resultsReleasedAt) return `<div class="exb-result" style="background:#FFF8E8; border-color:#EBD59A; color:#43340A;"><b>Results are out.</b><div>They were released on ${escapeHtml(fmtDateTime(e.resultsReleasedAt))}${e.resultsReleasedBy ? ' by '+escapeHtml(e.resultsReleasedBy) : ''}. Students can see their score and your comment. Coordinators can see their own students' answers and scores.</div><div style="margin-top:10px;"><button type="button" class="btn ghost" data-withdraw-results="${e.id}">Withdraw the results</button></div></div>`;
+  return `<div class="exb-result" style="background:#F4F1E7; border-color:#C9D1DB; color:#10243A;"><b>Results</b><div>${scored} of ${sids.length} ${sids.length===1?'student has':'students have'} been scored. Nobody sees any score until you release the results.</div><div style="margin-top:10px;"><button type="button" class="btn amber" data-release-results="${e.id}"${sids.length ? '' : ' disabled'}>Release the results</button></div></div>`;
+}
+// Release panel: sits at the TOP of the Exams tab so the Release button is easy to find.
+function examReleasePanelHtml(){
+  if(!ME || (ME.role!=='ambassador' && ME.role!=='coordinator')) return '';
+  const scoped = ME.role==='ambassador' ? DB.exams : DB.exams.filter(e=>e.coordinatorId===ME.id);
+  if(!scoped.length) return '';
+  const sorted = [...scoped].sort((a,b)=>String(b.startAt||b.date).localeCompare(String(a.startAt||a.date)));
+  const rows = sorted.map(e=>{
+    const sids = [...new Set(DB.examAttempts.filter(a=>a.examId===e.id && a.submittedAt).map(a=>a.studentId))];
+    const scored = sids.filter(sid=>{ const b = examBestAttempt(e, sid); return b && examScoreNum(b)!==null; }).length;
+    let action;
+    if(e.resultsReleasedAt) action = `<span class="item-meta" style="margin-right:10px;">Released ${escapeHtml(fmtDateTime(e.resultsReleasedAt))}</span><button type="button" class="btn ghost small" data-withdraw-results="${e.id}">Withdraw</button>`;
+    else if(!sids.length) action = '<span class="item-meta">No submissions yet, so there is nothing to release.</span>';
+    else action = `<button type="button" class="btn amber" data-release-results="${e.id}">Release the results</button>`;
+    return `<div class="item" style="margin-bottom:10px;"><div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span></div><div class="item-meta">${sids.length} submitted · ${scored} scored${e.resultsReleasedAt ? '' : ' · students and coordinators see nothing until you release'}</div><div class="item-actions" style="margin-top:8px;">${action}</div></div>`;
+  }).join('');
+  return `<div class="card" style="margin-bottom:18px; border:2px solid var(--amber, #E0A800);"><h3 style="margin:0 0 6px; font-size:20px; font-weight:800;">Release exam results</h3><p class="note" style="margin:0 0 12px;">Mark the answers first (Review answers and give marks, under each exam below). Then press Release. Students and their coordinators are notified.</p>${rows}</div>`;
+}
+
+async function removeNotificationsByRef(ref){
+  const fresh = await sharedRead('notifications'), base = Array.isArray(fresh) ? fresh : (DB.notifications || []);
+  const keep = base.filter(n=>n.refId!==ref);
+  if(keep.length === base.length) return;
+  DB.notifications = keep; await saveKey('notifications');
+}
+async function examReleaseResults(id){
+  const e = DB.exams.find(x=>x.id===id); if(!e || e.resultsReleasedAt) return;
+  const freshA = await sharedRead('examAttempts'); if(Array.isArray(freshA)) DB.examAttempts = freshA;
+  const sids = [...new Set(DB.examAttempts.filter(a=>a.examId===id && a.submittedAt).map(a=>a.studentId))];
+  if(!sids.length) return alert('No student has submitted this exam yet.');
+  const students = sids.map(sid=>DB.students.find(s=>s.id===sid)).filter(Boolean);
+  const unscored = sids.filter(sid=>{ const b = examBestAttempt(e, sid); return !b || examScoreNum(b)===null; }).length;
+  const coordIds = [...new Set(students.map(s=>s.coordinatorId).filter(Boolean))];
+  const coords = DB.coordinators.filter(c=>coordIds.includes(c.id));
+  const msg = `Release the results of "${e.title}"?\n\n${sids.length} student${sids.length===1?'':'s'} took part and ${coords.length} coordinator${coords.length===1?'':'s'} will be told.` + (unscored ? `\n\nWarning: ${unscored} student${unscored===1?' has':'s have'} no score yet and will see "not scored yet" until you add it.` : '') + '\n\nStudents and coordinators get an in-portal notification and an app notification (if they turned it on). You choose email or SMS next.';
+  if(!confirm(msg)) return;
+  const title = `Results released: ${e.title}`;
+  const ch = await askChannels(title);
+  const ok = await examPatch(id, x=>{ x.resultsReleasedAt = new Date().toISOString(); x.resultsReleasedBy = ME.name; });
+  if(!ok){ return alert('The results could not be released. Check your connection and try again.'); }
+  const stuBody = `Your result for "${e.title}" is out. Open the Exams tab in your portal to see your score and feedback.`;
+  const coBody = `The results for "${e.title}" are out. Check your students' results in the Exams tab of your portal.`;
+  const common = { role:'ambassador', author:ME.name, coordinatorId:null, link:'exams', refId:'results:'+id, date:today(), seenBy:{[ME.id]:Date.now()} };
+  await appendShared('notifications', { ...common, id:uid(), ts:Date.now(), title:`Your results are out: ${e.title}`, body:stuBody, toIds:students.map(s=>s.id) });
+  if(coords.length) await appendShared('notifications', { ...common, id:uid(), ts:Date.now()+1, title:`Students' results are out: ${e.title}`, body:coBody, toIds:coords.map(c=>c.id) });
+  if(ch.email){ dispatchEmails(students, { subject:title, body:stuBody, author:ME.name, kind:'results' }); if(coords.length) dispatchEmails(coords, { subject:title, body:coBody, author:ME.name, kind:'results' }); }
+  const s = DB.settings || {};
+  if(ch.sms && s.webhookUrl){
+    students.filter(r=>r.phone && r.notifySms).forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(stuBody), recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId }));
+    coords.filter(r=>r.phone && r.notifySms).forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(coBody), recipientId:r.id, recipientRole:'coordinator', studentCoordinatorId:null }));
+  }
+  let pushNote = '';
+  try{
+    const a1 = await sb.rpc('ambassador_push', { p_external_ids:students.map(x=>String(x.id)), p_heading:'Your results are out', p_message:stuBody });
+    if(coords.length) await sb.rpc('ambassador_push', { p_external_ids:coords.map(x=>String(x.id)), p_heading:"Your students' results are out", p_message:coBody });
+    if(a1.error) pushNote = ' The app notification could not be sent.';
+  }catch(err){ pushNote = ' The app notification could not be sent.'; }
+  examToast('Results released.' + pushNote);
+  render('exams');
+}
+async function examWithdrawResults(id){
+  const e = DB.exams.find(x=>x.id===id); if(!e || !e.resultsReleasedAt) return;
+  if(!confirm(`Withdraw the results of "${e.title}"? Students and coordinators will no longer see scores, and the release notifications will be removed. Messages already sent by email, SMS or app cannot be recalled.`)) return;
+  const ok = await examPatch(id, x=>{ delete x.resultsReleasedAt; delete x.resultsReleasedBy; });
+  if(!ok) return alert('Could not withdraw the results. Try again.');
+  await removeNotificationsByRef('results:'+id);
+  examToast('Results withdrawn.'); render('exams');
+}
+function coordResultsHtml(){
+  if(!ME || ME.role!=='coordinator') return '';
+  const mine = DB.students.filter(s=>s.coordinatorId===ME.id); if(!mine.length) return '';
+  const exams = DB.exams.filter(e=>e.resultsReleasedAt).sort((a,b)=>String(b.resultsReleasedAt).localeCompare(String(a.resultsReleasedAt)));
+  const blocks = exams.map(e=>{
+    const taken = mine.filter(s=>DB.examAttempts.some(a=>a.examId===e.id && a.studentId===s.id && a.submittedAt));
+    if(!taken.length) return '';
+    const notTaken = mine.filter(s=>!taken.includes(s));
+    const bests = taken.map(s=>examBestAttempt(e, s.id)).filter(b=>b && examScoreNum(b)!==null);
+    const avg = bests.length ? (bests.reduce((n,b)=>n+examScoreNum(b),0)/bests.length) : null;
+    const rows = [...taken].sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>{
+      const best = examBestAttempt(e, s.id);
+      const atts = DB.examAttempts.filter(a=>a.examId===e.id && a.studentId===s.id && a.submittedAt).sort((x,y)=>(x.attemptNo||1)-(y.attemptNo||1));
+      const first = escapeHtml(String(s.name).split(' ')[0]);
+      const final = best && examScoreNum(best)!==null ? `Final score: ${escapeHtml(examScoreText(e, best))}` : 'Final score: not marked yet';
+      const detail = atts.map(a=>`<details style="margin-top:12px;"><summary style="cursor:pointer; font-size:17px; font-weight:800; color:var(--navy);">${atts.length>1 ? `Attempt ${a.attemptNo||1}${a===best ? ', counted as the final score' : ''}. ` : ''}Show the questions and ${first}'s answers</summary>${atts.length>1 && examScoreNum(a)!==null ? `<div class="exb-mark-row">Score for this attempt: ${escapeHtml(examScoreText(e,a))}</div>` : ''}<div class="exb-ans-list">${examAnswerRowsHtml(e, a)}</div>${a.feedback ? `<div style="margin-top:14px; font-size:17px; font-weight:700;">Comment from the ambassador: ${linkify(a.feedback)}</div>` : ''}</details>`).join('');
+      return `<div class="exr-stu"><div class="top"><span class="exr-name">${escapeHtml(s.name)}</span><span class="exr-final">${final}</span></div>${detail}</div>`;
+    }).join('');
+    return `<details class="exb-sched" style="margin-top:14px;"><summary style="font-size:19px; font-weight:800;">${escapeHtml(e.title)}</summary><p style="margin:10px 0 0; font-size:17px; font-weight:600;">Released on ${escapeHtml(fmtDateTime(e.resultsReleasedAt))}. ${taken.length} of your ${mine.length} students took this exam.${avg!==null ? ' The average score was '+(Math.round(avg*10)/10)+(e.totalMarks ? ' out of '+e.totalMarks : '')+'.' : ''}</p>${rows}${notTaken.length ? `<p style="margin:16px 0 0; font-size:17px; font-weight:600;">Did not take this exam: ${notTaken.map(s=>escapeHtml(s.name)).join(', ')}.</p>` : ''}</details>`;
+  }).join('');
+  if(!blocks) return '';
+  return `<div class="card" style="margin-bottom:20px; border:2px solid var(--teal);"><h3 style="margin:0 0 6px; font-size:22px; font-weight:800;">Your students' exam results</h3><p style="margin:0; font-size:17px; font-weight:600;">Open an exam to read each of your students' answers and see their final score.</p>${blocks}</div>`;
+}
+document.addEventListener('click', ev=>{
+  const g = ev.target.closest && ev.target.closest('[data-goto-tab]'); if(!g) return;
+  const t = document.querySelector('.tab[data-tab="'+g.dataset.gotoTab+'"]'); if(t) t.click(); else render(g.dataset.gotoTab);
+});
+document.addEventListener('input', ev=>{
+  const t = ev.target; if(!t || !t.matches) return;
+  if(t.matches('[data-score-for]')){ t.dataset.manual = '1'; return; }
+  if(!t.matches('[data-mark-att]')) return;
+  const id = t.dataset.markAtt, a = DB.examAttempts.find(x=>x.id===id), e = a && DB.exams.find(x=>x.id===a.examId);
+  const tot = document.querySelector(`[data-score-for="${id}"]`); if(!a || !e || !tot || tot.dataset.manual==='1') return;
+  const keyRow = (DB.examKeys||[]).find(k=>k.id===e.id), keys = keyRow ? keyRow.keys : {};
+  let sum = 0;
+  e.questions.forEach(q=>{ if(q.type==='mcq' && keys[q.id] && a.answers && a.answers[q.id]!==undefined && Number(a.answers[q.id])===keys[q.id].correct) sum += q.marks; });
+  document.querySelectorAll(`[data-mark-att="${id}"]`).forEach(i=>{ const n = parseFloat(i.value); if(isFinite(n)) sum += n; });
+  tot.value = String(Math.round(sum*100)/100);
+});
+
 // ---------------------------------------------------------------- retakes, instructions edits, push
 function examRetakesOf(examId, studentId){ return (DB.examRetakes||[]).filter(r=>r.examId===examId && r.studentId===studentId); }
-function examAttemptsFor(e, studentId){ return (e.attempts||1) + examRetakesOf(e.id, studentId).filter(r=>r.status==='approved').length; }
+function examAllowanceFor(e, studentId){ return (e.attempts||1) + examRetakesOf(e.id, studentId).filter(r=>r.status==='approved').length; }
 async function examPatch(id, fn){
   const fresh = await sharedRead('exams'); const base = Array.isArray(fresh) ? fresh : DB.exams;
   const x = base.find(y=>y.id===id); if(!x) return false;
@@ -6894,6 +7137,22 @@ async function examDecideRetake(id, status){
   r.status = status; r.decidedAt = new Date().toISOString(); r.decidedBy = ME.name;
   DB.examRetakes = base; await saveKey('examRetakes'); examRetakeRefresh();
 }
+function exRetakesPending(){
+  if(!ME || ME.role==='student') return [];
+  return (DB.examRetakes||[]).filter(r=>r.status==='pending' && (ME.role==='ambassador' || (DB.exams.find(x=>x.id===r.examId)||{}).coordinatorId===ME.id));
+}
+function examRetakeAlert(){
+  let el = document.getElementById('retakeToast');
+  const pend = exRetakesPending();
+  if(!pend.length || currentTab==='exams'){ if(el) el.remove(); return; }
+  let seen = []; try{ seen = JSON.parse(localStorage.getItem('ichc:retakeNotified')||'[]'); }catch(e){}
+  const fresh = pend.filter(r=>!seen.includes(r.id));
+  fresh.forEach(r=>{ try{ if('Notification' in window && Notification.permission==='granted') new Notification('Retake request', { body: r.studentName + ' asked to retake ' + (r.examTitle||'an exam') }); }catch(e){} });
+  if(fresh.length){ try{ localStorage.setItem('ichc:retakeNotified', JSON.stringify(seen.concat(fresh.map(r=>r.id)).slice(-200))); }catch(e){} }
+  if(!el){ el = document.createElement('div'); el.id = 'retakeToast'; el.style.cssText = 'position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:9000; background:#16123F; color:#fff; padding:12px 14px 12px 20px; border-radius:999px; display:flex; align-items:center; gap:14px; box-shadow:0 14px 34px rgba(0,0,0,.35); font-size:14px; max-width:92vw;'; document.body.appendChild(el); }
+  el.innerHTML = '<span><b>' + pend.length + '</b> retake request' + (pend.length===1?'':'s') + ' waiting</span><button type="button" class="btn amber small" id="retakeToastGo">Review</button>';
+  document.getElementById('retakeToastGo').onclick = ()=>{ const t = document.querySelector('.tab[data-tab="exams"]'); if(t) t.click(); else render('exams'); };
+}
 function exRetakePanelHtml(){
   const mineExam = (ex)=> ME.role==='ambassador' || (ex && ex.coordinatorId===ME.id);
   const list = (DB.examRetakes||[]).filter(r=>mineExam(DB.exams.find(x=>x.id===r.examId)));
@@ -6907,6 +7166,7 @@ function exRetakePanelHtml(){
 }
 function examRetakeRefresh(){
   if(XP) return;
+  examRetakeAlert();
   if(ME.role==='student'){ if(currentTab==='exams') render('exams'); return; }
   const b = document.getElementById('exRetakeBox'); if(b) b.innerHTML = exRetakePanelHtml();
 }
@@ -6926,8 +7186,8 @@ function studentExamsBlock(){
       if(attempt && attempt.submittedAt){
         return `<div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span><span class="badge stud">Submitted</span></div>
-          <div class="item-body">${escapeHtml(e.subject||'')} · ${e.timeLimitMin} min${attempt.autoSubmitted?' · auto-submitted at time limit':''}${attempt.score?` · Score: ${escapeHtml(String(attempt.score))}`:''}</div>
-          ${attempt.feedback ? `<div class="item-body" style="margin-top:4px; color:var(--muted);">Feedback: ${linkify(attempt.feedback)}</div>` : ''}
+          <div class="item-body">${escapeHtml(e.subject||'')} · ${e.timeLimitMin} min${attempt.autoSubmitted?' · auto-submitted at time limit':''}${(e.resultsReleasedAt && attempt.score)?` · Score: ${escapeHtml(String(attempt.score))}`:''}</div>
+          ${(e.resultsReleasedAt && attempt.feedback) ? `<div class="item-body" style="margin-top:4px; color:var(--muted);">Feedback: ${linkify(attempt.feedback)}</div>` : ''}
         </div>`;
       }
       return `<div class="item">
@@ -6936,7 +7196,7 @@ function studentExamsBlock(){
         <div class="item-actions"><button class="btn teal small" data-start-exam="${e.id}">Start exam →</button></div>
       </div>`;
     }
-    const st = examStatus(e, now), running = mine.find(a=>!a.submittedAt), left = Math.max(0, examAttemptsFor(e, ME.id) - mine.length);
+    const st = examStatus(e, now), running = mine.find(a=>!a.submittedAt), left = Math.max(0, examAllowanceFor(e, ME.id) - mine.length);
     const tot = e.questions.reduce((n,q)=>n+q.timeSec,0);
     const badge = running ? '<span class="badge stud">In progress</span>' : st==='open' ? '<span class="badge coord">Open now</span>' : st==='upcoming' ? '<span class="badge stud">Opens soon</span>' : '<span class="badge amb">Closed</span>';
     let action;
@@ -6953,12 +7213,21 @@ function studentExamsBlock(){
       if(lastRt && lastRt.status==='approved' && left>0) rtHtml += '<div class="item-meta" style="margin-top:8px;">Retake approved. You have another attempt.</div>';
       if(!running && left===0 && mine.some(a=>a.submittedAt) && st!=='upcoming') rtHtml += '<div style="margin-top:8px;"><button type="button" class="btn secondary small" data-request-retake="'+e.id+'">Request a retake</button></div>';
     }
-    const past = mine.filter(a=>a.submittedAt).map(a=>`<div class="item-meta" style="margin-top:4px;">Attempt ${a.attemptNo||1}: submitted ${escapeHtml(fmtDateTime(a.submittedAt))}${a.autoSubmitted?' (auto-submitted)':''}${a.score ? ' · <b>Score: '+escapeHtml(String(a.score))+'</b>' : ''}${a.feedback ? ' · Feedback: '+linkify(a.feedback) : ''}</div>`).join('');
+    const past = mine.filter(a=>a.submittedAt).map(a=>`<div class="item-meta" style="margin-top:4px;">Attempt ${a.attemptNo||1}: submitted ${escapeHtml(fmtDateTime(a.submittedAt))}${a.autoSubmitted?' (auto-submitted)':''}</div>`).join('');
+    let resBlock = '';
+    if(mine.some(a=>a.submittedAt)){
+      if(e.resultsReleasedAt){
+        const best = examBestAttempt(e, ME.id);
+        resBlock = (best && examScoreNum(best)!==null)
+          ? `<div class="exb-result"><b>Your result</b><div style="font-weight:800; font-size:18px;">${escapeHtml(examScoreText(e, best))}</div>${mine.filter(a=>a.submittedAt).length>1 ? '<div>This is your best attempt.</div>' : ''}${best.feedback ? `<div class="fb">Comment from your ambassador: ${linkify(best.feedback)}</div>` : ''}</div>`
+          : '<div class="exb-result" style="background:#F4F1E7; border-color:#C9D1DB; color:#10243A;"><b>Results are out.</b><div>Your attempt has not been marked yet. Please check again soon.</div></div>';
+      } else resBlock = '<div class="exb-result" style="background:#F4F1E7; border-color:#C9D1DB; color:#10243A;"><b>Your result is not out yet.</b><div>It will show here when your ambassador releases the results.</div></div>';
+    }
     return `<div class="item">
       <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span>${badge}</div>
       <div class="item-body">${escapeHtml(e.subject||'')}${e.subject?' · ':''}${e.questions.length} questions · ${e.totalMarks} marks · about ${fmtDur(tot)} in total${e.coordinatorId===null?' · Programme-wide':''}</div>
-      <div class="xs-facts"><span>Opens <b>${escapeHtml(fmtDateTime(e.startAt))}</b></span><span>Closes <b>${escapeHtml(fmtDateTime(e.endAt))}</b></span><span>Attempts <b>${mine.length} of ${examAttemptsFor(e, ME.id)}</b> used</span></div>
-      ${past}
+      <div class="xs-facts"><span>Opens <b>${escapeHtml(fmtDateTime(e.startAt))}</b></span><span>Closes <b>${escapeHtml(fmtDateTime(e.endAt))}</b></span><span>Attempts <b>${mine.length} of ${examAllowanceFor(e, ME.id)}</b> used</span></div>
+      ${past}${resBlock}
       <div class="item-actions">${action}</div>${rtHtml}
     </div>`;
   }).join('') : `<div class="empty">No exams posted yet. Your coordinator will post one when it's time.</div>`}
@@ -7039,6 +7308,7 @@ function xpMergeLocal(a){
     if((l.qIndex||0) > (a.qIndex||0)){ a.qIndex = l.qIndex; a.qStartedAt = l.qStartedAt; }
     else if((l.qIndex||0) === (a.qIndex||0) && l.qStartedAt && Date.parse(l.qStartedAt) < Date.parse(a.qStartedAt)) a.qStartedAt = l.qStartedAt;
     a.answers = { ...(a.answers||{}), ...(l.answers||{}) };
+    a.photos = a.photos || {}; Object.keys(l.photos||{}).forEach(k=>{ if((l.photos[k]||[]).length >= (a.photos[k]||[]).length) a.photos[k] = l.photos[k]; });
     a.tabSwitches = Math.max(a.tabSwitches||0, l.tabSwitches||0); a.fsExits = Math.max(a.fsExits||0, l.fsExits||0);
   }catch(e){}
 }
@@ -7057,6 +7327,7 @@ function xpOpen(examId, preview){
   document.body.appendChild(el); document.body.style.overflow = 'hidden';
   XP = { exam, attempt:null, stage:'loading', el, preview:!!preview, timer:null, shown:-1, lastVis:0, fsGate:false };
   xpEnterFs();   // must run inside the click, before any await
+  el.addEventListener('change', xpPhotoPick);
   document.addEventListener('visibilitychange', xpVis);
   document.addEventListener('fullscreenchange', xpFsChange); document.addEventListener('webkitfullscreenchange', xpFsChange);
   document.addEventListener('keydown', xpKey);
@@ -7080,7 +7351,7 @@ function xpOpen(examId, preview){
         const st = examStatus(exam);
         if(st==='upcoming'){ XP.stage = 'error'; XP.msg = 'This exam opens ' + fmtDateTime(exam.startAt) + '.'; return xpPaint(); }
         if(st==='closed'){ XP.stage = 'error'; XP.msg = 'This exam has closed.'; return xpPaint(); }
-        if(mine.length >= examAttemptsFor(exam, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
+        if(mine.length >= examAllowanceFor(exam, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
       }
     }
     XP.stage = 'instructions'; xpPaint();
@@ -7104,7 +7375,7 @@ function xpInfoGrid(){
   const no = XP.attempt ? (XP.attempt.attemptNo||1) : mine.length + 1;
   const range = Math.min(...secs) === Math.max(...secs) ? fmtDur(secs[0]) : `${fmtDur(Math.min(...secs))} to ${fmtDur(Math.max(...secs))}`;
   const cell = (k,v)=>`<div class="exmp-cell"><small>${k}</small><b>${v}</b></div>`;
-  return `<div class="exmp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${XP.preview ? (e.attempts||1) : examAttemptsFor(e, ME.id)}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
+  return `<div class="exmp-grid">${cell('Questions', qs.length)}${cell('Total marks', e.totalMarks)}${cell('Time per question', range)}${cell('Timers add up to', fmtDur(tot))}${cell('Attempt', XP.preview ? 'Preview' : `${no} of ${XP.preview ? (e.attempts||1) : examAllowanceFor(e, ME.id)}`)}${cell('Closes', e.endAt ? escapeHtml(fmtDateTime(e.endAt)) : 'Preview has no closing time')}</div>`;
 }
 function xpShell(inner, foot){
   const e = XP.exam;
@@ -7136,9 +7407,39 @@ function xpPaint(){
   }
   if(XP.stage==='q'){ xpPaintQuestion(); return; }
   if(XP.stage==='done'){
-    const a = XP.attempt, n = e.questions.length, answered = e.questions.filter(q=>a.answers[q.id]!==undefined && a.answers[q.id]!=='').length;
-    const more = !XP.preview && examStatus(e)==='open' && examAttemptsFor(e, ME.id) > (a.attemptNo||1);
-    el.innerHTML = xpShell(`<div class="exmp-center"><div class="exmp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="exmp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${examAttemptsFor(e, ME.id)-(a.attemptNo||1)} attempt${examAttemptsFor(e, ME.id)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="exmp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
+    const a = XP.attempt, n = e.questions.length, answered = e.questions.filter(q=>xpHas(a,q)).length;
+    const more = !XP.preview && examStatus(e)==='open' && examAllowanceFor(e, ME.id) > (a.attemptNo||1);
+    el.innerHTML = xpShell(`<div class="exmp-center"><div class="exmp-tick">✓</div><h1>${XP.preview ? 'Preview finished' : 'Exam submitted'}</h1><p class="exmp-lead">${answered} of ${n} questions answered${a.autoSubmitted ? (a.autoReason==='window' ? '. The exam closed, so it was submitted for you.' : '.') : '.'}</p>${XP.preview ? '' : `<p>Your examiner will mark it and share your result here.${more ? ` You have ${examAllowanceFor(e, ME.id)-(a.attemptNo||1)} attempt${examAllowanceFor(e, ME.id)-(a.attemptNo||1)===1?'':'s'} left.` : ''}</p>`}${XP.syncFailed ? '<p class="exmp-warnline">We could not reach the server, but your answers are saved on this device. Reconnect and open the exam again to send them.</p>' : ''}</div>`, '<button class="btn amber" data-xp="close">Back to exams</button>');
+  }
+}
+function xpHas(a, q){ const t = a.answers[q.id]; return (t!==undefined && t!=='') || !!(a.photos && a.photos[q.id] && a.photos[q.id].length); }
+function xpPhotoRender(){
+  const box = document.getElementById('xpPhotos'); if(!box || !XP || XP.stage!=='q') return;
+  const a = XP.attempt, q = XP.exam.questions[a.qIndex], list = (a.photos && a.photos[q.id]) || [];
+  box.innerHTML = list.map((u,i)=>`<div class="exmp-ph"><img src="${escapeHtml(u)}" alt="Your work, photo ${i+1}"><button type="button" data-xp-photo-del="${i}" aria-label="Remove photo">\u00d7</button></div>`).join('') + (XP.upCount ? `<div class="exmp-ph up">Uploading...</div>` : '');
+}
+function xpPhotoMsg(t, err){ const s = document.getElementById('xpPhotoStatus'); if(s){ s.textContent = t||''; s.className = 'exmp-phstat' + (err ? ' err' : ''); } }
+async function xpPhotoPick(ev){
+  if(!XP || XP.stage!=='q' || ev.target.id!=='xpPhotoIn') return;
+  const files = Array.from(ev.target.files||[]); ev.target.value = '';
+  const a = XP.attempt, q = XP.exam.questions[a.qIndex]; a.photos = a.photos || {}; const list = (a.photos[q.id] = a.photos[q.id] || []);
+  const room = 4 - list.length - (XP.upCount||0); if(room <= 0){ xpPhotoMsg('You can add up to 4 photos for this question.', true); return; }
+  for(const f of files.slice(0, room)){
+    XP.upCount = (XP.upCount||0) + 1; xpPhotoMsg(''); xpPhotoRender();
+    try{
+      if(!/^image\//.test(f.type||'image/jpeg')) throw new Error('That file is not a picture.');
+      if(XP.preview){ list.push(URL.createObjectURL(f)); }
+      else {
+        const blob = await compressImageFile(f, 1600, 0.82);
+        const path = `exam-work/${a.examId}/${String(ME.id).replace(/[^a-z0-9_-]/gi,'')}-${a.id}-${String(q.id).replace(/[^a-z0-9_-]/gi,'')}-${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}.jpg`;
+        const { error } = await sb.storage.from(PROFILE_PHOTO_BUCKET).upload(path, blob, { contentType:'image/jpeg', upsert:false });
+        if(error) throw error;
+        list.push(sb.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl);
+        xpSaveLocal(); xpSync(a);
+      }
+    }catch(err){ xpPhotoMsg('That photo did not upload: ' + (err && err.message ? err.message : 'please try again') + '.', true); }
+    XP.upCount = Math.max(0, (XP.upCount||1) - 1);
+    if(XP && XP.stage==='q' && XP.attempt.qIndex === XP.shown && XP.exam.questions[XP.shown].id === q.id) xpPhotoRender();
   }
 }
 function xpPaintQuestion(){
@@ -7150,7 +7451,8 @@ function xpPaintQuestion(){
   if(q.type==='mcq'){
     input = `<div class="exmp-opts">${q.options.map((o,j)=>`<button type="button" class="exmp-opt${Number(ans)===j && ans!==undefined && ans!=='' ?' on':''}" data-xp-opt="${j}"><b>${'ABCD'[j]}</b><span>${escapeHtml(chemify(o))}</span></button>`).join('')}</div>`;
   } else {
-    input = `<textarea id="xpAnswer" class="exmp-answer" rows="9" placeholder="${q.type==='short' ? 'Type your answer here' : 'Write your working and final answer here'}" spellcheck="false">${escapeHtml(ans||'')}</textarea>`;
+    input = `<textarea id="xpAnswer" class="exmp-answer" rows="${q.type==='structured' ? 6 : 9}" placeholder="${q.type==='short' ? 'Type your answer here' : q.type==='structured' ? 'Type what you can here. Use the photo box below for balanced equations and written working.' : 'Write your working and final answer here'}" spellcheck="false">${escapeHtml(ans||'')}</textarea>`;
+    if(q.type==='structured' || q.type==='calc' || q.type==='theory') input += `<div class="exmp-photo"><div class="exmp-photo-h"><b>Balanced equations and written working</b><span>Write your solution on paper, then take a clear photo of it and upload it. You can add up to 4 photos.</span></div><div class="exmp-phs" id="xpPhotos"></div><input id="xpPhotoIn" type="file" accept="image/*" multiple hidden><button type="button" class="btn secondary small" data-xp="photo">Take or choose a photo</button><span class="exmp-phstat" id="xpPhotoStatus"></span></div>`;
   }
   el.innerHTML = `<div class="exmp-top">
       <div class="exmp-brand"><b>${escapeHtml(e.title)}</b><span>Question ${i+1} of ${n}${XP.preview ? ' · preview' : ''}</span></div>
@@ -7164,6 +7466,7 @@ function xpPaintQuestion(){
       ${e.dataLine ? `<details class="exmp-data"><summary>Data sheet</summary><div>${escapeHtml(e.dataLine)}</div></details>` : ''}
     </div></div>
     <div class="exmp-foot">${XP.preview ? '<button class="btn ghost small" data-xp="close">Exit preview</button>' : ''}<span class="exmp-hint" id="xpNote">${a.tabSwitches||a.fsExits ? '⚠ Leaving the exam is recorded.' : 'You cannot go back to earlier questions.'}</span><button class="btn amber" data-xp="next">${i===n-1 ? 'Submit exam' : 'Next question →'}</button></div>`;
+  xpPhotoRender();
   xpTick(true);
 }
 function xpTick(force){
@@ -7194,7 +7497,7 @@ async function xpBegin(){
       if(open){ xpMergeLocal(open); XP.attempt = open; }
       else {
         if(examStatus(e) !== 'open'){ XP.stage = 'error'; XP.msg = 'This exam is not open right now.'; return xpPaint(); }
-        if(mine.length >= examAttemptsFor(e, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
+        if(mine.length >= examAllowanceFor(e, ME.id)){ XP.stage = 'error'; XP.msg = 'You have used all your attempts for this exam.'; return xpPaint(); }
         const iso = new Date().toISOString();
         XP.attempt = { id:uid(), v:2, examId:e.id, studentId:ME.id, studentName:ME.name, attemptNo:mine.length+1, startedAt:iso, qIndex:0, qStartedAt:iso, answers:{}, tabSwitches:0, fsExits:0, submittedAt:null };
         await xpSync(XP.attempt);
@@ -7225,7 +7528,7 @@ async function xpNext(){
   if(!XP || XP.stage!=='q' || XP.busy) return;
   XP.busy = true;
   const e = XP.exam, a = XP.attempt, q = e.questions[a.qIndex], last = a.qIndex === e.questions.length-1;
-  const has = a.answers[q.id] !== undefined && a.answers[q.id] !== '';
+  const has = xpHas(a, q);
   let ok = true;
   if(last) ok = await xpAskConfirm(has ? 'Submit your exam now? You will not be able to change your answers.' : 'You have not answered this question. Submit your exam now?', 'Submit exam');
   else if(!has) ok = await xpAskConfirm('You have not answered this question and cannot come back to it. Move on?', 'Move on');
@@ -7252,6 +7555,8 @@ async function xpFinish(auto){
 }
 function xpClick(ev){
   if(XP && XP.fsGate && !ev.target.closest('[data-xp="close"]')){ xpEnterFs(); return; }
+  const pd = ev.target.closest('[data-xp-photo-del]');
+  if(pd && XP && XP.stage==='q'){ const a = XP.attempt, q = XP.exam.questions[a.qIndex]; if(a.photos && a.photos[q.id]){ a.photos[q.id].splice(+pd.dataset.xpPhotoDel, 1); xpSaveLocal(); xpSync(a); xpPhotoRender(); } return; }
   const o = ev.target.closest('[data-xp-opt]');
   if(o && XP && XP.stage==='q'){
     const a = XP.attempt, q = XP.exam.questions[a.qIndex]; a.answers[q.id] = +o.dataset.xpOpt; xpSaveLocal();
@@ -7262,6 +7567,7 @@ function xpClick(ev){
   if(b.dataset.xp==='begin') return xpBegin();
   if(b.dataset.xp==='next') return xpNext();
   if(b.dataset.xp==='fs'){ xpEnterFs(); return; }
+  if(b.dataset.xp==='photo'){ XP.pickUntil = Date.now() + 180000; const inp = document.getElementById('xpPhotoIn'); if(inp) inp.click(); return; }
 }
 let xpSaveTimer = null;
 function xpInput(ev){
@@ -7278,6 +7584,7 @@ function xpKey(ev){
 }
 function xpVis(){
   if(!XP || XP.stage!=='q' || XP.preview) return;
+  if(XP.pickUntil && Date.now() < XP.pickUntil) return;
   if(document.hidden){
     const a = XP.attempt; a.tabSwitches = (a.tabSwitches||0) + 1; xpSaveLocal();
     if(Date.now() - XP.lastVis > 10000){ XP.lastVis = Date.now(); xpSync(a); }
@@ -7295,7 +7602,7 @@ function xpFsChange(){
   if(!XP || !xpFsSupported()) return;
   if(xpInFs()){ if(XP.fsGate) xpUngate(); return; }
   if(XP.stage!=='q' || XP.fsGate) return;
-  if(!XP.preview){ XP.attempt.fsExits = (XP.attempt.fsExits||0) + 1; xpSaveLocal(); xpSync(XP.attempt); }
+  if(!XP.preview && !(XP.pickUntil && Date.now() < XP.pickUntil)){ XP.attempt.fsExits = (XP.attempt.fsExits||0) + 1; xpSaveLocal(); xpSync(XP.attempt); }
   XP.fsGate = true; xpGate();
 }
 
@@ -8006,6 +8313,11 @@ function wireHandlers(tab){
       if(!confirm('Submit your final answer? You will not be able to change it afterward.')) return;
       finalizeExamAttempt(EXAM_CTX.attempt, EXAM_CTX.exam, {autoSubmitted:false});
     });
+    if(q('examPhotoBtn')){
+      q('examPhotoBtn').addEventListener('click', ()=>{ window.examPickUntil = Date.now() + 180000; q('examPhotoIn').click(); });
+      q('examPhotoIn').addEventListener('change', examLegacyPhotoPick);
+      examLegacyPhotoRender();
+    }
     if(EXAM_CTX && EXAM_CTX.mode==='running') startExamRuntime(EXAM_CTX.exam, EXAM_CTX.attempt);
 
     document.querySelectorAll('[data-remove-exam]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -8099,19 +8411,24 @@ function wireHandlers(tab){
   // run them together instead of one after the other.
   const [savedMe] = await Promise.all([ sGet('me', false), loadDB() ]);
   if(!sbReady){
+    console.error('Supabase is not connected (library failed to load or SUPABASE_CONFIG is missing).');
+    // One automatic retry covers a momentary network or CDN hiccup.
+    try{ if(!sessionStorage.getItem('ichc:autoRetry')){ sessionStorage.setItem('ichc:autoRetry','1'); location.reload(); return; } }catch(e){}
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C0392B; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
-    banner.textContent = '⚠ Storage isn\'t connected yet — nobody\'s data will save. Open this file, find SUPABASE_CONFIG near the top of the <script>, and paste in your Supabase project URL and key.';
+    banner.innerHTML = 'We could not connect just now. Check your internet connection and try again. <button type="button" style="margin-left:8px; padding:4px 14px; border-radius:999px; border:0; font-weight:700; cursor:pointer;" onclick="try{sessionStorage.removeItem(\'ichc:autoRetry\')}catch(e){} location.reload()">Retry</button>';
     document.body.prepend(banner);
     return;
   }
+  try{ sessionStorage.removeItem('ichc:autoRetry'); }catch(e){}
   if(dbLoadError && !(DB.coordinators.length || DB.students.length)){
     // Roster came back empty AND a read actually failed — this is very likely
     // a stale/expired sign-in session (blocked by the database's access rules),
     // not real data loss. Say so plainly instead of quietly showing "nothing".
     const banner = document.createElement('div');
     banner.style.cssText = 'position:fixed; top:0; left:0; right:0; z-index:999; background:#C97F22; color:#fff; text-align:center; padding:10px 16px; font-family:sans-serif; font-size:13.5px;';
-    banner.textContent = '⚠ Couldn\'t load the live roster — this usually means your sign-in session has expired, not that any data was lost. Try signing out and back in with Google, or refresh the page.';
+    console.error('Roster failed to load:', dbLoadErrorMsg);
+    banner.textContent = 'We could not load your portal. Please refresh the page or sign in again.';
     document.body.prepend(banner);
   }
   renderPasskeyBox();
