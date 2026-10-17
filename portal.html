@@ -813,6 +813,11 @@
   .rm-fb.ok{background:var(--mint);} .rm-fb.no{background:#FFE5E5;}
   .rm-chip{display:inline-block; border-radius:999px; padding:3px 11px; font-size:11.5px; font-weight:800; background:var(--lilac); color:var(--navy); margin-right:5px;}
   .rm-chip.on{background:var(--mint); color:var(--teal-deep);} .rm-chip.bad{background:#FFE0E0; color:#C2242B;}
+  .rm-draft{border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:0 0 12px; background:#fff;}
+  .rm-draft.off{opacity:.55;}
+  .rm-draft-head{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 8px;}
+  .rm-draft textarea,.rm-draft input[type=text],.rm-draft input:not([type]){width:100%;}
+  .rm-postbar{position:sticky; bottom:8px; z-index:5; background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px 14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; box-shadow:0 8px 24px rgba(10,24,38,.18);}
   .rm-pill{display:inline-block; border-radius:999px; padding:4px 12px; font-size:11.5px; font-weight:800; border:2px solid var(--navy-deep); box-shadow:0 2px 0 var(--navy-deep);}
   .rm-pill.done{background:var(--teal); color:#fff;} .rm-pill.review{background:var(--lilac); color:var(--navy-deep);} .rm-pill.lock{background:#E7E3F5; color:#6E6B93; border-color:#B7B2D6; box-shadow:0 2px 0 #B7B2D6;}
   .rm-badges{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
@@ -8778,7 +8783,7 @@ function rmTopicSelect(id, value, attrs){
   const v = value || ((id && RM.view==='section' && RM.topic) ? RM.topic : '');
   return `<select ${id?`id="${id}"`:''} ${attrs||''}><option value="">Not tagged (general)</option>${RM_TOPICS.map(([k,t])=>`<option value="${k}"${v===k?' selected':''}>${escapeHtml(t)}</option>`).join('')}</select>`;
 }
-const RM = { view:'home', topic:null, tab:'practice', sub:'quizzes', ov:null, ovAt:0, board:null, note:'', busy:false, sess:null, err:'', mq:{ list:null, filter:'all', total:0, flagged:0, msg:'', busy:false }, prog:null, schedOpen:false };
+const RM = { view:'home', topic:null, tab:'practice', sub:'quizzes', ov:null, ovAt:0, board:null, note:'', busy:false, sess:null, err:'', mq:{ list:null, filter:'all', total:0, flagged:0, msg:'', busy:false, mode:'manual', drafts:null, genMeta:null }, prog:null, schedOpen:false };
 const rmStaff = ()=> !!ME && ME.role !== 'student';
 const rmDate = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }catch(e){ return d; } };
 const rmDateY = (d)=>{ try{ return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d; } };
@@ -8789,7 +8794,7 @@ const rmFirst = ()=> String((ME && ME.name) || 'there').trim().split(/\s+/)[0];
 async function rmApi(action, payload){
   if(!sbReady) throw new Error('offline');
   const { data, error } = await sb.functions.invoke('roadmap', { body:{ action, ...(payload||{}) } });
-  if(error){ let m = ''; try{ const j = await error.context.json(); m = j.error || ''; }catch(e){} throw new Error(m || 'unavailable'); }
+  if(error){ let m = '', dt = ''; try{ const j = await error.context.json(); m = j.error || ''; dt = j.detail || ''; }catch(e){} const err = new Error(m || 'unavailable'); err.detail = dt; throw err; }
   return data;
 }
 function rmErr(e){
@@ -8986,7 +8991,7 @@ function rmSectionHtml(){
   else if(RM.tab==='questions') body = rmManageHtml(s);
   else if(RM.tab==='students') body = '<div id="rmProgRoot"><div class="rm-skel"><i></i><i></i></div></div>';
   else body = rmPracticeHtml(s);
-  const chips = staff ? `<span class="rm-chip">${s.total} question${s.total===1?'':'s'}</span>${s.reqTotal?`<span class="rm-chip">${s.reqTotal} in the coordinator set</span>`:''}${(RM.ov.cohort&&RM.ov.cohort[s.id])?`<span class="rm-chip">${RM.ov.cohort[s.id].complete}/${RM.ov.cohort[s.id].students} students complete</span>`:''}` : '';
+  const chips = staff ? `<span class="rm-chip">${s.total} question${s.total===1?'':'s'}</span>${s.reqTotal?`<span class="rm-chip">${s.reqTotal} in the coordinator set</span>`:''}${(RM.ov.cohort&&RM.ov.cohort[s.id])?`<span class="rm-chip">${RM.ov.cohort[s.id].complete}/${RM.ov.cohort[s.id].students} students complete</span>`:''}${(RM.ov.flaggedByTopic&&RM.ov.flaggedByTopic[s.id])?`<span class="rm-chip bad">${RM.ov.flaggedByTopic[s.id]} reported</span>`:''}` : '';
   return `
   <div style="margin:0 0 12px;"><button class="btn ghost small" type="button" data-rm-home>&larr; Roadmap</button></div>
   <div class="rm-shead" style="--hue:${hue}">
@@ -9141,6 +9146,8 @@ function rmStaffResourcesHtml(s){
 // ----- staff: question bank -----
 function rmManageHtml(s){
   return `
+  <div class="rm-subnav tight" id="rmMqModes"><button class="pill${RM.mq.mode==='ai'?'':' on'}" type="button" data-rm-mqmode="manual">&#9997; Write a question myself</button><button class="pill${RM.mq.mode==='ai'?' on':''}" type="button" data-rm-mqmode="ai">&#10022; Generate with AI (review first)</button></div>
+  <div id="rmPanelManual" style="display:${RM.mq.mode==='ai'?'none':'block'};">
   <div class="card" style="margin-bottom:16px;">
     <h3 style="margin:0 0 4px; font-size:16px;">Add a question</h3>
     <p class="note" style="margin:0 0 10px;">Tick "part of the coordinator set" to make it count towards completion. ${ME.role==='coordinator'?'Only your students see it.':'Everyone sees it.'}</p>
@@ -9159,16 +9166,20 @@ function rmManageHtml(s){
     <label class="eb-check" style="display:block; margin-bottom:12px;"><input type="checkbox" id="rmReq" checked> Part of the coordinator set (required for completion)</label>
     <button class="btn teal small" type="button" data-rm-add>Add question</button> <span id="rmAddMsg" class="note" style="margin-left:8px;"></span>
   </div>
-  <div class="card" style="margin-bottom:16px;">
-    <h3 style="margin:0 0 4px; font-size:16px;">Generate practice questions with AI</h3>
-    <p class="note" style="margin:0 0 10px;">Each question is written, then solved again independently. Only the ones where both answers agree are added. Students can report any that still look wrong.</p>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-      <div class="field" style="margin:0;"><label>Level</label><select id="rmGenTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
-      <div class="field" style="margin:0;"><label>How many</label><select id="rmGenCount"><option value="10">10</option><option value="20">20</option></select></div>
-      <div class="field" style="margin:0; flex:1; min-width:200px;"><label>Focus (optional)</label><input id="rmGenFocus" placeholder="e.g. limiting reagent and percentage yield"></div>
-      <button class="btn amber small" type="button" data-rm-gen ${RM.mq.busy?'disabled':''}>${RM.mq.busy?'Writing and checking...':'Generate'}</button>
+  </div>
+  <div id="rmPanelAi" style="display:${RM.mq.mode==='ai'?'block':'none'};">
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin:0 0 4px; font-size:16px;">&#10022; Generate practice questions with AI</h3>
+      <p class="note" style="margin:0 0 10px;">The AI writes drafts and checks each answer with a second solve. <b>Nothing is posted until you review it.</b> You can edit any draft, untick the ones you do not want, then post the rest.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="margin:0;"><label>Level</label><select id="rmGenTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
+        <div class="field" style="margin:0;"><label>How many</label><select id="rmGenCount"><option value="6">6</option><option value="10" selected>10</option><option value="20">20</option></select></div>
+        <div class="field" style="margin:0; flex:1; min-width:200px;"><label>Focus (optional)</label><input id="rmGenFocus" placeholder="e.g. limiting reagent and percentage yield"></div>
+        <button class="btn amber small" type="button" data-rm-gen ${RM.mq.busy?'disabled':''}>${RM.mq.busy?'Writing and checking...':'Generate drafts'}</button>
+      </div>
+      <p id="rmGenMsg" class="note" style="margin:8px 0 0;">${escapeHtml(RM.mq.msg||'')}</p>
     </div>
-    <p id="rmGenMsg" class="note" style="margin:8px 0 0;">${escapeHtml(RM.mq.msg||'')}</p>
+    <div id="rmDraftBox">${rmDraftsHtml()}</div>
   </div>
   <div class="rm-subnav tight" id="rmFilters"></div>
   <div id="rmList"><div class="rm-skel"><i></i><i></i></div></div>`;
@@ -9194,7 +9205,8 @@ function rmPaintList(){
       <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(q.explanation)}</div>`:''}</div>
       <div class="item-actions">${q.status==='flagged'?`<button class="btn teal small" type="button" data-rm-q="approve" data-id="${q.id}">Keep it</button>`:''}<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
   };
-  box.innerHTML = `<p class="note" style="margin:0 0 10px;">${M.total} question${M.total===1?'':'s'}${M.filter!=='all'?' in this view':' in this section'}${M.msg?' &middot; '+escapeHtml(M.msg):''}</p>` +
+  const repBanner = (M.flagged>0 && M.filter!=='flagged') ? `<div class="card" style="margin:0 0 12px; border-left:4px solid #C0392B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;"><span><b>${M.flagged} reported question${M.flagged===1?'':'s'}</b> from students ${M.flagged===1?'is':'are'} hidden from practice until you review ${M.flagged===1?'it':'them'}.</span><button class="btn small" type="button" data-rm-filter="flagged">Review now</button></div>` : '';
+  box.innerHTML = repBanner + `<p class="note" style="margin:0 0 10px;">${M.total} question${M.total===1?'':'s'}${M.filter!=='all'?' in this view':' in this section'}${M.msg?' &middot; '+escapeHtml(M.msg):''}</p>` +
     (list.length ? `<div class="list">${list.map(item).join('')}</div>${list.length<M.total?'<div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-more>Load more</button></div>':''}` : '<div class="empty">No questions here yet.</div>');
 }
 async function rmAddQuestion(){
@@ -9218,17 +9230,93 @@ async function rmAddQuestion(){
     msg.textContent = 'Added.'; await rmLoad(true); await rmLoadList(false);
   }catch(e){ msg.textContent = rmErr(e); }
 }
+function rmDraftsHtml(){
+  const M = RM.mq, list = M.drafts;
+  if(!list || !list.length) return '';
+  const card = (d, i)=>{
+    const chip = d.verified ? '<span class="rm-chip on">Answer double-checked</span>' : '<span class="rm-chip bad">Not double-checked: solve it yourself</span>';
+    const body = d.type==='mcq'
+      ? `<div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">${(d.options||[]).map((o,k)=>`<div class="field" style="margin:0;"><label><input type="radio" name="rdc-${d.uid}" data-rd="${d.uid}" data-rd-f="correct" value="${k}"${d.answerIndex===k?' checked':''}> Option ${'ABCDEF'[k]} (tick the correct one)</label><input type="text" data-rd="${d.uid}" data-rd-f="opt" data-k="${k}" value="${escapeHtml(o)}"></div>`).join('')}</div>`
+      : `<div class="grid2" style="grid-template-columns:1fr 1fr 1fr; gap:10px;"><div class="field" style="margin:0;"><label>Answer (number)</label><input type="text" inputmode="decimal" data-rd="${d.uid}" data-rd-f="ans" value="${escapeHtml(String(d.answer))}"></div><div class="field" style="margin:0;"><label>Allowed error (%)</label><input type="text" inputmode="decimal" data-rd="${d.uid}" data-rd-f="tol" value="${Math.round(Number(d.tolerance||0.02)*1000)/10}"></div><div class="field" style="margin:0;"><label>Unit</label><input type="text" data-rd="${d.uid}" data-rd-f="unit" value="${escapeHtml(d.unit||'')}"></div></div>`;
+    return `<div class="rm-draft${d.include?'':' off'}" id="rd-${d.uid}">
+      <div class="rm-draft-head"><label class="eb-check" style="margin:0;"><input type="checkbox" data-rd="${d.uid}" data-rd-f="include"${d.include?' checked':''}> <b>Draft ${i+1}</b> &middot; ${d.type==='mcq'?'Multiple choice':'Numerical'}</label><span>${chip}<button class="btn ghost small" type="button" data-rm-draft-del="${d.uid}">Remove</button></span></div>
+      <div class="field" style="margin:0 0 10px;"><label>Question</label><textarea rows="3" data-rd="${d.uid}" data-rd-f="text">${escapeHtml(d.text)}</textarea></div>
+      ${body}
+      <div class="field" style="margin:10px 0 0;"><label>Explanation (shown after the student answers)</label><input type="text" data-rd="${d.uid}" data-rd-f="exp" value="${escapeHtml(d.explanation||'')}"></div>
+    </div>`;
+  };
+  const n = list.filter(d=>d.include).length;
+  return `<div class="section-title" style="margin:6px 0 10px;"><div><h3 style="margin:0; font-size:16px;">Review the drafts</h3><p class="note" style="margin:2px 0 0;">Read each question and solve it yourself if you are unsure. Edit anything, untick or remove what you do not want. Students see nothing until you post.</p></div></div>
+    ${list.map(card).join('')}
+    <div class="rm-postbar"><button class="btn teal" type="button" data-rm-draft-post id="rmPostBtn">Post ${n} question${n===1?'':'s'}</button><label class="eb-check" style="margin:0;"><input type="checkbox" id="rmDraftReq"> Part of the coordinator set (required for completion)</label><button class="btn ghost small" type="button" data-rm-draft-discard>Discard all drafts</button><span id="rmDraftMsg" class="note" style="margin:0;"></span></div>`;
+}
+function rmDraftCount(){
+  const n = (RM.mq.drafts||[]).filter(d=>d.include).length, b = document.getElementById('rmPostBtn');
+  if(b) b.textContent = `Post ${n} question${n===1?'':'s'}`;
+}
+function rmDraftInput(ev){
+  const t = ev.target, uidv = t && t.dataset && t.dataset.rd; if(!uidv) return;
+  const d = (RM.mq.drafts||[]).find(x=>x.uid===uidv); if(!d) return;
+  const f = t.dataset.rdF, v = t.value;
+  if(f==='text') d.text = v;
+  else if(f==='opt') d.options[parseInt(t.dataset.k,10)] = v;
+  else if(f==='ans') d.answer = v;
+  else if(f==='tol') d.tolerance = (parseFloat(v)||2)/100;
+  else if(f==='unit') d.unit = v;
+  else if(f==='exp') d.explanation = v;
+}
+function rmDraftChange(ev){
+  const t = ev.target, uidv = t && t.dataset && t.dataset.rd; if(!uidv) return false;
+  const d = (RM.mq.drafts||[]).find(x=>x.uid===uidv); if(!d) return true;
+  if(t.dataset.rdF==='include'){ d.include = t.checked; const c = document.getElementById('rd-'+d.uid); if(c) c.classList.toggle('off', !d.include); rmDraftCount(); }
+  else if(t.dataset.rdF==='correct'){ d.answerIndex = parseInt(t.value,10); }
+  return true;
+}
 async function rmGenerate(){
   const g = (id)=>document.getElementById(id), M = RM.mq;
-  if(M.busy) return; M.busy = true; M.msg = '';
+  if(M.busy) return;
+  if(M.drafts && M.drafts.length && !confirm('You have drafts waiting for review. Generating again will replace them. Continue?')) return;
+  M.busy = true; M.msg = '';
   const btn = document.querySelector('[data-rm-gen]'); if(btn){ btn.disabled = true; btn.textContent = 'Writing and checking...'; }
   const out = g('rmGenMsg'); if(out) out.textContent = 'This can take up to a minute.';
+  const tier = g('rmGenTier').value;
   try{
-    const r = await rmApi('generate', { topic:RM.topic, tier:g('rmGenTier').value, count:parseInt(g('rmGenCount').value,10), focus:g('rmGenFocus').value.trim() });
-    M.msg = r.added ? `Added ${r.added} verified question${r.added===1?'':'s'}${r.dropped?` (${r.dropped} dropped: failed the answer check or duplicated)`:''}.` : 'None passed the answer check this time. Try again.';
-    await rmLoad(true);
-  }catch(e){ M.msg = rmErr(e); }
-  M.busy = false; M.list = null; rmPaint();
+    const r = await rmApi('generate', { topic:RM.topic, tier, count:parseInt(g('rmGenCount').value,10), focus:g('rmGenFocus').value.trim() });
+    const drafts = (r.drafts||[]).map(d=>({ ...d, uid:uid(), include:true }));
+    M.drafts = drafts.length ? drafts : null; M.genMeta = { tier:r.tier || tier, topic:RM.topic };
+    M.msg = drafts.length
+      ? `${drafts.length} draft${drafts.length===1?'':'s'} ready for your review.${r.dropped?` ${r.dropped} dropped (failed the answer check or duplicated).`:''}${r.verifySkipped?' The answer double-check could not run this time, so check every answer yourself.':''}`
+      : 'No draft passed the answer check this time. Try again.';
+  }catch(e){ M.msg = rmErr(e) + (e && e.detail ? ` (${e.detail})` : ''); }
+  M.busy = false; rmPaint();
+}
+async function rmDraftPost(){
+  const M = RM.mq, msg = document.getElementById('rmDraftMsg'), say = (t)=>{ if(msg) msg.textContent = t; };
+  const keep = (M.drafts||[]).filter(d=>d.include);
+  if(!keep.length) return say('Tick at least one question to post.');
+  const questions = [];
+  for(let i=0;i<keep.length;i++){
+    const d = keep[i], n = (M.drafts||[]).indexOf(d)+1;
+    if(!String(d.text||'').trim()) return say(`Draft ${n} has no question text.`);
+    if(d.type==='mcq'){
+      const raw = (d.options||[]).map(o=>String(o||'').trim());
+      if(!raw[d.answerIndex]) return say(`Draft ${n}: the correct option is empty.`);
+      const kept = raw.map((t,k)=>({t,k})).filter(o=>o.t);
+      if(kept.length<2) return say(`Draft ${n}: add at least two options.`);
+      questions.push({ type:'mcq', text:d.text.trim(), options:kept.map(o=>o.t), answerIndex:kept.findIndex(o=>o.k===d.answerIndex), explanation:String(d.explanation||'').trim() });
+    } else {
+      if(!isFinite(parseFloat(String(d.answer).replace(/,/g,'')))) return say(`Draft ${n}: the answer must be a number.`);
+      questions.push({ type:'num', text:d.text.trim(), answer:String(d.answer).trim(), tolerance:Number(d.tolerance)||0.02, unit:String(d.unit||'').trim(), explanation:String(d.explanation||'').trim() });
+    }
+  }
+  const req = document.getElementById('rmDraftReq'), btn = document.getElementById('rmPostBtn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Posting...'; }
+  try{
+    const r = await rmApi('q_post_batch', { topic:RM.topic, tier:(M.genMeta && M.genMeta.tier) || 'competition', required:!!(req && req.checked), questions });
+    M.drafts = (M.drafts||[]).filter(d=>!d.include); if(!M.drafts.length) M.drafts = null;
+    M.msg = `Posted ${r.added} reviewed question${r.added===1?'':'s'}${M.drafts?`. ${M.drafts.length} unticked draft${M.drafts.length===1?'':'s'} still here.`:'.'}`;
+    await rmLoad(true); M.list = null; rmPaint();
+  }catch(e){ if(btn){ btn.disabled = false; rmDraftCount(); } say(rmErr(e)); }
 }
 async function rmQuestionOp(op, id, value){
   try{ await rmApi('q_set', { id, op, value:!!value }); await rmLoadList(false); await rmLoad(true); }
@@ -9261,7 +9349,7 @@ function rmPaint(){
 }
 async function wireRoadmap(){
   let root = rmRoot(); if(!root) return;
-  root.onclick = rmClick; root.onchange = rmChange;
+  root.onclick = rmClick; root.onchange = rmChange; root.oninput = rmDraftInput;
   const needs = !RM.ov || Date.now()-RM.ovAt > 20000;
   if(needs){
     try{ await rmLoad(true); }
@@ -9276,7 +9364,7 @@ async function wireRoadmap(){
   if(!window.__rmResize){ window.__rmResize = true; window.addEventListener('resize', rmFit); }
 }
 async function rmClick(ev){
-  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-sub],[data-rm-start-mode],[data-rm-daily],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-go],[data-rm-add],[data-rm-gen],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift]');
+  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-sub],[data-rm-start-mode],[data-rm-daily],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-go],[data-rm-add],[data-rm-gen],[data-rm-mqmode],[data-rm-draft-post],[data-rm-draft-discard],[data-rm-draft-del],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift]');
   if(!t) return;
   const d = t.dataset;
   if(d.rmOpen!==undefined){
@@ -9284,7 +9372,7 @@ async function rmClick(ev){
     const s = rmSec(d.rmOpen); if(!s) return;
     if(!s.open){ RM.note = `${s.title} opens on ${rmDateY(s.start)}. Finish the current section first.`; rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return; }
     RM.note = ''; RM.view = 'section'; RM.topic = s.id; RM.tab = rmStaff() ? 'questions' : 'practice'; RM.sess = null; RM.err = '';
-    RM.mq = { list:null, filter:'all', total:0, flagged:0, msg:'', busy:false };
+    RM.mq = { list:null, filter:'all', total:0, flagged:0, msg:'', busy:false, mode:'manual', drafts:null, genMeta:null };
     rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return;
   }
   if(d.rmHome!==undefined){ RM.view = 'home'; RM.sess = null; RM.note = ''; RM.err = ''; try{ await rmLoad(true); }catch(e){} return rmFull(); }
@@ -9306,6 +9394,10 @@ async function rmClick(ev){
   if(d.rmEnd!==undefined) return rmFinish();
   if(d.rmAdd!==undefined) return rmAddQuestion();
   if(d.rmGen!==undefined) return rmGenerate();
+  if(d.rmMqmode){ RM.mq.mode = d.rmMqmode; const a = document.getElementById('rmPanelAi'), m = document.getElementById('rmPanelManual'); if(a) a.style.display = RM.mq.mode==='ai' ? 'block' : 'none'; if(m) m.style.display = RM.mq.mode==='ai' ? 'none' : 'block'; document.querySelectorAll('[data-rm-mqmode]').forEach(b=>b.classList.toggle('on', b.dataset.rmMqmode===RM.mq.mode)); return; }
+  if(d.rmDraftPost!==undefined) return rmDraftPost();
+  if(d.rmDraftDiscard!==undefined){ if(RM.mq.drafts && !confirm('Throw away all drafts? Nothing has been posted.')) return; RM.mq.drafts = null; RM.mq.msg = 'Drafts discarded. Nothing was posted.'; return rmPaint(); }
+  if(d.rmDraftDel){ RM.mq.drafts = (RM.mq.drafts||[]).filter(x=>x.uid!==d.rmDraftDel); if(!RM.mq.drafts.length) RM.mq.drafts = null; const box = document.getElementById('rmDraftBox'); if(box) box.innerHTML = rmDraftsHtml(); return; }
   if(d.rmFilter){ RM.mq.filter = d.rmFilter; RM.mq.list = null; rmPaintList(); return rmLoadList(false); }
   if(d.rmQ){ if(d.rmQ==='delete' && !confirm('Delete this question for good?')) return; if(d.rmQ==='reject' && !confirm('Remove this question from practice?')) return; return rmQuestionOp(d.rmQ, d.id, d.value); }
   if(d.rmMore!==undefined) return rmLoadList(true);
@@ -9323,6 +9415,7 @@ async function rmClick(ev){
 }
 async function rmChange(ev){
   const t = ev.target;
+  if(rmDraftChange(ev)) return;
   if(t.id==='rmType'){ document.getElementById('rmMcqBox').classList.toggle('hidden', t.value!=='mcq'); document.getElementById('rmNumBox').classList.toggle('hidden', t.value!=='num'); }
   if(t.id==='rmRemind'){ try{ await rmApi('schedule_set', { remindersOn:t.checked }); RM.ov.remindersOn = t.checked; }catch(e){ t.checked = !t.checked; alert(rmErr(e)); } }
 }
