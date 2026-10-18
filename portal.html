@@ -2155,10 +2155,10 @@ function pollsCoordinatorView(){
       const {counts, total} = pollResults(p);
       return `
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(p.question)}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(chemify(p.question))}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
         ${p.options.map((o,i)=>`
           <div class="poll-row">
-            <div class="poll-row-label"><span>${escapeHtml(o)}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
+            <div class="poll-row-label"><span>${escapeHtml(chemify(o))}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
             <div class="poll-bar-track"><div class="poll-bar-fill" style="width:${total?Math.round(counts[i]/total*100):0}%;"></div></div>
           </div>`).join('')}
         <div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:4px;">${total} total vote${total===1?'':'s'}</div>
@@ -2182,13 +2182,13 @@ function pollsStudentView(){
       const {counts, total} = pollResults(p);
       return `
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(p.question)}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(chemify(p.question))}</span><span class="item-meta">${fmtDate(p.date)}${p.closed?' · Closed':''}</span></div>
         ${showResults ? p.options.map((o,i)=>`
           <div class="poll-row">
-            <div class="poll-row-label"><span>${escapeHtml(o)}${hasVoted && myVote===i?' <b>(your vote)</b>':''}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
+            <div class="poll-row-label"><span>${escapeHtml(chemify(o))}${hasVoted && myVote===i?' <b>(your vote)</b>':''}</span><span>${counts[i]} vote${counts[i]===1?'':'s'}${total?` (${Math.round(counts[i]/total*100)}%)`:''}</span></div>
             <div class="poll-bar-track"><div class="poll-bar-fill${hasVoted && myVote===i?' mine':''}" style="width:${total?Math.round(counts[i]/total*100):0}%;"></div></div>
           </div>`).join('') : `
-          <div>${p.options.map((o,i)=>`<label class="quiz-opt"><input type="radio" name="pollvote-${p.id}" value="${i}" style="width:auto;">${escapeHtml(o)}</label>`).join('')}</div>
+          <div>${p.options.map((o,i)=>`<label class="quiz-opt"><input type="radio" name="pollvote-${p.id}" value="${i}" style="width:auto;">${escapeHtml(chemify(o))}</label>`).join('')}</div>
           <button class="btn amber small" data-vote-poll="${p.id}" style="margin-top:6px;">Submit vote</button>`}
       </div>`;
     }).join('') : `<div class="empty">No polls yet — your coordinator hasn't posted one.</div>`}
@@ -2225,9 +2225,9 @@ function quizzesCoordinatorView(){
       const {total, correct} = quizStats(qz);
       return `
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(qz.question)}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(chemify(qz.question))}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
         <div class="item-body">
-          ${qz.options.map((o,i)=>`<div style="padding:4px 0;">${i===qz.correctIndex?'✅':'—'} ${escapeHtml(o)}</div>`).join('')}
+          ${qz.options.map((o,i)=>`<div style="padding:4px 0;">${i===qz.correctIndex?'✅':'—'} ${escapeHtml(chemify(o))}</div>`).join('')}
         </div>
         <div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:4px;">${total} attempt${total===1?'':'s'} · ${total?Math.round(correct/total*100):0}% correct</div>
         <div class="item-actions"><button class="btn ghost small" data-remove-quiz="${qz.id}">Remove</button></div>
@@ -2244,7 +2244,7 @@ function quizzesStudentView(){
       const mineAttempt = qz.attempts && qz.attempts[ME.id];
       return `
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(qz.question)}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(chemify(qz.question))}</span><span class="item-meta">${fmtDate(qz.date)}</span></div>
         <div>
           ${qz.options.map((o,i)=>{
             let cls = 'quiz-opt';
@@ -2252,7 +2252,7 @@ function quizzesStudentView(){
               if(i===qz.correctIndex) cls += ' correct';
               else if(i===mineAttempt.selectedIndex) cls += ' wrong';
             }
-            return `<label class="${cls}"><input type="radio" name="quiz-${qz.id}" value="${i}" style="width:auto;" ${mineAttempt && mineAttempt.selectedIndex===i?'checked':''} ${mineAttempt?'disabled':''}>${escapeHtml(o)}</label>`;
+            return `<label class="${cls}"><input type="radio" name="quiz-${qz.id}" value="${i}" style="width:auto;" ${mineAttempt && mineAttempt.selectedIndex===i?'checked':''} ${mineAttempt?'disabled':''}>${escapeHtml(chemify(o))}</label>`;
           }).join('')}
         </div>
         ${mineAttempt
@@ -2294,7 +2294,7 @@ function practiceQuestionSection(role){
       ${mine.length ? mine.map(p=>`
         <div class="item">
           <div class="item-head"><span class="item-title">Posted ${fmtDate(p.date)}</span></div>
-          <div class="item-body">${linkify(p.question)}${p.answer?`<br><span style="color:var(--muted);">Hint: ${linkify(p.answer)}</span>`:''}</div>
+          <div class="item-body">${linkify(chemify(p.question))}${p.answer?`<br><span style="color:var(--muted);">Hint: ${linkify(chemify(p.answer))}</span>`:''}</div>
           <div class="item-actions"><button class="btn ghost small" data-remove-prac="${p.id}">Remove</button></div>
         </div>`).join('') : `<div class="empty">No practice question posted this week yet.</div>`}
     </div>`;
@@ -2306,11 +2306,11 @@ function practiceQuestionSection(role){
   ${latest ? `
     <div class="card" style="margin-bottom:20px;">
       <div class="badge stud" style="margin-bottom:10px;">This week</div>
-      <div style="font-size:16px; line-height:1.6;">${escapeHtml(latest.question)}</div>
-      ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(latest.answer)}</p></details>` : ''}
+      <div style="font-size:16px; line-height:1.6;">${escapeHtml(chemify(latest.question))}</div>
+      ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(chemify(latest.answer))}</p></details>` : ''}
     </div>` : `<div class="empty">No practice question yet — your coordinator will post one soon.</div>`}
   ${mine.length>1 ? `<h3 style="font-size:15px; margin:20px 0 10px;">Past questions</h3><div class="list">${mine.slice(1).map(p=>`
-    <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(p.question)}</div></div>`).join('')}</div>` : ''}`;
+    <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(chemify(p.question))}</div></div>`).join('')}</div>` : ''}`;
 }
 
 function audienceFor(coordinatorId){
@@ -3599,12 +3599,48 @@ function chemParse(body){
   if(depth || !n) return null;
   return { out, groups:n, hasParen, lastDigits };
 }
+// Chemistry wording -> real symbols (Greek letters, degrees, units, maths signs). Safe to run twice on the same text.
+const CHEM_GREEK = { alpha:'α', beta:'β', gamma:'γ', delta:'δ', sigma:'σ', pi:'π', lambda:'λ', theta:'θ', epsilon:'ε', rho:'ρ', omega:'ω', phi:'φ', tau:'τ', mu:'μ' };
+function chemSymbols(t){
+  // delta as a change: "delta H", "Delta G°", "delta-H", "delta Hf", "delta T", "delta t", "delta pH", "delta[A]" -> ΔH, ΔG°, ΔHf, ΔT, Δt, ΔpH, Δ[A]
+  t = t.replace(/\b(?:[Dd]elta|DELTA)(?:-|[ \t])?(?=(?:[HGSEUTPVAQ][°º⁰]?(?:f|c|b|m|r|rxn|vap|fus|sub|sol|soln|lat|hyd|ion|comb|cell|mix|atom|diss|neut|app)?|[tnxpvmc]|pH|pOH|pKa|pKb)(?![A-Za-z])|\[)/g, 'Δ');
+  // partial charges: "delta+", "delta-", "delta(+)", "delta positive" -> δ⁺ / δ⁻
+  t = t.replace(/\b[Dd]elta(?:\(([+-])\)|([+-]))(?![A-Za-z0-9])/g, (m, a, b)=> 'δ' + ((a||b)==='+' ? '⁺' : '⁻'));
+  t = t.replace(/\b[Dd]elta[ \t]+(positive|negative)\b/g, (m, w)=> 'δ' + (w==='positive' ? '⁺' : '⁻'));
+  // standard-state sign after a thermodynamic delta: ΔG0, ΔH^o, ΔSº -> ΔG°, ΔH°, ΔS°
+  t = t.replace(/Δ([HGSEU])(?:\^\{?[0o]\}?|[0oº⁰])(?![A-Za-z0-9])/g, 'Δ$1°');
+  // alpha / beta / gamma: decay, particles, rays, helix and names such as beta-carotene, alpha-D-glucose
+  t = t.replace(/\b(alpha|beta|gamma)\b(?=[ \t]+(?:particles?|decay|decays|emission|emitters?|radiation|rays?|helix|helices|sheets?|plus|minus)\b)/gi, (m, w)=> CHEM_GREEK[w.toLowerCase()]);
+  t = t.replace(/\b(alpha|beta|gamma)([+-])(?=[ \t]+(?:decay|decays|particles?|emission|emitters?|radiation)\b)/gi, (m, w, s)=> CHEM_GREEK[w.toLowerCase()] + (s==='+' ? '⁺' : '⁻'));
+  t = t.replace(/\b(alpha|beta|gamma)-(?=[A-Za-z(\d])/g, (m, w)=> CHEM_GREEK[w] + '-');
+  // sigma and pi bonds / orbitals
+  t = t.replace(/\b(sigma|pi)(?=(?:[ \t]|-)+(?:bonds?|bonding|electrons?|orbitals?|systems?|backbonding)\b|\*)/gi, (m, w)=> CHEM_GREEK[w.toLowerCase()]);
+  // Greek names that are unambiguous in chemistry (wavelength, angle, density, resistance ...)
+  t = t.replace(/\b(lambda|theta|epsilon|rho|omega|phi)\b/g, (m, w)=> CHEM_GREEK[w]);
+  t = t.replace(/\bOmega\b/g, 'Ω');
+  // degrees and temperature: 25 degrees Celsius, 25oC, 25 deg C, 104.5 degrees, 109.5^o
+  t = t.replace(/(\d)\s*(?:°\s*)?(?:degrees?|deg)\s*(C|F|K)(?:elsius|ahrenheit)?\b/gi, (m, d, u)=> d + ' °' + u.toUpperCase());
+  t = t.replace(/(\d)\s?o([CF])\b/g, '$1 °$2');
+  t = t.replace(/(\d)\s?\^\{?o\}?(?![A-Za-z0-9])/g, '$1°');
+  // angstrom, micro units
+  t = t.replace(/(\d)\s*[Aa]ngstroms?\b/g, '$1 Å');
+  t = t.replace(/(\d)\s?[uμ](?=(?:mol|g|L|l|m|M)(?![A-Za-z]))/g, '$1 µ');
+  // volume and unit powers: 25 cm3, mol dm-3, J K-1 mol-1, m2
+  t = t.replace(/(?<![A-Za-z0-9])(dm|cm|mm|km)([23])(?![A-Za-z0-9])/g, (m, u, p)=> u + chemSup(p));
+  t = t.replace(/(\d\s?)(m)([23])(?![A-Za-z0-9])/g, (m, n, u, p)=> n + u + chemSup(p));
+  t = t.replace(/(?<![A-Za-z0-9])(dm|cm|mm|m|L|s|g|kg|mol|K|J|kJ)-([1-3])(?![0-9A-Za-z-])/g, (m, u, p)=> u + chemSup('-' + p));
+  // maths signs written with keys
+  t = t.replace(/(?<=\s)<=(?=\s)/g, '≤').replace(/(?<=\s)>=(?=\s)/g, '≥').replace(/(?<=\s)!=(?=\s)/g, '≠').replace(/(?<=\s)~=(?=\s)/g, '≈');
+  t = t.replace(/(?<=[\s(\d])(?:\+\/-|\+-)(?=[\s\d.)])/g, '±');
+  t = t.replace(/\bsqrt\(/g, '√(');
+  return t;
+}
 function chemify(text){
   if(!text) return text;
   let t = String(text);
   // arrows and symbols
   t = t.replace(/<-{1,2}>|<=+>|⇄/g, '⇌').replace(/(^|\s)(?:-{1,2}>|=>)(?=\s|$)/g, '$1→').replace(/(^|\s)<-(?=\s)/g, '$1←');
-  t = t.replace(/(\d)\s*(?:degrees?|deg)\s*C(?:elsius)?\b/gi, '$1 °C').replace(/\b[Dd]elta\s?(?=[HGSEUT]\b)/g, 'Δ');
+  t = chemSymbols(t);
   // scientific notation and powers: 2.5 x 10^-3, mol L^-1, m^2, and charges written with ^
   t = t.replace(/(\d(?:\.\d+)?)\s*[xX*]\s*10(?=\^)/g, '$1 × 10');
   t = t.replace(/\^\{?([+-]?\d*[+-]?)\}?/g, (m, g)=> g ? chemSup(g) : m);
@@ -3632,6 +3668,20 @@ function chemify(text){
   });
   return t;
 }
+
+// Chemistry boxes tidy themselves when the writer clicks out of them (delta, arrows, formulas, units ...)
+const CHEM_FIELD_IDS = new Set(['quizQuestion','quizOptA','quizOptB','quizOptC','quizOptD','pracQ','pracA','pollQuestion','pollOpt1','pollOpt2','pollOpt3','pollOpt4','examInstr','exbData']);
+document.addEventListener('focusout', ev=>{
+  try{
+    const el = ev.target; if(!el || !el.tagName || !/^(TEXTAREA|INPUT)$/.test(el.tagName)) return;
+    if(el.tagName === 'INPUT' && el.type !== 'text') return;
+    const qf = el.dataset ? el.dataset.qf : '', rf = el.dataset ? el.dataset.rdF : '';
+    const hit = CHEM_FIELD_IDS.has(el.id) || /^(text|opt|answer|scheme)$/.test(qf || '') || /^(text|opt|exp|unit)$/.test(rf || '');
+    if(!hit) return;
+    const v = el.value, nv = chemify(v);
+    if(nv !== v){ el.value = nv; el.dispatchEvent(new Event('input', { bubbles:true })); }
+  }catch(e){}
+});
 
 // ================= exam-ai helper =================
 async function examAi(action, payload){
@@ -6544,16 +6594,16 @@ function examReviewHtml(e){
       const blank = (ans===undefined || ans==='');
       let shown, verdict = '';
       if(q.type==='mcq'){
-        shown = blank ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml(q.options[ans]||'')}`;
-        if(k.correct !== undefined){ verdict = (!blank && Number(ans)===k.correct) ? '<span class="exb-ok">This answer is correct.</span>' : `<span class="exb-bad">This answer is wrong. The right answer is option ${'ABCD'[k.correct]}: ${escapeHtml(q.options[k.correct]||'')}.</span>`; }
+        shown = blank ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml(chemify(q.options[ans]||''))}`;
+        if(k.correct !== undefined){ verdict = (!blank && Number(ans)===k.correct) ? '<span class="exb-ok">This answer is correct.</span>' : `<span class="exb-bad">This answer is wrong. The right answer is option ${'ABCD'[k.correct]}: ${escapeHtml(chemify(q.options[k.correct]||''))}.</span>`; }
       } else {
         const ph = (a.photos && a.photos[q.id]) || [];
-        shown = blank ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(ans)}</span>`;
+        shown = blank ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(chemify(String(ans)))}</span>`;
         if(ph.length) shown += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">${ph.map((u,j)=>`<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${escapeHtml(u)}" alt="Student work, photo ${j+1}" style="width:150px; height:150px; object-fit:cover; border-radius:10px; border:2px solid #C9D1DB;"></a>`).join('')}</div>`;
-        if(k.answer) verdict = `<span class="exb-key-line">Model answer: ${escapeHtml(k.answer)}${k.scheme ? ' Marking guide: ' + escapeHtml(k.scheme) : ''}</span>`;
+        if(k.answer) verdict = `<span class="exb-key-line">Model answer: ${escapeHtml(chemify(k.answer))}${k.scheme ? ' Marking guide: ' + escapeHtml(chemify(k.scheme)) : ''}</span>`;
       }
       const mk = q.type!=='mcq' ? `<div class="exb-mark-row"><label for="mk-${a.id}-${q.id}">Marks for this question</label><input id="mk-${a.id}-${q.id}" type="number" min="0" max="${q.marks}" step="0.5" data-mark-att="${a.id}" data-mark-q="${q.id}" value="${a.marks && a.marks[q.id]!==undefined ? escapeHtml(String(a.marks[q.id])) : ''}" style="width:96px;"><span>out of ${q.marks}</span></div>` : '';
-      return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(q.text)}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${verdict ? `<div style="margin-top:8px;">${verdict}</div>` : ''}${mk}</div>`;
+      return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(chemify(q.text))}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${verdict ? `<div style="margin-top:8px;">${verdict}</div>` : ''}${mk}</div>`;
     }).join('') + ((!a.answers && a.answer) ? `<div class="exb-ans"><div class="exb-ans-no">Written answer</div><div style="white-space:pre-wrap;">${escapeHtml(a.answer)}</div></div>` : '');
     const manualSum = e.questions.reduce((n,q)=> n + (q.type!=='mcq' && a.marks && isFinite(parseFloat(a.marks[q.id])) ? parseFloat(a.marks[q.id]) : 0), 0);
     const hasMarks = !!(a.marks && Object.keys(a.marks).length);
@@ -6742,7 +6792,7 @@ function exbOnClick(ev){
   }
   if(d.exbAdd !== undefined){ if(EXB.questions.length >= EXAM_MAX_Q) return; EXB.questions.push(exbNewQ(d.exbAdd)); exbPaint(); const l = document.getElementById('exbList'); const last = l && l.lastElementChild; if(last) last.scrollIntoView({behavior:'smooth', block:'center'}); return; }
   if(d.exbClear !== undefined){ if(EXB.questions.length && confirm('Remove every question from the list?')){ EXB.questions = []; exbPaint(); } return; }
-  if(d.exbFix !== undefined){ EXB.questions.forEach(q=>{ q.text = chemify(q.text); if(q.options) q.options = q.options.map(o=>chemify(o)); }); exbPaint(); return; }
+  if(d.exbFix !== undefined){ EXB.questions.forEach(q=>{ q.text = chemify(q.text); if(q.options) q.options = q.options.map(o=>chemify(o)); if(q.answer) q.answer = chemify(q.answer); if(q.scheme) q.scheme = chemify(q.scheme); }); exbPaint(); return; }
   if(d.exbApplysec !== undefined){ EXB.questions.forEach(q=>{ q.timeSec = EXB.sec[q.type]; }); exbPaint(); return; }
   if(d.exbImport !== undefined){
     const raw = (document.getElementById('exbPaste')||{}).value || '';
@@ -6872,6 +6922,8 @@ async function exbPost(){
   if(en <= new Date()) return fail('The closing time is already in the past.');
   const t = exbTotals();
   if(t.sec > t.win && !confirm(`The timers add up to ${fmtDur(t.sec)} but the exam is only open for ${fmtDur(t.win)}. Students who start late will be cut off at the closing time. Post anyway?`)) return;
+  E.questions.forEach(q=>{ q.text = chemify(q.text); if(q.options) q.options = q.options.map(o=>chemify(o)); if(q.answer) q.answer = chemify(q.answer); if(q.scheme) q.scheme = chemify(q.scheme); });
+  E.instructions = chemify(E.instructions || ''); E.dataLine = chemify(E.dataLine || '');
   if(msg) msg.textContent = 'Posting…';
   const examId = uid();
   const keys = {}; E.questions.forEach(q=>{ keys[q.id] = q.type==='mcq' ? { correct:q.correct, scheme:q.scheme||'' } : { answer:q.answer||'', scheme:q.scheme||'' }; });
@@ -6983,13 +7035,13 @@ function examAnswerRowsHtml(e, a){
   return e.questions.map((q,i)=>{
     const ans = a.answers[q.id], ph = (a.photos && a.photos[q.id]) || [];
     let shown;
-    if(q.type==='mcq') shown = (ans===undefined || ans==='') ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml((q.options||[])[ans]||'')}`;
+    if(q.type==='mcq') shown = (ans===undefined || ans==='') ? 'No answer given.' : `Option ${'ABCD'[ans]}: ${escapeHtml(chemify((q.options||[])[ans]||''))}`;
     else {
-      shown = (ans===undefined || ans==='') ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(ans)}</span>`;
+      shown = (ans===undefined || ans==='') ? (ph.length ? '' : 'No answer given.') : `<span style="white-space:pre-wrap;">${escapeHtml(chemify(String(ans)))}</span>`;
       if(ph.length) shown += `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:8px;">${ph.map((u,j)=>`<a href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open full size"><img src="${escapeHtml(u)}" alt="Student work, photo ${j+1}" style="width:150px; height:150px; object-fit:cover; border-radius:10px; border:2px solid #C9D1DB;"></a>`).join('')}</div>`;
     }
     const mk = (q.type!=='mcq' && a.marks && a.marks[q.id]!==undefined) ? `<div class="exb-mark-row">Marks for this question: ${escapeHtml(String(a.marks[q.id]))} out of ${q.marks}</div>` : '';
-    return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(q.text)}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${mk}</div>`;
+    return `<div class="exb-ans"><div class="exb-ans-no">Question ${i+1}</div><span class="exb-ans-q">${escapeHtml(chemify(q.text))}</span><div class="exb-ans-label">Student's answer</div><div>${shown}</div>${mk}</div>`;
   }).join('');
 }
 function examResultsBlockHtml(e){
@@ -7718,8 +7770,8 @@ function wireHandlers(tab){
 
   // ---- Polls ----
   if(q('addPollBtn')) q('addPollBtn').addEventListener('click', async ()=>{
-    const question = q('pollQuestion').value.trim();
-    const options = [q('pollOpt1').value.trim(), q('pollOpt2').value.trim(), q('pollOpt3').value.trim(), q('pollOpt4').value.trim()].filter(Boolean);
+    const question = chemify(q('pollQuestion').value.trim());
+    const options = [q('pollOpt1').value.trim(), q('pollOpt2').value.trim(), q('pollOpt3').value.trim(), q('pollOpt4').value.trim()].filter(Boolean).map(o=>chemify(o));
     if(!question) return alert('Add a question.');
     if(options.length<2) return alert('Add at least two options.');
     DB.polls.push({id:uid(), coordinatorId:ME.id, question, options, votes:{}, closed:false, topic:(q('pollTopic')&&q('pollTopic').value)||'', date:today(), ts:Date.now()});
@@ -7753,8 +7805,8 @@ function wireHandlers(tab){
 
   // ---- Quizzes ----
   if(q('addQuizBtn')) q('addQuizBtn').addEventListener('click', async ()=>{
-    const question = q('quizQuestion').value.trim();
-    const rawOpts = [q('quizOptA').value.trim(), q('quizOptB').value.trim(), q('quizOptC').value.trim(), q('quizOptD').value.trim()];
+    const question = chemify(q('quizQuestion').value.trim());
+    const rawOpts = [q('quizOptA').value.trim(), q('quizOptB').value.trim(), q('quizOptC').value.trim(), q('quizOptD').value.trim()].map(o=>chemify(o));
     const letterIndex = parseInt(q('quizCorrect').value, 10);
     if(!question) return alert('Add a question.');
     if(!rawOpts[letterIndex]) return alert('The selected correct option is empty — fill it in, or pick a different one as correct.');
@@ -8077,8 +8129,8 @@ function wireHandlers(tab){
   }));
 
   if(q('addPracBtn')) q('addPracBtn').addEventListener('click', async ()=>{
-    const question=q('pracQ').value.trim(); if(!question) return alert('Question required.');
-    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:q('pracA').value.trim(), topic:(q('pracTopic')&&q('pracTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
+    const question=chemify(q('pracQ').value.trim()); if(!question) return alert('Question required.');
+    DB.practice.push({id:uid(), coordinatorId:ME.id, question, answer:chemify(q('pracA').value.trim()), topic:(q('pracTopic')&&q('pracTopic').value)||'', date:today(), seenBy:{[ME.id]:Date.now()}});
     await saveKey('practice'); render('practice');
     await notifyBroadcast({title:'New practice question posted', body:question, coordinatorId:ME.id, author:ME.name, role:ME.role});
   });
@@ -8575,9 +8627,9 @@ function lrPaint(root){
     main = `<div class="card">
       <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted);"><span>Question ${LEARN.i+1} of ${LEARN.qs.length}</span><span>${LEARN.right} correct</span></div>
       <div class="lr-bar"><b style="width:${Math.round(LEARN.i/LEARN.qs.length*100)}%"></b></div>
-      <div class="lr-q" style="margin-top:16px;">${escapeHtml(q[1])}</div>
-      ${q[2].map((o,k)=>`<button class="lr-opt${done ? (k===q[3]?' correct':(k===LEARN.picked?' wrong':'')) : ''}" data-lr-pick="${k}" ${done?'disabled':''}>${escapeHtml(o)}</button>`).join('')}
-      ${done ? `<div class="lr-fb ${LEARN.picked===q[3]?'ok':'no'}"><b>${LEARN.picked===q[3]?'Correct.':'Not quite.'}</b> ${escapeHtml(q[4]||'')}</div>
+      <div class="lr-q" style="margin-top:16px;">${escapeHtml(chemify(q[1]))}</div>
+      ${q[2].map((o,k)=>`<button class="lr-opt${done ? (k===q[3]?' correct':(k===LEARN.picked?' wrong':'')) : ''}" data-lr-pick="${k}" ${done?'disabled':''}>${escapeHtml(chemify(o))}</button>`).join('')}
+      ${done ? `<div class="lr-fb ${LEARN.picked===q[3]?'ok':'no'}"><b>${LEARN.picked===q[3]?'Correct.':'Not quite.'}</b> ${escapeHtml(chemify(q[4]||''))}</div>
         <button class="btn amber" id="lrNext">${LEARN.i+1<LEARN.qs.length?'Next question':'Finish'}</button>` : ''}
     </div>`;
   }
@@ -9055,12 +9107,12 @@ function rmSessionHtml(){
   } else {
     input = `<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;"><input id="rmNum" inputmode="decimal" autocomplete="off" placeholder="Your answer" style="max-width:220px;" ${r?'disabled':''} value="${r?escapeHtml(String(S.given||'')):''}">${q.unit?`<span>${escapeHtml(q.unit)}</span>`:''}${r?'':`<button class="btn teal small" type="button" data-rm-check ${S.busy?'disabled':''}>Check</button>`}</div>`;
   }
-  const fb = r ? `<div class="rm-fb ${r.correct?'ok':'no'} rm-win"><b>${r.correct?'Correct.':'Not quite.'}</b>${(!r.correct && q.type==='num') ? ` The answer is <b>${escapeHtml(r.answer)}</b>.` : ''} ${escapeHtml(r.explanation||'')}</div>
+  const fb = r ? `<div class="rm-fb ${r.correct?'ok':'no'} rm-win"><b>${r.correct?'Correct.':'Not quite.'}</b>${(!r.correct && q.type==='num') ? ` The answer is <b>${escapeHtml(r.answer)}</b>.` : ''} ${escapeHtml(chemify(r.explanation||''))}</div>
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><button class="btn amber" type="button" data-rm-next>${S.i+1<S.qs.length?'Next question':'Finish'}</button>${S.reported?'<span class="note" style="margin:0;">Thanks, we will review this question.</span>':'<button class="btn ghost small" type="button" data-rm-report>Report a problem with this question</button>'}</div>` : '';
   return `<div class="card rm-win">
     <div style="display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--muted); flex-wrap:wrap;"><span>${S.daily?'Daily 5 &middot; ':''}${sec?escapeHtml(sec.title)+' &middot; ':''}Question ${S.i+1} of ${S.qs.length}${S.review?' &middot; revision':''}</span><span><span class="rm-chip">${src}</span><span class="rm-chip">${escapeHtml(q.tier)}</span></span></div>
     <div class="rm-bar" style="margin-top:8px;"><b data-w="${Math.round(100*S.i/S.qs.length)}" style="width:${Math.round(100*S.i/S.qs.length)}%"></b></div>
-    <div class="rm-q">${escapeHtml(q.text).replace(/\n/g,'<br>')}</div>
+    <div class="rm-q">${escapeHtml(chemify(q.text)).replace(/\n/g,'<br>')}</div>
     ${input}
     ${fb}
   </div>
@@ -9199,10 +9251,10 @@ function rmPaintList(){
   if(fl) fl.innerHTML = [['all','All'],['set','Coordinator set'],['ai','AI practice'],['flagged','Reported ('+M.flagged+')'],['mine','Mine']].map(([k,l])=>`<button class="pill${M.filter===k?' on':''}" type="button" data-rm-filter="${k}">${l}</button>`).join('');
   const list = M.list || [];
   const item = (q)=>{
-    const ans = q.qtype==='mcq' ? (q.options||[]).map((o,i)=>`<div style="margin:2px 0; ${i===q.answer_index?'color:var(--teal-deep); font-weight:700;':''}">${'ABCDEF'[i]}. ${escapeHtml(o)}${i===q.answer_index?' &#10003;':''}</div>`).join('') : `<div style="color:var(--teal-deep); font-weight:700;">Answer: ${escapeHtml(String(Number(q.answer_num)))} ${escapeHtml(q.unit||'')} <span style="color:var(--muted); font-weight:400;">(&plusmn;${Math.round(Number(q.tolerance)*1000)/10}%)</span></div>`;
-    return `<div class="item"><div class="item-head"><span class="item-title" style="font-weight:700;">${escapeHtml(q.body).replace(/\n/g,'<br>')}</span></div>
+    const ans = q.qtype==='mcq' ? (q.options||[]).map((o,i)=>`<div style="margin:2px 0; ${i===q.answer_index?'color:var(--teal-deep); font-weight:700;':''}">${'ABCDEF'[i]}. ${escapeHtml(chemify(o))}${i===q.answer_index?' &#10003;':''}</div>`).join('') : `<div style="color:var(--teal-deep); font-weight:700;">Answer: ${escapeHtml(String(Number(q.answer_num)))} ${escapeHtml(q.unit||'')} <span style="color:var(--muted); font-weight:400;">(&plusmn;${Math.round(Number(q.tolerance)*1000)/10}%)</span></div>`;
+    return `<div class="item"><div class="item-head"><span class="item-title" style="font-weight:700;">${escapeHtml(chemify(q.body)).replace(/\n/g,'<br>')}</span></div>
       <div style="margin:6px 0;"><span class="rm-chip">${q.source==='ai'?'AI':'Set by coordinator'}</span><span class="rm-chip">${escapeHtml(q.tier)}</span><span class="rm-chip">${q.qtype==='mcq'?'Multiple choice':'Numerical'}</span>${q.required?'<span class="rm-chip on">Required</span>':''}${q.status==='flagged'?`<span class="rm-chip bad">Reported x${q.flags}</span>`:''}</div>
-      <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(q.explanation)}</div>`:''}</div>
+      <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(chemify(q.explanation))}</div>`:''}</div>
       <div class="item-actions">${q.status==='flagged'?`<button class="btn teal small" type="button" data-rm-q="approve" data-id="${q.id}">Keep it</button>`:''}<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
   };
   const repBanner = (M.flagged>0 && M.filter!=='flagged') ? `<div class="card" style="margin:0 0 12px; border-left:4px solid #C0392B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;"><span><b>${M.flagged} reported question${M.flagged===1?'':'s'}</b> from students ${M.flagged===1?'is':'are'} hidden from practice until you review ${M.flagged===1?'it':'them'}.</span><button class="btn small" type="button" data-rm-filter="flagged">Review now</button></div>` : '';
@@ -9303,10 +9355,10 @@ async function rmDraftPost(){
       if(!raw[d.answerIndex]) return say(`Draft ${n}: the correct option is empty.`);
       const kept = raw.map((t,k)=>({t,k})).filter(o=>o.t);
       if(kept.length<2) return say(`Draft ${n}: add at least two options.`);
-      questions.push({ type:'mcq', text:d.text.trim(), options:kept.map(o=>o.t), answerIndex:kept.findIndex(o=>o.k===d.answerIndex), explanation:String(d.explanation||'').trim() });
+      questions.push({ type:'mcq', text:chemify(d.text.trim()), options:kept.map(o=>chemify(o.t)), answerIndex:kept.findIndex(o=>o.k===d.answerIndex), explanation:chemify(String(d.explanation||'').trim()) });
     } else {
       if(!isFinite(parseFloat(String(d.answer).replace(/,/g,'')))) return say(`Draft ${n}: the answer must be a number.`);
-      questions.push({ type:'num', text:d.text.trim(), answer:String(d.answer).trim(), tolerance:Number(d.tolerance)||0.02, unit:String(d.unit||'').trim(), explanation:String(d.explanation||'').trim() });
+      questions.push({ type:'num', text:chemify(d.text.trim()), answer:String(d.answer).trim(), tolerance:Number(d.tolerance)||0.02, unit:chemify(String(d.unit||'').trim()), explanation:chemify(String(d.explanation||'').trim()) });
     }
   }
   const req = document.getElementById('rmDraftReq'), btn = document.getElementById('rmPostBtn');
