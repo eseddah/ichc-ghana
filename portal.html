@@ -1938,7 +1938,7 @@ function renderUpdateToast(){
 function tabSources(tab){
   if(!ME) return [];
   switch(tab){
-    case 'applications': return ME.role==='ambassador' ? [{items:DB.applications.filter(a=>a.status!=='interested'), field:null, save:null}] : [];
+    case 'applications': return ME.role==='ambassador' ? [{items:DB.applications.filter(a=>a.status!=='interested' && !appResolved(a)), field:null, save:null}] : [];
     case 'announce':
       return (ME.role==='ambassador' || ME.role==='student') ? [{items:DB.announcements, field:'seenBy', save:'announcements'}] : [];
     case 'alerts':
@@ -6045,9 +6045,23 @@ async function sendInterviewInvite(id, btn){
   delete INTV.open[id]; delete INTV.draft[id];
   render('applications');
 }
+// An application that has already been accepted (a student was created from it) or has a recorded
+// decision is finished: it must never sit in the Applications list. If a stale write ever brings one
+// back, it is hidden here and removed from the database in the background.
+function appResolved(a){
+  if(!a || !a.id) return false;
+  return (DB.students||[]).some(s=>s.applicationId===a.id) || (DB.applicationDecisions||[]).some(d=>d.applicationId===a.id);
+}
+let _appPrune = false;
+function pruneResolvedApplications(){
+  if(_appPrune || !ME || ME.role!=='ambassador' || !(DB.applications||[]).some(appResolved)) return;
+  _appPrune = true;
+  setTimeout(async ()=>{ try{ await mutateApplications(list=>list.filter(a=>!appResolved(a))); }catch(e){ console.error(e); } _appPrune = false; }, 600);
+}
 function applicationsView(){
   if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can review applications.</div>`;
-  const real = DB.applications.filter(a=>a.status!=='interested');
+  pruneResolvedApplications();
+  const real = DB.applications.filter(a=>a.status!=='interested' && !appResolved(a));
   const interested = DB.applications.filter(a=>a.status==='interested');
   const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
@@ -8402,7 +8416,7 @@ function wireHandlers(tab){
       // Carries the applicant's private token forward (when present) so the
       // status banner on the public site can match this decision without
       // relying on email alone — see apply.html for why that matters.
-      DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
+      DB.applicationDecisions.push({ id: uid(), applicationId: app.id, name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
       await saveKey('applicationDecisions');
       const cleared = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
       if(!cleared) alert(app.name + ' is now a student, but the database refused to remove the application from this list. Open Applications and use Accept again, then "Accept without sending a message", to clear it.');
@@ -8421,7 +8435,7 @@ function wireHandlers(tab){
     await reviewApplicantDecision({app, decision:'declined', reason, commit: async ()=>{
       const removed = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
       if(!removed){ alert('Could not decline this applicant: the database refused the change. Nothing was sent to the applicant. Please try again.'); return false; }
-      DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
+      DB.applicationDecisions.push({ id: uid(), applicationId: app.id, name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
       await saveKey('applicationDecisions');
       return true;
     }});
