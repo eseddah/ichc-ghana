@@ -8404,7 +8404,8 @@ function wireHandlers(tab){
       // relying on email alone — see apply.html for why that matters.
       DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
       await saveKey('applicationDecisions');
-      await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+      const cleared = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+      if(!cleared) alert(app.name + ' is now a student, but the database refused to remove the application from this list. Open Applications and use Accept again, then "Accept without sending a message", to clear it.');
       return true;
     }});
     render('applications');
