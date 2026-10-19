@@ -2403,6 +2403,104 @@ function applicantDecisionDraft({app, decision, reason}){
   return { title, mail: mail.join('\n\n'), sms };
 }
 
+// Review window for an accept/decline. The email and the text message are written separately and each
+// has its own Send button. Nothing is saved until the first send (or "without sending a message"):
+// `commit` performs the decision once, and Cancel before that changes nothing.
+function reviewApplicantDecision({app, decision, reason, commit}){
+  const s = DB.settings || {}, accepted = decision === 'accepted', d = applicantDecisionDraft({app, decision, reason});
+  const canEmail = !!app.email, canSms = !!(s.webhookUrl && app.phone);
+  const first = intvFirst(app.name), verb = accepted ? 'accepted' : 'declined';
+  return new Promise(resolve=>{
+    let committed = false, busy = false;
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.65); display:flex; align-items:flex-start; justify-content:center; padding:16px; overflow:auto;';
+    const card = 'border:1.5px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px;';
+    o.innerHTML = `<div role="dialog" aria-modal="true" aria-labelledby="adTitle" style="background:#fff; border-radius:16px; padding:20px; width:min(580px,100%); margin:auto;">
+      <h3 id="adTitle" style="margin:0 0 4px; font-size:18px;"></h3>
+      <p class="note" style="margin:0 0 14px;">Write the email and the text message separately, and send each one on its own. ${escapeHtml(first)} is marked <b>${verb}</b> when you send the first message, or when you choose to ${accepted?'accept':'decline'} without one. Cancel before that and nothing changes.</p>
+      <div style="${card}">
+        <div style="font-weight:700; margin-bottom:8px;">Email${canEmail ? ' <span style="font-weight:500; color:var(--muted); font-size:12.5px;">to ' + escapeHtml(app.email) + '</span>' : ''}</div>
+        <div class="field" style="margin:0 0 10px;"><label>Subject</label><input id="adSubject" type="text"${canEmail?'':' disabled'}></div>
+        <div class="field" style="margin:0 0 4px;"><label>Message</label><textarea id="adMail" rows="8"${canEmail?'':' disabled'}></textarea></div>
+        <p class="note" style="margin:0 0 10px; font-size:12px;">${canEmail ? `It already opens with "Hi ${escapeHtml(first)}"${accepted ? ', and the portal link is added at the end' : ''}.` : 'No email address on file.'} <button type="button" class="mc-chip" id="adClearMail"${canEmail?'':' disabled'}>Start blank</button></p>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><button type="button" class="btn small ${accepted?'teal':'ghost app-decline'}" id="adSendEmail"${canEmail?'':' disabled'}>Send email</button><span class="psms-status" id="adEmailSt" role="status" aria-live="polite" style="margin:0;"></span></div>
+      </div>
+      <div style="${card}">
+        <div style="font-weight:700; margin-bottom:8px;">Text message${app.phone ? ' <span style="font-weight:500; color:var(--muted); font-size:12.5px;">to ' + escapeHtml(app.phone) + '</span>' : ''}</div>
+        <div class="field" style="margin:0 0 4px;"><textarea id="adSms" rows="5"${canSms?'':' disabled'} aria-label="Text message"></textarea></div>
+        <p class="note" style="margin:0 0 10px; font-size:12px;"><span id="adSmsCount"></span>${accepted && canSms ? ' The portal link is added at the end.' : ''}${canSms ? '' : (app.phone ? ' Text sending is not connected.' : ' No phone number on file.')} <button type="button" class="mc-chip" id="adClearSms"${canSms?'':' disabled'}>Start blank</button></p>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;"><button type="button" class="btn small ${accepted?'teal':'ghost app-decline'}" id="adSendSms"${canSms?'':' disabled'}>Send text</button><span class="psms-status" id="adSmsSt" role="status" aria-live="polite" style="margin:0;"></span></div>
+      </div>
+      <div id="adFoot" style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;"></div></div>`;
+    document.body.appendChild(o);
+    const q = id=>o.querySelector('#'+id);
+    q('adTitle').textContent = (accepted ? 'Accept ' : 'Decline ') + (app.name || 'this applicant');
+    q('adSubject').value = d.title; q('adMail').value = d.mail; q('adSms').value = d.sms;
+    const count = ()=>{ const sg = psmsSegments(q('adSms').value); q('adSmsCount').textContent = sg.len + ' characters, ' + sg.parts + (sg.parts===1 ? ' text' : ' texts') + ' (each uses SMS credit).'; };
+    q('adSms').addEventListener('input', count); count();
+    q('adClearMail').addEventListener('click', ()=>{ q('adMail').value = ''; q('adMail').focus(); });
+    q('adClearSms').addEventListener('click', ()=>{ q('adSms').value = ''; count(); q('adSms').focus(); });
+    const finish = ()=>{ document.removeEventListener('keydown', onKey); o.remove(); resolve(committed); };
+    const onKey = e=>{ if(e.key==='Escape' && !busy) finish(); };
+    document.addEventListener('keydown', onKey);
+    const foot = ()=>{
+      q('adFoot').innerHTML = committed
+        ? `<button class="btn teal small" id="adDone" type="button">Done</button>`
+        : `<button class="btn ghost small" id="adCancel" type="button">Cancel</button><button class="btn ghost small" id="adSkip" type="button">${accepted?'Accept':'Decline'} without sending a message</button>`;
+      const dn = q('adDone'), cn = q('adCancel'), sk = q('adSkip');
+      if(dn) dn.addEventListener('click', finish);
+      if(cn) cn.addEventListener('click', finish);
+      if(sk) sk.addEventListener('click', async ()=>{ if(busy) return; busy = true; sk.disabled = true; const ok = await ensureCommitted(); busy = false; if(ok) finish(); else sk.disabled = false; });
+    };
+    const ensureCommitted = async ()=>{
+      if(committed) return true;
+      let ok = false; try{ ok = (await commit()) !== false; }catch(e){ console.error(e); }
+      if(!ok) return false;
+      committed = true; foot(); return true;
+    };
+    const status = (id, text, ok)=>{ const el = q(id); el.className = 'psms-status ' + (ok ? 'ok' : 'bad'); el.textContent = text; };
+    q('adSendEmail').addEventListener('click', async ()=>{
+      if(busy) return;
+      const title = q('adSubject').value.trim(), mail = q('adMail').value.trim();
+      if(!title || !mail){ status('adEmailSt', 'Add a subject and a message first.', false); return; }
+      busy = true; q('adSendEmail').disabled = true;
+      if(!(await ensureCommitted())){ busy = false; q('adSendEmail').disabled = false; status('adEmailSt', 'Could not save the decision. Nothing was sent.', false); return; }
+      await notifyApplicantDecision({app, decision, reason, custom:{ title, mail, sms:'', sendEmail:true, sendSms:false }});
+      busy = false; ['adSubject','adMail','adClearMail'].forEach(i=>q(i).disabled = true);
+      status('adEmailSt', 'Email sent. See the Email Log for delivery.', true);
+    });
+    q('adSendSms').addEventListener('click', async ()=>{
+      if(busy) return;
+      const sms = q('adSms').value.trim();
+      if(!sms){ status('adSmsSt', 'Write the text message first.', false); return; }
+      busy = true; q('adSendSms').disabled = true;
+      if(!(await ensureCommitted())){ busy = false; q('adSendSms').disabled = false; status('adSmsSt', 'Could not save the decision. Nothing was sent.', false); return; }
+      await notifyApplicantDecision({app, decision, reason, custom:{ title:d.title, mail:'', sms, sendEmail:false, sendSms:true }});
+      busy = false; ['adSms','adClearSms'].forEach(i=>q(i).disabled = true);
+      status('adSmsSt', 'Text sent. See the SMS Log for delivery.', true);
+    });
+    foot();
+    setTimeout(()=>{ try{ q('adMail').focus(); }catch(e){} }, 30);
+  });
+}
+
+// Emails/texts a single applicant directly about an accept/decline decision on their
+// application. Separate from notifyBroadcast because the applicant isn't on the
+// roster yet (or, if declined, never will be) — so they aren't part of any audience.
+function applicantDecisionDraft({app, decision, reason}){
+  const accepted = decision === 'accepted', after = app.interview ? ' after your interview' : '', first = intvFirst(app.name);
+  const title = accepted ? `You're in! Your ${programName()} application was accepted` : `Update on your ${programName()} application`;
+  // the email template already says "Hi <first name>", so the email body does not repeat the greeting
+  const mail = accepted
+    ? [`Great news: your application has been accepted${after}, and your student portal is now switched on.`, `Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video. When you confirm the video, your roadmap and daily practice unlock, and you then meet your coordinator and get the official WhatsApp group invitation.`]
+    : [`Thank you for applying to ${programName()}${app.interview ? ' and for taking the time to interview with us' : ''}.`, `We're unable to move forward with your application at this time.`];
+  let sms = accepted
+    ? `Hi ${first}, great news: your ${programName()} application has been accepted${after} and your student portal is switched on. Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video.`
+    : `Hi ${first}, thank you for applying to ${programName()}. We're unable to move forward with your application at this time.`;
+  if(reason){ mail.push(reason); sms += ' ' + reason; }
+  return { title, mail: mail.join('\n\n'), sms };
+}
+
 // Shows the Ambassador exactly what the applicant will receive and lets them edit or add to it
 // BEFORE anything is saved or sent. Resolves with the final message, or null if they cancel.
 function reviewApplicantDecision({app, decision, reason}){
@@ -6025,7 +6123,7 @@ function applicationsView(){
   const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
-  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining first shows you the email and text the applicant will receive, so you can edit or add to it before anything is sent.</p></div></div>
+  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining opens a window where you write the email and the text message separately and send each one yourself.</p></div></div>
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
     ${sorted.length ? sorted.map(a=>`
@@ -6035,7 +6133,7 @@ function applicationsView(){
         ${a.howHeard ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">Heard about us via: ${escapeHtml(a.howHeard)}</div>` : ''}
         ${appDetailsHtml(a)}
         ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b style="font-size:12px;">Motivation</b><br>${linkify(a.message)}</div>`):''}
-        <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — added to the message you review before it is sent"></div>
+        <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — added to the draft email and text, which you can still edit"></div>
         ${a.stage==='Invited' ? `<div class="item-actions"><span class="note" style="flex-basis:100%; margin:0 0 6px;">Invited by email. Waiting for them to complete the application form.</span><button class="btn ghost small" data-resend-invite="${a.id}">Send the invitation again</button><button class="btn ghost small" data-remove-interest="${a.id}">Remove</button></div>` : `${interviewSummaryHtml(a)}${INTV.open[a.id] ? interviewPanelHtml(a) : ''}<div class="item-actions app-actions">
           ${appActionBtn('review', a)}${appActionBtn('interview', a)}${appActionBtn('accept', a)}${appActionBtn('decline', a)}
         </div>`}
@@ -8366,19 +8464,20 @@ function wireHandlers(tab){
       render('applications');
       return;
     }
-    // The Ambassador reviews (and can edit) the message first. Cancelling here changes nothing.
-    const custom = await reviewApplicantDecision({app, decision:'accepted', reason});
-    if(!custom) return;
+    // The Ambassador writes and sends the email and the text from the review window.
+    // The student is only created when they send the first message (or choose to accept without one).
     b.disabled = true;
-    DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
-    await saveKey('students'); await syncPublicDirectory();
-    await notifyApplicantDecision({app, decision:'accepted', reason, custom});
-    // Carries the applicant's private token forward (when present) so the
-    // status banner on the public site can match this decision without
-    // relying on email alone — see apply.html for why that matters.
-    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
-    await saveKey('applicationDecisions');
-    await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+    await reviewApplicantDecision({app, decision:'accepted', reason, commit: async ()=>{
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      await saveKey('students'); await syncPublicDirectory();
+      // Carries the applicant's private token forward (when present) so the
+      // status banner on the public site can match this decision without
+      // relying on email alone — see apply.html for why that matters.
+      DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'accepted', reason, date: today() });
+      await saveKey('applicationDecisions');
+      await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+      return true;
+    }});
     render('applications');
   }));
   document.querySelectorAll('[data-decline-app]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -8386,15 +8485,16 @@ function wireHandlers(tab){
     if(!app) return;
     const reasonInp = document.querySelector(`[data-app-reason-for="${app.id}"]`);
     const reason = reasonInp ? reasonInp.value.trim() : '';
-    // The Ambassador reviews (and can edit) the message first. Cancelling here changes nothing.
-    const custom = await reviewApplicantDecision({app, decision:'declined', reason});
-    if(!custom) return;
+    // The Ambassador writes and sends the email and the text from the review window.
+    // The applicant is only declined when they send the first message (or choose to decline without one).
     b.disabled = true;
-    const removed = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
-    if(!removed){ alert('Could not decline this applicant: the database refused the change. Nothing was sent to the applicant. Please try again.'); render('applications'); return; }
-    await notifyApplicantDecision({app, decision:'declined', reason, custom});
-    DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
-    await saveKey('applicationDecisions');
+    await reviewApplicantDecision({app, decision:'declined', reason, commit: async ()=>{
+      const removed = await mutateApplications(list=>list.filter(a=>a.id!==app.id));
+      if(!removed){ alert('Could not decline this applicant: the database refused the change. Nothing was sent to the applicant. Please try again.'); return false; }
+      DB.applicationDecisions.push({ id: uid(), name: app.name, email: app.email.toLowerCase(), token: app.token, decision:'declined', reason, date: today() });
+      await saveKey('applicationDecisions');
+      return true;
+    }});
     render('applications');
   }));
   document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
