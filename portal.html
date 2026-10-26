@@ -1334,6 +1334,7 @@ async function loadDB(){
   DB.smsLog        = smsLog || [];
   DB.ambassadorProfiles = ambassadorProfiles || {};
   DB.examRetakes = Array.isArray(examRetakes) ? examRetakes : [];
+  try{ const qr = await sGet('posts:qReports', true); DB.qReports = Array.isArray(qr) ? qr : []; }catch(e){ DB.qReports = []; }
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
@@ -1406,7 +1407,7 @@ const KEY_MAP = {
   applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', examKeys:'posts:examKeys', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
   alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log',
-  ambassadorProfiles:'ambassador:profiles', examRetakes:'posts:examRetakes'
+  ambassadorProfiles:'ambassador:profiles', examRetakes:'posts:examRetakes', qReports:'posts:qReports'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -1880,7 +1881,7 @@ function alertsSectionForStudentHtml(){
 // tab is what marks things read — the toast itself never does. ----
 function myUnreadAnnouncements(){
   if(!ME || ME.role!=='student') return [];
-  return DB.announcements.filter(a=>!(a.seenBy && a.seenBy[ME.id])).filter(afterCutoff);
+  return DB.announcements.filter(annVisible).filter(a=>!(a.seenBy && a.seenBy[ME.id])).filter(afterCutoff);
 }
 async function markAnnouncementSeen(id){
   if(!ME || ME.role!=='student') return;
@@ -1940,7 +1941,7 @@ function tabSources(tab){
   switch(tab){
     case 'applications': return ME.role==='ambassador' ? [{items:DB.applications.filter(a=>a.status!=='interested' && !appResolved(a)), field:null, save:null}] : [];
     case 'announce':
-      return (ME.role==='ambassador' || ME.role==='student') ? [{items:DB.announcements, field:'seenBy', save:'announcements'}] : [];
+      return (ME.role==='ambassador' || ME.role==='student') ? [{items:DB.announcements.filter(annVisible), field:'seenBy', save:'announcements'}] : [];
     case 'alerts':
       if(ME.role==='ambassador') return [{items:DB.alerts, field:'views', save:'alerts'}];
       if(ME.role==='coordinator') return [{items:DB.alerts.filter(a=>a.coordinatorId===ME.id), field:'views', save:'alerts'}];
@@ -2346,11 +2347,15 @@ async function removeNotificationsFor(ann){
   if(keep.length === base.length) return;
   DB.notifications = keep; await saveKey('notifications');
 }
-async function notifyBroadcast({title, body, coordinatorId, author, role, refId}){
+async function notifyBroadcast({title, body, coordinatorId, author, role, refId, audience}){
+  // audience: 'coordinators' or 'students' narrows a programme-wide broadcast; anything else keeps the old behaviour
+  let recipients = audienceFor(coordinatorId);
+  const narrowed = !coordinatorId && (audience==='coordinators' || audience==='students');
+  if(narrowed) recipients = audience==='coordinators' ? (DB.coordinators||[]) : (DB.students||[]);
   const entry = { id: uid(), refId: refId||null, title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
+  if(narrowed){ entry.toIds = recipients.map(r=>r.id); entry.audience = audience; }
   await appendShared('notifications', entry);
 
-  const recipients = audienceFor(coordinatorId);
   const s = DB.settings || {};
 
   const ch = await askChannels(title);
@@ -3374,6 +3379,41 @@ function smsResendHtml(rows){
       <button type="button" class="mc-chip" style="margin-top:8px" data-sms-resend="${escapeHtml(e.id)}">Resend</button></div>`).join('')}
     ${out.length>50 ? `<p class="note">Showing the first 50. "Resend all" covers every one.</p>` : ''}</div>${oldNote}</div>`;
 }
+async function smsRemoveIds(ids){
+  const fresh = await sGet('sms:log', true), base = Array.isArray(fresh) ? fresh : (DB.smsLog||[]);
+  const drop = new Set(ids);
+  DB.smsLog = base.filter(e=>!drop.has(e.id));
+  await saveKey('smsLog');
+}
+function wireSmsLogActions(){
+  const list = document.getElementById('smsLogList'), all = document.getElementById('smsRemoveAllFailed');
+  if(all) all.addEventListener('click', async ()=>{
+    const ids = smsScopedRows().filter(e=>e.status!=='delivered').map(e=>e.id);
+    if(!ids.length || !confirm(`Remove ${ids.length} failed text${ids.length===1?'':'s'} from the log? This can't be undone.`)) return;
+    all.disabled = true; await smsRemoveIds(ids); render('smslog');
+  });
+  if(!list) return;
+  list.addEventListener('click', async ev=>{
+    const b = ev.target.closest('button'); if(!b || b.disabled) return;
+    if(b.dataset.smsRowRemove){
+      if(!confirm('Remove this failed text from the log?')) return;
+      b.disabled = true; await smsRemoveIds([b.dataset.smsRowRemove]); render('smslog'); return;
+    }
+    if(b.dataset.smsRowResend){
+      const e = (DB.smsLog||[]).find(x=>x.id===b.dataset.smsRowResend); if(!e) return;
+      const url = DB.settings && DB.settings.webhookUrl;
+      if(!url) return alert("Text messaging isn't connected. Add the SMS webhook in Settings first.");
+      b.disabled = true; b.textContent = 'Sending...';
+      await sendSmsNow(url, { to:e.to, name:e.name, from:ME.name, subject:e.subject||null, message:e.message, recipientId:e.recipientId, recipientRole:e.recipientRole, studentCoordinatorId:e.studentCoordinatorId });
+      await new Promise(r=>setTimeout(r, 3500));
+      try{ await reloadDbKey('sms:log'); }catch(err){}
+      // when the new attempt got through, the old failed row is no longer needed
+      const ok = (DB.smsLog||[]).some(d=>d.status==='delivered' && d.to===e.to && d.message===e.message && d.ts>e.ts);
+      if(ok) await smsRemoveIds([e.id]);
+      render('smslog');
+    }
+  });
+}
 function wireSmsResend(){
   const box = document.getElementById('smsResendBox'); if(!box) return;
   let busy = false;
@@ -3442,7 +3482,8 @@ function smsLogView(){
   <div class="section-title"><div><h2>SMS Log</h2><p>${isAmbassador ? 'Every text message sent across the programme' : 'Texts sent to your students'} — pulled directly from Africa\'s Talking\'s own delivery result, not just whether the request was made.</p></div></div>
   ${rows.length ? `<p class="note" style="margin-bottom:14px;">${delivered} of ${rows.length} delivered.</p>` : ''}
   ${smsResendHtml(rows)}
-  <div class="list">
+  ${rows.some(e=>e.status!=='delivered') ? `<div style="margin:0 0 12px;"><button class="btn ghost small" type="button" id="smsRemoveAllFailed">Remove all failed (${rows.filter(e=>e.status!=='delivered').length})</button></div>` : ''}
+  <div class="list" id="smsLogList">
     ${rows.length ? rows.map(e=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(e.name || e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
@@ -3450,6 +3491,7 @@ function smsLogView(){
         ${e.subject ? `<div class="item-body" style="font-size:12.5px; color:var(--muted); margin-top:2px;">${escapeHtml(e.subject)}</div>` : ''}
         ${e.status!=='delivered' && e.detail ? `<div class="item-body" style="margin-top:6px; padding:8px 10px; background:rgba(192,57,43,.06); border-radius:8px; font-size:12.5px; color:#C0392B;">${escapeHtml(e.detail)}</div>` : ''}
         ${e.cost ? `<div class="item-body" style="font-size:11.5px; color:var(--muted); margin-top:2px;">Cost: ${escapeHtml(e.cost)}</div>` : ''}
+        ${e.status!=='delivered' ? `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">${e.message ? `<button type="button" class="mc-chip" data-sms-row-resend="${escapeHtml(e.id)}">Resend</button>` : ''}<button type="button" class="mc-chip" data-sms-row-remove="${escapeHtml(e.id)}">Remove</button></div>` : ''}
       </div>`).join('') : `<div class="empty">No text messages sent ${isAmbassador ? 'yet' : 'to your students yet'}.</div>`}
   </div>`;
 }
@@ -4117,9 +4159,34 @@ function emailLogPaint(note){
       <p class="note" style="margin:0 0 10px;">Fix the cause (for example the daily limit resetting), then press Resend.</p>
       <button class="btn teal" id="emailResendAll" type="button">Resend all ${out.length}</button><span id="emailResendStatus" class="note" style="margin-left:10px;"></span>
       <div style="margin-top:8px; font-size:12.5px; color:var(--muted);">Latest reason: ${escapeHtml(String(out[0].detail||'').slice(0,160))}</div></div>` : ''}
-    <div class="list">${rows.slice(0,100).map(e=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(e.name||e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
+    ${rows.some(e=>e.status==='failed') ? `<div style="margin:0 0 12px;"><button class="btn ghost small" type="button" id="emailRemoveAllFailed">Remove all failed (${rows.filter(e=>e.status==='failed').length})</button></div>` : ''}
+    <div class="list" id="emailLogList">${rows.slice(0,100).map(e=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(e.name||e.to)}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div>
       <div class="item-body" style="font-size:13px;">${escapeHtml(e.to)} ${badge(e.status)}</div><div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(e.subject)}</div>
-      ${e.status==='failed' && e.detail ? `<div class="item-body" style="font-size:12px; color:#C0392B;">${escapeHtml(String(e.detail).slice(0,160))}</div>` : ''}</div>`).join('')}</div>`}`;
+      ${e.status==='failed' && e.detail ? `<div class="item-body" style="font-size:12px; color:#C0392B;">${escapeHtml(String(e.detail).slice(0,160))}</div>` : ''}
+      ${e.status==='failed' ? `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;"><button type="button" class="mc-chip" data-em-row-resend="${escapeHtml(e.id)}">Resend</button><button type="button" class="mc-chip" data-em-row-remove="${escapeHtml(e.id)}">Remove</button></div>` : ''}</div>`).join('')}</div>`}`;
+  const lst = document.getElementById('emailLogList'), rmAll = document.getElementById('emailRemoveAllFailed');
+  if(rmAll) rmAll.addEventListener('click', async ()=>{
+    const ids = emailScopedRows().filter(e=>e.status==='failed').map(e=>e.id);
+    if(!ids.length || !confirm(`Remove ${ids.length} failed email${ids.length===1?'':'s'} from the log? This can't be undone.`)) return;
+    rmAll.disabled = true; await emailRemoveIds(ids); emailLogPaint({ ok:true, text:`Removed ${ids.length} failed email${ids.length===1?'':'s'}.` });
+  });
+  if(lst) lst.addEventListener('click', async ev=>{
+    const bt = ev.target.closest('button'); if(!bt || bt.disabled) return;
+    if(bt.dataset.emRowRemove){
+      if(!confirm('Remove this failed email from the log?')) return;
+      bt.disabled = true; await emailRemoveIds([bt.dataset.emRowRemove]); emailLogPaint({ ok:true, text:'Removed.' }); return;
+    }
+    if(bt.dataset.emRowResend){
+      const e = (EMAILLOG||[]).find(x=>x.id===bt.dataset.emRowResend); if(!e) return;
+      bt.disabled = true; bt.textContent = 'Sending...';
+      try{ await sb.functions.invoke('send-email', { body:{ to:e.to, name:e.name, subject:e.subject, message:e.message, author:e.author, kind:e.kind, replyTo:ME.email, recipientId:e.recipientId, recipientRole:e.recipientRole, studentCoordinatorId:e.studentCoordinatorId } }); }catch(err){}
+      await new Promise(r=>setTimeout(r, 1800));
+      EMAILLOG = (await sGet('email:log', true)) || [];
+      const ok = EMAILLOG.some(d=>d.status==='sent' && d.to===e.to && d.subject===e.subject && d.message===e.message && d.ts>e.ts);
+      if(ok){ await emailRemoveIds([e.id]); emailLogPaint({ ok:true, text:`Email to ${e.name||e.to} was sent.` }); }
+      else emailLogPaint({ ok:false, text:`The email to ${e.name||e.to} still failed. Check the reason shown and try again.` });
+    }
+  });
   const b = document.getElementById('emailResendAll');
   if(b) b.addEventListener('click', async ()=>{
     b.disabled = true; const st = document.getElementById('emailResendStatus'); let n = 0;
@@ -4134,6 +4201,12 @@ function emailLogPaint(note){
     const left = emailOutstanding(emailScopedRows()).length;
     emailLogPaint({ ok: left===0, text: left===0 ? `All ${out.length} sent.` : `${out.length-left} of ${out.length} sent. The rest still failed, check the reason shown and try again.` });
   });
+}
+async function emailRemoveIds(ids){
+  const fresh = await sGet('email:log', true), base = Array.isArray(fresh) ? fresh : (EMAILLOG||[]);
+  const drop = new Set(ids);
+  EMAILLOG = base.filter(e=>!drop.has(e.id));
+  await sSet('email:log', EMAILLOG, true);
 }
 async function wireEmailLog(){
   const root = document.getElementById('emailLogRoot'); if(!root) return;
@@ -6220,8 +6293,15 @@ function settingsView(){
     <b>Why not send SMS (or call Claude) directly?</b> Sending real texts, or generating exam drafts with Claude, both need a private account key (Twilio, Anthropic, etc.) that can never sit safely inside a page anyone can view or download — it would be stealable in seconds. Routing through your own webhook/proxy keeps that key on your side, out of this page entirely. If this page is opened straight from a file instead of a real hosted link, browsers may also block these outgoing requests altogether — hosting it (Netlify, Vercel, etc.) makes delivery reliable.
   </div>`;
 }
+function annVisible(a){
+  if(!ME || ME.role==='ambassador') return true;
+  if(a.audience==='coordinators') return ME.role==='coordinator';
+  if(a.audience==='students') return ME.role==='student';
+  return true;
+}
+function annAudienceLabel(a){ return a.audience==='coordinators' ? 'Coordinators only' : a.audience==='students' ? 'Students only' : 'Everyone'; }
 function announceView(canPost){
-  const list = [...DB.announcements].filter(afterCutoff).sort((a,b)=>b.date.localeCompare(a.date));
+  const list = [...DB.announcements].filter(annVisible).filter(afterCutoff).sort((a,b)=>b.date.localeCompare(a.date));
   // Opening this tab is what "reads" an announcement for the unread-updates
   // toast — same convention as alerts marking themselves viewed when shown.
   if(ME.role==='student') list.forEach(a=>markAnnouncementSeen(a.id));
@@ -6231,12 +6311,13 @@ function announceView(canPost){
   <div class="card" style="margin-bottom:18px;">
     <div class="field" style="margin:0 0 10px;"><label>Title</label><input id="annTitle" placeholder="e.g. Application deadline reminder"></div>
     <div class="field" style="margin:0 0 10px;"><label>Message</label><textarea id="annBody" rows="3" placeholder="Write your announcement"></textarea></div>
+    <div class="field" style="margin:0 0 12px;"><label>Send to</label><select id="annAudience"><option value="all">Everyone (coordinators and students)</option><option value="coordinators">Coordinators only</option><option value="students">Students only</option></select></div>
     <button class="btn amber small" id="addAnnBtn">Post announcement</button>
   </div>` : ''}
   <div class="list">
     ${list.length ? list.map(a=>`
       <div class="item">
-        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
+        <div class="item-head"><span class="item-title">${escapeHtml(a.title)}${canPost ? ` <span class="badge ghost" style="margin-left:6px; font-size:11px;">${annAudienceLabel(a)}</span>` : ''}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
         <div class="item-body">${linkify(a.body)}</div>${linkPreviewCard()}
         ${canPost ? `
         <div class="item-body" style="margin-top:8px;">
@@ -7778,7 +7859,7 @@ function wireHandlers(tab){
   if(tab==='people' || tab==='students') wireAccess(tab);
   if(tab==='mock' || window.RM_HOSTED==='mock') wireMock();
   if(tab==='chat') wireChat();
-  if(tab==='smslog') wireSmsResend();
+  if(tab==='smslog'){ wireSmsResend(); wireSmsLogActions(); }
   if(tab==='emaillog') wireEmailLog();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
@@ -8075,12 +8156,13 @@ function wireHandlers(tab){
   if(q('addAnnBtn')) q('addAnnBtn').addEventListener('click', async ()=>{
     const annBtn = q('addAnnBtn'); if(annBtn.disabled) return;
     const title=q('annTitle').value.trim(), body=q('annBody').value.trim();
+    const audience = q('annAudience') ? q('annAudience').value : 'all';
     if(!title||!body) return alert('Please fill in both fields.');
     annBtn.disabled = true;
     try{
       const annId = uid();
-      await appendShared('announcements', {id:annId, title, body, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
-      await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador', refId:annId});
+      await appendShared('announcements', {id:annId, title, body, audience, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}});
+      await notifyBroadcast({title, body, coordinatorId:null, author:ME.name, role:'ambassador', refId:annId, audience});
     }catch(e){ annBtn.disabled = false; console.error(e); return alert('That announcement did not finish posting. Please check before trying again.'); }
     render('announce');
   });
@@ -9263,9 +9345,57 @@ async function rmAnswer(given){
 }
 async function rmReport(){
   const S = RM.sess; if(!S || S.reported) return;
-  try{ await rmApi('report', { questionId:S.qs[S.i].id }); S.reported = true; }catch(e){ alert(rmErr(e)); }
+  try{
+    const q = S.qs[S.i];
+    await rmApi('report', { questionId:q.id }); S.reported = true;
+    // keep a record of WHO reported, so the reviewer can see the name and send the verdict back
+    try{
+      const fresh = await sharedRead('qReports'), base = Array.isArray(fresh) ? fresh : (DB.qReports||[]);
+      if(!base.some(r=>r.questionId===q.id && r.reporterId===ME.id && r.status==='open')){
+        await appendShared('qReports', { id:uid(), questionId:q.id, questionText:String(q.text||q.body||'').slice(0,300), topic:RM.topic||null, reporterId:ME.id, reporterName:ME.name||'Unknown', reporterRole:ME.role, ts:Date.now(), status:'open' });
+      }
+    }catch(err){ console.warn('report record failed', err); }
+  }catch(e){ alert(rmErr(e)); }
   rmPaint();
 }
+function rqOpenFor(qid){ return (DB.qReports||[]).filter(r=>r.questionId===qid && r.status==='open'); }
+function rqPanelHtml(q){
+  const open = rqOpenFor(q.id), id = escapeHtml(q.id);
+  const who = open.length
+    ? open.map(r=>`<span class="rm-chip">${escapeHtml(r.reporterName)} &middot; ${escapeHtml(r.reporterRole)} &middot; ${fmtDateTime(r.ts)}</span>`).join('')
+    : '<span class="note" style="margin:0;">The name was not recorded for this report (it was made before names were tracked), so no message can be sent back.</span>';
+  return `<div style="margin:10px 0 4px; padding:12px; background:rgba(192,57,43,.05); border:1px solid rgba(192,57,43,.25); border-radius:12px;">
+    <div style="font-size:12.5px; font-weight:700; margin-bottom:6px;">Reported by</div><div style="margin-bottom:10px;">${who}</div>
+    <div class="field" style="margin:0 0 10px;"><label>Your verdict ${open.length ? '(sent to ' + (open.length===1 ? 'the person who reported it' : 'everyone who reported it') + ' as an app notification)' : ''}</label><textarea rows="2" data-rq-verdict="${id}" placeholder="e.g. You were right, option C was wrong, so it has been removed. Thank you."></textarea></div>
+    <div class="item-actions"><button class="btn teal small" type="button" data-rq-decide="keep" data-id="${id}">Keep it</button><button class="btn ghost small" type="button" data-rq-decide="remove" data-id="${id}">Remove from practice</button></div>
+    <span class="note" data-rq-msg="${id}" style="margin:6px 0 0; display:block;"></span></div>`;
+}
+async function rqDecide(btn){
+  const qid = btn.dataset.id, keep = btn.dataset.rqDecide==='keep';
+  const box = document.querySelector(`[data-rq-verdict="${qid}"]`), msg = document.querySelector(`[data-rq-msg="${qid}"]`);
+  const verdict = box ? box.value.trim() : '';
+  if(!verdict){ if(msg){ msg.textContent = 'Type your verdict first, so the person who reported it knows what you decided.'; } return; }
+  if(!keep && !confirm('Remove this question from practice?')) return;
+  const btns = document.querySelectorAll(`[data-rq-decide][data-id="${qid}"]`); btns.forEach(b=>{ b.disabled = true; });
+  if(msg) msg.textContent = 'Saving...';
+  try{
+    await rmApi('q_set', { id:qid, op: keep ? 'approve' : 'reject', value:false });
+    const fresh = await sharedRead('qReports'), base = Array.isArray(fresh) ? fresh : (DB.qReports||[]);
+    const mine = base.filter(r=>r.questionId===qid && r.status==='open');
+    mine.forEach(r=>{ r.status = 'resolved'; r.decision = keep ? 'kept' : 'removed'; r.verdict = verdict; r.decidedBy = ME.name; r.decidedAt = Date.now(); });
+    DB.qReports = base; if(mine.length) await saveKey('qReports');
+    const seen = new Set(); let n = 0;
+    for(const r of mine){
+      if(seen.has(r.reporterId)) continue; seen.add(r.reporterId);
+      const snip = String(r.questionText||'').slice(0,90);
+      await appendShared('notifications', { id:uid(), kind:'question_verdict', title: keep ? 'Your reported question was reviewed: kept' : 'Your reported question was reviewed: removed', body: (snip ? `"${snip}${r.questionText.length>90?'...':''}"\n` : '') + `Verdict from ${ME.name}: ${verdict}`, author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now()+n, toIds:[r.reporterId], seenBy:{[ME.id]:Date.now()} });
+      n++;
+    }
+    RM.mq.msg = n ? `Done. ${n} reporter${n===1?'':'s'} notified.` : 'Done. No reporter name was on record, so nobody was notified.';
+    await rmLoadList(false); await rmLoad(true);
+  }catch(e){ btns.forEach(b=>{ b.disabled = false; }); if(msg) msg.textContent = rmErr(e); }
+}
+document.addEventListener('click', ev=>{ const b = ev.target.closest('[data-rq-decide]'); if(b) rqDecide(b); });
 async function rmFinish(){
   const daily = RM.sess && RM.sess.daily;
   RM.sess = null; if(daily || RM.view==='daily') RM.view = 'home';
@@ -9352,6 +9482,7 @@ function rmManageHtml(s){
 async function rmLoadList(more){
   const M = RM.mq;
   try{
+    try{ const fr = await sharedRead('qReports'); if(Array.isArray(fr)) DB.qReports = fr; }catch(e){}
     const offset = more && M.list ? M.list.length : 0;
     const r = await rmApi('q_list', { topic:RM.topic, filter:M.filter==='all'?'':M.filter, limit:60, offset });
     M.list = more && M.list ? M.list.concat(r.questions) : r.questions; M.total = r.total; M.flagged = r.flagged;
@@ -9368,7 +9499,8 @@ function rmPaintList(){
     return `<div class="item"><div class="item-head"><span class="item-title" style="font-weight:700;">${escapeHtml(chemify(q.body)).replace(/\n/g,'<br>')}</span></div>
       <div style="margin:6px 0;"><span class="rm-chip">${q.source==='ai'?'AI':'Set by coordinator'}</span><span class="rm-chip">${escapeHtml(q.tier)}</span><span class="rm-chip">${q.qtype==='mcq'?'Multiple choice':'Numerical'}</span>${q.required?'<span class="rm-chip on">Required</span>':''}${q.status==='flagged'?`<span class="rm-chip bad">Reported x${q.flags}</span>`:''}</div>
       <div class="item-body">${ans}${q.explanation?`<div style="margin-top:6px; color:var(--muted);">${escapeHtml(chemify(q.explanation))}</div>`:''}</div>
-      <div class="item-actions">${q.status==='flagged'?`<button class="btn teal small" type="button" data-rm-q="approve" data-id="${q.id}">Keep it</button>`:''}<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
+      ${q.status==='flagged' ? rqPanelHtml(q) : ''}
+      <div class="item-actions">${q.status==='flagged'?'':`<button class="btn ghost small" type="button" data-rm-q="reject" data-id="${q.id}">Remove from practice</button>`}${q.mine?`<button class="btn ghost small" type="button" data-rm-q="delete" data-id="${q.id}">Delete</button><button class="btn ghost small" type="button" data-rm-q="required" data-value="${q.required?'':'1'}" data-id="${q.id}">${q.required?'Make optional':'Make required'}</button>`:''}</div></div>`;
   };
   const repBanner = (M.flagged>0 && M.filter!=='flagged') ? `<div class="card" style="margin:0 0 12px; border-left:4px solid #C0392B; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;"><span><b>${M.flagged} reported question${M.flagged===1?'':'s'}</b> from students ${M.flagged===1?'is':'are'} hidden from practice until you review ${M.flagged===1?'it':'them'}.</span><button class="btn small" type="button" data-rm-filter="flagged">Review now</button></div>` : '';
   box.innerHTML = repBanner + `<p class="note" style="margin:0 0 10px;">${M.total} question${M.total===1?'':'s'}${M.filter!=='all'?' in this view':' in this section'}${M.msg?' &middot; '+escapeHtml(M.msg):''}</p>` +
