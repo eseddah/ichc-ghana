@@ -9774,31 +9774,37 @@ async function rmGenerate(){
   const style = g('rmGenStyle') ? g('rmGenStyle').value : 'standard';
   const simple = g('rmGenSimple') ? !!g('rmGenSimple').checked : false;
   M.style = style; M.simple = simple;
-  // The extra instructions travel inside the focus text, so they work with the current server function.
+  // The server keeps only the first 200 characters of the focus text, so the instructions are short and go first.
   const extra = [];
-  if(style==='word') extra.push('Write every question as a short real-life word problem (kitchen, farm, market, water, medicine) with all the numbers needed. Use short, simple sentences.');
-  if(simple) extra.push('Write each explanation in very simple everyday words, step by step, and explain any chemistry term in plain language.');
-  extra.push('Use proper chemistry symbols and notation.');
-  const focus = [g('rmGenFocus').value.trim(), ...extra].filter(Boolean).join(' ').slice(0, 900);
-  // Small batches finish well inside the server time limit, and one slow batch no longer loses everything.
-  const BATCH = 5, sizes = []; for(let left = total; left > 0; left -= BATCH) sizes.push(Math.min(BATCH, left));
-  let all = [], dropped = 0, skipped = false, failErr = null, seen = new Set(), meta = null;
-  for(let i = 0; i < sizes.length; i++){
-    say(sizes.length > 1 ? `Writing and checking batch ${i+1} of ${sizes.length}...` : 'This can take up to a minute.');
-    let r = null; failErr = null;
-    for(let k = 0; k < 3; k++){
-      try{ r = await rmApi('generate', { topic:RM.topic, tier, count:sizes[i], focus, style, simple }); failErr = null; break; }
+  if(style==='word') extra.push('Real-life word problems in short, simple sentences.');
+  if(simple) extra.push('Explanations in very simple words.');
+  extra.push('Use proper chemistry symbols.');
+  const focus = [...extra, g('rmGenFocus').value.trim()].filter(Boolean).join(' ').slice(0, 200);
+  // Batches run at the same time, so 10 or 20 questions take about as long as 5.
+  const BATCH = 5, sizes = []; if(total <= 8) sizes.push(total); else for(let left = total; left > 0; left -= BATCH) sizes.push(Math.min(BATCH, left));
+  let all = [], dropped = 0, skipped = false, failErr = null, seen = new Set(), meta = null, finished = 0;
+  const t0 = Date.now();
+  const tick = setInterval(()=>say(`Writing and checking ${total} question${total===1?'':'s'}... ${finished}/${sizes.length} parts done (${Math.round((Date.now()-t0)/1000)}s)`), 1000);
+  const runBatch = async (n)=>{
+    for(let k = 0; k < 2; k++){
+      try{ return await rmApi('generate', { topic:RM.topic, tier, count:n, focus, style, simple }); }
       catch(e){
         failErr = e; console.error('roadmap generate failed:', e && e.message, e && e.detail);
-        if(!e || e.message !== 'unavailable' || k === 2) break;
-        say(`The AI is busy. Trying batch ${i+1} again in ${(k+1)*5} seconds...`);
-        await new Promise(res=>setTimeout(res, (k+1)*5000));
+        if(!e || e.message !== 'unavailable' || k === 1) return null;
+        await new Promise(res=>setTimeout(res, 3000));
       }
     }
-    if(!r) break;
+    return null;
+  };
+  const results = await Promise.all(sizes.map(n=>runBatch(n).then(r=>{ finished++; return r; })));
+  clearInterval(tick);
+  results.forEach(r=>{
+    if(!r) return;
+    failErr = failErr && results.every(x=>!x) ? failErr : (results.some(x=>!x) ? failErr : null);
     meta = r; dropped += (r.dropped||0); if(r.verifySkipped) skipped = true;
     (r.drafts||[]).forEach(d=>{ const key = String(d.text||'').toLowerCase().replace(/\s+/g,' ').trim(); if(!key || seen.has(key)){ dropped++; return; } seen.add(key); all.push({ ...d, uid:uid(), include:true }); });
-  }
+  });
+  if(!results.some(x=>!x)) failErr = null;
   M.drafts = all.length ? all : null; M.genMeta = { tier:(meta && meta.tier) || tier, topic:RM.topic };
   const fail = failErr ? rmErr(failErr) + (failErr.detail ? ` (${failErr.detail})` : '') : '';
   if(all.length){
