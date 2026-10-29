@@ -1228,7 +1228,7 @@ async function sSet(key, val, shared){
     const { error } = await sb.from('ichc_kv').upsert({ key, value: val });
     if(error) throw error;
     return true;
-  }catch(e){ console.error('Supabase set failed', e); return false; }
+  }catch(e){ console.error('Supabase set failed', e); window.lastSbError = (e && (e.message||e.code)) || String(e); return false; }
 }
 async function sDelete(key, shared){
   if(!shared){ try{ localStorage.removeItem('ichc:'+key); }catch(e){} return true; }
@@ -1645,7 +1645,7 @@ function stopRealtimeSync(){
 const HOT_POLL_PROPS = ['comments','notifications','alerts','announcements','examRetakes'];
 const TAB_POLL_PROPS = {
   people:['students','coordinators','applications'], students:['students'], space:['students','callsheets','materials','practice'],
-  calls:['callsheets','attendance'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
+  calls:['callsheets','attendance'], classes:['callsheets','students','coordinators'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
   exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], load:['students','coordinators']
@@ -3140,7 +3140,7 @@ function tabIconSvg(k){
 }
 function buildTabsLegacy(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -3230,6 +3230,7 @@ function renderLegacy(tab){
   else if(tab==='applicantmsg' && ME.role==='ambassador') html = applicantMsgView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
+  else if(tab==='classes' && ME.role==='ambassador') html = classesAdminView();
   else if(tab==='load' && ME.role==='ambassador') html = coordLoadView();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
@@ -5878,7 +5879,7 @@ function studentView(tab){
   if(tab==='learn') return '<div id="learnRoot"></div>';
   if(tab==='welcome'){
     const myRecord = DB.students.find(s=>s.id===ME.id);
-    const calls = DB.callsheets.filter(c=>c.coordinatorId===myCoordinatorId()).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
+    const calls = callsForStudent().sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
     const activeSession = calls.filter(c=>sessionStatus(c)==='Active')[0];
     const first = String(ME.name||'').trim().split(/\s+/)[0];
     const locked = obLocked();
@@ -5918,7 +5919,7 @@ function studentView(tab){
     </div>`}`;
   }
   if(tab==='hub'){
-    const calls = DB.callsheets.filter(c=>c.coordinatorId===myCoordinatorId()).sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
+    const calls = callsForStudent().sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
     const mats = DB.materials.filter(m=>m.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
     return `
     <div class="section-title"><div><h2>Call sheets</h2><p>Your coordinator's session schedule — status updates automatically.</p></div></div>
@@ -5952,6 +5953,181 @@ function studentView(tab){
     <div class="section-title"><div><h2>Ask a question</h2><p>Talk to your coordinator and the Ambassador desk — and see what your groupmates are asking too.</p></div></div>
     ${commentThread(relevant, myCoordinatorId())}`;
   }
+}
+
+// Matching helpers for the applications list. Some sign-ups arrive without an id, so every lookup
+// can fall back to name + email + date instead of silently finding nothing.
+function appKey(a){ return a && a.id ? 'id:'+a.id : 'k:'+String((a&&a.email)||'').toLowerCase()+'|'+String((a&&a.name)||'')+'|'+String((a&&a.date)||''); }
+function sameApp(x, app){ return !!x && !!app && (app.id ? x.id===app.id : (!x.id && appKey(x)===appKey(app))); }
+function findAppFor(btn, attr){
+  const id = btn.dataset[attr], key = btn.dataset.appKey;
+  return (DB.applications||[]).find(a=> (id && a.id===id) || (!id && !a.id && appKey(a)===key)) || null;
+}
+
+// ================= Ambassador: schedule classes for students =================
+const CLASS_CH_KEY = 'ichc_class_channels';
+function classChannelDefaults(){ let c = null; try{ c = JSON.parse(localStorage.getItem(CLASS_CH_KEY) || 'null'); }catch(e){} return c || { email:true, sms:false, push:true }; }
+function classStudents(cs){
+  const a = cs.audience || { scope:'all' };
+  if(a.scope==='coordinator') return (DB.students||[]).filter(s=>s.coordinatorId===a.coordinatorId);
+  if(a.scope==='students') return (DB.students||[]).filter(s=>(a.studentIds||[]).includes(s.id));
+  return (DB.students||[]).slice();
+}
+function classForStudent(cs, studentId){ return !!cs.byAmbassador && classStudents(cs).some(s=>s.id===studentId); }
+function callsForStudent(){
+  const mine = myCoordinatorId();
+  return (DB.callsheets||[]).filter(c=> c.byAmbassador ? classForStudent(c, ME.id) : (!!c.coordinatorId && c.coordinatorId===mine));
+}
+function classAudienceLabel(cs){
+  const a = cs.audience || { scope:'all' }, n = classStudents(cs).length;
+  if(a.scope==='coordinator') return `Students of ${coordName(a.coordinatorId)} (${n})`;
+  if(a.scope==='students') return `${n} selected student${n===1?'':'s'}`;
+  return `All students (${n})`;
+}
+function askClassChannels(title){
+  const saved = classChannelDefaults(), s = DB.settings || {};
+  return new Promise(resolve=>{
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.65); display:flex; align-items:center; justify-content:center; padding:16px;';
+    o.innerHTML = `<div role="dialog" aria-modal="true" style="background:#fff; border-radius:16px; padding:20px; width:min(420px,100%);">
+      <h3 style="margin:0 0 4px; font-size:18px;">Tell the students by&hellip; <span style="font-weight:400; font-size:13px; color:var(--muted);">(optional)</span></h3>
+      <p class="note" style="margin:0 0 12px;" id="ccTitle"></p>
+      <label class="eb-check"><input type="checkbox" id="ccEmail" ${saved.email?'checked':''}> Email</label>
+      <label class="eb-check"><input type="checkbox" id="ccSms" ${saved.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit${s.webhookUrl?'':'; SMS is not connected'})</span></label>
+      <label class="eb-check"><input type="checkbox" id="ccPush" ${saved.push?'checked':''}> App notification (web push)</label>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;"><button class="btn ghost small" id="ccSkip" type="button">Don't notify</button><button class="btn teal small" id="ccGo" type="button">Send</button></div></div>`;
+    document.body.appendChild(o); o.querySelector('#ccTitle').textContent = title;
+    const done = ch=>{ if(ch.email||ch.sms||ch.push){ try{ localStorage.setItem(CLASS_CH_KEY, JSON.stringify(ch)); }catch(e){} } o.remove(); resolve(ch); };
+    o.querySelector('#ccGo').addEventListener('click', ()=>done({ email:o.querySelector('#ccEmail').checked, sms:o.querySelector('#ccSms').checked, push:o.querySelector('#ccPush').checked }));
+    o.querySelector('#ccSkip').addEventListener('click', ()=>done({ email:false, sms:false, push:false }));
+  });
+}
+async function sendClassNotice(cs, ch, kind){
+  if(!(ch.email || ch.sms || ch.push)) return 'No notification was sent.';
+  const rec = classStudents(cs), s = DB.settings || {}, out = [];
+  if(!rec.length) return 'There are no students in this audience to notify.';
+  const titles = { new:`New class: ${cs.title}`, reminder:`Class reminder: ${cs.title}`, cancelled:`Class cancelled: ${cs.title}`, restored:`Class is back on: ${cs.title}` };
+  const title = titles[kind] || titles.new, when = fmtSessionTime(cs);
+  let body = kind==='cancelled' ? `This class (${when}) has been cancelled.` : `${when}.`;
+  if(kind!=='cancelled'){ if(cs.link) body += `\nJoin: ${normalizeUrl(cs.link)}`; if(cs.notes) body += `\n${cs.notes}`; }
+  if(ch.push){
+    try{
+      await appendShared('notifications', { id:uid(), refId:cs.id, kind:'class', title, body, author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}, toIds:rec.map(r=>r.id), audience:'students' });
+      out.push(`app notification to ${rec.length}`);
+    }catch(e){ console.error(e); out.push('app notification failed'); }
+  }
+  if(ch.email){
+    const n = rec.filter(r=>r.email && r.notifyEmail!==false).length;
+    try{ dispatchEmails(rec, { subject:title, body, author:ME.name, kind:'class' }); out.push(`email to ${n}`); }catch(e){ console.error(e); out.push('email failed'); }
+  }
+  if(ch.sms){
+    if(!s.webhookUrl) out.push('texts not sent (SMS is not connected in Settings)');
+    else {
+      const t = rec.filter(r=>r.phone && r.notifySms);
+      t.forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(`${title}. ${body}`), recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId }));
+      out.push(`text to ${t.length}`);
+    }
+  }
+  return 'Sent: ' + out.join(', ') + '.';
+}
+function classesAdminView(){
+  if(ME.role!=='ambassador') return `<div class="empty">Only the Ambassador can schedule classes here.</div>`;
+  const ch = classChannelDefaults(), s = DB.settings || {};
+  const coords = (DB.coordinators||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const studs = (DB.students||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const list = (DB.callsheets||[]).filter(c=>c.byAmbassador).sort((a,b)=>(b.startAt||'').localeCompare(a.startAt||''));
+  return `
+  <div class="section-title"><div><h2>Schedule classes</h2><p>Set a class for your students. It appears in their Sessions list, and you choose whether to tell them by email, text message or app notification (web push), or none.</p></div></div>
+  <div class="card" style="margin-bottom:18px;">
+    <div class="grid2" style="grid-template-columns:1fr 1fr; gap:10px;">
+      <div class="field" style="margin:0;"><label>Class title</label><input id="classTitle" placeholder="e.g. Mole concept: live class"></div>
+      <div class="field" style="margin:0;"><label>Meeting link</label><input id="classLink" placeholder="Google Meet / Zoom link"></div>
+      <div class="field" style="margin:0;"><label>Starts (Accra time)</label><input id="classStart" type="datetime-local"></div>
+      <div class="field" style="margin:0;"><label>Ends (Accra time)</label><input id="classEnd" type="datetime-local"></div>
+    </div>
+    <div class="field"><label>Notes for students</label><textarea id="classNotes" rows="2" placeholder="What to bring or revise beforehand"></textarea></div>
+    <div class="field">
+      <label>Who is it for?</label>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
+        <label class="alert-scope-opt"><input type="radio" name="classScope" value="all" checked style="width:auto;"> All students (${studs.length})</label>
+        <label class="alert-scope-opt"><input type="radio" name="classScope" value="coordinator" style="width:auto;"> Students of one coordinator</label>
+        <label class="alert-scope-opt"><input type="radio" name="classScope" value="students" style="width:auto;"> Selected students</label>
+      </div>
+      <div id="classCoordPick" style="display:none; max-width:320px;"><select id="classCoord"><option value="">Choose a coordinator</option>${coords.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)} (${studs.filter(x=>x.coordinatorId===c.id).length})</option>`).join('')}</select></div>
+      <div id="classStudPick" style="display:none; max-height:180px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:10px; flex-direction:column; gap:6px;">${studs.length ? studs.map(x=>`<label class="alert-scope-opt" style="font-size:13.5px;"><input type="checkbox" class="classStudChk" value="${escapeHtml(x.id)}" style="width:auto;"> ${escapeHtml(x.name)}</label>`).join('') : `<span style="font-size:12.5px; color:var(--muted);">No students yet.</span>`}</div>
+    </div>
+    <div class="field">
+      <label>Tell the students by&hellip; <span style="font-weight:400; color:var(--muted);">(optional, tick any, or none)</span></label>
+      <label class="eb-check"><input type="checkbox" id="classChEmail" ${ch.email?'checked':''}> Email</label>
+      <label class="eb-check"><input type="checkbox" id="classChSms" ${ch.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit${s.webhookUrl?'':'; SMS is not connected yet'})</span></label>
+      <label class="eb-check"><input type="checkbox" id="classChPush" ${ch.push?'checked':''}> App notification (web push)</label>
+    </div>
+    <button class="btn teal small" id="addClassBtn" type="button">Schedule class</button>
+  </div>
+  <div class="list">
+    ${list.length ? list.map(c=>`
+      <div class="item">
+        <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
+        <div class="item-meta" style="margin-bottom:6px;">${escapeHtml(fmtSessionTime(c))}</div>
+        <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Link: ${linkifyUrl(c.link)}<br>`:''}<span style="font-size:12.5px; color:var(--muted);">For: ${escapeHtml(classAudienceLabel(c))}</span></div>
+        <div class="item-actions">
+          <button class="btn ghost small" type="button" data-class-notify="${c.id}">Notify again</button>
+          ${!c.cancelled ? `<button class="btn ghost small" type="button" data-class-cancel="${c.id}">Cancel class</button>` : `<button class="btn ghost small" type="button" data-class-uncancel="${c.id}">Un-cancel</button>`}
+          <button class="btn ghost small" type="button" data-class-remove="${c.id}">Remove</button>
+        </div>
+      </div>`).join('') : `<div class="empty">No classes scheduled yet.</div>`}
+  </div>`;
+}
+function wireClasses(){
+  const q = id=>document.getElementById(id);
+  document.querySelectorAll('input[name="classScope"]').forEach(r=>r.addEventListener('change', ()=>{
+    const v = document.querySelector('input[name="classScope"]:checked').value;
+    q('classCoordPick').style.display = v==='coordinator' ? 'block' : 'none';
+    q('classStudPick').style.display = v==='students' ? 'flex' : 'none';
+  }));
+  if(q('addClassBtn')) q('addClassBtn').addEventListener('click', async ()=>{
+    const title = q('classTitle').value.trim(), startAt = q('classStart').value, endAt = q('classEnd').value;
+    if(!title || !startAt) return alert('A title and a start time are required.');
+    if(endAt && endAt < startAt) return alert('The end time must be after the start time.');
+    const scope = document.querySelector('input[name="classScope"]:checked').value;
+    const audience = { scope };
+    if(scope==='coordinator'){ audience.coordinatorId = q('classCoord').value; if(!audience.coordinatorId) return alert('Choose a coordinator.'); }
+    if(scope==='students'){ audience.studentIds = [...document.querySelectorAll('.classStudChk:checked')].map(x=>x.value); if(!audience.studentIds.length) return alert('Tick at least one student.'); }
+    const cs = { id:uid(), byAmbassador:true, createdBy:ME.id, coordinatorId:null, audience, title, startAt, endAt, link:q('classLink').value.trim(), notes:q('classNotes').value.trim(), cancelled:false, date:startAt.slice(0,10) };
+    if(!classStudents(cs).length) return alert('There are no students in that audience yet.');
+    const ch = { email:q('classChEmail').checked, sms:q('classChSms').checked, push:q('classChPush').checked };
+    try{ localStorage.setItem(CLASS_CH_KEY, JSON.stringify(ch)); }catch(e){}
+    q('addClassBtn').disabled = true;
+    DB.callsheets.push(cs);
+    try{ await saveKey('callsheets'); }catch(e){ console.error(e); }
+    try{ await syncPublicDirectory(); }catch(e){}
+    render('classes');
+    const note = await sendClassNotice(cs, ch, 'new');
+    alert('Class scheduled. ' + note);
+  });
+  document.querySelectorAll('[data-class-notify]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.classNotify); if(!cs) return;
+    const ch = await askClassChannels('Reminder: ' + cs.title);
+    alert(await sendClassNotice(cs, ch, 'reminder'));
+  }));
+  document.querySelectorAll('[data-class-cancel]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.classCancel); if(!cs) return;
+    cs.cancelled = true; await saveKey('callsheets'); render('classes');
+    const ch = await askClassChannels('Class cancelled: ' + cs.title);
+    const note = await sendClassNotice(cs, ch, 'cancelled'); if(ch.email||ch.sms||ch.push) alert(note);
+  }));
+  document.querySelectorAll('[data-class-uncancel]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.classUncancel); if(!cs) return;
+    cs.cancelled = false; await saveKey('callsheets'); render('classes');
+    const ch = await askClassChannels('Class is back on: ' + cs.title);
+    const note = await sendClassNotice(cs, ch, 'restored'); if(ch.email||ch.sms||ch.push) alert(note);
+  }));
+  document.querySelectorAll('[data-class-remove]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cs = DB.callsheets.find(c=>c.id===b.dataset.classRemove); if(!cs) return;
+    if(!confirm('Remove "'+cs.title+'"? Students will no longer see it.')) return;
+    DB.callsheets = DB.callsheets.filter(c=>c.id!==cs.id);
+    await saveKey('callsheets'); try{ await syncPublicDirectory(); }catch(e){} render('classes');
+  }));
 }
 
 function interestDup(a){
@@ -6136,7 +6312,7 @@ function applicationsView(){
   pruneResolvedApplications();
   const real = DB.applications.filter(a=>a.status!=='interested' && !appResolved(a));
   const interested = DB.applications.filter(a=>a.status==='interested');
-  const sorted = [...real].sort((a,b)=>b.date.localeCompare(a.date));
+  const sorted = [...real].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
   <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining opens a window where you write the email and the text message separately and send each one yourself.</p></div></div>
@@ -6150,7 +6326,7 @@ function applicationsView(){
         ${appDetailsHtml(a)}
         ${a.message?(`<div class="item-body" style="margin-top:6px; padding:10px 12px; background:var(--chalk); border-radius:8px;"><b style="font-size:12px;">Motivation</b><br>${linkify(a.message)}</div>`):''}
         <div class="field" style="margin:10px 0 0;"><input data-app-reason-for="${a.id}" placeholder="Note (optional) — added to the draft email and text, which you can still edit"></div>
-        ${a.stage==='Invited' ? `<div class="item-actions"><span class="note" style="flex-basis:100%; margin:0 0 6px;">Invited by email. Waiting for them to complete the application form.</span><button class="btn ghost small" data-resend-invite="${a.id}">Send the invitation again</button><button class="btn ghost small" data-remove-interest="${a.id}">Remove</button></div>` : `${interviewSummaryHtml(a)}${INTV.open[a.id] ? interviewPanelHtml(a) : ''}<div class="item-actions app-actions">
+        ${a.stage==='Invited' ? `<div class="item-actions"><span class="note" style="flex-basis:100%; margin:0 0 6px;">Invited by email. Waiting for them to complete the application form.</span><button class="btn ghost small" data-resend-invite="${escapeHtml(a.id||'')}" data-app-key="${escapeHtml(appKey(a))}">Send the invitation again</button><button class="btn ghost small" data-remove-interest="${escapeHtml(a.id||'')}" data-app-key="${escapeHtml(appKey(a))}">Remove</button></div>` : `${interviewSummaryHtml(a)}${INTV.open[a.id] ? interviewPanelHtml(a) : ''}<div class="item-actions app-actions">
           ${appActionBtn('review', a)}${appActionBtn('interview', a)}${appActionBtn('accept', a)}${appActionBtn('decline', a)}
         </div>`}
       </div>`).join('') : `<div class="empty">No applications yet — submissions from the public website's "Start your application" form will appear here.</div>`}
@@ -6163,8 +6339,8 @@ function applicationsView(){
         <div class="item-head"><span class="item-title">${escapeHtml(a.name)}</span><span class="item-meta">${fmtDate(a.date)}</span></div>
         <div class="item-body">${escapeHtml(a.email)}${a.phone?(' · '+escapeHtml(a.phone)):''}${interestDup(a)?' <span class="badge" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">Already applied or enrolled</span>':''}</div>
         <div class="item-actions">
-          <button class="btn amber small" data-convert-interest="${a.id}">Move to Applications</button>
-          <button class="btn ghost small" data-remove-interest="${a.id}">Remove</button>
+          <button class="btn amber small" data-convert-interest="${escapeHtml(a.id||'')}" data-app-key="${escapeHtml(appKey(a))}">Move to Applications</button>
+          <button class="btn ghost small" data-remove-interest="${escapeHtml(a.id||'')}" data-app-key="${escapeHtml(appKey(a))}">Remove</button>
         </div>
       </div>`).join('') : `<div class="empty">Nobody on the Interest List right now.</div>`}
   </div>`;
@@ -6349,7 +6525,7 @@ function commentThread(items, coordinatorId){
 function combinedFeed(){
   const items = [];
   DB.materials.forEach(m=>items.push({type:'Material', title:m.title, by:coordName(m.coordinatorId), date:m.date, body:m.body}));
-  DB.callsheets.forEach(c=>items.push({type:'Call sheet · '+sessionStatus(c), title:c.title, by:coordName(c.coordinatorId), date:c.date, body:fmtSessionTime(c)}));
+  DB.callsheets.forEach(c=>items.push({type:'Call sheet · '+sessionStatus(c), title:c.title, by:(c.byAmbassador ? 'Ambassador' : coordName(c.coordinatorId)), date:c.date, body:fmtSessionTime(c)}));
   DB.practice.forEach(p=>items.push({type:'Practice question', title:p.question.slice(0,60)+(p.question.length>60?'…':''), by:coordName(p.coordinatorId), date:p.date, body:p.question}));
   DB.exams.forEach(e=>items.push({type:'Exam posted', title:e.title, by: e.coordinatorId ? coordName(e.coordinatorId) : 'Ambassador', date:e.date, body:`${e.timeLimitMin} min · ${e.subject||'no subject noted'}`}));
   DB.comments.forEach(c=>items.push({type:'Message', title:`${c.author} (${c.role})`, by:coordName(c.coordinatorId), date:c.date, body:c.text}));
@@ -7861,6 +8037,7 @@ function wireHandlers(tab){
   if(tab==='chat') wireChat();
   if(tab==='smslog'){ wireSmsResend(); wireSmsLogActions(); }
   if(tab==='emaillog') wireEmailLog();
+  if(tab==='classes') wireClasses();
 
   // Shared by the pinned banner and the student's Notifications tab — both render
   // a data-ack-alert button for the same underlying alert.
@@ -8524,23 +8701,36 @@ function wireHandlers(tab){
     render('applications');
   }));
   document.querySelectorAll('[data-convert-interest]').forEach(b=>b.addEventListener('click', async ()=>{
-    const app = DB.applications.find(a=>a.id===b.dataset.convertInterest);
-    if(!app) return;
-    const moved = await mutateApplications(list=>list.map(x=>{ if(x.id!==app.id) return x; const y=Object.assign({},x); delete y.status; y.stage='Invited'; if(!y.date) y.date=today(); return y; }));
-    if(!moved){ alert('Could not move this person: the database refused the change. Please try again.'); render('applications'); return; }
-    inviteInterest(app);
+    const app = findAppFor(b, 'convertInterest');
+    if(!app){ alert('Could not find this person in the list. The latest list will be loaded now.'); try{ await pollLive(true); }catch(e){} render('applications'); return; }
+    b.disabled = true; b.textContent = 'Moving…';
+    let hit = false;
+    const moved = await mutateApplications(list=>{
+      const out = list.map(x=>{
+        if(!sameApp(x, app)) return x;
+        hit = true;
+        const y = Object.assign({}, x); delete y.status; y.id = y.id || uid(); y.stage = 'Invited'; if(!y.date) y.date = today(); return y;
+      });
+      if(!hit){   // this screen was out of date: the person is not in the saved list yet, so add them as moved
+        const y = Object.assign({}, app); delete y.status; y.id = y.id || uid(); y.stage = 'Invited'; if(!y.date) y.date = today(); out.push(y);
+      }
+      return out;
+    });
+    if(!moved){ alert('Could not move this person: the database refused the change.' + (window.lastSbError ? '\n\nReason: ' + window.lastSbError : '') + '\n\nPlease try again.'); render('applications'); return; }
+    try{ inviteInterest(app); }catch(e){ console.error('Invitation email could not be queued', e); }
     render('applications');
     alert('Moved to Applications. An email inviting ' + (String(app.name||'').trim().split(/\s+/)[0] || 'them') + ' to start their application is on its way.');
   }));
   document.querySelectorAll('[data-resend-invite]').forEach(b=>b.addEventListener('click', ()=>{
-    const app = DB.applications.find(a=>a.id===b.dataset.resendInvite); if(!app) return;
-    inviteInterest(app); b.textContent = 'Invitation sent again ✓'; b.disabled = true;
+    const app = findAppFor(b, 'resendInvite'); if(!app) return;
+    try{ inviteInterest(app); b.textContent = 'Invitation sent again ✓'; }catch(e){ console.error(e); b.textContent = 'Could not send'; }
+    b.disabled = true;
   }));
   document.querySelectorAll('[data-remove-interest]').forEach(b=>b.addEventListener('click', async ()=>{
-    const app = DB.applications.find(a=>a.id===b.dataset.removeInterest); if(!app) return;
+    const app = findAppFor(b, 'removeInterest'); if(!app) return;
     if(!confirm('Remove '+app.name+' from this list?')) return;
-    const removed = await mutateApplications(list=>list.filter(x=>x.id!==app.id));
-    if(!removed) alert('Could not remove this person: the database refused the change. Please try again.');
+    const removed = await mutateApplications(list=>list.filter(x=>!sameApp(x, app)));
+    if(!removed) alert('Could not remove this person: the database refused the change.' + (window.lastSbError ? '\n\nReason: ' + window.lastSbError : ''));
     render('applications');
   }));
 
@@ -8912,6 +9102,7 @@ const NAV = {
     { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['load','Coordinator load']] },
+    { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
@@ -9047,7 +9238,7 @@ async function rmApi(action, payload){
 function rmErr(e){
   const m = String((e && e.message) || e);
   const map = { locked:'This section has not opened yet.', rate_limited:'Too many requests in a short time. Please wait a moment.', quota:'The AI is busy right now. Try again in a few minutes.', not_configured:'The AI is not configured yet.', forbidden:'You do not have permission to do that.', bad_options:'Check the options and the correct answer.', bad_answer:'The answer must be a number.', bad_dates:'Check the dates: each section must end on or after its own start.', bad_order:'Each section must start after the one before it.', offline:'You appear to be offline.' };
-  return map[m] || 'Something went wrong. Please try again.';
+  return map[m] || (m && m!=='unavailable' ? 'Something went wrong (' + m + '). Please try again.' : 'The AI service did not answer. It may be busy, or its key or model may need attention. Please try again.');
 }
 function rmCurrentId(){
   const ov = RM.ov; if(!ov) return 'quant';
@@ -9469,6 +9660,8 @@ function rmManageHtml(s){
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
         <div class="field" style="margin:0;"><label>Level</label><select id="rmGenTier"><option value="foundation">Foundation</option><option value="competition" selected>Competition</option><option value="olympiad">Olympiad</option></select></div>
         <div class="field" style="margin:0;"><label>How many</label><select id="rmGenCount"><option value="6">6</option><option value="10" selected>10</option><option value="20">20</option></select></div>
+        <div class="field" style="margin:0;"><label>Question style</label><select id="rmGenStyle"><option value="standard"${RM.mq.style==='word'?'':' selected'}>Standard questions</option><option value="word"${RM.mq.style==='word'?' selected':''}>Word problems (real-life stories)</option></select></div>
+        <label class="eb-check" style="margin:0 0 8px;"><input type="checkbox" id="rmGenSimple"${RM.mq.simple===false?'':' checked'}> Explain answers in simple words</label>
         <div class="field" style="margin:0; flex:1; min-width:200px;"><label>Focus (optional)</label><input id="rmGenFocus" placeholder="e.g. limiting reagent and percentage yield"></div>
         <button class="btn amber small" type="button" data-rm-gen ${RM.mq.busy?'disabled':''}>${RM.mq.busy?'Writing and checking...':'Generate drafts'}</button>
       </div>
@@ -9575,16 +9768,44 @@ async function rmGenerate(){
   if(M.drafts && M.drafts.length && !confirm('You have drafts waiting for review. Generating again will replace them. Continue?')) return;
   M.busy = true; M.msg = '';
   const btn = document.querySelector('[data-rm-gen]'); if(btn){ btn.disabled = true; btn.textContent = 'Writing and checking...'; }
-  const out = g('rmGenMsg'); if(out) out.textContent = 'This can take up to a minute.';
+  const say = (t)=>{ const o = g('rmGenMsg'); if(o) o.textContent = t; };
   const tier = g('rmGenTier').value;
-  try{
-    const r = await rmApi('generate', { topic:RM.topic, tier, count:parseInt(g('rmGenCount').value,10), focus:g('rmGenFocus').value.trim() });
-    const drafts = (r.drafts||[]).map(d=>({ ...d, uid:uid(), include:true }));
-    M.drafts = drafts.length ? drafts : null; M.genMeta = { tier:r.tier || tier, topic:RM.topic };
-    M.msg = drafts.length
-      ? `${drafts.length} draft${drafts.length===1?'':'s'} ready for your review.${r.dropped?` ${r.dropped} dropped (failed the answer check or duplicated).`:''}${r.verifySkipped?' The answer double-check could not run this time, so check every answer yourself.':''}`
-      : 'No draft passed the answer check this time. Try again.';
-  }catch(e){ M.msg = rmErr(e) + (e && e.detail ? ` (${e.detail})` : ''); }
+  const total = parseInt(g('rmGenCount').value,10) || 10;
+  const style = g('rmGenStyle') ? g('rmGenStyle').value : 'standard';
+  const simple = g('rmGenSimple') ? !!g('rmGenSimple').checked : false;
+  M.style = style; M.simple = simple;
+  // The extra instructions travel inside the focus text, so they work with the current server function.
+  const extra = [];
+  if(style==='word') extra.push('Write every question as a short real-life word problem (kitchen, farm, market, water, medicine) with all the numbers needed. Use short, simple sentences.');
+  if(simple) extra.push('Write each explanation in very simple everyday words, step by step, and explain any chemistry term in plain language.');
+  extra.push('Use proper chemistry symbols and notation.');
+  const focus = [g('rmGenFocus').value.trim(), ...extra].filter(Boolean).join(' ').slice(0, 900);
+  // Small batches finish well inside the server time limit, and one slow batch no longer loses everything.
+  const BATCH = 5, sizes = []; for(let left = total; left > 0; left -= BATCH) sizes.push(Math.min(BATCH, left));
+  let all = [], dropped = 0, skipped = false, failErr = null, seen = new Set(), meta = null;
+  for(let i = 0; i < sizes.length; i++){
+    say(sizes.length > 1 ? `Writing and checking batch ${i+1} of ${sizes.length}...` : 'This can take up to a minute.');
+    let r = null; failErr = null;
+    for(let k = 0; k < 3; k++){
+      try{ r = await rmApi('generate', { topic:RM.topic, tier, count:sizes[i], focus, style, simple }); failErr = null; break; }
+      catch(e){
+        failErr = e; console.error('roadmap generate failed:', e && e.message, e && e.detail);
+        if(!e || e.message !== 'unavailable' || k === 2) break;
+        say(`The AI is busy. Trying batch ${i+1} again in ${(k+1)*5} seconds...`);
+        await new Promise(res=>setTimeout(res, (k+1)*5000));
+      }
+    }
+    if(!r) break;
+    meta = r; dropped += (r.dropped||0); if(r.verifySkipped) skipped = true;
+    (r.drafts||[]).forEach(d=>{ const key = String(d.text||'').toLowerCase().replace(/\s+/g,' ').trim(); if(!key || seen.has(key)){ dropped++; return; } seen.add(key); all.push({ ...d, uid:uid(), include:true }); });
+  }
+  M.drafts = all.length ? all : null; M.genMeta = { tier:(meta && meta.tier) || tier, topic:RM.topic };
+  const fail = failErr ? rmErr(failErr) + (failErr.detail ? ` (${failErr.detail})` : '') : '';
+  if(all.length){
+    M.msg = `${all.length} draft${all.length===1?'':'s'} ready for your review.${dropped?` ${dropped} dropped (failed the answer check or duplicated).`:''}${skipped?' The answer double-check could not run this time, so check every answer yourself.':''}${fail?` Some batches did not finish: ${fail}`:''}`;
+  } else {
+    M.msg = fail || 'No draft passed the answer check this time. Try again.';
+  }
   M.busy = false; rmPaint();
 }
 async function rmDraftPost(){
