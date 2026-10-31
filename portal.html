@@ -1011,23 +1011,6 @@ OneSignalDeferred.push(async function(OneSignal){
 </script>
 </head>
 <body>
-<!-- MAINTENANCE-LOCK-START (delete everything up to MAINTENANCE-LOCK-END to restore the site) -->
-<style>
-  body > *:not(#maintenance-lock){display:none !important;}
-  html,body{margin:0;background:#0A1826 !important;overflow:hidden !important;}
-  #maintenance-lock{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:#0A1826;color:#F6F4EE;font-family:'Plus Jakarta Sans','IBM Plex Sans',Arial,sans-serif;text-align:center;}
-  #maintenance-lock .box{max-width:520px;}
-  #maintenance-lock h1{margin:0 0 12px;font-size:28px;color:#E39A3B;}
-  #maintenance-lock p{margin:0;font-size:16px;line-height:1.6;opacity:.9;}
-</style>
-<div id="maintenance-lock" role="alert">
-  <div class="box">
-    <h1>Temporarily Down</h1>
-    <p>Chemistry Competition Prep — Ghana is temporarily down. Please check back later. Thank you for your patience.</p>
-  </div>
-</div>
-<!-- MAINTENANCE-LOCK-END -->
-
 
 <template id="hexlogo-tpl">
 <svg viewBox="0 0 360 190" xmlns="http://www.w3.org/2000/svg">
@@ -1855,7 +1838,7 @@ async function acknowledgeAlert(alertId){
 function renderAlertBanner(){
   const el = document.getElementById('alertBanner');
   if(!el) return;
-  if(!ME || ME.role!=='student'){ el.innerHTML=''; return; }
+  if(!ME || ME.role!=='student' || certOnlyUser()){ el.innerHTML=''; return; }
   const active = myCriticalUnacked().sort((a,b)=>b.ts-a.ts);
   if(!active.length){ el.innerHTML=''; return; }
   active.forEach(a=>markAlertViewed(a.id));
@@ -1917,7 +1900,7 @@ let toastDismissedFor = 0; // unread count the student last dismissed the toast 
 function renderUpdateToast(){
   const el = document.getElementById('updateToast');
   if(!el) return;
-  if(!ME || ME.role!=='student'){ el.classList.remove('show'); return; }
+  if(!ME || ME.role!=='student' || certOnlyUser()){ el.classList.remove('show'); return; }
   const n = myUnreadUpdatesCount();
   if(n===0 || n<=toastDismissedFor || currentTab==='notifications' || currentTab==='announce'){
     el.classList.remove('show');
@@ -3227,6 +3210,7 @@ function restoreFormState(container, state){
   }
 }
 function renderLegacy(tab){
+  if(certOnlyUser()) tab = 'certificates';
   stopExamRuntime();
   currentTab = tab;
   const s = document.getElementById('screen');
@@ -4505,8 +4489,12 @@ function obLocked(){
   const o = obState(st, ONB.data, ONB.videos);
   return !(o.steps.find(x=>x.id==='videos').done || ONB.data.completedAt);
 }
+// Closing mode: students and coordinators only see Certificates. Set to false to bring every section back.
+const CERT_ONLY_MODE = true;
+function certOnlyUser(){ return CERT_ONLY_MODE && !!ME && ME.role !== 'ambassador'; }
 function navList(){
   const n = ME && NAV[ME.role]; if(!n) return n;
+  if(certOnlyUser()) return n.filter(t=>t.k === 'certificates');
   return (ME.role === 'student' && obLocked()) ? n.filter(t=>t.k === 'welcome') : n;
 }
 // If the lock changed since the menu was drawn (video confirmed, or the record finished loading), redraw menu and Home.
@@ -5013,6 +5001,7 @@ function certificatesView(){
   if(ME.role==='ambassador') return certificatesAmbassadorView();
   const mine = myCertificates().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
   return `
+  ${CERT_ONLY_MODE ? '<div class="card" style="margin-bottom:18px; text-align:center; background:var(--navy-deep); color:#F6F4EE; padding:26px 20px;"><div style="font-size:20px; font-weight:700; line-height:1.4;">Thank you for being part of this programme!</div><div style="margin-top:6px; font-size:16px; color:#E39A3B; font-weight:600;">Access your Certificate.</div></div>' : ''}
   <div class="section-title"><div><h2>My certificates</h2><p>Issued by your Ambassador to recognize your ${ME.role==='coordinator'?'service':'participation'} in the programme. Anyone can confirm these are genuine using the verification link.</p></div></div>
   ${mine.length ? `<div class="list">${mine.map(certItemHtml).join('')}</div>` : `<div class="empty">No certificates issued to you yet. Your Ambassador issues these individually once eligible.</div>`}`;
 }
@@ -9149,6 +9138,7 @@ function setNavActive(k){
   document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===k));
 }
 function render(tab){
+  if(certOnlyUser()) tab = 'certificates';
   if(!ME || !NAV[ME.role]) return renderLegacy(tab);
   if(ME.role==='student' && obLocked() && tab!=='welcome') tab = 'welcome';   // onboarding students only ever see Home
   const r = navTop(tab);
