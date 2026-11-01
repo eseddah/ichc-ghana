@@ -143,6 +143,11 @@
       <div class="field"><label>What chemistry have you studied so far? <span class="req">(a few lines)</span></label><textarea id="fBackground" rows="4" placeholder="Topics, classes, books, online courses, anything relevant"></textarea></div>
       <div class="field"><label>Previous competition experience</label><select id="fCompetition"><option value="">Choose one</option><option>None yet</option><option>School-level competition</option><option>Regional competition</option><option>National competition</option><option>International competition</option></select></div>
       <div class="field"><label>Tell us about it <span class="req">(optional)</span></label><input id="fCompDetails" placeholder="Which competition, when, and how did it go?"></div>
+      <div class="field" id="prevBox"><label>Have you been part of this programme before?</label>
+        <div style="display:flex; gap:22px; flex-wrap:wrap;">
+          <label class="check" style="margin:6px 0;"><input type="checkbox" id="fPrevYes" data-prev="Yes"> Yes</label>
+          <label class="check" style="margin:6px 0;"><input type="checkbox" id="fPrevNo" data-prev="No"> No</label>
+        </div></div>
     </section>
     <section class="sec hidden" data-sec="4"><h2 class="sec-h">4. Prospects in chemistry</h2>
       <p class="hint">Which area of chemistry do you see yourself in? Pick at least one. You can choose several. If yours isn't listed, choose Others and type it.</p>
@@ -389,7 +394,7 @@ function validate(n){
     if(!chosenAge) return 'Please select your age range.';
   }
   if(n===2){ if(val('fSchool').length < 2) return 'Please enter your school.'; if(!val('fLevel')) return 'Please choose your class or level.'; if(val('fRegion').length < 2) return 'Please enter your region or town.'; }
-  if(n===3){ if(!val('fChemLevel')) return 'Please choose your chemistry level.'; if(val('fBackground').length < 15) return 'Please tell us a little about the chemistry you have studied.'; if(!val('fCompetition')) return 'Please choose your competition experience.'; }
+  if(n===3){ if(!val('fChemLevel')) return 'Please choose your chemistry level.'; if(val('fBackground').length < 15) return 'Please tell us a little about the chemistry you have studied.'; if(!val('fCompetition')) return 'Please choose your competition experience.'; if(!prevAnswer()) return 'Please tick Yes or No: have you been part of this programme before?'; }
   if(n===4){ if(!picks.interests.size) return 'Please pick at least one prospect in chemistry.'; if(picks.interests.has('Others') && val('fOtherInterest').length < 2) return 'Please type your prospect in the box.'; }
   if(n===5 && val('fMessage').length < 40) return 'Please write a few sentences about why you want to join.';
   if(n===6){ if(!picks.days.size) return 'Please pick at least one day you could join.'; if(!picks.times.size) return 'Please pick a best time of day.'; if(!val('fHours')) return 'Please choose how many hours you can give each week.'; if(!($('cAttend').checked && $('cTalk').checked && $('cDo').checked)) return 'Please tick all three commitments to submit.'; }
@@ -417,6 +422,9 @@ function renderCaptcha(){ if(CAPTCHA_ID !== null || !window.grecaptcha || !CAPTC
     const sc = document.createElement('script'); sc.src = 'https://www.google.com/recaptcha/api.js?onload=onCaptchaReady&render=explicit'; sc.async = true; sc.defer = true; document.head.appendChild(sc);
   }catch(e){ console.warn('captcha setup skipped', e); }
 })();
+// Yes / No tick boxes: ticking one clears the other, so exactly one answer (or none) is ever selected.
+['fPrevYes','fPrevNo'].forEach(id=>{ const el = $(id); if(el) el.addEventListener('change', ()=>{ if(el.checked){ const other = $(id==='fPrevYes' ? 'fPrevNo' : 'fPrevYes'); if(other) other.checked = false; } }); });
+const prevAnswer = ()=> $('fPrevYes') && $('fPrevYes').checked ? 'Yes' : ($('fPrevNo') && $('fPrevNo').checked ? 'No' : '');
 const STAGES = ['Applied','In review','Interview','Accepted','Onboarding','Joined'];
 $('submitBtn').addEventListener('click', async ()=>{
   const btn = $('submitBtn'); const e = validate(6); if(e){ $('errMsg').textContent = e; return; }
@@ -424,7 +432,7 @@ $('submitBtn').addEventListener('click', async ()=>{
   btn.disabled = true; btn.textContent = 'Submitting…';
   const email = val('fEmail').toLowerCase();
   const app = { id: uid(), token: uid(), name: val('fName'), email, phone: val('fPhone'), notifySms: $('fNotifySms').checked, school: val('fSchool'), region: val('fRegion'), ageRange: chosenAge, howHeard: val('fHeard'),
-    level: val('fLevel'), chemLevel: val('fChemLevel'), background: val('fBackground'), competition: val('fCompetition'), competitionDetails: val('fCompDetails'),
+    level: val('fLevel'), chemLevel: val('fChemLevel'), background: val('fBackground'), competition: val('fCompetition'), competitionDetails: val('fCompDetails'), previousParticipant: prevAnswer(),
     interests: [...picks.interests].map(x=>x==='Others' ? 'Other: ' + val('fOtherInterest') : x), message: val('fMessage'), availability: { days:[...picks.days], times:[...picks.times], hours: val('fHours') },
     commitments: { attend:true, communicate:true, activities:true }, stage:'Applied', date: today(), submittedAt: new Date().toISOString() };
   let savedId = app.id, savedToken = app.token;

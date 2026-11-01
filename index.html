@@ -1185,7 +1185,7 @@ function escapeHtml(str){
 }
 
 // ---------- Team cards + profile popup ----------
-const TEAM_AMBASSADOR_DEFAULT={name:'Eddah Edmond Seyram',role:'Local Ambassador, IChC',kind:'amb',photo:'',link:'https://intchc.org/en/eseyram',bio:'Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.'};
+const TEAM_AMBASSADOR_DEFAULT={name:'Eddah Edmond Seyram',role:'Ambassador / Coordinator',kind:'amb',photo:'',link:'https://intchc.org/en/eseyram',bio:'Founded Chemistry Competition Prep, leads the Ghana chapter, and oversees coordinators and student placement.'};
 let TEAM_MEMBERS=[], teamLastFocus=null;
 const TEAM_ICON_MORE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13,6 19,12 13,18"/></svg>';
 function safePhotoUrl(u){ return (typeof u==='string' && /^(https?:\/\/|data:image\/)/i.test(u.trim())) ? u.trim() : ''; }
@@ -1226,9 +1226,14 @@ function renderTeam(dir){
   const grid=document.getElementById('teamGrid'); if(!grid) return;
   const amb=Object.assign({},TEAM_AMBASSADOR_DEFAULT); const a=dir&&dir.ambassador;
   if(a){ if(a.name) amb.name=a.name; if(a.bio) amb.bio=a.bio; if(a.photo) amb.photo=a.photo; }
-  const coords=((dir&&dir.coordinators)||[]).map(c=>({name:c.name||'Coordinator',role:'Coordinator',kind:'coord',photo:c.photo||'',subject:c.subject||'',region:c.region||'',bio:c.bio||''}));
+  // The Ambassador is also a coordinator: one profile, not two. Any coordinator entry with the same name is merged into the first card.
+  const sameName=(x,y)=>String(x||'').toLowerCase().replace(/\s+/g,' ').trim()===String(y||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const rawCoords=((dir&&dir.coordinators)||[]);
+  const own=rawCoords.find(c=>sameName(c.name,amb.name));
+  if(own){ if(!amb.photo&&own.photo) amb.photo=own.photo; if(own.subject) amb.subject=own.subject; if(own.region) amb.region=own.region; if(!(a&&a.bio)&&own.bio) amb.bio=own.bio; }
+  const coords=rawCoords.filter(c=>!sameName(c.name,amb.name)).map(c=>({name:c.name||'Coordinator',role:'Coordinator',kind:'coord',photo:c.photo||'',subject:c.subject||'',region:c.region||'',bio:c.bio||''}));
   TEAM_MEMBERS=[amb,...coords];
-  grid.innerHTML=TEAM_MEMBERS.map((m,i)=>{ const meta=m.kind==='coord'?[m.subject,m.region].filter(Boolean).map(escapeHtml).join(' · '):'';
+  grid.innerHTML=TEAM_MEMBERS.map((m,i)=>{ const meta=(m.kind==='coord'||m.subject||m.region)?[m.subject,m.region].filter(Boolean).map(escapeHtml).join(' · '):'';
     return `<div class="person ${m.kind}" data-team-idx="${i}">${teamAvatarHtml(m)}<h3>${escapeHtml(m.name)}</h3><div class="role">${escapeHtml(m.role)}</div><div class="pmeta">${meta||'&nbsp;'}</div><button class="readmore" type="button" aria-label="Read more about ${escapeHtml(m.name)}" title="Read more">${TEAM_ICON_MORE}</button></div>`; }).join('');
   wirePhotoFallbacks(grid);
 }

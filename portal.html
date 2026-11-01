@@ -1206,6 +1206,16 @@ try{
     sbReady = true;
   }
 }catch(e){ console.error('Supabase init failed', e); }
+// Direct calls to the email / SMS functions (personal emails, reach-out) also skip ghosted students.
+try{
+  if(sbReady && sb.functions && typeof sb.functions.invoke==='function'){
+    const _invoke = sb.functions.invoke.bind(sb.functions);
+    sb.functions.invoke = (name, opts)=>{
+      try{ if((name==='send-email' || name==='send-sms') && opts && opts.body && ghostedId(opts.body.recipientId)) return Promise.resolve({ data:{ ok:true, skipped:'inactive' }, error:null }); }catch(e){}
+      return _invoke(name, opts);
+    };
+  }
+}catch(e){ console.warn('invoke guard skipped', e); }
 
 async function sGet(key, shared){
   if(!shared){
@@ -1707,6 +1717,7 @@ window.addEventListener('focus', ()=>{ if(ME) pollLive(true); });
 // each, so a broadcast to many recipients doesn't get rate-limited.
 let _emailQueue = Promise.resolve();
 function queueEmailSend(payload, meta){
+  if(meta && ghostedId(meta.recipientId)) return Promise.resolve();
   const logResult = (status, detail)=>{
     if(!meta || typeof sbReady === 'undefined' || !sbReady) return;
     try{ sb.rpc('append_kv_item', { p_key:'email:log', p_item:{ id:(crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()), to:payload.template_params.to_email, name:meta.name||null, subject:meta.subject||'', message:String(meta.message||'').slice(0,1500), author:meta.author||null, kind:meta.kind||null, recipientId:meta.recipientId||null, recipientRole:meta.recipientRole||null, studentCoordinatorId:meta.studentCoordinatorId||null, via:'emailjs', status, detail, ts:Date.now() } }).then(()=>{}, ()=>{}); }catch(e){}
@@ -1724,6 +1735,7 @@ function queueEmailSend(payload, meta){
 }
 let _smsQueue = Promise.resolve();
 async function queueSmsSend(url, payload){
+  if(payload && ghostedId(payload.recipientId)) return;
   // If the SMS webhook points at our own Supabase Edge Function (send-sms),
   // it requires a valid signed-in session (verify_jwt is on) — attach the
   // current access token plus the anon key the gateway itself expects. For
@@ -1790,7 +1802,7 @@ function alertPriorityBadge(p){
 // (rather than snapshotted at send time) so a student added to a targeted group later
 // still sees the alert, and one removed from it stops seeing it.
 function resolveAlertAudience(alert){
-  const pool = alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice();
+  const pool = (alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice()).filter(s=>!ghostedStudent(s));
   const t = alert.target || {scope:'all', groups:[], studentIds:[]};
   if(t.scope==='groups') return pool.filter(s=>s.group && t.groups.includes(s.group));
   if(t.scope==='students') return pool.filter(s=>t.studentIds.includes(s.id));
@@ -2315,7 +2327,7 @@ function practiceQuestionSection(role){
 }
 
 function audienceFor(coordinatorId){
-  const students = coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students;
+  const students = (coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students).filter(s=>!ghostedStudent(s));
   const coords = coordinatorId ? DB.coordinators.filter(c=>c.id===coordinatorId) : DB.coordinators;
   return [...students, ...coords];
 }
@@ -2351,7 +2363,7 @@ async function notifyBroadcast({title, body, coordinatorId, author, role, refId,
   // audience: 'coordinators' or 'students' narrows a programme-wide broadcast; anything else keeps the old behaviour
   let recipients = audienceFor(coordinatorId);
   const narrowed = !coordinatorId && (audience==='coordinators' || audience==='students');
-  if(narrowed) recipients = audience==='coordinators' ? (DB.coordinators||[]) : (DB.students||[]);
+  if(narrowed) recipients = audience==='coordinators' ? (DB.coordinators||[]) : (DB.students||[]).filter(s=>!ghostedStudent(s));
   const entry = { id: uid(), refId: refId||null, title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
   if(narrowed){ entry.toIds = recipients.map(r=>r.id); entry.audience = audience; }
   await appendShared('notifications', entry);
@@ -3571,6 +3583,7 @@ function psmsSegments(t){
 function psmsStudents(){
   const term = PSMS.search.trim().toLowerCase();
   return (DB.students||[]).slice()
+    .filter(s=>!ghostedStudent(s))
     .filter(s=>!PSMS.onlyPhone || psmsHasPhone(s))
     .filter(s=>!term || [s.name, s.email, s.phone, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
@@ -4084,6 +4097,7 @@ function certCardCanvas(c, url, hasQr){
 }
 async function shareCert(id){
   const c = (DB.certificates||[]).find(x=>x.id===id); if(!c) return;
+  if(c.status==='revoked' && !(ME && ME.role==='ambassador')){ alert('This certificate has been revoked, so it can’t be shared.'); return; }
   const url = certVerifyUrl(c.id), hasQr = await loadQr(), cv = certCardCanvas(c, url, hasQr);
   const o = document.createElement('div');
   o.style.cssText = 'position:fixed; inset:0; z-index:1400; background:rgba(8,20,30,.7); display:flex; align-items:center; justify-content:center; padding:14px; overflow:auto;';
@@ -4112,6 +4126,7 @@ document.addEventListener('click', e=>{ const b = e.target.closest('[data-share-
 // ---- Server email (Brevo): branded, logged, resendable. Falls back to EmailJS when the server is not set up ----
 let _srvEmailQueue = Promise.resolve();
 function queueServerEmail(payload, fallback){
+  if(payload && ghostedId(payload.recipientId)) return;
   _srvEmailQueue = _srvEmailQueue.then(async ()=>{
     try{
       const { error } = await sb.functions.invoke('send-email', { body: payload });
@@ -4232,7 +4247,7 @@ function pemHasEmail(s){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s && s.
 function pemSelected(){ return (DB.students||[]).find(s=>s.id===PEM.studentId) || null; }
 function pemStudents(){
   const term = PEM.search.trim().toLowerCase();
-  return (DB.students||[]).slice().filter(s=>!PEM.onlyEmail || pemHasEmail(s))
+  return (DB.students||[]).slice().filter(s=>!ghostedStudent(s)).filter(s=>!PEM.onlyEmail || pemHasEmail(s))
     .filter(s=>!term || [s.name, s.email, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
 }
@@ -4377,6 +4392,18 @@ function studentAccess(s){
   if(idle > IDLE_LIMIT_MS) return { state:'inactive', locked:true, reason:'idle', seen:ref, days:Math.floor(idle/864e5) };
   return { state:'active', locked:false, seen:ref, days:Math.floor(idle/864e5) };
 }
+// ===== Ghosting: a switched-off or inactive student is treated as if they were not on the platform =====
+// They are left out of every audience (announcements, alerts, classes, results, personal emails and texts) and the
+// email / SMS senders refuse them as a last line of defence. Only the reactivation screen still reaches them.
+function ghostedStudent(s){
+  if(!s) return false;
+  if(s.portalBlocked) return true;
+  if(!DB || !DB.lastSeen) return false;   // activity data not loaded yet: never ghost on a guess
+  return !!studentAccess(s).locked;
+}
+function ghostedId(id){
+  try{ if(!id || !DB || !DB.students) return false; const s = DB.students.find(x=>x.id===id); return !!s && ghostedStudent(s); }catch(e){ return false; }
+}
 function accessBadge(s){
   const a = studentAccess(s);
   if(a.state === 'active') return `<span class="acc-badge acc-on">Active${a.days>0 ? ' · seen '+a.days+'d ago' : ' · seen today'}</span>`;
@@ -4459,6 +4486,7 @@ function stageChip(st){
 }
 function appDetailsHtml(a){
   const rows = [['Class or level',a.level],['Chemistry level',a.chemLevel],['Studied so far',a.background],['Interests',(a.interests||[]).join(', ')],['Competition experience',[a.competition,a.competitionDetails].filter(Boolean).join(' — ')],
+    ['Part of the programme before', a.previousParticipant],
     ['Availability', a.availability ? [(a.availability.days||[]).join(', '), (a.availability.times||[]).join('/'), a.availability.hours].filter(Boolean).join(' · ') : ''],
     ['Commitment', a.commitments ? 'Agreed to attend sessions, stay in touch and complete activities' : '']].filter(r=>r[1]);
   if(!rows.length) return '';
@@ -5025,8 +5053,8 @@ function certItemHtml(c){
     <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
       <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
       <button class="btn ghost small" data-copy-verify="${c.id}">Copy verification ID</button>
-      <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
-      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>
+      ${revoked ? '<span style="font-size:12.5px; color:#B3261E;">This certificate has been revoked and can no longer be downloaded or shared.</span>' : `<button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>`}
     </div>
   </div>`;
 }
@@ -5061,7 +5089,7 @@ function certificatesAmbassadorView(){
     <div id="certIssueStatus" style="font-size:13px; margin-top:10px; min-height:18px;"></div>
   </div>
 
-  <div class="section-title"><div><h2>Issued certificates</h2></div></div>
+  <div class="section-title"><div><h2>Issued certificates</h2></div>${issued.some(c=>c.status!=='revoked') ? '<button class="btn ghost small" id="certRevokeAll" type="button" style="color:#B3261E; border-color:#B3261E;">Revoke all certificates</button>' : '<span class="note" style="margin:0;">All certificates are revoked</span>'}</div>
   ${issued.length ? `<div class="list">${issued.map(c=>`
     <div class="item">
       <div class="item-head"><span class="item-title">${escapeHtml(c.recipient_name)} <span class="badge ${c.type==='service'?'coord':'stud'}" style="margin-left:6px;">${escapeHtml(CERT_COPY[c.type].label)}</span></span><span class="item-meta">${fmtDate(String(c.issue_date))}</span></div>
@@ -5138,6 +5166,17 @@ async function revokeCert(id, status){
   DB.certificates = await loadCertificates();
   render('certificates');
 }
+async function revokeAllCertificates(){
+  const n = DB.certificates.filter(c=>c.status!=='revoked').length;
+  if(!n){ alert('Every certificate is already revoked.'); return; }
+  if(!confirm(`Revoke all ${n} active certificate${n===1?'':'s'} (students and coordinators)? They will show as revoked on the public verification page. You can reinstate any of them one by one.`)) return;
+  try{
+    const { error } = await sb.from('ichc_certificates').update({ status:'revoked' }).neq('status','revoked');
+    if(error) throw error;
+  }catch(e){ alert('Could not revoke the certificates: ' + ((e && (e.message||e.code)) || e)); return; }
+  DB.certificates = await loadCertificates();
+  render('certificates');
+}
 async function deleteCertificate(id){
   const result = await deleteCertificateRow(id);
   if(!result.ok){ alert('Could not delete that certificate: ' + (result.error||'unknown error')); return; }
@@ -5155,6 +5194,7 @@ function trackedCaps(text){
 async function downloadCertificatePdf(id){
   const c = DB.certificates.find(x=>x.id===id) || await fetchCertificateById(id);
   if(!c){ alert('Could not find that certificate.'); return; }
+  if(c.status==='revoked' && !(ME && ME.role==='ambassador')){ alert('This certificate has been revoked, so it can’t be downloaded.'); return; }
   if(typeof window.jspdf === 'undefined'){ alert('The PDF library hasn\'t loaded yet — check your connection and try again.'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
@@ -5988,9 +6028,10 @@ const CLASS_CH_KEY = 'ichc_class_channels';
 function classChannelDefaults(){ let c = null; try{ c = JSON.parse(localStorage.getItem(CLASS_CH_KEY) || 'null'); }catch(e){} return c || { email:true, sms:false, push:true }; }
 function classStudents(cs){
   const a = cs.audience || { scope:'all' };
-  if(a.scope==='coordinator') return (DB.students||[]).filter(s=>s.coordinatorId===a.coordinatorId);
-  if(a.scope==='students') return (DB.students||[]).filter(s=>(a.studentIds||[]).includes(s.id));
-  return (DB.students||[]).slice();
+  const live = (DB.students||[]).filter(s=>!ghostedStudent(s));
+  if(a.scope==='coordinator') return live.filter(s=>s.coordinatorId===a.coordinatorId);
+  if(a.scope==='students') return live.filter(s=>(a.studentIds||[]).includes(s.id));
+  return live.slice();
 }
 function classForStudent(cs, studentId){ return !!cs.byAmbassador && classStudents(cs).some(s=>s.id===studentId); }
 function callsForStudent(){
@@ -7461,7 +7502,7 @@ async function examReleaseResults(id){
   const freshA = await sharedRead('examAttempts'); if(Array.isArray(freshA)) DB.examAttempts = freshA;
   const sids = [...new Set(DB.examAttempts.filter(a=>a.examId===id && a.submittedAt).map(a=>a.studentId))];
   if(!sids.length) return alert('No student has submitted this exam yet.');
-  const students = sids.map(sid=>DB.students.find(s=>s.id===sid)).filter(Boolean);
+  const students = sids.map(sid=>DB.students.find(s=>s.id===sid)).filter(s=>s && !ghostedStudent(s));
   const unscored = sids.filter(sid=>{ const b = examBestAttempt(e, sid); return !b || examScoreNum(b)===null; }).length;
   const coordIds = [...new Set(students.map(s=>s.coordinatorId).filter(Boolean))];
   const coords = DB.coordinators.filter(c=>coordIds.includes(c.id));
@@ -8691,7 +8732,7 @@ function wireHandlers(tab){
     // The student is only created when they send the first message (or choose to accept without one).
     b.disabled = true;
     await reviewApplicantDecision({app, decision:'accepted', reason, commit: async ()=>{
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), waGroupId:currentWaGroupId(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), activatedAt:Date.now(), waGroupId:currentWaGroupId(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
       // Carries the applicant's private token forward (when present) so the
       // status banner on the public site can match this decision without
@@ -8828,6 +8869,7 @@ function wireHandlers(tab){
       render('certificates');
     });
     if(q('certIssueBtn')) q('certIssueBtn').addEventListener('click', issueCertificatesBulk);
+    if(q('certRevokeAll')) q('certRevokeAll').addEventListener('click', revokeAllCertificates);
     document.querySelectorAll('[data-revoke-cert]').forEach(b=>b.addEventListener('click', ()=>{
       if(confirm('Revoke this certificate? It will show as revoked on the public verification page.')) revokeCert(b.dataset.revokeCert, 'revoked');
     }));
@@ -9157,7 +9199,7 @@ function dutyCardHtml(k){
     <p class="note" style="margin:0;">The Ambassador can view your activity here and may reassign this role if the work is not discharged well.</p></div>`;
 }
 const ACT = { who:'students', level:'all', search:'' };
-const REACH = { audience:'students_very', subject:'We miss you on Chemistry Competition Prep', body:'', touched:false, sending:false, status:'' };
+const REACH = { audience:'students_low', subject:'We miss you on Chemistry Competition Prep', body:'', touched:false, sending:false, status:'' };
 const DUTYUI = { composeFor:null, text:'' };
 
 function dutyDays(ms){ return ms ? Math.floor((Date.now()-ms)/864e5) : null; }
@@ -9231,7 +9273,7 @@ function actStatsView(){
   <div class="list" id="actList">${actListHtml()}</div>`;
 }
 function reachRecipients(){
-  const a = REACH.audience, rows = a.startsWith('students') ? actStudentRows() : actCoordRows();
+  const a = REACH.audience, rows = a.startsWith('students') ? actStudentRows().filter(r=>{ const st = (DB.students||[]).find(x=>x.id===r.id); return !ghostedStudent(st); }) : actCoordRows();
   return rows.filter(r=> a.endsWith('_very') ? r.level==='very' : (r.level==='very' || r.level==='low'));
 }
 function reachSyncBody(){
@@ -9254,7 +9296,7 @@ function actReachView(){
   return `${ME.role==='coordinator' ? dutyCardHtml('activity') : ''}
   <div class="section-title"><div><h2>Reach out</h2><p>Message people who have gone quiet. Emails go out from the portal in one tap. WhatsApp opens a ready message for each person, and you press send.</p></div></div>
   <div class="psms-wrap"><div class="card">
-    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_very','Very inactive students (14+ days or never signed in)')}${opt('students_low','All inactive students (7+ days)')}${opt('coords_very','Very inactive coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
+    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_low','Slipping students (still active, quiet for 7+ days)')}${opt('coords_very','Very inactive coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
     <div class="field"><label for="rcSubject">Email subject</label><input id="rcSubject" maxlength="150" value="${escapeHtml(REACH.subject)}"></div>
     <div class="field"><label for="rcBody">Message (use {name} and {days})</label><textarea id="rcBody" rows="8" maxlength="1500">${escapeHtml(REACH.body)}</textarea></div>
     <div class="psms-foot"><span class="psms-count" id="rcCount"></span><button class="btn teal" id="rcSend" type="button">Email everyone listed</button></div>
