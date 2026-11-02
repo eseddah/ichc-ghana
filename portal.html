@@ -3265,6 +3265,8 @@ function renderLegacy(tab){
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
+  else if(tab==='lessons') html = lessonsView();
+  else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
   else if(ME.role==='ambassador') html = ambassadorView(tab);
@@ -6112,29 +6114,31 @@ function askClassChannels(title){
     o.querySelector('#ccSkip').addEventListener('click', ()=>done({ email:false, sms:false, push:false }));
   });
 }
-async function sendClassNotice(cs, ch, kind){
+async function sendClassNotice(cs, ch, kind, opts){
+  const who = (opts && opts.author) || ME.name;
   if(!(ch.email || ch.sms || ch.push)) return 'No notification was sent.';
   const rec = classStudents(cs), s = DB.settings || {}, out = [];
   if(!rec.length) return 'There are no students in this audience to notify.';
   const titles = { new:`New class: ${cs.title}`, reminder:`Class reminder: ${cs.title}`, cancelled:`Class cancelled: ${cs.title}`, restored:`Class is back on: ${cs.title}` };
   const title = titles[kind] || titles.new, when = fmtSessionTime(cs);
   let body = kind==='cancelled' ? `This class (${when}) has been cancelled.` : `${when}.`;
+  if(opts && opts.lead && kind!=='cancelled') body = opts.lead + '. ' + body;
   if(kind!=='cancelled'){ if(cs.link) body += `\nJoin: ${normalizeUrl(cs.link)}`; if(cs.notes) body += `\n${cs.notes}`; }
   if(ch.push){
     try{
-      await appendShared('notifications', { id:uid(), refId:cs.id, kind:'class', title, body, author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}, toIds:rec.map(r=>r.id), audience:'students' });
+      await appendShared('notifications', { id:uid(), refId:cs.id, kind:'class', title, body, author:who, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}, toIds:rec.map(r=>r.id), audience:'students' });
       out.push(`app notification to ${rec.length}`);
     }catch(e){ console.error(e); out.push('app notification failed'); }
   }
   if(ch.email){
     const n = rec.filter(r=>r.email && r.notifyEmail!==false).length;
-    try{ dispatchEmails(rec, { subject:title, body, author:ME.name, kind:'class' }); out.push(`email to ${n}`); }catch(e){ console.error(e); out.push('email failed'); }
+    try{ dispatchEmails(rec, { subject:title, body, author:who, kind:'class' }); out.push(`email to ${n}`); }catch(e){ console.error(e); out.push('email failed'); }
   }
   if(ch.sms){
     if(!s.webhookUrl) out.push('texts not sent (SMS is not connected in Settings)');
     else {
       const t = rec.filter(r=>r.phone && r.notifySms);
-      t.forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(`${title}. ${body}`), recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId }));
+      t.forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:who, subject:title, message:withPortalLink(`${title}. ${body}`), recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId }));
       out.push(`text to ${t.length}`);
     }
   }
@@ -6174,12 +6178,13 @@ function classesAdminView(){
     </div>
     <button class="btn teal small" id="addClassBtn" type="button">Schedule class</button>
   </div>
+  ${crPanelShell()}
   <div class="list">
     ${list.length ? list.map(c=>`
       <div class="item">
         <div class="item-head"><span class="item-title">${escapeHtml(c.title)}</span>${sessionStatusBadge(c)}</div>
         <div class="item-meta" style="margin-bottom:6px;">${escapeHtml(fmtSessionTime(c))}</div>
-        <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Link: ${linkifyUrl(c.link)}<br>`:''}<span style="font-size:12.5px; color:var(--muted);">For: ${escapeHtml(classAudienceLabel(c))}</span></div>
+        <div class="item-body">${c.notes?linkify(c.notes)+'<br>':''}${c.link?`Link: ${linkifyUrl(c.link)}<br>`:''}<span style="font-size:12.5px; color:var(--muted);">For: ${escapeHtml(classAudienceLabel(c))}</span>${CR.cfg && !c.cancelled ? `<br><span style="font-size:12.5px; color:var(--muted);">${escapeHtml(crNextText(c))}</span>` : ''}</div>
         <div class="item-actions">
           <button class="btn ghost small" type="button" data-class-notify="${c.id}">Notify again</button>
           ${!c.cancelled ? `<button class="btn ghost small" type="button" data-class-cancel="${c.id}">Cancel class</button>` : `<button class="btn ghost small" type="button" data-class-uncancel="${c.id}">Un-cancel</button>`}
@@ -6203,7 +6208,7 @@ function wireClasses(){
     const audience = { scope };
     if(scope==='coordinator'){ audience.coordinatorId = q('classCoord').value; if(!audience.coordinatorId) return alert('Choose a coordinator.'); }
     if(scope==='students'){ audience.studentIds = [...document.querySelectorAll('.classStudChk:checked')].map(x=>x.value); if(!audience.studentIds.length) return alert('Tick at least one student.'); }
-    const cs = { id:uid(), byAmbassador:true, createdBy:ME.id, coordinatorId:null, audience, title, startAt, endAt, link:q('classLink').value.trim(), notes:q('classNotes').value.trim(), cancelled:false, date:startAt.slice(0,10) };
+    const cs = { id:uid(), createdAt:Date.now(), byAmbassador:true, createdBy:ME.id, coordinatorId:null, audience, title, startAt, endAt, link:q('classLink').value.trim(), notes:q('classNotes').value.trim(), cancelled:false, date:startAt.slice(0,10) };
     if(!classStudents(cs).length) return alert('There are no students in that audience yet.');
     const ch = { email:q('classChEmail').checked, sms:q('classChSms').checked, push:q('classChPush').checked };
     try{ localStorage.setItem(CLASS_CH_KEY, JSON.stringify(ch)); }catch(e){}
@@ -9203,9 +9208,9 @@ const DUTY_DEFAULTS = {
   applications:{ email:'kassimhassan1290@gmail.com' },
   activity:{ email:'davidarmahx774@gmail.com' },
   // Programme portfolios: unassigned until the Ambassador appoints someone.
-  welfare:{ email:'' }, content:{ email:'' }, exams:{ email:'' }, comms:{ email:'' }, events:{ email:'' }, community:{ email:'' }, support:{ email:'' }
+  updates:{ email:'' }, welfare:{ email:'' }, content:{ email:'' }, exams:{ email:'' }, comms:{ email:'' }, events:{ email:'' }, community:{ email:'' }, support:{ email:'' }
 };
-const PORTFOLIO_KEYS = ['welfare','content','exams','comms','events','community','support'];
+const PORTFOLIO_KEYS = ['updates','welfare','content','exams','comms','events','community','support'];
 const DUTY_INFO = {
   reactivation:{ title:'Account Reactivation', tab:'Reactivation', duties:[
     'Handle every request to reactivate a student portal, and switch it back on once you are satisfied the student is serious.',
@@ -9225,6 +9230,12 @@ const DUTY_INFO = {
     'Report concerns to the Ambassador, who can view your activity and reassign this role.' ],
     outcomes:[ 'Very inactive students and coordinators are contacted every week.', 'The number of inactive students falls from month to month.', 'The Ambassador receives clear information on who needs support or reassignment.' ],
     tips:[ 'Be encouraging: ask what is in the way before you warn anyone.', 'Use email for a record and WhatsApp for a personal touch.', 'Your messages are logged so the Ambassador can see the follow-up being done.' ] },
+  updates:{ title:'Updates & Guide', tab:'Updates', duties:[
+    'Read every new portal update as soon as it appears and understand what it changes for students and coordinators.',
+    'Keep the explanation of each portal section clear and correct: edit the guide whenever a feature changes.',
+    'Share important updates with coordinators, students and groups on WhatsApp, in plain and friendly language.' ],
+    outcomes:[ 'Every coordinator hears about a new feature before students ask about it.', 'Each portal section has a clear, up-to-date explanation.', 'Updates reach the right people and groups on WhatsApp quickly.' ],
+    tips:[ 'Lead with what changed and what the reader should do next.', 'Check the wording of each update before you share it, then adjust it for the group you are sending it to.', 'The Ambassador can see this page and everything you edit or share.' ] },
   welfare:{ title:'Student Welfare', tab:'Welfare', duties:[
     'Check in with students who are struggling, quiet or discouraged, and listen before you advise.',
     'Pass genuine concerns (family, school, data or personal problems) to the Ambassador quietly and promptly.',
@@ -9305,6 +9316,7 @@ const PF_LINKS = {
 };
 const PFUI = { status:'' };
 function portfolioView(k){
+  if(k==='updates') return updatesWorkspaceHtml();
   const d = DUTY_INFO[k];
   const links = (PF_LINKS[k]||[]).map(([t,l])=>`<button class="btn ghost small" type="button" data-pf-go="${t}">${escapeHtml(l)}</button>`).join(' ');
   return `<div class="section-title"><div><h2>${escapeHtml(d.title)}</h2><p>You have been appointed to lead this area. Your responsibilities, what good looks like, and a place to report to the Ambassador are below.</p></div></div>
@@ -9328,6 +9340,7 @@ async function fillPortfolioLog(k){
   box.innerHTML = mine.length ? mine.map(e=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-meta">${fmtDateTime(e.ts)}</span></div><div class="item-body">${escapeHtml(String(e.action).slice(8))}</div></div>`).join('') : '<div class="empty">No reports sent yet.</div>';
 }
 function wirePortfolio(k){
+  if(k==='updates'){ updWire(); return; }
   const q = id=>document.getElementById(id);
   document.querySelectorAll('[data-pf-go]').forEach(b=>b.addEventListener('click', ()=>render(b.dataset.pfGo)));
   fillPortfolioLog(k);
@@ -9587,6 +9600,7 @@ function paintRoleSwitch(){
   btn.dataset.to = other; btn.textContent = other==='coordinator' ? 'Switch to Coordinator' : 'Switch to Ambassador';
 }
 function wireDuty(tab){
+  if(typeof lvWire==='function') lvWire(tab);
   const q = id=>document.getElementById(id);
   if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)]) wirePortfolio(tab.slice(3));
   if(tab==='appcontrol' && q('dcSave')) q('dcSave').addEventListener('click', async ()=>{
@@ -9847,6 +9861,7 @@ async function sendDutyEmail(){
 const NAV = {
   student:[
     { k:'welcome', l:'Home', ic:'home', host:true },
+    { k:'lessons', l:'Lessons', ic:'lessons', subs:[['lessons','Lesson videos']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['ask','Ask your coordinator']] },
     { k:'inbox', l:'Inbox', ic:'notifications', subs:[['announce','Announcements'],['notifications','Notifications']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
@@ -9854,6 +9869,7 @@ const NAV = {
   coordinator:[
     { k:'space', l:'Home', ic:'home', subs:[['space','Overview'],['students','My students'],['calls','Sessions'],['profile','My profile']] },
     { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
+    { k:'lessons', l:'Lessons', ic:'lessons', subs:[['lessons','Lesson videos']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['messages','Student messages']] },
     { k:'inbox', l:'Inbox', ic:'notifications', subs:[['alerts','Alerts'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
@@ -9863,14 +9879,15 @@ const NAV = {
     { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
-    { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes']] },
+    { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
-    { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
+    { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
 };
 Object.assign(TAB_ICONS, {
+  lessons:'<rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10,9 16,12 10,15"/>',
   home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13V10"/><path d="M10 20.5v-6h4v6"/>',
   roadmap:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5"/>'
 });
@@ -10710,6 +10727,687 @@ document.addEventListener('keydown', (ev)=>{
   const root = rmRoot(); if(!root || !root.contains(ev.target)) return;
   if(ev.key==='Enter' && ev.target.id==='rmNum'){ ev.preventDefault(); rmAnswer(ev.target.value); }
 });
+</script>
+<script>
+/* ======================================================================
+   ADD-ON  (added November 2026)
+   1. Lesson videos: coordinators upload, students watch / react / comment,
+      the Ambassador can share any video with the whole cohort.
+   2. Automatic class reminders to eligible students + recipients summary.
+   3. Updates & Guide: a duty under Team & duties for an assigned coordinator.
+   Data lives in the same ichc_kv table as everything else:
+     lessons:videos        list of videos
+     lessons:ev:<videoId>  append-only events (views, reactions, comments)
+     classrem:config       reminder settings
+     classrem:sent         reminder claims / results (prevents double sends)
+     duty:updates          edits and custom entries for Updates & Guide
+   ====================================================================== */
+const LV_BUCKET = 'how-to-videos', LV_MAX_MB = 50, LV_MAX_SEC = 12*60;
+const LV_REACTS = [['helpful','\u{1F44D}','Helpful'],['clear','\u{1F4A1}','Made sense'],['love','\u2764\uFE0F','Loved it'],['confused','\u{1F914}','Confusing']];
+const LV = { list:null, ev:{}, up:{ file:null, dur:0, objUrl:'', msg:'', busy:false }, tab:'reactions', poll:null, openId:null };
+const lvEsc = s => escapeHtml(String(s==null ? '' : s));
+const lvDur = sec => { sec = Math.max(0, Math.round(sec||0)); return Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0'); };
+
+// ---------- storage helpers ----------
+async function lvLoadList(){ const v = await sGet('lessons:videos', true); if(Array.isArray(v)) LV.list = v; else if(!LV.list) LV.list = []; return LV.list; }
+async function lvSaveVideo(v){
+  const fresh = await sGet('lessons:videos', true);
+  const base = Array.isArray(fresh) ? fresh : (LV.list || []);
+  const next = base.filter(x=>x && x.id!==v.id).concat([v]);
+  const ok = await sSet('lessons:videos', next, true);
+  if(ok) LV.list = next;
+  return ok;
+}
+async function lvLoadEv(id){ const v = await sGet('lessons:ev:'+id, true); if(Array.isArray(v)) LV.ev[id] = v; else if(!LV.ev[id]) LV.ev[id] = []; return LV.ev[id]; }
+async function lvAddEv(id, ev){
+  ev = Object.assign({ id:uid(), ts:Date.now() }, ev);
+  (LV.ev[id] = LV.ev[id] || []).push(ev);
+  try{ const { error } = await sb.rpc('append_kv_item', { p_key:'lessons:ev:'+id, p_item:ev }); if(error) throw error; return true; }
+  catch(e){ console.error('lesson event not saved', e); return false; }
+}
+
+// ---------- who can see / manage ----------
+function lvAudience(v){
+  const live = (DB.students||[]).filter(s=>!ghostedStudent(s));
+  return (v.cohort || !v.coordinatorId) ? live : live.filter(s=>s.coordinatorId===v.coordinatorId);
+}
+function lvVisibleTo(v){
+  if(!v || v.removed || !ME) return false;
+  if(ME.role==='ambassador') return true;
+  if(v.cohort) return true;
+  if(ME.role==='coordinator') return v.coordinatorId===ME.id;
+  return !!v.coordinatorId && v.coordinatorId===myCoordinatorId();
+}
+function lvCanManage(v){ return ME.role==='ambassador' || (ME.role==='coordinator' && v.coordinatorId===ME.id); }
+function lvIsStaffFor(v){ return lvCanManage(v); }
+
+// ---------- derive stats from the event stream ----------
+function lvStats(id){
+  const ev = (LV.ev[id]||[]).slice().sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const gone = new Set(ev.filter(e=>e.t==='delcomment').map(e=>e.ref));
+  const started = new Map(), done = new Map(), react = new Map(), comments = [];
+  ev.forEach(e=>{
+    if(e.t==='view' && e.role==='student' && !started.has(e.sid)) started.set(e.sid, e);
+    else if(e.t==='done' && e.role==='student' && !done.has(e.sid)) done.set(e.sid, e);
+    else if(e.t==='react') react.set(e.sid, e);
+    else if(e.t==='comment' && !gone.has(e.id)) comments.push(e);
+  });
+  const counts = {}; LV_REACTS.forEach(r=>counts[r[0]] = 0);
+  react.forEach(e=>{ if(e.key && counts[e.key]!=null) counts[e.key]++; });
+  return { started, done, react, counts, comments };
+}
+function lvReactSummary(s){ const bits = LV_REACTS.filter(r=>s.counts[r[0]]>0).map(r=>`${r[1]} ${s.counts[r[0]]}`); return bits.length ? bits.join('  ') : 'No reactions yet'; }
+function lvWatchedCount(v, s){ const ids = new Set(lvAudience(v).map(x=>x.id)); let a = 0, b = 0; s.started.forEach((_,k)=>{ if(ids.has(k)) a++; }); s.done.forEach((_,k)=>{ if(ids.has(k)) b++; }); return { started:a, done:b, total:ids.size }; }
+
+// ---------- the Lessons page ----------
+function lessonsView(){
+  const role = ME.role;
+  const sub = role==='student' ? 'Short lessons from your coordinator and from the Ambassador. Watch, react and comment.'
+    : role==='coordinator' ? 'Upload lessons of about 10 minutes for your students. You can see who has watched, and how they reacted.'
+    : 'Every lesson in the programme. Share any coordinator\u2019s video with the whole cohort, and everyone will see its reactions and comments.';
+  return `<div class="section-title"><div><h2>Lesson videos</h2><p>${sub}</p></div></div>
+  ${role!=='student' ? lvUploadCardHtml() : ''}
+  <div id="lvListBox">${LV.list ? lvListHtml() : '<div class="empty">Loading lessons\u2026</div>'}</div>`;
+}
+function lvUploadCardHtml(){
+  const u = LV.up, amb = ME.role==='ambassador';
+  return `<div class="card" style="margin-bottom:18px;">
+    <h3 style="margin:0 0 4px; font-size:16px;">Upload a lesson video</h3>
+    <p class="note" style="margin:0 0 12px;">About 10 minutes per video (up to ${LV_MAX_SEC/60} minutes and ${LV_MAX_MB} MB). MP4 works best. Add the caption first, then choose the video.${amb ? ' Videos you upload go to the whole cohort.' : ''}</p>
+    <div class="field"><label for="lvTitle">Lesson title</label><input id="lvTitle" maxlength="80" placeholder="e.g. Mole concept: worked examples"></div>
+    <div class="field"><label for="lvCaption">Caption (shown above the video)</label><textarea id="lvCaption" rows="3" maxlength="600" placeholder="What this lesson covers and what students should do after watching"></textarea><div class="note" id="lvCapCount" style="margin:4px 0 0;"></div></div>
+    <div class="field"><label for="lvFile">Video file</label><input id="lvFile" type="file" accept="video/mp4,video/webm,video/quicktime"><div class="note" id="lvFileInfo" style="margin:6px 0 0;">${u.file ? lvEsc(lvFileInfoText()) : 'No video chosen yet.'}</div></div>
+    <video id="lvPrev" controls preload="metadata" playsinline style="display:${u.objUrl?'block':'none'}; width:100%; max-width:420px; border-radius:10px; margin:6px 0 10px; background:#000;" ${u.objUrl?`src="${lvEsc(u.objUrl)}"`:''}></video>
+    <label class="eb-check"><input type="checkbox" id="lvNotify" checked> ${amb ? 'Notify all students (app notification)' : 'Notify my students (app notification)'}</label>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px;"><button class="btn teal small" id="lvUpBtn" type="button" ${u.busy?'disabled':''}>Upload lesson</button><span class="note" id="lvUpMsg" style="margin:0;">${lvEsc(u.msg)}</span></div>
+  </div>`;
+}
+function lvFileInfoText(){
+  const u = LV.up; if(!u.file) return '';
+  let t = `${u.file.name} \u00B7 ${(u.file.size/1048576).toFixed(1)} MB` + (u.dur ? ` \u00B7 ${lvDur(u.dur)}` : ' \u00B7 checking length\u2026');
+  if(u.file.size > LV_MAX_MB*1048576) t += ` \u2014 over ${LV_MAX_MB} MB. Trim it or lower the quality.`;
+  else if(u.dur > LV_MAX_SEC) t += ` \u2014 longer than ${LV_MAX_SEC/60} minutes. Please trim it.`;
+  return t;
+}
+function lvVisible(){ return (LV.list||[]).filter(lvVisibleTo).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); }
+function lvCardHtml(v){
+  const s = lvStats(v.id), w = lvWatchedCount(v, s), nCm = s.comments.length;
+  const where = v.cohort ? '<span class="badge" style="background:rgba(31,138,112,.15); color:var(--teal-deep);">Whole cohort</span>' : '<span class="badge">Group only</span>';
+  const who = v.byRole==='ambassador' ? 'Ambassador' : (v.coordinatorId ? coordName(v.coordinatorId) : (v.by||''));
+  const mine = ME.role==='student' ? (s.react.get(ME.id) && s.react.get(ME.id).key ? ` \u00B7 You reacted ${(LV_REACTS.find(r=>r[0]===s.react.get(ME.id).key)||[])[1]||''}` : '') : '';
+  const stat = ME.role==='student'
+    ? `${lvReactSummary(s)} \u00B7 ${nCm} comment${nCm===1?'':'s'}${mine}`
+    : `<b>${w.started}</b> of ${w.total} student${w.total===1?'':'s'} watched \u00B7 ${w.done} finished \u00B7 ${lvReactSummary(s)} \u00B7 ${nCm} comment${nCm===1?'':'s'}`;
+  const cap = String(v.caption||''); 
+  return `<div class="item" data-lv-card="${lvEsc(v.id)}">
+    <div class="item-head"><span class="item-title">${lvEsc(v.title)}</span>${where}</div>
+    <div class="item-meta" style="margin-bottom:6px;">${lvEsc(who)} \u00B7 ${lvEsc(fmtDateTime(v.createdAt))} \u00B7 ${lvDur(v.durationSec)}</div>
+    <div class="item-body">${linkify(cap.length>220 ? cap.slice(0,220)+'\u2026' : cap)}<div style="font-size:12.5px; color:var(--muted); margin-top:6px;">${stat}</div></div>
+    <div class="item-actions">
+      <button class="btn teal small" type="button" data-lv-open="${lvEsc(v.id)}">Watch</button>
+      ${ME.role==='ambassador' ? (v.cohort ? `<button class="btn ghost small" type="button" data-lv-share="${lvEsc(v.id)}" data-on="0">Back to group only</button>` : (v.coordinatorId ? `<button class="btn amber small" type="button" data-lv-share="${lvEsc(v.id)}" data-on="1">Share with whole cohort</button>` : '')) : ''}
+      ${lvCanManage(v) ? `<button class="btn ghost small" type="button" data-lv-remove="${lvEsc(v.id)}">Remove</button>` : ''}
+    </div></div>`;
+}
+function lvListHtml(){
+  const all = lvVisible();
+  const block = (title, note, arr)=> arr.length ? `<div class="section-title" style="margin-top:22px;"><div><h2>${title}</h2><p>${note}</p></div></div><div class="list">${arr.map(lvCardHtml).join('')}</div>` : '';
+  if(!all.length) return `<div class="empty">${ME.role==='student' ? 'No lessons yet. Your coordinator will post one soon.' : 'No lesson videos yet. Upload the first one above.'}</div>`;
+  if(ME.role==='student') return block('From your coordinator', 'Only you and your group can see these.', all.filter(v=>!v.cohort)) + block('For the whole cohort', 'Everyone in the programme can watch these and see the reactions and comments.', all.filter(v=>v.cohort));
+  if(ME.role==='coordinator') return block('My videos', 'Group-only videos stay with your students until the Ambassador shares them.', all.filter(v=>v.coordinatorId===ME.id)) + block('Shared with the whole cohort', 'Videos from other coordinators and the Ambassador.', all.filter(v=>v.coordinatorId!==ME.id));
+  return block('Group-only videos', 'Uploaded by coordinators. Share any of them with the whole cohort.', all.filter(v=>!v.cohort)) + block('Shared with the whole cohort', 'Everyone sees the reactions and comments on these.', all.filter(v=>v.cohort));
+}
+async function lvRefreshList(){
+  const box = document.getElementById('lvListBox'); if(!box) return;
+  await lvLoadList();
+  await Promise.all(lvVisible().map(v=>lvLoadEv(v.id)));
+  const b2 = document.getElementById('lvListBox'); if(b2) b2.innerHTML = lvListHtml();
+}
+
+// ---------- upload ----------
+function lvWireLessons(){
+  const q = id=>document.getElementById(id);
+  const box = q('lvListBox');
+  if(box && !box.dataset.wired){ box.dataset.wired = '1'; box.addEventListener('click', lvListClick); }
+  if(q('lvCaption')){
+    const upd = ()=>{ q('lvCapCount').textContent = `${q('lvCaption').value.length} / 600`; };
+    q('lvCaption').addEventListener('input', upd); upd();
+  }
+  if(q('lvFile')){
+    q('lvFile').addEventListener('change', ()=>{
+      const f = q('lvFile').files[0]; const u = LV.up;
+      if(u.objUrl){ try{ URL.revokeObjectURL(u.objUrl); }catch(e){} }
+      u.file = f || null; u.dur = 0; u.objUrl = f ? URL.createObjectURL(f) : ''; u.msg = '';
+      q('lvFileInfo').textContent = f ? lvFileInfoText() : 'No video chosen yet.';
+      const pv = q('lvPrev'); pv.style.display = f ? 'block' : 'none'; if(f) pv.src = u.objUrl; else pv.removeAttribute('src');
+      if(f){
+        const probe = document.createElement('video'); probe.preload = 'metadata';
+        probe.onloadedmetadata = ()=>{ u.dur = isFinite(probe.duration) ? probe.duration : 0; if(q('lvFileInfo')) q('lvFileInfo').textContent = lvFileInfoText(); };
+        probe.onerror = ()=>{ if(q('lvFileInfo')) q('lvFileInfo').textContent = f.name + ' \u2014 this file could not be read as a video. Try an MP4.'; };
+        probe.src = u.objUrl;
+      }
+    });
+    q('lvUpBtn').addEventListener('click', lvDoUpload);
+  }
+  lvRefreshList();
+}
+async function lvDoUpload(){
+  const q = id=>document.getElementById(id), u = LV.up;
+  const msg = t=>{ u.msg = t; if(q('lvUpMsg')) q('lvUpMsg').textContent = t; };
+  if(u.busy) return;
+  const title = q('lvTitle').value.trim(), caption = q('lvCaption').value.trim();
+  if(!title) return msg('Add a lesson title.');
+  if(!caption) return msg('Write a caption first, so students know what the lesson covers.');
+  if(!u.file) return msg('Choose a video file.');
+  if(u.file.size > LV_MAX_MB*1048576) return msg(`That video is over ${LV_MAX_MB} MB. Trim it or lower its quality.`);
+  if(!u.dur) return msg('The video length could not be read yet. Wait a moment or try an MP4 file.');
+  if(u.dur > LV_MAX_SEC) return msg(`That video is longer than ${LV_MAX_SEC/60} minutes. Please trim it to about 10 minutes.`);
+  u.busy = true; q('lvUpBtn').disabled = true;
+  const t0 = Date.now(), tick = setInterval(()=>{ if(q('lvUpMsg')) q('lvUpMsg').textContent = `Uploading\u2026 ${Math.round((Date.now()-t0)/1000)}s. Keep this page open.`; }, 1000);
+  msg('Uploading\u2026 keep this page open.');
+  try{
+    const ext = (u.file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5) || 'mp4';
+    const path = `lessons/${String(ME.id).replace(/[^a-zA-Z0-9_-]/g,'')}/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;
+    const { error } = await sb.storage.from(LV_BUCKET).upload(path, u.file, { contentType:u.file.type || 'video/mp4', cacheControl:'3600' });
+    if(error) throw error;
+    const url = sb.storage.from(LV_BUCKET).getPublicUrl(path).data.publicUrl;
+    const amb = ME.role==='ambassador';
+    const v = { id:uid(), title, caption, url, path, durationSec:Math.round(u.dur), sizeBytes:u.file.size, coordinatorId: amb ? null : ME.id, by:ME.name, byRole:ME.role, createdAt:Date.now(), cohort:amb, cohortAt: amb ? Date.now() : 0, cohortBy: amb ? ME.name : '', removed:false };
+    const ok = await lvSaveVideo(v);
+    if(!ok) throw new Error('The video uploaded but could not be added to the lesson list. Please try again.');
+    let note = '';
+    if(q('lvNotify') && q('lvNotify').checked){ try{ const n = await lvNotifyStudents(v, amb ? `New lesson for everyone: ${title}` : `New lesson from your coordinator: ${title}`); note = ` ${n} student${n===1?'':'s'} notified.`; }catch(e){ console.error(e); } }
+    if(u.objUrl){ try{ URL.revokeObjectURL(u.objUrl); }catch(e){} }
+    LV.up = { file:null, dur:0, objUrl:'', msg:'Uploaded.' + note, busy:false };
+    clearInterval(tick); render('lessons');
+  }catch(e){
+    console.error(e); clearInterval(tick); u.busy = false;
+    const m = String((e && (e.message||e.error)) || e || '');
+    if(q('lvUpBtn')) q('lvUpBtn').disabled = false;
+    msg(/row-level security|policy|not authorized|permission/i.test(m) ? 'Your account is not allowed to upload to the video storage yet. Ask the Ambassador to allow lesson uploads in Supabase Storage.' : (/bucket/i.test(m) ? 'The video storage bucket was not found.' : (m || 'Upload failed. Please try again.')));
+  }
+}
+async function lvNotifyStudents(v, title){
+  const rec = lvAudience(v); if(!rec.length) return 0;
+  await appendShared('notifications', { id:uid(), refId:v.id, kind:'lesson', title, body:`${v.title}: ${String(v.caption||'').slice(0,160)}\nOpen Lessons in your portal to watch.`, author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}, toIds:rec.map(r=>r.id), audience:'students' });
+  return rec.length;
+}
+
+// ---------- list actions ----------
+async function lvListClick(ev){
+  const t = ev.target.closest('[data-lv-open],[data-lv-share],[data-lv-remove]'); if(!t) return;
+  if(t.dataset.lvOpen) return lvOpen(t.dataset.lvOpen);
+  const v = (LV.list||[]).find(x=>x.id===(t.dataset.lvShare||t.dataset.lvRemove)); if(!v) return;
+  if(t.dataset.lvShare){
+    const on = t.dataset.on==='1';
+    if(!confirm(on ? `Share "${v.title}" with the whole cohort? Every student will be able to watch it and see its reactions and comments.` : `Move "${v.title}" back to ${coordName(v.coordinatorId)}'s group only?`)) return;
+    t.disabled = true;
+    const nv = Object.assign({}, v, { cohort:on, cohortAt:on ? Date.now() : 0, cohortBy:on ? ME.name : '' });
+    if(!(await lvSaveVideo(nv))){ t.disabled = false; return alert('Could not save the change. Check your connection and try again.'); }
+    if(on){ try{ const n = await lvNotifyStudents(nv, `New lesson for everyone: ${nv.title}`); alert(`Shared with the whole cohort. ${n} student${n===1?'':'s'} notified.`); }catch(e){} }
+    return lvRefreshList();
+  }
+  if(t.dataset.lvRemove){
+    if(!confirm(`Remove "${v.title}"? Students will no longer see it.`)) return;
+    const nv = Object.assign({}, v, { removed:true });
+    if(!(await lvSaveVideo(nv))) return alert('Could not remove it. Try again.');
+    try{ if(v.path) await sb.storage.from(LV_BUCKET).remove([v.path]); }catch(e){}
+    return lvRefreshList();
+  }
+}
+
+// ---------- the player window ----------
+function lvClose(){
+  const m = document.getElementById('lvModal'); if(m) m.remove();
+  if(LV.poll){ clearInterval(LV.poll); LV.poll = null; }
+  LV.openId = null;
+  if(currentTab==='lessons') lvRefreshList();
+}
+async function lvOpen(id){
+  const v = (LV.list||[]).find(x=>x.id===id); if(!v || !lvVisibleTo(v)) return;
+  const m0 = document.getElementById('lvModal'); if(m0) m0.remove();
+  await lvLoadEv(id);
+  LV.openId = id; LV.tab = 'reactions';
+  const staff = lvIsStaffFor(v), o = document.createElement('div');
+  o.id = 'lvModal';
+  o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.72); overflow:auto; padding:12px; display:flex; justify-content:center; align-items:flex-start;';
+  o.innerHTML = `<div role="dialog" aria-modal="true" aria-label="${lvEsc(v.title)}" style="background:#fff; border-radius:16px; width:min(780px,100%); margin:6px auto; padding:16px;">
+    <div style="display:flex; gap:10px; justify-content:space-between; align-items:flex-start;"><div><h3 style="margin:0; font-size:19px;">${lvEsc(v.title)}</h3><div class="note" style="margin:3px 0 0;">${lvEsc(v.byRole==='ambassador'?'Ambassador':(v.coordinatorId?coordName(v.coordinatorId):v.by))} \u00B7 ${lvEsc(fmtDateTime(v.createdAt))} \u00B7 ${v.cohort?'Whole cohort':'Group only'}</div></div><button class="btn ghost small" type="button" id="lvX">Close</button></div>
+    <p style="margin:10px 0; font-size:14px; line-height:1.55; white-space:pre-wrap;">${linkify(v.caption||'')}</p>
+    <video id="lvVideo" controls controlsList="nodownload" playsinline preload="metadata" src="${lvEsc(v.url)}" style="width:100%; max-height:60vh; border-radius:10px; background:#000;"></video>
+    <div id="lvStatsLine" class="note" style="margin:10px 0;"></div>
+    <div style="display:flex; gap:8px; margin:6px 0 10px;"><button class="mc-chip" type="button" data-lv-tab="reactions">Reactions</button><button class="mc-chip" type="button" data-lv-tab="comments">Comments</button>${staff?'<button class="mc-chip" type="button" data-lv-tab="watchers">Who watched</button>':''}</div>
+    <div id="lvPane"></div></div>`;
+  document.body.appendChild(o);
+  o.addEventListener('click', e=>{
+    if(e.target===o || e.target.id==='lvX') return lvClose();
+    const tb = e.target.closest('[data-lv-tab]'); if(tb){ LV.tab = tb.dataset.lvTab; return lvPaintPane(v, true); }
+    const rb = e.target.closest('[data-lv-react]'); if(rb) return lvReact(v, rb.dataset.lvReact);
+    if(e.target.closest('#lvPost')) return lvPostComment(v);
+    const dc = e.target.closest('[data-lv-delc]'); if(dc) return lvDelComment(v, dc.dataset.lvDelc);
+  });
+  if(ME.role==='student') lvTrack(v, o.querySelector('#lvVideo'));
+  lvPaintPane(v, true);
+  LV.poll = setInterval(async ()=>{ if(LV.openId!==v.id) return; await lvLoadEv(v.id); lvPaintPane(v, false); }, 15000);
+}
+function lvTrack(v, vid){
+  let last = 0, played = 0, sStart = false, sDone = false;
+  const mark = async kind=>{ const s = lvStats(v.id); if((kind==='view' ? s.started : s.done).has(ME.id)) return; await lvAddEv(v.id, { t:kind, sid:ME.id, name:ME.name, role:'student' }); lvPaintPane(v, false); };
+  const finish = ()=>{ if(!sStart){ sStart = true; mark('view'); } if(!sDone){ sDone = true; mark('done'); } };
+  vid.addEventListener('timeupdate', ()=>{
+    const t = vid.currentTime; if(!vid.paused && t>last && t-last<2) played += t-last; last = t;
+    if(!sStart && played>=5){ sStart = true; mark('view'); }
+    const d = vid.duration || v.durationSec || 0; if(!sDone && d && t>=d*0.9) finish();
+  });
+  vid.addEventListener('ended', finish);
+}
+function lvPaintPane(v, rebuild){
+  const pane = document.getElementById('lvPane'); if(!pane) return;
+  const s = lvStats(v.id), w = lvWatchedCount(v, s);
+  const line = document.getElementById('lvStatsLine');
+  if(line) line.innerHTML = lvIsStaffFor(v) ? `<b>${w.started}</b> of ${w.total} students watched \u00B7 ${w.done} finished \u00B7 ${lvReactSummary(s)} \u00B7 ${s.comments.length} comment${s.comments.length===1?'':'s'}` : `${lvReactSummary(s)} \u00B7 ${s.comments.length} comment${s.comments.length===1?'':'s'}`;
+  document.querySelectorAll('#lvModal [data-lv-tab]').forEach(b=>{ b.style.cssText = LV.tab===b.dataset.lvTab ? 'background:var(--navy-deep); color:#fff;' : ''; if(b.dataset.lvTab==='comments') b.textContent = `Comments (${s.comments.length})`; });
+  if(rebuild){
+    if(LV.tab==='reactions') pane.innerHTML = '<div id="lvReactBox"></div>';
+    else if(LV.tab==='comments') pane.innerHTML = `<div class="field" style="margin:0 0 10px;"><textarea id="lvCmt" rows="2" maxlength="600" placeholder="Write a comment or ask a question about this lesson"></textarea><div style="margin-top:6px;"><button class="btn teal small" type="button" id="lvPost">Post comment</button></div></div><div id="lvCmtList"></div>`;
+    else pane.innerHTML = '<div id="lvWatchBox"></div>';
+  }
+  const rb = document.getElementById('lvReactBox'); if(rb) rb.innerHTML = lvReactHtml(v, s);
+  const cl = document.getElementById('lvCmtList'); if(cl) cl.innerHTML = lvCommentsHtml(v, s);
+  const wb = document.getElementById('lvWatchBox'); if(wb) wb.innerHTML = lvWatchersHtml(v, s);
+}
+function lvReactHtml(v, s){
+  const mine = s.react.get(ME.id), mk = mine && mine.key;
+  const btns = LV_REACTS.map(r=>`<button type="button" class="mc-chip" data-lv-react="${r[0]}" aria-pressed="${mk===r[0]}" style="font-size:14px; padding:9px 14px;">${r[1]} ${r[2]} \u00B7 ${s.counts[r[0]]}</button>`).join(' ');
+  const names = LV_REACTS.map(r=>{ const who = [...s.react.values()].filter(e=>e.key===r[0]).map(e=>e.name||'Someone'); return who.length ? `<div style="margin-top:6px; font-size:13px;"><b>${r[1]} ${r[2]}:</b> ${who.map(lvEsc).join(', ')}</div>` : ''; }).join('');
+  return `<div style="display:flex; flex-wrap:wrap; gap:8px;">${btns}</div><p class="note" style="margin:8px 0 0;">Tap a reaction to choose it. Tap it again to take it back. ${v.cohort ? 'Everyone in the cohort can see these.' : 'Only this group, the coordinator and the Ambassador can see these until the video is shared with the whole cohort.'}</p>${names}`;
+}
+function lvCommentsHtml(v, s){
+  if(!s.comments.length) return '<div class="empty">No comments yet. Be the first to ask or share something.</div>';
+  return [...s.comments].reverse().map(c=>{
+    const role = c.role==='ambassador' ? '<span class="badge amb">Ambassador</span>' : c.role==='coordinator' ? '<span class="badge coord">Coordinator</span>' : '';
+    const canDel = c.sid===ME.id || lvCanManage(v);
+    return `<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-title" style="font-size:14px;">${lvEsc(c.name||'Someone')} ${role}</span><span class="item-meta">${lvEsc(fmtDateTime(c.ts))}</span></div><div class="item-body" style="white-space:pre-wrap;">${linkify(c.text||'')}</div>${canDel?`<div class="item-actions"><button class="btn ghost small" type="button" data-lv-delc="${lvEsc(c.id)}">Delete</button></div>`:''}</div>`;
+  }).join('');
+}
+function lvWatchersHtml(v, s){
+  const aud = lvAudience(v).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  if(!aud.length) return '<div class="empty">No students in this audience yet.</div>';
+  const rows = aud.map(st=>{ const d = s.done.get(st.id), b = s.started.get(st.id); const status = d ? `<span style="color:#1F8A70; font-weight:700;">Finished</span>` : b ? '<span style="color:#B9770E; font-weight:700;">Started</span>' : '<span style="color:var(--muted);">Not yet</span>'; return `<tr style="border-top:1px solid rgba(15,36,56,.08);"><td style="padding:6px 8px;">${lvEsc(st.name)}</td><td style="padding:6px 8px;">${lvEsc(st.group||'\u2014')}</td><td style="padding:6px 8px;">${status}</td></tr>`; }).join('');
+  return `<div style="overflow:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="text-align:left; color:var(--muted);"><th style="padding:4px 8px;">Student</th><th style="padding:4px 8px;">Group</th><th style="padding:4px 8px;">Watched</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+async function lvReact(v, key){
+  const s = lvStats(v.id), cur = s.react.get(ME.id), nk = cur && cur.key===key ? '' : key;
+  const ok = await lvAddEv(v.id, { t:'react', sid:ME.id, name:ME.name, role:ME.role, key:nk });
+  lvPaintPane(v, false); if(!ok) alert('Your reaction could not be saved. Check your connection.');
+}
+async function lvPostComment(v){
+  const ta = document.getElementById('lvCmt'); if(!ta) return;
+  const text = ta.value.trim(); if(!text) return;
+  const btn = document.getElementById('lvPost'); btn.disabled = true;
+  const ok = await lvAddEv(v.id, { t:'comment', sid:ME.id, name:ME.name, role:ME.role, text:text.slice(0,600) });
+  btn.disabled = false; if(!ok) return alert('Your comment could not be saved. Check your connection.');
+  ta.value = ''; lvPaintPane(v, false);
+}
+async function lvDelComment(v, cid){
+  if(!confirm('Delete this comment?')) return;
+  await lvAddEv(v.id, { t:'delcomment', ref:cid, sid:ME.id, name:ME.name, role:ME.role });
+  lvPaintPane(v, false);
+}
+
+/* ======================================================================
+   2. AUTOMATIC CLASS REMINDERS
+   ====================================================================== */
+const CR_OFFSETS = [[2880,'2 days before'],[1440,'1 day before'],[720,'12 hours before'],[180,'3 hours before'],[60,'1 hour before'],[30,'30 minutes before'],[15,'15 minutes before']];
+const CR_DEFAULT = { on:true, offsets:[1440,180,60,15], ch:{ push:true, email:true, sms:false } };
+const CR = { cfg:null, sent:[], loaded:false, busy:false, sel:null };
+async function crLoad(){
+  const c = await sGet('classrem:config', true), s = await sGet('classrem:sent', true);
+  CR.cfg = Object.assign({}, CR_DEFAULT, c || {}); CR.cfg.ch = Object.assign({}, CR_DEFAULT.ch, (c && c.ch) || {});
+  if(!Array.isArray(CR.cfg.offsets) || !CR.cfg.offsets.length) CR.cfg.offsets = CR_DEFAULT.offsets.slice();
+  CR.sent = Array.isArray(s) ? s : []; CR.loaded = true;
+}
+// A session by the Ambassador has its own audience. A coordinator's session goes to that coordinator's students.
+function crProxy(cs){ return cs.byAmbassador ? cs : Object.assign({}, cs, { byAmbassador:true, audience:{ scope:'coordinator', coordinatorId:cs.coordinatorId } }); }
+function crScope(cs){   // everyone the class is meant for, before the inactive ones are removed
+  const a = cs.byAmbassador ? (cs.audience || { scope:'all' }) : { scope:'coordinator', coordinatorId:cs.coordinatorId };
+  const all = DB.students || [];
+  if(a.scope==='coordinator') return all.filter(s=>s.coordinatorId===a.coordinatorId);
+  if(a.scope==='students') return all.filter(s=>(a.studentIds||[]).includes(s.id));
+  return all.slice();
+}
+function crLead(mins){
+  const m = Math.max(1, Math.round(mins));
+  if(m>=1440){ const d = Math.round(m/1440); return `Starts in ${d} day${d>1?'s':''}`; }
+  if(m>=120) return `Starts in about ${Math.round(m/60)} hours`;
+  if(m>=50) return 'Starts in about 1 hour';
+  return `Starts in ${m} minutes`;
+}
+function crOffsetLabel(o){ const f = CR_OFFSETS.find(x=>x[0]===o); return f ? f[1] : `${o} minutes before`; }
+function crDueTarget(cs, cfg, now){
+  if(!cs || cs.cancelled || !cs.startAt) return null;
+  const st = accraDate(cs.startAt); if(!st) return null;
+  const mins = (st.getTime() - now)/60000; if(mins<=0) return null;
+  const offs = cfg.offsets.slice().sort((a,b)=>a-b);
+  const due = offs.filter(o=> o>=mins && (!cs.createdAt || st.getTime()-o*60000 >= cs.createdAt - 1000));
+  if(!due.length) return null;
+  const target = due[0];
+  if(target - mins > target*0.5 + 10) return null;      // far too late for this reminder to still make sense
+  return { target, mins, k:`${cs.id}|${target}` };
+}
+async function crClaim(k){
+  let fresh = await sGet('classrem:sent', true); fresh = Array.isArray(fresh) ? fresh : [];
+  CR.sent = fresh;
+  if(fresh.some(x=>x.k===k && x.t!=='done')) return false;
+  await new Promise(r=>setTimeout(r, Math.random()*2500));
+  const mine = { id:uid(), k, by:ME.id, byName:ME.name, ts:Date.now() };
+  try{ const { error } = await sb.rpc('append_kv_item', { p_key:'classrem:sent', p_item:mine }); if(error) throw error; }catch(e){ console.warn('reminder claim failed', e); return false; }
+  let after = await sGet('classrem:sent', true); after = Array.isArray(after) ? after : [mine]; CR.sent = after;
+  const first = after.find(x=>x.k===k && x.t!=='done');
+  return !!first && first.id===mine.id;
+}
+async function crTick(){
+  if(CR.busy || !ME || !DB || !DB.callsheets) return;
+  if(ME.role!=='ambassador' && ME.role!=='coordinator') return;
+  CR.busy = true;
+  try{
+    if(!CR.loaded) await crLoad();
+    const cfg = CR.cfg; if(!cfg.on || !(cfg.ch.push || cfg.ch.email || cfg.ch.sms)) return;
+    const now = Date.now();
+    for(const cs of (DB.callsheets||[])){
+      const due = crDueTarget(cs, cfg, now); if(!due) continue;
+      if(CR.sent.some(x=>x.k===due.k && x.t!=='done')) continue;
+      if(!(await crClaim(due.k))) continue;
+      const px = crProxy(cs), rec = classStudents(px);
+      let note = 'No eligible students.';
+      if(rec.length){ try{ note = await sendClassNotice(px, { email:!!cfg.ch.email, sms:!!cfg.ch.sms, push:!!cfg.ch.push }, 'reminder', { lead:crLead(due.mins), author:programName() }); }catch(e){ console.error(e); note = 'Sending failed.'; } }
+      try{ await sb.rpc('append_kv_item', { p_key:'classrem:sent', p_item:{ id:uid(), k:due.k, t:'done', title:cs.title, offset:due.target, n:rec.length, note, ts:Date.now() } }); }catch(e){}
+    }
+  }catch(e){ console.warn('reminder tick failed', e); }
+  finally{ CR.busy = false; }
+}
+function crNextText(cs){
+  const cfg = CR.cfg; if(!cfg || !cfg.on) return 'Reminders are off.';
+  if(cs.cancelled) return '';
+  const st = accraDate(cs.startAt); if(!st) return '';
+  const now = Date.now(), sent = new Set((CR.sent||[]).map(x=>x.k));
+  const next = cfg.offsets.slice().sort((a,b)=>b-a).map(o=>({ o, at:st.getTime()-o*60000 })).find(x=>x.at>now && !sent.has(`${cs.id}|${x.o}`) && (!cs.createdAt || x.at>=cs.createdAt));
+  if(!next) return st.getTime()>now ? 'All reminders for this class have been handled.' : '';
+  const mins = Math.round((next.at-now)/60000), t = mins>=1440 ? `${Math.round(mins/1440)} day(s)` : mins>=60 ? `${Math.floor(mins/60)} h ${mins%60} min` : `${mins} min`;
+  return `Next reminder: ${crOffsetLabel(next.o).toLowerCase()} (in ${t}).`;
+}
+
+// students see a small banner when a class is about to start or is running
+function crStudentBanner(){
+  const old = document.getElementById('crBanner');
+  if(!ME || ME.role!=='student'){ if(old) old.remove(); return; }
+  let best = null, now = Date.now();
+  try{ callsForStudent().forEach(cs=>{
+    if(cs.cancelled || !cs.startAt) return;
+    const st = accraDate(cs.startAt); if(!st) return; const en = accraDate(cs.endAt);
+    const m = (st.getTime()-now)/60000, live = m<=0 && (en ? now<en.getTime() : m>-120);
+    if((m>0 && m<=90) || live){ if(!best || m<best.m) best = { cs, m, live }; }
+  }); }catch(e){}
+  if(!best || sessionStorage.getItem('crDismiss:'+best.cs.id)){ if(old) old.remove(); return; }
+  const text = best.live ? `Class is on now: ${best.cs.title}` : `${crLead(best.m)}: ${best.cs.title}`;
+  const link = best.cs.link ? normalizeUrl(best.cs.link) : '';
+  const html = `<span style="flex:1; min-width:0;"><b>\u{1F4DA} ${lvEsc(text)}</b></span>${link?`<a href="${lvEsc(link)}" target="_blank" rel="noopener" class="btn teal small" style="text-decoration:none;">Join</a>`:''}<button type="button" class="btn ghost small" id="crBannerX">Dismiss</button>`;
+  let el = old;
+  if(!el){ el = document.createElement('div'); el.id = 'crBanner'; el.style.cssText = 'position:fixed; left:50%; transform:translateX(-50%); bottom:16px; z-index:1500; background:#fff; border:2px solid var(--amber-deep, #E39A3B); border-radius:14px; padding:10px 14px; display:flex; gap:10px; align-items:center; width:min(560px, calc(100% - 24px)); box-shadow:0 8px 28px rgba(8,20,30,.25); font-size:14px;'; document.body.appendChild(el); }
+  el.innerHTML = html;
+  const x = document.getElementById('crBannerX'); if(x) x.onclick = ()=>{ try{ sessionStorage.setItem('crDismiss:'+best.cs.id, '1'); }catch(e){} el.remove(); };
+}
+
+// ---------- reminder panel on Schedule classes ----------
+function crPanelShell(){ return '<div id="crPanel" style="margin-bottom:18px;"><div class="empty">Loading reminders\u2026</div></div>'; }
+async function crWirePanel(){
+  const box = document.getElementById('crPanel'); if(!box) return;
+  await crLoad(); crPaintPanel();
+}
+function crUpcoming(){
+  const now = Date.now();
+  return (DB.callsheets||[]).filter(c=>!c.cancelled && c.startAt && accraDate(c.startAt) && accraDate(c.startAt).getTime()>now).sort((a,b)=>accraDate(a.startAt)-accraDate(b.startAt));
+}
+function crSummaryHtml(){
+  const up = crUpcoming();
+  if(!up.length) return '<div class="empty">No upcoming classes. Schedule one above and the students who will be reminded appear here.</div>';
+  if(!CR.sel || !up.some(c=>c.id===CR.sel)) CR.sel = up[0].id;
+  const cs = up.find(c=>c.id===CR.sel), scope = crScope(cs), coords = (DB.coordinators||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const elig = s=>!ghostedStudent(s);
+  const group = (title, sub, list)=>{
+    const ok = list.filter(elig).length;
+    return `<details class="card" style="margin-bottom:10px;"><summary style="cursor:pointer; list-style:none;"><div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;"><b>${lvEsc(title)}</b><span class="note" style="margin:0;">${list.length} student${list.length===1?'':'s'} \u00B7 <span style="color:#1F8A70;">${ok} will be reminded</span> \u00B7 <span style="color:#C0392B;">${list.length-ok} skipped</span></span></div><div class="note" style="margin:4px 0 0;">${sub}</div></summary>
+      ${list.length ? `<div style="overflow:auto; margin-top:8px;"><table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="text-align:left; color:var(--muted);"><th style="padding:4px 8px;">Student</th><th style="padding:4px 8px;">Activeness</th><th style="padding:4px 8px;">Reminder</th><th style="padding:4px 8px;">Reaches them by</th></tr></thead><tbody>
+      ${list.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))).map(s=>{ const e = elig(s), ch = ['App notification']; if(s.email && s.notifyEmail!==false) ch.push('Email'); if(s.phone && s.notifySms) ch.push('Text'); return `<tr style="border-top:1px solid rgba(15,36,56,.08);"><td style="padding:6px 8px;">${lvEsc(s.name||'')}</td><td style="padding:6px 8px;">${accessBadge(s)}</td><td style="padding:6px 8px;">${e?'<span style="color:#1F8A70; font-weight:700;">Will be reminded</span>':'<span style="color:#C0392B; font-weight:700;">Skipped</span>'}</td><td style="padding:6px 8px; color:var(--muted);">${e?ch.join(', '):'\u2014'}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="note" style="margin:10px 0 0;">No students here.</p>'}</details>`;
+  };
+  const seen = c=>{ const d = dutyDays(coordSeenMs(c)); return seenText(d).toLowerCase(); };
+  const blocks = coords.map(c=>{ const list = scope.filter(s=>s.coordinatorId===c.id); return list.length ? group(c.name||'Unnamed', `Coordinator ${seen(c)}`, list) : ''; }).join('');
+  const orphans = scope.filter(s=>!s.coordinatorId || !coords.some(c=>c.id===s.coordinatorId));
+  const totalOk = scope.filter(elig).length;
+  return `<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+      <div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700;">${scope.length}</div><div class="note" style="margin:0;">in this class</div></div>
+      <div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700; color:#1F8A70;">${totalOk}</div><div class="note" style="margin:0;">will be reminded</div></div>
+      <div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700; color:#C0392B;">${scope.length-totalOk}</div><div class="note" style="margin:0;">skipped (inactive)</div></div></div>
+    ${blocks}${orphans.length ? group('Not yet paired', 'Students without a coordinator', orphans) : ''}`;
+}
+function crPaintPanel(){
+  const box = document.getElementById('crPanel'); if(!box || !CR.cfg) return;
+  const cfg = CR.cfg, s = DB.settings || {}, up = crUpcoming();
+  const log = (CR.sent||[]).filter(x=>x.t==='done').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,10);
+  box.innerHTML = `<div class="card" style="margin-bottom:14px;">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;"><h3 style="margin:0; font-size:16px;">Automatic class reminders</h3>
+        <label class="eb-check" style="margin:0;"><input type="checkbox" id="crOn" ${cfg.on?'checked':''}> <b>${cfg.on?'On':'Off'}</b></label></div>
+      <p class="note" style="margin:6px 0 10px;">Eligible students are reminded again and again as a class gets closer. Students who are inactive or switched off are never contacted. A reminder goes out only once for each time slot, even if several people have the portal open.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">${CR_OFFSETS.map(([m,l])=>`<button type="button" class="mc-chip" data-cr-off="${m}" aria-pressed="${cfg.offsets.includes(m)}">${l}</button>`).join('')}</div>
+      <label class="eb-check"><input type="checkbox" id="crPush" ${cfg.ch.push?'checked':''}> App notification (web push)</label>
+      <label class="eb-check"><input type="checkbox" id="crEmail" ${cfg.ch.email?'checked':''}> Email</label>
+      <label class="eb-check"><input type="checkbox" id="crSms" ${cfg.ch.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit${s.webhookUrl?'':'; SMS is not connected yet'})</span></label>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px;"><button class="btn teal small" type="button" id="crSave">Save reminder settings</button><span class="note" id="crMsg" style="margin:0;"></span></div>
+      <p class="note" style="margin:10px 0 0;">Reminders are sent by the portal while the Ambassador or any coordinator has it open. Students who have the portal open also see a banner when a class is about to start. ${up.length ? 'Next class: <b>'+lvEsc(up[0].title)+'</b>. '+lvEsc(crNextText(up[0])) : ''}</p></div>
+    <div class="section-title" style="margin-top:6px;"><div><h2>Who will be reminded</h2><p>Coordinators with their students and whether each one is active. Choose a class to check.</p></div></div>
+    ${up.length ? `<div class="field" style="max-width:420px;"><select id="crSel">${up.map(c=>`<option value="${lvEsc(c.id)}" ${c.id===CR.sel?'selected':''}>${lvEsc(c.title)} \u2014 ${lvEsc(fmtSessionTime(c))}</option>`).join('')}</select></div>` : ''}
+    <div id="crSummary">${crSummaryHtml()}</div>
+    <div class="section-title" style="margin-top:22px;"><div><h2>Reminder log</h2><p>The latest automatic reminders and what happened.</p></div></div>
+    <div class="list">${log.length ? log.map(x=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-title" style="font-size:14px;">${lvEsc(x.title||'')} \u00B7 ${lvEsc(crOffsetLabel(x.offset).toLowerCase())}</span><span class="item-meta">${lvEsc(fmtDateTime(x.ts))}</span></div><div class="item-body" style="font-size:13px;">${lvEsc(x.note||'')} (${x.n||0} eligible)</div></div>`).join('') : '<div class="empty">No automatic reminders sent yet.</div>'}</div>`;
+  box.onclick = e=>{ const b = e.target.closest('[data-cr-off]'); if(!b) return; const on = b.getAttribute('aria-pressed')!=='true'; b.setAttribute('aria-pressed', String(on)); };
+  const sel = document.getElementById('crSel'); if(sel) sel.onchange = ()=>{ CR.sel = sel.value; const sm = document.getElementById('crSummary'); if(sm) sm.innerHTML = crSummaryHtml(); };
+  document.getElementById('crSave').onclick = async ()=>{
+    const offs = [...box.querySelectorAll('[data-cr-off][aria-pressed="true"]')].map(b=>parseInt(b.dataset.crOff,10)).sort((a,b)=>b-a);
+    const next = { on:document.getElementById('crOn').checked, offsets:offs, ch:{ push:document.getElementById('crPush').checked, email:document.getElementById('crEmail').checked, sms:document.getElementById('crSms').checked } };
+    const m = document.getElementById('crMsg');
+    if(next.on && !offs.length){ m.textContent = 'Choose at least one reminder time.'; return; }
+    if(next.on && !(next.ch.push || next.ch.email || next.ch.sms)){ m.textContent = 'Choose at least one way to reach students.'; return; }
+    m.textContent = 'Saving\u2026';
+    const ok = await sSet('classrem:config', next, true);
+    if(ok){ CR.cfg = next; m.textContent = 'Saved.'; crPaintPanel(); } else m.textContent = 'Could not save. Check your connection.';
+  };
+}
+
+/* ======================================================================
+   3. UPDATES & GUIDE  (duty: "updates")
+   ====================================================================== */
+const UPD = { stored:null, adding:false, editId:null, filter:'all', prevSeen:0, share:null };
+const UPD_BUILTIN = [
+  { id:'u-lessons', kind:'update', tag:'New', ts:Date.parse('2026-11-02T08:00:00Z'), title:'Lesson videos are live',
+    body:'Coordinators can now upload lesson videos of about 10 minutes (up to 12 minutes) in the new *Lessons* section.\n\n*How it works*\n1. Open *Lessons*, write a title and a caption, choose the video and press Upload.\n2. Your students are notified. They can watch, react and comment.\n3. You see how many students started and finished each video, and who they are.\n4. The Ambassador can share any coordinator\u2019s video with the whole cohort. Once it is shared, everyone sees the same reactions and comments.\n\n*Tip:* record in landscape, keep the file under 50 MB (720p MP4 works well) and use the caption to tell students what to do after watching.' },
+  { id:'u-reminders', kind:'update', tag:'New', ts:Date.parse('2026-11-02T08:01:00Z'), title:'Automatic class reminders',
+    body:'Students are now reminded about every upcoming class automatically: by default 1 day, 3 hours, 1 hour and 15 minutes before it starts, by app notification and email.\n\n*What coordinators should know*\n\u2022 Only active students are reminded. Inactive or switched-off students are skipped.\n\u2022 Reminders for your own sessions go to your students.\n\u2022 The Ambassador controls the times and channels under *Classes > Schedule classes*, where a list shows every coordinator with their students and who will be reminded.\n\u2022 A student who has the portal open also sees a banner when a class is about to start.' },
+  { id:'u-updates', kind:'update', tag:'New', ts:Date.parse('2026-11-02T08:02:00Z'), title:'Updates & Guide: a new duty',
+    body:'This page keeps the assigned coordinator informed about every new update to the portal, with a plain explanation of what each section does.\n\n*What you can do here*\n\u2022 Read new updates (marked NEW).\n\u2022 Open the *Portal guide* to read a full explanation of any section.\n\u2022 Edit any update or guide entry so the wording is clear for your audience.\n\u2022 Share it on WhatsApp with a person, a group or any chat. The message is ready for you to adjust before you send.\n\u2022 Add your own update when something changes.\n\nThe Ambassador sees this page too, and every edit and share is recorded under Team & duties.' },
+  { id:'g-home', kind:'guide', tag:'Guide', ts:0, title:'Home and Overview',
+    body:'*Who uses it:* everyone.\n\nThis is the first screen after sign-in. Students see their onboarding steps first (confirm your place, watch the orientation video), and after that their coordinator\u2019s details and daily work. Coordinators see an overview of their group. The Ambassador sees programme-wide numbers and the Activity feed, which lists every call sheet, resource, practice question and message from every coordinator in one place.' },
+  { id:'g-students', kind:'guide', tag:'Guide', ts:0, title:'My students',
+    body:'*Who uses it:* coordinators (the Ambassador sees all students under People).\n\nShows your students, lowest progress first. Give each student a group so revision sessions and call sheets can target the right cluster. Each student shows whether they are Active or Inactive. A student who has not been seen for a long time is switched to inactive and is then left out of announcements, alerts, classes and reminders until they are reactivated. If the Ambassador switched a student off, only the Ambassador can switch them back on.' },
+  { id:'g-sessions', kind:'guide', tag:'Guide', ts:0, title:'Sessions (call sheets)',
+    body:'*Who uses it:* coordinators publish, students read.\n\nPublish your session schedule with a title, start and end time (Accra time), a meeting link and notes. The status changes by itself: Upcoming, Active, Completed or Cancelled. Students see their coordinator\u2019s sessions, plus any class the Ambassador scheduled for them. Students are reminded automatically before each session.' },
+  { id:'g-roadmap', kind:'guide', tag:'Guide', ts:0, title:'Roadmap, practice, quizzes and mock',
+    body:'*Who uses it:* students work in it, coordinators and the Ambassador build it.\n\nThe Roadmap is the learning path. A section opens for students on its start date and stays open afterwards. Inside it you will find:\n\u2022 *Daily practice:* five questions a day. Short, regular sessions beat long ones done rarely.\n\u2022 *Weekly practice question:* one sharp problem a week.\n\u2022 *Quizzes:* quick auto-graded multiple-choice checks.\n\u2022 *Polls:* quick votes with live results.\n\u2022 *Materials and Resource library:* notes, slide decks and past papers from coordinators and the Ambassador desk.\n\u2022 *Mock competition:* a timed, auto-marked practice of 15 questions in 30 minutes. Every mock is freshly written.\nCoordinators and the Ambassador can add questions, review AI-written drafts before posting, and fix questions that students report.' },
+  { id:'g-exams', kind:'guide', tag:'Guide', ts:0, title:'Exams',
+    body:'*Who uses it:* coordinators and the Ambassador build, students sit.\n\nBuild a timed online exam, set when it opens and closes and how many attempts are allowed. Students answer one question per screen and every question has its own timer. The Ambassador can oversee or remove any exam and releases results and retakes. Marking should follow a written scheme so every student is judged the same way.' },
+  { id:'g-community', kind:'guide', tag:'Guide', ts:0, title:'Community chat and Coordinator lounge',
+    body:'*Community chat* is one group chat for students, coordinators and the Ambassador. Type @ to tag someone. Keep it kind and about chemistry and the programme.\n\n*Coordinator lounge* is a private space for coordinators and the Ambassador to swap tips and coordinate. Students never see it.' },
+  { id:'g-messages', kind:'guide', tag:'Guide', ts:0, title:'Student messages and Ask your coordinator',
+    body:'Students use *Ask your coordinator* to talk to their coordinator and the Ambassador desk, and can see what their groupmates ask. Coordinators answer under *Student messages*. Reply quickly: unanswered questions are the most common reason students go quiet.' },
+  { id:'g-alerts', kind:'guide', tag:'Guide', ts:0, title:'Alerts, Notifications and logs',
+    body:'*Alerts* are priority notices. Critical alerts stay pinned at the top of a student\u2019s dashboard until they acknowledge them. *Notifications* is the feed of every announcement and group message. The *SMS log* shows every text and its real delivery result. The *Email log* shows every email sent and how it went. Use the logs first when a student says they never received something.' },
+  { id:'g-lessons', kind:'guide', tag:'Guide', ts:0, title:'Lesson videos',
+    body:'*Who uses it:* coordinators upload, students watch, the Ambassador shares.\n\n*Upload:* write a title and caption first, then choose a video of about 10 minutes (max 12 minutes, 50 MB). Tick the box to notify your students.\n*Watch:* students watch inside the portal. A student counts as having watched after a few seconds of playing, and as finished near the end.\n*React and comment:* students choose one reaction (Helpful, Made sense, Loved it, Confusing) and can comment. Coordinators can reply and remove comments.\n*Who watched:* the coordinator sees which students started and finished.\n*Whole cohort:* the Ambassador can share any coordinator\u2019s video with everyone. From then on every student sees its reactions and comments.' },
+  { id:'g-classes', kind:'guide', tag:'Guide', ts:0, title:'Schedule classes and reminders',
+    body:'*Who uses it:* the Ambassador.\n\nSchedule a class for all students, one coordinator\u2019s students or selected students. Choose whether to tell them by email, text message or app notification. You can cancel, un-cancel, remove or notify again.\n\n*Automatic reminders:* choose the reminder times (for example 1 day, 3 hours, 1 hour and 15 minutes before) and the channels. The page lists every coordinator with their students and whether each is active, so you can see who will and will not be reminded. The reminder log shows what was sent.' },
+  { id:'g-people', kind:'guide', tag:'Guide', ts:0, title:'People, activity and reach out',
+    body:'*Who uses it:* the Ambassador and the coordinator holding the Activity duty.\n\n\u2022 *People:* the roster of coordinators and students. Add them first, because this is what lets them sign in.\n\u2022 *Coordinators & students:* every coordinator with their students, how many are active or inactive, and each student\u2019s group.\n\u2022 *Coordinator load:* how many students each coordinator has, fewest first, so you know who has room.\n\u2022 *Activity stats:* Active means seen in the last 7 days, slipping is 7 to 13 days, very inactive is 14 days or more.\n\u2022 *Reach out:* email or WhatsApp people who have gone quiet. Be encouraging and ask what is in the way.' },
+  { id:'g-applicants', kind:'guide', tag:'Guide', ts:0, title:'Applicants and onboarding',
+    body:'*Who uses it:* the Ambassador and the coordinator holding the Applications duty.\n\nApplications arrive from the public form. Mark an applicant in review, invite them to an interview (they get the details, and the panel coordinators are invited on WhatsApp), then accept or decline. Accepting switches on their student portal; the Ambassador writes the email and text separately. People who signed up while applications were closed wait on the Interest List until you move them in. *Onboarding* holds the videos new students must watch to the end before they unlock their coordinator and the WhatsApp group. *Open & deadline* opens or pauses applications and sets the closing date.' },
+  { id:'g-broadcast', kind:'guide', tag:'Guide', ts:0, title:'Announcements and messages',
+    body:'*Announcements* go from the Ambassador desk to everyone, or only to coordinators, or only to students. *Alerts* are priority notices. *Text a student* and *Email a student* reach one person only, never a group. Always proofread names, dates and links before sending.' },
+  { id:'g-certificates', kind:'guide', tag:'Guide', ts:0, title:'Certificates',
+    body:'The Ambassador issues a Certificate of Service to coordinators and a Certificate of Participation to students. Each has a unique ID that anyone can use to verify it. It recognises participation and is not an academic qualification.' },
+  { id:'g-settings', kind:'guide', tag:'Guide', ts:0, title:'Settings, Team & duties and profiles',
+    body:'*Settings* holds the programme name and status banner, email and SMS connections, and WhatsApp group links for new students. *Team & duties* lets the Ambassador hand sections of the portal to coordinators and take them back. Each appointment comes with a WhatsApp message and an email listing the duties, and every duty has a place to report back. *Public profile* is what shows under Meet the team on the public website.' }
+];
+async function updLoad(){ const v = await sGet('duty:updates', true); if(Array.isArray(v)) UPD.stored = v; else if(!UPD.stored) UPD.stored = []; }
+function updItems(){
+  const st = new Map((UPD.stored||[]).map(x=>[x.id, x])), out = [];
+  UPD_BUILTIN.forEach(b=>{ const o = st.get(b.id); out.push(Object.assign({}, b, o || {}, { builtin:true, edited:!!o, ts:b.ts })); st.delete(b.id); });
+  st.forEach(x=>{ if(x && !x.deleted) out.push(Object.assign({}, x, { builtin:false })); });
+  return out;
+}
+async function updSave(item){
+  const fresh = await sGet('duty:updates', true);
+  const base = Array.isArray(fresh) ? fresh : (UPD.stored || []);
+  const next = base.filter(x=>x && x.id!==item.id).concat([item]);
+  const ok = await sSet('duty:updates', next, true); if(ok) UPD.stored = next; return ok;
+}
+async function updDrop(id){
+  const fresh = await sGet('duty:updates', true);
+  const base = Array.isArray(fresh) ? fresh : (UPD.stored || []);
+  const next = base.filter(x=>x && x.id!==id);
+  const ok = await sSet('duty:updates', next, true); if(ok) UPD.stored = next; return ok;
+}
+function updShareText(it){
+  const url = portalUrl();
+  return ['*'+programName().toUpperCase()+'*', '*'+it.title+'*', '', it.body, '', url ? 'Portal: '+url : '', '\u2014 '+ME.name].join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function updatesWorkspaceHtml(){
+  UPD.prevSeen = parseInt(localStorage.getItem('ichc:updSeen:'+ME.id) || '0', 10) || 0;
+  const p = dutyPerson('updates');
+  const lead = ME.role==='ambassador'
+    ? `<p>Everything the assigned coordinator reads and shares about portal updates and features. You can read, edit and share it too. <b>Assigned to:</b> ${p && p.name ? lvEsc(p.name) : 'nobody yet (appoint someone under Team & duties)'}.</p>`
+    : '<p>New updates to the portal and a clear explanation of every section. Edit anything to make it clearer, then share it on WhatsApp with a person, a group or any chat.</p>';
+  return `<div class="section-title"><div><h2>Updates &amp; guide</h2>${lead}</div></div>
+  ${ME.role==='coordinator' ? dutyCardHtml('updates') : ''}
+  <div id="updRoot">${UPD.stored ? updRootHtml() : '<div class="empty">Loading\u2026</div>'}</div>
+  ${ME.role==='ambassador' ? '<div class="section-title" style="margin-top:26px;"><div><h2>Recent activity</h2><p>Edits and shares on this page, newest first.</p></div></div><div class="list" id="updLog"><div class="empty">Loading\u2026</div></div>' : ''}`;
+}
+function updCardHtml(it){
+  const isNew = it.kind==='update' && (it.ts||0) > UPD.prevSeen;
+  if(UPD.editId===it.id) return `<div class="card" style="margin-bottom:12px; border-color:var(--amber-deep);"><div class="field"><label>Title</label><input id="updT" maxlength="120" value="${lvEsc(it.title)}"></div><div class="field"><label>Message (use *bold* the way WhatsApp does)</label><textarea id="updB" rows="12" maxlength="4000">${lvEsc(it.body)}</textarea></div><div style="display:flex; flex-wrap:wrap; gap:8px;"><button class="btn teal small" type="button" data-upd-savedit="${lvEsc(it.id)}">Save changes</button><button class="btn ghost small" type="button" data-upd-cancel>Cancel</button>${it.builtin && it.edited ? `<button class="btn ghost small" type="button" data-upd-reset="${lvEsc(it.id)}">Restore original wording</button>` : ''}</div></div>`;
+  const tagc = it.tag==='New' ? 'background:rgba(227,154,59,.2); color:#8A5A12;' : it.tag==='Fix' ? 'background:rgba(31,138,112,.15); color:var(--teal-deep);' : '';
+  const body = linkify(it.body).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+  const meta = [it.kind==='update' && it.ts ? fmtDateTime(it.ts) : '', it.edited || it.updatedBy ? `Edited by ${it.updatedBy||'a coordinator'}` : '', !it.builtin && it.by ? `Added by ${it.by}` : ''].filter(Boolean).join(' \u00B7 ');
+  const actions = `<div class="item-actions"><button class="wa-btn" type="button" data-upd-share="${lvEsc(it.id)}">${WA_ICON}Share on WhatsApp</button><button class="btn ghost small" type="button" data-upd-edit="${lvEsc(it.id)}">Edit</button><button class="btn ghost small" type="button" data-upd-copy="${lvEsc(it.id)}">Copy</button>${!it.builtin ? `<button class="btn ghost small" type="button" data-upd-del="${lvEsc(it.id)}">Delete</button>` : ''}</div>`;
+  if(it.kind==='guide') return `<details class="card" style="margin-bottom:10px;"><summary style="cursor:pointer; list-style:none; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;"><b>${lvEsc(it.title)}</b><span class="note" style="margin:0;">${lvEsc(meta)}</span></summary><div style="margin-top:10px; font-size:14px; line-height:1.6;">${body}</div>${actions}</details>`;
+  return `<div class="item" style="margin-bottom:12px;"><div class="item-head"><span class="item-title">${lvEsc(it.title)} ${isNew?'<span class="badge" style="background:#C0392B; color:#fff;">NEW</span>':''}</span><span class="badge" style="${tagc}">${lvEsc(it.tag||'Update')}</span></div><div class="item-meta" style="margin-bottom:6px;">${lvEsc(meta)}</div><div class="item-body" style="line-height:1.6;">${body}</div>${actions}</div>`;
+}
+function updRootHtml(){
+  const all = updItems(), f = UPD.filter;
+  const updates = all.filter(x=>x.kind==='update').sort((a,b)=>(b.ts||0)-(a.ts||0)), guide = all.filter(x=>x.kind==='guide');
+  const chip = (v,l)=>`<button type="button" class="mc-chip" data-upd-filter="${v}" aria-pressed="${f===v}">${l}</button>`;
+  const nNew = updates.filter(x=>(x.ts||0)>UPD.prevSeen).length;
+  const form = UPD.adding ? `<div class="card" style="margin-bottom:14px; border-color:var(--amber-deep);"><div class="field"><label for="updNT">Title</label><input id="updNT" maxlength="120" placeholder="e.g. Exam timer now shows on every question"></div><div class="field"><label for="updNB">What changed, and what people should do (use *bold* the way WhatsApp does)</label><textarea id="updNB" rows="8" maxlength="4000"></textarea></div><div style="display:flex; flex-wrap:wrap; gap:8px;"><select id="updNTag" style="max-width:160px;"><option>New</option><option>Feature</option><option>Fix</option><option>Notice</option></select><button class="btn teal small" type="button" id="updAddSave">Save update</button><button class="btn ghost small" type="button" data-upd-cancel>Cancel</button></div></div>` : '';
+  return `<div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px;">${chip('all','Everything')}${chip('updates','What\u2019s new'+(nNew?' ('+nNew+')':''))}${chip('guide','Portal guide')}<button class="btn amber small" type="button" id="updAdd" style="margin-left:auto;">Add an update</button></div>
+  ${form}
+  ${f!=='guide' ? `<div class="section-title"><div><h2>What\u2019s new</h2><p>Newest first. Items marked NEW appeared since you last opened this page.</p></div></div>${updates.map(updCardHtml).join('') || '<div class="empty">No updates yet.</div>'}` : ''}
+  ${f!=='updates' ? `<div class="section-title" style="margin-top:22px;"><div><h2>Portal guide</h2><p>What every section does and who uses it. Open one to read it, edit it or share it.</p></div></div>${guide.map(updCardHtml).join('')}` : ''}`;
+}
+async function updWire(){
+  const root = document.getElementById('updRoot'); if(!root) return;
+  if(!root.dataset.wired){ root.dataset.wired = '1'; root.addEventListener('click', updClick); }
+  await updLoad();
+  const r2 = document.getElementById('updRoot'); if(!r2) return;
+  r2.innerHTML = updRootHtml();
+  clearTimeout(UPD.seenTimer); UPD.seenTimer = setTimeout(()=>{ try{ localStorage.setItem('ichc:updSeen:'+ME.id, String(Date.now())); }catch(e){} }, 8000);
+  if(ME.role==='ambassador') updFillLog();
+}
+async function updFillLog(){
+  const box = document.getElementById('updLog'); if(!box) return;
+  let log = []; try{ log = (await sGet('duty:log', true)) || []; }catch(e){}
+  log = log.filter(e=>e && e.duty==='updates').sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,30);
+  box.innerHTML = log.length ? log.map(e=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-title">${lvEsc(e.by||'')}</span><span class="item-meta">${lvEsc(fmtDateTime(e.ts))}</span></div><div class="item-body">${lvEsc(e.action||'')}</div></div>`).join('') : '<div class="empty">Nothing recorded yet.</div>';
+}
+function updRepaint(){ const r = document.getElementById('updRoot'); if(r) r.innerHTML = updRootHtml(); }
+async function updClick(ev){
+  const t = ev.target.closest('[data-upd-filter],[data-upd-share],[data-upd-edit],[data-upd-copy],[data-upd-del],[data-upd-savedit],[data-upd-cancel],[data-upd-reset],#updAdd,#updAddSave'); if(!t) return;
+  const q = id=>document.getElementById(id), items = updItems();
+  if(t.dataset.updFilter){ UPD.filter = t.dataset.updFilter; return updRepaint(); }
+  if(t.id==='updAdd'){ UPD.adding = true; return updRepaint(); }
+  if(t.hasAttribute('data-upd-cancel')){ UPD.adding = false; UPD.editId = null; return updRepaint(); }
+  if(t.id==='updAddSave'){
+    const title = q('updNT').value.trim(), body = q('updNB').value.trim();
+    if(!title || !body) return alert('Add a title and a message.');
+    const item = { id:uid(), kind:'update', tag:q('updNTag').value, title, body, ts:Date.now(), by:ME.name };
+    t.disabled = true;
+    if(!(await updSave(item))){ t.disabled = false; return alert('Could not save. Try again.'); }
+    UPD.adding = false; updRepaint();
+    await logDuty('updates', `Added update: ${title}`);
+    if(ME.role==='ambassador'){ const p = dutyPerson('updates'); if(p && p.id){ try{ await appendShared('notifications', { id:uid(), refId:item.id, kind:'update', title:`New portal update: ${title}`, body:body.slice(0,160), author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{[ME.id]:Date.now()}, toIds:[p.id], audience:'coordinators' }); }catch(e){} } }
+    return;
+  }
+  const id = t.dataset.updShare || t.dataset.updEdit || t.dataset.updCopy || t.dataset.updDel || t.dataset.updSavedit || t.dataset.updReset;
+  const it = items.find(x=>x.id===id); if(!it) return;
+  if(t.dataset.updEdit){ UPD.editId = id; return updRepaint(); }
+  if(t.dataset.updSavedit){
+    const title = q('updT').value.trim(), body = q('updB').value.trim();
+    if(!title || !body) return alert('The title and message cannot be empty.');
+    const rec = { id:it.id, kind:it.kind, tag:it.tag, title, body, ts:it.ts, by:it.by, updatedBy:ME.name, updatedAt:Date.now() };
+    t.disabled = true;
+    if(!(await updSave(rec))){ t.disabled = false; return alert('Could not save. Try again.'); }
+    UPD.editId = null; updRepaint(); return logDuty('updates', `Edited: ${title}`);
+  }
+  if(t.dataset.updReset){ if(!confirm('Restore the original wording?')) return; if(!(await updDrop(id))) return alert('Could not restore. Try again.'); UPD.editId = null; updRepaint(); return logDuty('updates', `Restored original wording: ${it.title}`); }
+  if(t.dataset.updDel){ if(!confirm(`Delete "${it.title}"?`)) return; if(!(await updDrop(id))) return alert('Could not delete. Try again.'); updRepaint(); return logDuty('updates', `Deleted update: ${it.title}`); }
+  if(t.dataset.updCopy){ const txt = updShareText(it); try{ await navigator.clipboard.writeText(txt); t.textContent = 'Copied'; setTimeout(()=>{ t.textContent = 'Copy'; }, 1500); }catch(e){ prompt('Copy this message:', txt); } return; }
+  if(t.dataset.updShare) return updOpenShare(it);
+}
+function updOpenShare(it){
+  const old = document.getElementById('updShareModal'); if(old) old.remove();
+  const people = [...(DB.coordinators||[]).filter(c=>c.phone).map(c=>({ n:c.name+' (coordinator)', p:c.phone })), ...(DB.students||[]).filter(s=>s.phone && !ghostedStudent(s)).map(s=>({ n:s.name+' (student)', p:s.phone }))].sort((a,b)=>a.n.localeCompare(b.n));
+  const o = document.createElement('div'); o.id = 'updShareModal';
+  o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.65); overflow:auto; padding:14px; display:flex; justify-content:center; align-items:flex-start;';
+  o.innerHTML = `<div role="dialog" aria-modal="true" style="background:#fff; border-radius:16px; width:min(560px,100%); margin:8px auto; padding:18px;">
+    <h3 style="margin:0 0 4px; font-size:18px;">Share on WhatsApp</h3>
+    <p class="note" style="margin:0 0 10px;">Edit the message if you like. WhatsApp opens with it ready and you press send.</p>
+    <textarea id="shT" rows="14" style="width:100%; font-family:inherit; font-size:13.5px;">${lvEsc(updShareText(it))}</textarea>
+    <div class="note" id="shCount" style="margin:4px 0 10px;"></div>
+    <div class="card" style="margin-bottom:10px;"><b style="font-size:14px;">To a group or any chat</b><p class="note" style="margin:4px 0 8px;">WhatsApp lets you pick any group or contact.</p><button class="wa-btn" type="button" id="shAny">${WA_ICON}Choose a chat in WhatsApp</button></div>
+    <div class="card"><b style="font-size:14px;">To one person</b>
+      <div class="field" style="margin:8px 0;"><select id="shPick"><option value="">Pick someone with a saved number</option>${people.map(p=>`<option value="${lvEsc(p.p)}">${lvEsc(p.n)}</option>`).join('')}</select></div>
+      <div class="field" style="margin:0 0 8px;"><input id="shNum" type="tel" placeholder="or type a number, e.g. 0244123456"></div>
+      <button class="wa-btn" type="button" id="shOne">${WA_ICON}Send to this person</button></div>
+    <div style="display:flex; gap:8px; margin-top:12px; justify-content:flex-end;"><button class="btn ghost small" type="button" id="shCopy">Copy message</button><button class="btn ghost small" type="button" id="shX">Close</button></div></div>`;
+  document.body.appendChild(o);
+  const q = id=>o.querySelector('#'+id), txt = ()=>q('shT').value;
+  const cnt = ()=>{ const n = txt().length; q('shCount').textContent = `${n} characters` + (n>2500 ? '. This is long, and WhatsApp may cut it. Consider sharing it in two parts.' : ''); }; cnt(); q('shT').addEventListener('input', cnt);
+  const done = how=>{ logDuty('updates', `Shared "${it.title}" on WhatsApp (${how})`); };
+  q('shX').onclick = ()=>o.remove(); o.addEventListener('click', e=>{ if(e.target===o) o.remove(); });
+  q('shAny').onclick = ()=>{ window.open('https://wa.me/?text='+encodeURIComponent(txt()), '_blank', 'noopener'); done('any chat or group'); };
+  q('shPick').onchange = ()=>{ q('shNum').value = q('shPick').value; };
+  q('shOne').onclick = ()=>{ const link = waLink(q('shNum').value || q('shPick').value, txt()); if(!link) return alert('Enter a valid phone number first.'); window.open(link, '_blank', 'noopener'); done('one person'); };
+  q('shCopy').onclick = async ()=>{ try{ await navigator.clipboard.writeText(txt()); q('shCopy').textContent = 'Copied'; }catch(e){ prompt('Copy this message:', txt()); } };
+}
+
+// ---------- one hook, called from wireDuty() after every screen is drawn ----------
+function lvWire(tab){
+  try{
+    if(tab==='lessons') lvWireLessons();
+    else if(tab==='classes') crWirePanel();
+    else if(tab==='updates') updWire();
+  }catch(e){ console.error('add-on wiring failed', e); }
+}
+// ---------- background loop: reminders for staff, class banner for students ----------
+setInterval(()=>{ try{ crTick(); crStudentBanner(); }catch(e){} }, 60000);
+setTimeout(()=>{ try{ crTick(); crStudentBanner(); }catch(e){} }, 9000);
+
 </script>
 </body>
 </html>
