@@ -596,6 +596,28 @@
   .push-bell{position:fixed; left:16px; bottom:18px; width:50px; height:50px; border-radius:50%; border:3px solid #fff; background:var(--navy-deep); color:#fff; font-size:22px; cursor:pointer; z-index:1090; box-shadow:0 8px 22px rgba(10,24,38,.4); display:flex; align-items:center; justify-content:center; padding:0;}
   .push-bell em{position:absolute; top:-4px; right:-4px; width:20px; height:20px; border-radius:50%; background:#C0392B; color:#fff; font-size:13px; font-style:normal; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .push-bell i{position:absolute; bottom:2px; right:2px; width:12px; height:12px; border-radius:50%; background:#2ecc71; border:2px solid #fff;}
+  .pa-back{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.6); display:flex; align-items:center; justify-content:center; padding:16px;}
+  .pa-card{background:#fff; color:var(--ink,#1B2430); border-radius:22px; width:min(400px,100%); padding:26px 24px 20px; text-align:center; border:2px solid var(--navy-deep); box-shadow:0 6px 0 var(--navy-deep);}
+  .pa-ic{width:62px; height:62px; border-radius:50%; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; background:var(--amber); color:var(--navy-deep); border:2px solid var(--navy-deep);}
+  .pa-card h3{margin:0 0 8px; font-size:22px;}
+  .pa-lead{margin:0 0 12px; font-size:14.5px; line-height:1.55;}
+  .pa-list{list-style:none; margin:0 0 14px; padding:0; text-align:left; font-size:14px; line-height:1.5;}
+  .pa-list li{padding:7px 0 7px 26px; position:relative; border-top:1px solid rgba(15,36,56,.1);}
+  .pa-list li:before{content:'\2713'; position:absolute; left:4px; top:6px; font-weight:800; color:var(--teal-deep,#146956);}
+  .pa-msg{min-height:0; margin:0 0 10px; font-size:13px; line-height:1.5; color:#B3261E;}
+  .pa-msg:empty{display:none;}
+  .pa-btns{display:flex; flex-direction:column; gap:8px;} .pa-btns .btn{width:100%; justify-content:center; text-align:center;}
+  .pa-fine{margin:12px 0 0; font-size:12px; color:var(--muted,#6B7280);}
+  .pw{position:fixed; left:78px; bottom:18px; z-index:1085; display:flex; align-items:center; gap:12px; width:min(380px, calc(100vw - 190px)); background:#FFF4D6; color:var(--navy-deep); border:2px solid var(--navy-deep); border-radius:20px; box-shadow:0 4px 0 var(--navy-deep); padding:10px 12px 10px 10px;}
+  .pw.done{background:#E4F4EE;}
+  .pw-ic{flex:0 0 42px; height:42px; border-radius:50%; background:var(--amber); border:2px solid var(--navy-deep); display:flex; align-items:center; justify-content:center;}
+  .pw.done .pw-ic{background:#7FD1B6;}
+  .pw-m{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; line-height:1.25;}
+  .pw-m b{font-size:14.5px;} .pw-m span{font-size:12.5px; color:#4B4672;}
+  .pw-bar{display:block; height:6px; border-radius:3px; background:rgba(15,36,56,.14); margin-top:5px; overflow:hidden;} .pw-bar u{display:block; height:100%; background:var(--navy-deep); border-radius:3px; text-decoration:none;}
+  .pw-go{flex:0 0 auto; border:2px solid var(--navy-deep); background:var(--navy-deep); color:#fff; font:inherit; font-weight:700; font-size:13px; padding:8px 12px; border-radius:999px; cursor:pointer;}
+  .pw-x{position:absolute; top:-10px; right:-8px; width:24px; height:24px; border-radius:50%; border:2px solid var(--navy-deep); background:#fff; color:var(--navy-deep); font-size:15px; line-height:1; cursor:pointer; padding:0;}
+  @media (max-width:640px){ .pw{left:16px; right:16px; bottom:80px; width:auto;} }
   .push-panel{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.55); display:flex; align-items:flex-end; justify-content:flex-start; padding:16px;}
   .push-card{background:#fff; border-radius:16px; padding:18px; width:min(360px,100%); margin-bottom:64px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
 
@@ -1206,6 +1228,16 @@ try{
     sbReady = true;
   }
 }catch(e){ console.error('Supabase init failed', e); }
+// Direct calls to the email / SMS functions (personal emails, reach-out) also skip ghosted students.
+try{
+  if(sbReady && sb.functions && typeof sb.functions.invoke==='function'){
+    const _invoke = sb.functions.invoke.bind(sb.functions);
+    sb.functions.invoke = (name, opts)=>{
+      try{ if((name==='send-email' || name==='send-sms') && opts && opts.body && ghostedId(opts.body.recipientId)) return Promise.resolve({ data:{ ok:true, skipped:'inactive' }, error:null }); }catch(e){}
+      return _invoke(name, opts);
+    };
+  }
+}catch(e){ console.warn('invoke guard skipped', e); }
 
 async function sGet(key, shared){
   if(!shared){
@@ -1707,6 +1739,7 @@ window.addEventListener('focus', ()=>{ if(ME) pollLive(true); });
 // each, so a broadcast to many recipients doesn't get rate-limited.
 let _emailQueue = Promise.resolve();
 function queueEmailSend(payload, meta){
+  if(meta && ghostedId(meta.recipientId)) return Promise.resolve();
   const logResult = (status, detail)=>{
     if(!meta || typeof sbReady === 'undefined' || !sbReady) return;
     try{ sb.rpc('append_kv_item', { p_key:'email:log', p_item:{ id:(crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()), to:payload.template_params.to_email, name:meta.name||null, subject:meta.subject||'', message:String(meta.message||'').slice(0,1500), author:meta.author||null, kind:meta.kind||null, recipientId:meta.recipientId||null, recipientRole:meta.recipientRole||null, studentCoordinatorId:meta.studentCoordinatorId||null, via:'emailjs', status, detail, ts:Date.now() } }).then(()=>{}, ()=>{}); }catch(e){}
@@ -1724,6 +1757,7 @@ function queueEmailSend(payload, meta){
 }
 let _smsQueue = Promise.resolve();
 async function queueSmsSend(url, payload){
+  if(payload && ghostedId(payload.recipientId)) return;
   // If the SMS webhook points at our own Supabase Edge Function (send-sms),
   // it requires a valid signed-in session (verify_jwt is on) — attach the
   // current access token plus the anon key the gateway itself expects. For
@@ -1790,7 +1824,7 @@ function alertPriorityBadge(p){
 // (rather than snapshotted at send time) so a student added to a targeted group later
 // still sees the alert, and one removed from it stops seeing it.
 function resolveAlertAudience(alert){
-  const pool = alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice();
+  const pool = (alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice()).filter(s=>!ghostedStudent(s));
   const t = alert.target || {scope:'all', groups:[], studentIds:[]};
   if(t.scope==='groups') return pool.filter(s=>s.group && t.groups.includes(s.group));
   if(t.scope==='students') return pool.filter(s=>t.studentIds.includes(s.id));
@@ -2315,7 +2349,7 @@ function practiceQuestionSection(role){
 }
 
 function audienceFor(coordinatorId){
-  const students = coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students;
+  const students = (coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students).filter(s=>!ghostedStudent(s));
   const coords = coordinatorId ? DB.coordinators.filter(c=>c.id===coordinatorId) : DB.coordinators;
   return [...students, ...coords];
 }
@@ -2351,7 +2385,7 @@ async function notifyBroadcast({title, body, coordinatorId, author, role, refId,
   // audience: 'coordinators' or 'students' narrows a programme-wide broadcast; anything else keeps the old behaviour
   let recipients = audienceFor(coordinatorId);
   const narrowed = !coordinatorId && (audience==='coordinators' || audience==='students');
-  if(narrowed) recipients = audience==='coordinators' ? (DB.coordinators||[]) : (DB.students||[]);
+  if(narrowed) recipients = audience==='coordinators' ? (DB.coordinators||[]) : (DB.students||[]).filter(s=>!ghostedStudent(s));
   const entry = { id: uid(), refId: refId||null, title, body, author, role, coordinatorId: coordinatorId||null, date: today(), ts: Date.now(), seenBy: ME ? {[ME.id]:Date.now()} : {} };
   if(narrowed){ entry.toIds = recipients.map(r=>r.id); entry.audience = audience; }
   await appendShared('notifications', entry);
@@ -2817,7 +2851,7 @@ function mcCelebrateCerts(){
   }catch(e){ console.warn('Certificate celebration failed', e); }
 }
 function initMascot(){
-  ['mcPop','mcDock','mcEdit'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
+  ['mcPop','mcDock','mcEdit','pracWidget','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); }); if(typeof PW!=='undefined' && PW.timer){ clearInterval(PW.timer); PW.timer = null; }
   const look = mcLoad(), first = ((ME && ME.name)||'').trim().split(/\s+/)[0];
   const wrap = document.createElement('div');
   wrap.innerHTML = `
@@ -2911,7 +2945,7 @@ async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
   if(presenceTimer) clearInterval(presenceTimer);
   stopRealtimeSync();
-  ['mcPop','mcDock','mcEdit'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
+  ['mcPop','mcDock','mcEdit','pracWidget','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); }); if(typeof PW!=='undefined' && PW.timer){ clearInterval(PW.timer); PW.timer = null; }
   sessionStorage.removeItem('ichc_mascot_welcomed');
   if(ME && ME.email && sbReady){
     delete DB.presence[ME.email.toLowerCase()];
@@ -3239,6 +3273,7 @@ function renderLegacy(tab){
   else if(tab==='actreach' && canSeeActivity()) html = actReachView();
   else if(tab==='reactivate' && canReactivate()) html = reactivateView();
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
+  else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
@@ -3571,6 +3606,7 @@ function psmsSegments(t){
 function psmsStudents(){
   const term = PSMS.search.trim().toLowerCase();
   return (DB.students||[]).slice()
+    .filter(s=>!ghostedStudent(s))
     .filter(s=>!PSMS.onlyPhone || psmsHasPhone(s))
     .filter(s=>!term || [s.name, s.email, s.phone, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
@@ -4084,6 +4120,7 @@ function certCardCanvas(c, url, hasQr){
 }
 async function shareCert(id){
   const c = (DB.certificates||[]).find(x=>x.id===id); if(!c) return;
+  if(c.status==='revoked' && !(ME && ME.role==='ambassador')){ alert('This certificate has been revoked, so it can’t be shared.'); return; }
   const url = certVerifyUrl(c.id), hasQr = await loadQr(), cv = certCardCanvas(c, url, hasQr);
   const o = document.createElement('div');
   o.style.cssText = 'position:fixed; inset:0; z-index:1400; background:rgba(8,20,30,.7); display:flex; align-items:center; justify-content:center; padding:14px; overflow:auto;';
@@ -4112,6 +4149,7 @@ document.addEventListener('click', e=>{ const b = e.target.closest('[data-share-
 // ---- Server email (Brevo): branded, logged, resendable. Falls back to EmailJS when the server is not set up ----
 let _srvEmailQueue = Promise.resolve();
 function queueServerEmail(payload, fallback){
+  if(payload && ghostedId(payload.recipientId)) return;
   _srvEmailQueue = _srvEmailQueue.then(async ()=>{
     try{
       const { error } = await sb.functions.invoke('send-email', { body: payload });
@@ -4232,7 +4270,7 @@ function pemHasEmail(s){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s && s.
 function pemSelected(){ return (DB.students||[]).find(s=>s.id===PEM.studentId) || null; }
 function pemStudents(){
   const term = PEM.search.trim().toLowerCase();
-  return (DB.students||[]).slice().filter(s=>!PEM.onlyEmail || pemHasEmail(s))
+  return (DB.students||[]).slice().filter(s=>!ghostedStudent(s)).filter(s=>!PEM.onlyEmail || pemHasEmail(s))
     .filter(s=>!term || [s.name, s.email, s.group, coordName(s.coordinatorId)].some(v=>String(v||'').toLowerCase().includes(term)))
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
 }
@@ -4377,6 +4415,18 @@ function studentAccess(s){
   if(idle > IDLE_LIMIT_MS) return { state:'inactive', locked:true, reason:'idle', seen:ref, days:Math.floor(idle/864e5) };
   return { state:'active', locked:false, seen:ref, days:Math.floor(idle/864e5) };
 }
+// ===== Ghosting: a switched-off or inactive student is treated as if they were not on the platform =====
+// They are left out of every audience (announcements, alerts, classes, results, personal emails and texts) and the
+// email / SMS senders refuse them as a last line of defence. Only the reactivation screen still reaches them.
+function ghostedStudent(s){
+  if(!s) return false;
+  if(s.portalBlocked) return true;
+  if(!DB || !DB.lastSeen) return false;   // activity data not loaded yet: never ghost on a guess
+  return !!studentAccess(s).locked;
+}
+function ghostedId(id){
+  try{ if(!id || !DB || !DB.students) return false; const s = DB.students.find(x=>x.id===id); return !!s && ghostedStudent(s); }catch(e){ return false; }
+}
 function accessBadge(s){
   const a = studentAccess(s);
   if(a.state === 'active') return `<span class="acc-badge acc-on">Active${a.days>0 ? ' · seen '+a.days+'d ago' : ' · seen today'}</span>`;
@@ -4459,6 +4509,7 @@ function stageChip(st){
 }
 function appDetailsHtml(a){
   const rows = [['Class or level',a.level],['Chemistry level',a.chemLevel],['Studied so far',a.background],['Interests',(a.interests||[]).join(', ')],['Competition experience',[a.competition,a.competitionDetails].filter(Boolean).join(' — ')],
+    ['Part of the programme before', a.previousParticipant],
     ['Availability', a.availability ? [(a.availability.days||[]).join(', '), (a.availability.times||[]).join('/'), a.availability.hours].filter(Boolean).join(' · ') : ''],
     ['Commitment', a.commitments ? 'Agreed to attend sessions, stay in touch and complete activities' : '']].filter(r=>r[1]);
   if(!rows.length) return '';
@@ -4738,11 +4789,89 @@ function openPushPanel(){
     o.remove(); paintBell(); openPushPanel();
   });
 }
+// Students who have neither allowed nor blocked notifications get a proper pop-up asking them to allow it.
+// The browser only shows its own permission dialog after a tap, so the pop-up carries the button that triggers it.
+async function pushAllow(){
+  try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
+  paintBell();
+  return pushState();
+}
+function openPushAsk(){
+  if(document.getElementById('pushAsk')) return;
+  const st = pushState(), needsInstall = st.ios && !st.supported;
+  const o = document.createElement('div'); o.id = 'pushAsk'; o.className = 'pa-back'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-label','Allow notifications');
+  const bell = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.500 7.500 2.500 7.500h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>';
+  o.innerHTML = `<div class="pa-card"><div class="pa-ic">${bell}</div>
+    <h3>Stay in the loop</h3>
+    <p class="pa-lead">${needsInstall ? 'To get notifications on an iPhone or iPad, add the portal to your Home Screen first: tap the Share button, choose <b>Add to Home Screen</b>, then open the portal from there and allow notifications.' : 'Allow notifications so you never miss a class, an announcement or your daily practice.'}</p>
+    ${needsInstall ? '' : '<ul class="pa-list"><li>Class and exam reminders</li><li>Announcements and alerts from your coordinator</li><li>A gentle daily nudge to keep your practice streak alive</li></ul>'}
+    <p class="pa-msg" id="paMsg"></p>
+    <div class="pa-btns">${needsInstall ? '<button class="btn amber" id="paNot" type="button">Got it</button>' : '<button class="btn amber" id="paYes" type="button">Allow notifications</button><button class="btn ghost" id="paNot" type="button">Not now</button>'}</div>
+    ${needsInstall ? '' : '<p class="pa-fine">You can change this any time from the bell at the bottom of the screen.</p>'}</div>`;
+  document.body.appendChild(o);
+  const close = ()=>{ o.remove(); };
+  o.querySelector('#paNot').addEventListener('click', close);
+  const yes = o.querySelector('#paYes');
+  if(yes) yes.addEventListener('click', async ()=>{
+    yes.disabled = true; yes.textContent = 'Waiting for your browser…';
+    const r = await pushAllow(), msg = o.querySelector('#paMsg');
+    if(r.on){ close(); try{ pwRefresh(true); }catch(e){} return; }
+    yes.disabled = false; yes.textContent = 'Allow notifications';
+    msg.textContent = r.perm==='denied' ? 'Notifications are blocked in your browser. Tap the lock icon next to the address bar, set Notifications to Allow, then refresh this page.' : 'No problem. You can turn them on any time from the bell at the bottom of the screen.';
+    if(r.perm==='denied'){ yes.remove(); o.querySelector('#paNot').textContent = 'Close'; }
+  });
+}
 function initPushUi(){
   paintBell();
-  const st = pushState(), seenKey = 'ichc_push_prompted';
-  if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
+  const st = pushState(), seenKey = 'ichc_push_prompted', isStu = !!ME && ME.role==='student';
+  if(isStu){
+    const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
+    if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
+    try{ pwStart(); }catch(e){ console.warn('practice widget skipped', e); }
+  } else if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
   setTimeout(paintBell, 6000);
+}
+
+// ---- Practice reminder widget: shown to students who have allowed notifications ----
+const PW = { timer:null, wired:false };
+function pwDay(){ return new Date().toISOString().slice(0,10); }
+function pwOffKey(){ return 'ichc_pw_off_' + (ME && ME.id || ''); }
+function pwRemove(){ const w = document.getElementById('pracWidget'); if(w) w.remove(); }
+function pwStart(){
+  if(PW.timer) clearInterval(PW.timer);
+  PW.timer = setInterval(()=>pwRefresh(), 5*60*1000);
+  if(!PW.wired){ PW.wired = true; document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pwRefresh(); }); }
+  pwRefresh();
+}
+async function pwRefresh(force){
+  if(!ME || ME.role!=='student'){ pwRemove(); return; }
+  const st = pushState(); if(!st.on){ pwRemove(); return; }
+  try{ if(typeof obLocked==='function' && obLocked()){ pwRemove(); return; } }catch(e){}
+  try{ if(!force && localStorage.getItem(pwOffKey()) === pwDay()){ pwRemove(); return; } }catch(e){}
+  let ov = null; try{ ov = await rmLoad(); }catch(e){}
+  if(!ME || ME.role!=='student') return;
+  const goal = ov && ov.dailyGoal || 5, n = ov ? Math.min(ov.todayCount||0, goal) : 0, streak = ov && ov.streak || 0, done = !!ov && n >= goal;
+  const pct = Math.round(n/goal*100);
+  const title = done ? 'Daily goal done' : 'Time to practise';
+  const sub = done ? (streak ? `${streak}-day streak. See you tomorrow.` : 'Well done. See you tomorrow.') : `${n} of ${goal} questions solved today${streak ? ' · ' + streak + '-day streak' : ''}`;
+  let w = document.getElementById('pracWidget');
+  if(!w){ w = document.createElement('div'); w.id = 'pracWidget'; w.className = 'pw'; w.setAttribute('role','complementary'); w.setAttribute('aria-label','Practice reminder'); document.body.appendChild(w);
+    w.addEventListener('click', e=>{
+      if(e.target.closest('.pw-x')){ try{ localStorage.setItem(pwOffKey(), pwDay()); }catch(err){} pwRemove(); return; }
+      if(e.target.closest('.pw-go')) pwGo();
+    }); }
+  w.classList.toggle('done', done);
+  w.innerHTML = `<div class="pw-ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.500L5.200 18a2 2 0 0 0 1.800 3h10a2 2 0 0 0 1.800-3L14 9.500V3"/><path d="M8 15h8"/></svg></div>
+    <div class="pw-m"><b>${title}</b><span>${escapeHtml(sub)}</span><i class="pw-bar"><u style="width:${pct}%"></u></i></div>
+    <button class="pw-go" type="button">${done ? 'Practise more' : 'Solve questions'}</button>
+    <button class="pw-x" type="button" aria-label="Hide until tomorrow">&times;</button>`;
+}
+async function pwGo(){
+  try{ await rmLoad(); }catch(e){}
+  RM.view = 'home'; RM.sess = null; render('welcome');
+  let tries = 0;
+  const wait = ()=>{ if(document.getElementById('rmRoot')){ rmStart('daily', 5, 'daily'); } else if(tries++ < 40){ setTimeout(wait, 100); } };
+  wait();
 }
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
@@ -5025,8 +5154,8 @@ function certItemHtml(c){
     <div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;">
       <span class="mono" style="font-size:12px; color:var(--muted);">ID: ${escapeHtml(c.id)}</span>
       <button class="btn ghost small" data-copy-verify="${c.id}">Copy verification ID</button>
-      <button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
-      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>
+      ${revoked ? '<span style="font-size:12.5px; color:#B3261E;">This certificate has been revoked and can no longer be downloaded or shared.</span>' : `<button class="btn teal small" data-download-cert="${c.id}">Download PDF</button>
+      <button class="btn ghost small" data-share-cert="${c.id}">Share</button>`}
     </div>
   </div>`;
 }
@@ -5061,7 +5190,7 @@ function certificatesAmbassadorView(){
     <div id="certIssueStatus" style="font-size:13px; margin-top:10px; min-height:18px;"></div>
   </div>
 
-  <div class="section-title"><div><h2>Issued certificates</h2></div></div>
+  <div class="section-title"><div><h2>Issued certificates</h2></div>${issued.some(c=>c.status!=='revoked') ? '<button class="btn ghost small" id="certRevokeAll" type="button" style="color:#B3261E; border-color:#B3261E;">Revoke all certificates</button>' : '<span class="note" style="margin:0;">All certificates are revoked</span>'}</div>
   ${issued.length ? `<div class="list">${issued.map(c=>`
     <div class="item">
       <div class="item-head"><span class="item-title">${escapeHtml(c.recipient_name)} <span class="badge ${c.type==='service'?'coord':'stud'}" style="margin-left:6px;">${escapeHtml(CERT_COPY[c.type].label)}</span></span><span class="item-meta">${fmtDate(String(c.issue_date))}</span></div>
@@ -5138,6 +5267,17 @@ async function revokeCert(id, status){
   DB.certificates = await loadCertificates();
   render('certificates');
 }
+async function revokeAllCertificates(){
+  const n = DB.certificates.filter(c=>c.status!=='revoked').length;
+  if(!n){ alert('Every certificate is already revoked.'); return; }
+  if(!confirm(`Revoke all ${n} active certificate${n===1?'':'s'} (students and coordinators)? They will show as revoked on the public verification page. You can reinstate any of them one by one.`)) return;
+  try{
+    const { error } = await sb.from('ichc_certificates').update({ status:'revoked' }).neq('status','revoked');
+    if(error) throw error;
+  }catch(e){ alert('Could not revoke the certificates: ' + ((e && (e.message||e.code)) || e)); return; }
+  DB.certificates = await loadCertificates();
+  render('certificates');
+}
 async function deleteCertificate(id){
   const result = await deleteCertificateRow(id);
   if(!result.ok){ alert('Could not delete that certificate: ' + (result.error||'unknown error')); return; }
@@ -5155,6 +5295,7 @@ function trackedCaps(text){
 async function downloadCertificatePdf(id){
   const c = DB.certificates.find(x=>x.id===id) || await fetchCertificateById(id);
   if(!c){ alert('Could not find that certificate.'); return; }
+  if(c.status==='revoked' && !(ME && ME.role==='ambassador')){ alert('This certificate has been revoked, so it can’t be downloaded.'); return; }
   if(typeof window.jspdf === 'undefined'){ alert('The PDF library hasn\'t loaded yet — check your connection and try again.'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
@@ -5988,9 +6129,10 @@ const CLASS_CH_KEY = 'ichc_class_channels';
 function classChannelDefaults(){ let c = null; try{ c = JSON.parse(localStorage.getItem(CLASS_CH_KEY) || 'null'); }catch(e){} return c || { email:true, sms:false, push:true }; }
 function classStudents(cs){
   const a = cs.audience || { scope:'all' };
-  if(a.scope==='coordinator') return (DB.students||[]).filter(s=>s.coordinatorId===a.coordinatorId);
-  if(a.scope==='students') return (DB.students||[]).filter(s=>(a.studentIds||[]).includes(s.id));
-  return (DB.students||[]).slice();
+  const live = (DB.students||[]).filter(s=>!ghostedStudent(s));
+  if(a.scope==='coordinator') return live.filter(s=>s.coordinatorId===a.coordinatorId);
+  if(a.scope==='students') return live.filter(s=>(a.studentIds||[]).includes(s.id));
+  return live.slice();
 }
 function classForStudent(cs, studentId){ return !!cs.byAmbassador && classStudents(cs).some(s=>s.id===studentId); }
 function callsForStudent(){
@@ -7461,7 +7603,7 @@ async function examReleaseResults(id){
   const freshA = await sharedRead('examAttempts'); if(Array.isArray(freshA)) DB.examAttempts = freshA;
   const sids = [...new Set(DB.examAttempts.filter(a=>a.examId===id && a.submittedAt).map(a=>a.studentId))];
   if(!sids.length) return alert('No student has submitted this exam yet.');
-  const students = sids.map(sid=>DB.students.find(s=>s.id===sid)).filter(Boolean);
+  const students = sids.map(sid=>DB.students.find(s=>s.id===sid)).filter(s=>s && !ghostedStudent(s));
   const unscored = sids.filter(sid=>{ const b = examBestAttempt(e, sid); return !b || examScoreNum(b)===null; }).length;
   const coordIds = [...new Set(students.map(s=>s.coordinatorId).filter(Boolean))];
   const coords = DB.coordinators.filter(c=>coordIds.includes(c.id));
@@ -8691,7 +8833,7 @@ function wireHandlers(tab){
     // The student is only created when they send the first message (or choose to accept without one).
     b.disabled = true;
     await reviewApplicantDecision({app, decision:'accepted', reason, commit: async ()=>{
-      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), waGroupId:currentWaGroupId(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
+      DB.students.push({id:uid(), name:app.name, email:app.email.toLowerCase(), coordinatorId:null, group:'', status:'Accepted', stage:'Pending confirmation', acceptedAt:Date.now(), activatedAt:Date.now(), waGroupId:currentWaGroupId(), interviewed:!!app.interview, applicationId:app.id, interests:app.interests||[], chemLevel:app.chemLevel||'', background:app.background||'', competition:app.competition||'', competitionDetails:app.competitionDetails||'', availability:app.availability||null, commitments:app.commitments||null, phone:app.phone||'', ageRange:app.ageRange||'', school:app.school||'', region:app.region||'', howHeard:app.howHeard||'', message:app.message||'', whatsappRedirected: (typeof app.whatsappRedirected==='boolean') ? app.whatsappRedirected : undefined, notifyEmail:true, notifySms: (typeof app.notifySms==='boolean') ? app.notifySms : !!app.phone, joined:today()});
       await saveKey('students'); await syncPublicDirectory();
       // Carries the applicant's private token forward (when present) so the
       // status banner on the public site can match this decision without
@@ -8828,6 +8970,7 @@ function wireHandlers(tab){
       render('certificates');
     });
     if(q('certIssueBtn')) q('certIssueBtn').addEventListener('click', issueCertificatesBulk);
+    if(q('certRevokeAll')) q('certRevokeAll').addEventListener('click', revokeAllCertificates);
     document.querySelectorAll('[data-revoke-cert]').forEach(b=>b.addEventListener('click', ()=>{
       if(confirm('Revoke this certificate? It will show as revoked on the public verification page.')) revokeCert(b.dataset.revokeCert, 'revoked');
     }));
@@ -9109,8 +9252,11 @@ async function lrRanking(root){
 const DUTY_DEFAULTS = {
   reactivation:{ email:'nyaw58846@gmail.com' },
   applications:{ email:'kassimhassan1290@gmail.com' },
-  activity:{ email:'davidarmahx774@gmail.com' }
+  activity:{ email:'davidarmahx774@gmail.com' },
+  // Programme portfolios: unassigned until the Ambassador appoints someone.
+  welfare:{ email:'' }, content:{ email:'' }, exams:{ email:'' }, comms:{ email:'' }, events:{ email:'' }, community:{ email:'' }, support:{ email:'' }
 };
+const PORTFOLIO_KEYS = ['welfare','content','exams','comms','events','community','support'];
 const DUTY_INFO = {
   reactivation:{ title:'Account Reactivation', tab:'Reactivation', duties:[
     'Handle every request to reactivate a student portal, and switch it back on once you are satisfied the student is serious.',
@@ -9129,7 +9275,49 @@ const DUTY_INFO = {
     'Email or WhatsApp students and coordinators who are very inactive and not working on their courses.',
     'Report concerns to the Ambassador, who can view your activity and reassign this role.' ],
     outcomes:[ 'Very inactive students and coordinators are contacted every week.', 'The number of inactive students falls from month to month.', 'The Ambassador receives clear information on who needs support or reassignment.' ],
-    tips:[ 'Be encouraging: ask what is in the way before you warn anyone.', 'Use email for a record and WhatsApp for a personal touch.', 'Your messages are logged so the Ambassador can see the follow-up being done.' ] }
+    tips:[ 'Be encouraging: ask what is in the way before you warn anyone.', 'Use email for a record and WhatsApp for a personal touch.', 'Your messages are logged so the Ambassador can see the follow-up being done.' ] },
+  welfare:{ title:'Student Welfare', tab:'Welfare', duties:[
+    'Check in with students who are struggling, quiet or discouraged, and listen before you advise.',
+    'Pass genuine concerns (family, school, data or personal problems) to the Ambassador quietly and promptly.',
+    'Keep a short private note of who you contacted and what support they need.' ],
+    outcomes:[ 'Students who are flagged as struggling hear from you within two days.', 'Concerns reach the Ambassador quickly and privately.', 'Students feel that someone is looking out for them.' ],
+    tips:[ 'Start with an open question such as: how are you finding things?', 'Keep what students tell you private and share only what is needed to help.', 'You are a mentor, not a counsellor: point students to proper help when a problem is bigger than mentoring.' ] },
+  content:{ title:'Learning Content', tab:'Content', duties:[
+    'Make sure every roadmap section has enough practice questions, notes and resources before it opens to students.',
+    'Review practice questions, including AI-generated drafts, for accuracy and difficulty before students see them.',
+    'Collect notes from coordinators and keep the resource library tidy and tagged by topic.' ],
+    outcomes:[ 'Each section opens with questions and resources already in place.', 'Questions that students report as wrong or unclear are fixed quickly.', 'The library is organised by topic and easy to use.' ],
+    tips:[ 'Work one section ahead of the schedule.', 'Solve a question yourself before you approve it.', 'Check reported questions every few days and fix them first.' ] },
+  exams:{ title:'Exams & Marking', tab:'Exams', duties:[
+    'Help the Ambassador prepare exams by checking the questions, marks, instructions and timing.',
+    'Support marking and moderation so every student is marked fairly and consistently.',
+    'Handle student questions about results and retakes, and report anything unusual to the Ambassador.' ],
+    outcomes:[ 'Every exam is checked by a second person before it is posted.', 'Marking is finished by the agreed date.', 'Result and retake questions are answered and recorded.' ],
+    tips:[ 'Mark with a written scheme so answers are judged the same way.', 'Re-mark a few scripts at random to check consistency.', 'Only the Ambassador releases results and approves retakes.' ] },
+  comms:{ title:'Communications', tab:'Comms', duties:[
+    'Draft clear announcements, reminders and flyers for students and for the public.',
+    'Keep the programme’s WhatsApp status, social pages and public website up to date with accurate news.',
+    'Make sure every message is timely, consistent in tone and proofread before it goes out.' ],
+    outcomes:[ 'Students never miss a deadline because a message was unclear.', 'Public pages and statuses show the latest news.', 'Anything that speaks for the programme is approved by the Ambassador first.' ],
+    tips:[ 'One message, one clear action.', 'Proofread names, dates and links before sending.', 'Agree anything public with the Ambassador first.' ] },
+  events:{ title:'Events & Guest Speakers', tab:'Events', duties:[
+    'Plan live sessions, guest talks and orientations: dates, speakers, meeting links and reminders.',
+    'Confirm speakers, test the meeting link and run the session on the day.',
+    'Share the recording and a short follow-up with students afterwards.' ],
+    outcomes:[ 'Every event has a confirmed date, host and link at least three days ahead.', 'Attendance is recorded for each session.', 'A follow-up is posted within two days of every event.' ],
+    tips:[ 'Remind students a day before and an hour before.', 'Have a backup host in case someone drops out.', 'Brief each speaker on the audience: secondary school and university students in Ghana.' ] },
+  community:{ title:'Groups & Community', tab:'Groups', duties:[
+    'Act as an admin of the WhatsApp groups: welcome new students and keep conversation on chemistry.',
+    'Keep the community chat and groups respectful, and remove spam or off-topic content.',
+    'Report repeated misconduct to the Ambassador.' ],
+    outcomes:[ 'New students are welcomed within a day of joining.', 'Groups stay respectful and focused on learning.', 'Rule breaches are handled calmly and reported.' ],
+    tips:[ 'Pin the group rules and the portal link.', 'Correct people privately first.', 'Keep the groups for chemistry; point other topics elsewhere.' ] },
+  support:{ title:'Technical Support', tab:'Help desk', duties:[
+    'Be the first contact for sign-in, notification and portal problems.',
+    'Check the common causes (wrong Google account, a typo in the saved email, blocked notifications) before escalating.',
+    'Log recurring problems and report them to the Ambassador with clear steps and screenshots.' ],
+    outcomes:[ 'Most sign-in problems are solved within a day.', 'Recurring bugs are reported clearly and early.', 'Students and coordinators know exactly where to ask for help.' ],
+    tips:[ 'Ask which Google account was used and whether the saved email matches it.', 'If the saved email has a typo, tell the Ambassador so it can be corrected.', 'Ask for a screenshot and the device and browser being used.' ] }
 };
 function dutyEmail(k){
   const d = DB.settings && DB.settings.duties && DB.settings.duties[k];
@@ -9151,10 +9339,57 @@ function dutyTabs(){
   if(hasDuty('applications')) t.push({ k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['appcontrol','Open & deadline'],['applicantmsg','Updates'],['onboarding','Onboarding']] });
   if(hasDuty('activity')) t.push({ k:'activity', l:'Activity', ic:'people', subs:[['actstats','Activity stats'],['actreach','Reach out'],['load','Coordinator load']] });
   if(hasDuty('reactivation')) t.push({ k:'reactivation', l:'Reactivation', ic:'students', subs:[['reactivate','Reactivation']] });
+  PORTFOLIO_KEYS.forEach(k=>{ if(hasDuty(k) && DUTY_INFO[k]) t.push({ k:'pf_'+k, l:DUTY_INFO[k].tab, ic:'people', subs:[['pf_'+k, DUTY_INFO[k].tab]] }); });
   return t;
 }
 async function logDuty(duty, action){
   try{ await sb.rpc('append_kv_item', { p_key:'duty:log', p_item:{ id:uid(), duty, action, by:ME.name, byEmail:ME.email, role:ME.role, ts:Date.now() } }); }catch(e){ console.warn('duty log skipped', e); }
+}
+const PF_LINKS = {
+  welfare:[['students','My students'],['messages','Student messages']],
+  content:[['roadmap','Roadmap and questions'],['lounge','Coordinator lounge']],
+  exams:[['roadmap','Roadmap and exams'],['messages','Student messages']],
+  comms:[['alerts','Alerts'],['lounge','Coordinator lounge']],
+  events:[['calls','Sessions'],['lounge','Coordinator lounge']],
+  community:[['chat','Community chat'],['lounge','Coordinator lounge']],
+  support:[['messages','Student messages'],['students','My students']]
+};
+const PFUI = { status:'' };
+function portfolioView(k){
+  const d = DUTY_INFO[k];
+  const links = (PF_LINKS[k]||[]).map(([t,l])=>`<button class="btn ghost small" type="button" data-pf-go="${t}">${escapeHtml(l)}</button>`).join(' ');
+  return `<div class="section-title"><div><h2>${escapeHtml(d.title)}</h2><p>You have been appointed to lead this area. Your responsibilities, what good looks like, and a place to report to the Ambassador are below.</p></div></div>
+  ${dutyCardHtml(k)}
+  <div class="card" style="margin-bottom:16px;"><b>What good looks like</b>
+    <ul style="margin:8px 0 0 18px; padding:0; font-size:13.5px; line-height:1.6;">${d.outcomes.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+  <div class="card" style="margin-bottom:16px;"><b>Tips</b>
+    <ul style="margin:8px 0 0 18px; padding:0; font-size:13.5px; line-height:1.6;">${d.tips.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+  ${links ? `<div class="card" style="margin-bottom:16px;"><b>Handy places</b><p class="note" style="margin:4px 0 10px;">Shortcuts to the parts of the portal you will use most in this role.</p><div style="display:flex; flex-wrap:wrap; gap:8px;">${links}</div></div>` : ''}
+  <div class="card" style="margin-bottom:16px;"><b>Report to the Ambassador</b>
+    <p class="note" style="margin:4px 0 8px;">Share progress, a concern or something you need. The Ambassador sees every report under Team &amp; duties.</p>
+    <textarea id="pfText" rows="4" style="width:100%; font-family:inherit; font-size:14px;" placeholder="What have you done, or what do you need?"></textarea>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:10px;"><button class="btn amber small" type="button" id="pfSend">Send report</button><span class="note" id="pfStatus" style="margin:0;">${escapeHtml(PFUI.status||'')}</span></div></div>
+  <div class="section-title"><div><h2>Your recent reports</h2></div></div>
+  <div class="list" id="pfLog"><div class="empty">Loading…</div></div>`;
+}
+async function fillPortfolioLog(k){
+  const box = document.getElementById('pfLog'); if(!box) return;
+  let log = []; try{ log = (await sGet('duty:log', true)) || []; }catch(e){}
+  const mine = log.filter(e=>e && e.duty===k && String(e.byEmail||'').toLowerCase()===String(ME.email||'').toLowerCase() && String(e.action||'').indexOf('Report: ')===0).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,8);
+  box.innerHTML = mine.length ? mine.map(e=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-meta">${fmtDateTime(e.ts)}</span></div><div class="item-body">${escapeHtml(String(e.action).slice(8))}</div></div>`).join('') : '<div class="empty">No reports sent yet.</div>';
+}
+function wirePortfolio(k){
+  const q = id=>document.getElementById(id);
+  document.querySelectorAll('[data-pf-go]').forEach(b=>b.addEventListener('click', ()=>render(b.dataset.pfGo)));
+  fillPortfolioLog(k);
+  if(q('pfSend')) q('pfSend').addEventListener('click', async ()=>{
+    const t = (q('pfText').value||'').trim();
+    if(t.length < 5){ q('pfStatus').textContent = 'Write a few words first.'; return; }
+    const btn = q('pfSend'); btn.disabled = true; q('pfStatus').textContent = 'Sending…';
+    await logDuty(k, 'Report: ' + t.slice(0,1500));
+    PFUI.status = 'Sent ✓ The Ambassador can see it.'; q('pfText').value = ''; q('pfStatus').textContent = PFUI.status; btn.disabled = false;
+    fillPortfolioLog(k);
+  });
 }
 function dutyCardHtml(k){
   const d = DUTY_INFO[k]; if(!d) return '';
@@ -9163,7 +9398,7 @@ function dutyCardHtml(k){
     <p class="note" style="margin:0;">The Ambassador can view your activity here and may reassign this role if the work is not discharged well.</p></div>`;
 }
 const ACT = { who:'students', level:'all', search:'' };
-const REACH = { audience:'students_very', subject:'We miss you on Chemistry Competition Prep', body:'', touched:false, sending:false, status:'' };
+const REACH = { audience:'students_low', subject:'We miss you on Chemistry Competition Prep', body:'', touched:false, sending:false, status:'' };
 const DUTYUI = { composeFor:null, text:'', emailFor:null, emailSubject:'', emailNote:'', emailExtra:'', emailPreview:false, emailStatus:'' };
 
 function dutyDays(ms){ return ms ? Math.floor((Date.now()-ms)/864e5) : null; }
@@ -9237,7 +9472,7 @@ function actStatsView(){
   <div class="list" id="actList">${actListHtml()}</div>`;
 }
 function reachRecipients(){
-  const a = REACH.audience, rows = a.startsWith('students') ? actStudentRows() : actCoordRows();
+  const a = REACH.audience, rows = a.startsWith('students') ? actStudentRows().filter(r=>{ const st = (DB.students||[]).find(x=>x.id===r.id); return !ghostedStudent(st); }) : actCoordRows();
   return rows.filter(r=> a.endsWith('_very') ? r.level==='very' : (r.level==='very' || r.level==='low'));
 }
 function reachSyncBody(){
@@ -9260,7 +9495,7 @@ function actReachView(){
   return `${ME.role==='coordinator' ? dutyCardHtml('activity') : ''}
   <div class="section-title"><div><h2>Reach out</h2><p>Message people who have gone quiet. Emails go out from the portal in one tap. WhatsApp opens a ready message for each person, and you press send.</p></div></div>
   <div class="psms-wrap"><div class="card">
-    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_very','Very inactive students (14+ days or never signed in)')}${opt('students_low','All inactive students (7+ days)')}${opt('coords_very','Very inactive coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
+    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_low','Slipping students (still active, quiet for 7+ days)')}${opt('coords_very','Very inactive coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
     <div class="field"><label for="rcSubject">Email subject</label><input id="rcSubject" maxlength="150" value="${escapeHtml(REACH.subject)}"></div>
     <div class="field"><label for="rcBody">Message (use {name} and {days})</label><textarea id="rcBody" rows="8" maxlength="1500">${escapeHtml(REACH.body)}</textarea></div>
     <div class="psms-foot"><span class="psms-count" id="rcCount"></span><button class="btn teal" id="rcSend" type="button">Email everyone listed</button></div>
@@ -9368,7 +9603,10 @@ function dutiesAdminView(){
   return `<div class="section-title"><div><h2>Team & duties</h2><p>Hand sections of the portal to coordinators and take them back whenever you wish. When you appoint someone, a branded WhatsApp message with their duties is prepared for you to edit and send.</p></div></div>
   ${dutyEmailComposeHtml()}
   ${compose}
+  <div class="section-title" style="margin-top:6px;"><div><h2>Portal duties</h2><p>These hand a section of the portal to a coordinator.</p></div></div>
   ${dutyCard('reactivation')}${dutyCard('applications')}${dutyCard('activity')}
+  <div class="section-title" style="margin-top:26px;"><div><h2>Programme portfolios</h2><p>Appoint coordinators to lead an area of the programme. Each person gets the same appointment message, a workspace under their own menu, and a way to report back to you.</p></div></div>
+  ${PORTFOLIO_KEYS.map(dutyCard).join('')}
   <div class="section-title" style="margin-top:26px;"><div><h2>Act as a coordinator</h2><p>Have students assigned to you like any coordinator, while you keep full Ambassador access to every student in the programme.</p></div></div>
   <div class="card" style="margin-bottom:22px;">${meCoord
     ? `<p style="margin:0 0 10px;">You are on the coordinator roster. Assign students to yourself under <b>People</b>, then switch to your coordinator view to work with them.</p><button class="btn teal small" type="button" id="dcSwitchCoord">Switch to my coordinator view</button>`
@@ -9381,6 +9619,7 @@ async function fillDutyLog(){
   let log = []; try{ log = (await sGet('duty:log', true)) || []; }catch(e){}
   log = [...log].sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,60);
   const label = { reactivation:'Reactivation', applications:'Applications', activity:'Activity', assign:'Assignment' };
+  PORTFOLIO_KEYS.forEach(k=>{ label[k] = DUTY_INFO[k].title; });
   box.innerHTML = log.length ? log.map(e=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-title">${escapeHtml(e.by||'')}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div><div class="item-body"><span class="badge">${escapeHtml(label[e.duty]||e.duty||'')}</span> ${escapeHtml(e.action||'')}</div></div>`).join('') : '<div class="empty">Nothing recorded yet.</div>';
 }
 async function switchRole(role){
@@ -9400,6 +9639,7 @@ function paintRoleSwitch(){
 }
 function wireDuty(tab){
   const q = id=>document.getElementById(id);
+  if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)]) wirePortfolio(tab.slice(3));
   if(tab==='appcontrol' && q('dcSave')) q('dcSave').addEventListener('click', async ()=>{
     const btn = q('dcSave'); btn.disabled = true; btn.textContent = 'Saving…';
     const paused = q('dcPause').checked, dv = q('dcDeadline').value;
