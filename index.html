@@ -3035,12 +3035,14 @@ function mcSvg(l, cls){
     return { text: trim(best.body, 460), href: best.href };
   }
   const hist = []; let mcLang = 'English';
+  let aiTimedOut = false;
   async function aiAnswer(q){
+    aiTimedOut = false;
     if(typeof sbReady === 'undefined' || !sbReady) return null;
     try{
       const msgs = hist.concat([{ role:'user', text:q }]).slice(-8);
       if(mcLang !== 'English') msgs[msgs.length-1] = { role:'user', text:`[Please reply in ${mcLang==='Twi'?'Twi (Akan)':mcLang}.] ` + q };
-      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), 60000)) ]);
+      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>{ aiTimedOut = true; rej(new Error('timeout')); }, 26000)) ]);
       if(r && !r.error && r.data && r.data.reply) return String(r.data.reply);
     }catch(e){ console.warn('AI chat unavailable, using on-page answers', e); }
     return null;
@@ -3057,8 +3059,11 @@ function mcSvg(l, cls){
     add(q, 'me'); $('mcQ').value = ''; $('mcSend').disabled = true;
     const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
     (async ()=>{
-      let [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 550))]);
-      for(let n = 0; !ai && n < 2; n++){ await new Promise(r=>setTimeout(r, 2000)); ai = await aiAnswer(q); } // keep trying quietly
+      const slow = setTimeout(()=>{ const n = document.createElement('em'); n.textContent = ' Still thinking…'; n.style.cssText = 'font-size:12px; opacity:.7; margin-left:8px; font-style:normal;'; dots.appendChild(n); }, 7000);
+      let [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 300))]);
+      // One quick retry only when the first try failed fast (a timeout means the AI is busy, so go straight to the on-page answer).
+      if(!ai && !aiTimedOut){ await new Promise(r=>setTimeout(r, 800)); ai = await aiAnswer(q); }
+      clearTimeout(slow);
       dots.remove();
       const r = ai ? { text: ai } : answer(q); // last resort only: answer from the page text
       hist.push({ role:'user', text:q }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);

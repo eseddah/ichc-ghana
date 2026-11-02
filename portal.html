@@ -608,16 +608,6 @@
   .pa-msg:empty{display:none;}
   .pa-btns{display:flex; flex-direction:column; gap:8px;} .pa-btns .btn{width:100%; justify-content:center; text-align:center;}
   .pa-fine{margin:12px 0 0; font-size:12px; color:var(--muted,#6B7280);}
-  .pw{position:fixed; left:78px; bottom:18px; z-index:1085; display:flex; align-items:center; gap:12px; width:min(380px, calc(100vw - 190px)); background:#FFF4D6; color:var(--navy-deep); border:2px solid var(--navy-deep); border-radius:20px; box-shadow:0 4px 0 var(--navy-deep); padding:10px 12px 10px 10px;}
-  .pw.done{background:#E4F4EE;}
-  .pw-ic{flex:0 0 42px; height:42px; border-radius:50%; background:var(--amber); border:2px solid var(--navy-deep); display:flex; align-items:center; justify-content:center;}
-  .pw.done .pw-ic{background:#7FD1B6;}
-  .pw-m{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:2px; line-height:1.25;}
-  .pw-m b{font-size:14.5px;} .pw-m span{font-size:12.5px; color:#4B4672;}
-  .pw-bar{display:block; height:6px; border-radius:3px; background:rgba(15,36,56,.14); margin-top:5px; overflow:hidden;} .pw-bar u{display:block; height:100%; background:var(--navy-deep); border-radius:3px; text-decoration:none;}
-  .pw-go{flex:0 0 auto; border:2px solid var(--navy-deep); background:var(--navy-deep); color:#fff; font:inherit; font-weight:700; font-size:13px; padding:8px 12px; border-radius:999px; cursor:pointer;}
-  .pw-x{position:absolute; top:-10px; right:-8px; width:24px; height:24px; border-radius:50%; border:2px solid var(--navy-deep); background:#fff; color:var(--navy-deep); font-size:15px; line-height:1; cursor:pointer; padding:0;}
-  @media (max-width:640px){ .pw{left:16px; right:16px; bottom:80px; width:auto;} }
   .push-panel{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.55); display:flex; align-items:flex-end; justify-content:flex-start; padding:16px;}
   .push-card{background:#fff; border-radius:16px; padding:18px; width:min(360px,100%); margin-bottom:64px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
 
@@ -2851,7 +2841,7 @@ function mcCelebrateCerts(){
   }catch(e){ console.warn('Certificate celebration failed', e); }
 }
 function initMascot(){
-  ['mcPop','mcDock','mcEdit','pracWidget','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); }); if(typeof PW!=='undefined' && PW.timer){ clearInterval(PW.timer); PW.timer = null; }
+  ['mcPop','mcDock','mcEdit','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
   const look = mcLoad(), first = ((ME && ME.name)||'').trim().split(/\s+/)[0];
   const wrap = document.createElement('div');
   wrap.innerHTML = `
@@ -2945,7 +2935,7 @@ async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
   if(presenceTimer) clearInterval(presenceTimer);
   stopRealtimeSync();
-  ['mcPop','mcDock','mcEdit','pracWidget','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); }); if(typeof PW!=='undefined' && PW.timer){ clearInterval(PW.timer); PW.timer = null; }
+  ['mcPop','mcDock','mcEdit','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
   sessionStorage.removeItem('ichc_mascot_welcomed');
   if(ME && ME.email && sbReady){
     delete DB.presence[ME.email.toLowerCase()];
@@ -4815,7 +4805,7 @@ function openPushAsk(){
   if(yes) yes.addEventListener('click', async ()=>{
     yes.disabled = true; yes.textContent = 'Waiting for your browser…';
     const r = await pushAllow(), msg = o.querySelector('#paMsg');
-    if(r.on){ close(); try{ pwRefresh(true); }catch(e){} return; }
+    if(r.on){ close(); return; }
     yes.disabled = false; yes.textContent = 'Allow notifications';
     msg.textContent = r.perm==='denied' ? 'Notifications are blocked in your browser. Tap the lock icon next to the address bar, set Notifications to Allow, then refresh this page.' : 'No problem. You can turn them on any time from the bell at the bottom of the screen.';
     if(r.perm==='denied'){ yes.remove(); o.querySelector('#paNot').textContent = 'Close'; }
@@ -4827,52 +4817,11 @@ function initPushUi(){
   if(isStu){
     const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
     if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
-    try{ pwStart(); }catch(e){ console.warn('practice widget skipped', e); }
   } else if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
   setTimeout(paintBell, 6000);
 }
 
-// ---- Practice reminder widget: shown to students who have allowed notifications ----
-const PW = { timer:null, wired:false };
-function pwDay(){ return new Date().toISOString().slice(0,10); }
-function pwOffKey(){ return 'ichc_pw_off_' + (ME && ME.id || ''); }
-function pwRemove(){ const w = document.getElementById('pracWidget'); if(w) w.remove(); }
-function pwStart(){
-  if(PW.timer) clearInterval(PW.timer);
-  PW.timer = setInterval(()=>pwRefresh(), 5*60*1000);
-  if(!PW.wired){ PW.wired = true; document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pwRefresh(); }); }
-  pwRefresh();
-}
-async function pwRefresh(force){
-  if(!ME || ME.role!=='student'){ pwRemove(); return; }
-  const st = pushState(); if(!st.on){ pwRemove(); return; }
-  try{ if(typeof obLocked==='function' && obLocked()){ pwRemove(); return; } }catch(e){}
-  try{ if(!force && localStorage.getItem(pwOffKey()) === pwDay()){ pwRemove(); return; } }catch(e){}
-  let ov = null; try{ ov = await rmLoad(); }catch(e){}
-  if(!ME || ME.role!=='student') return;
-  const goal = ov && ov.dailyGoal || 5, n = ov ? Math.min(ov.todayCount||0, goal) : 0, streak = ov && ov.streak || 0, done = !!ov && n >= goal;
-  const pct = Math.round(n/goal*100);
-  const title = done ? 'Daily goal done' : 'Time to practise';
-  const sub = done ? (streak ? `${streak}-day streak. See you tomorrow.` : 'Well done. See you tomorrow.') : `${n} of ${goal} questions solved today${streak ? ' · ' + streak + '-day streak' : ''}`;
-  let w = document.getElementById('pracWidget');
-  if(!w){ w = document.createElement('div'); w.id = 'pracWidget'; w.className = 'pw'; w.setAttribute('role','complementary'); w.setAttribute('aria-label','Practice reminder'); document.body.appendChild(w);
-    w.addEventListener('click', e=>{
-      if(e.target.closest('.pw-x')){ try{ localStorage.setItem(pwOffKey(), pwDay()); }catch(err){} pwRemove(); return; }
-      if(e.target.closest('.pw-go')) pwGo();
-    }); }
-  w.classList.toggle('done', done);
-  w.innerHTML = `<div class="pw-ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.500L5.200 18a2 2 0 0 0 1.800 3h10a2 2 0 0 0 1.800-3L14 9.500V3"/><path d="M8 15h8"/></svg></div>
-    <div class="pw-m"><b>${title}</b><span>${escapeHtml(sub)}</span><i class="pw-bar"><u style="width:${pct}%"></u></i></div>
-    <button class="pw-go" type="button">${done ? 'Practise more' : 'Solve questions'}</button>
-    <button class="pw-x" type="button" aria-label="Hide until tomorrow">&times;</button>`;
-}
-async function pwGo(){
-  try{ await rmLoad(); }catch(e){}
-  RM.view = 'home'; RM.sess = null; render('welcome');
-  let tries = 0;
-  const wait = ()=>{ if(document.getElementById('rmRoot')){ rmStart('daily', 5, 'daily'); } else if(tries++ < 40){ setTimeout(wait, 100); } };
-  wait();
-}
+
 function csvCell(v){
   const s = (v==null) ? '' : String(v);
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
