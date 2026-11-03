@@ -681,6 +681,32 @@
     .qmark{font-size:110px; height:48px;} .qmark.close{height:60px;}
   }
 
+
+  /* chat: time + read aloud, history */
+  .mc-foot{display:flex; justify-content:flex-end; align-items:center; gap:6px; margin-top:6px; font-size:11.5px; line-height:1; color:var(--muted); white-space:normal;}
+  .mc-foot time{font-variant-numeric:tabular-nums;}
+  .mc-spk{border:none; background:transparent; color:var(--teal); width:30px; height:30px; border-radius:50%; display:grid; place-items:center; cursor:pointer; padding:0;}
+  .mc-spk:hover{background:var(--tint);} .mc-spk.on{background:var(--teal); color:#fff; animation:mcSpk 1.2s ease-in-out infinite;}
+  @keyframes mcSpk{0%,100%{box-shadow:0 0 0 0 rgba(91,63,216,.45)}50%{box-shadow:0 0 0 7px rgba(91,63,216,0)}}
+  .mc-ch .mc-hbtn{display:grid; place-items:center; padding:0;} .mc-ch .mc-hbtn.on{background:var(--amber); color:var(--navy-deep);}
+  .mc-ch #mcAutoBtn{margin-left:8px;}
+  .mc-priv{margin:0; padding:4px max(16px,calc((100% - 880px)/2)) 8px; font-size:12px; color:var(--muted);}
+  .mc-hist{position:absolute; inset:0; z-index:6; background:var(--chalk,#FBFAFF); display:flex; flex-direction:column;}
+  .mc-hist[hidden]{display:none;}
+  .mch-top{display:flex; align-items:center; gap:10px; padding:14px max(16px,calc((100% - 880px)/2)); background:linear-gradient(135deg,#4527B8,#1D1B3A); color:#fff;}
+  .mch-top b{flex:1; font-size:17px;}
+  .mch-top button{border:none; border-radius:999px; background:rgba(255,255,255,.16); color:#fff; padding:8px 14px; font:inherit; font-weight:700; font-size:14px; cursor:pointer; min-height:40px; width:auto; height:auto;}
+  .mch-body{flex:1; overflow:auto; padding:16px max(16px,calc((100% - 880px)/2)); display:flex; flex-direction:column; gap:10px;}
+  .mch-row{display:flex; gap:8px; align-items:stretch;}
+  .mch-open{flex:1; min-width:0; text-align:left; background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; cursor:pointer; font:inherit; display:flex; flex-direction:column; gap:2px;}
+  .mch-open b{color:var(--navy-deep); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;} .mch-open small{color:var(--muted); font-size:13px;}
+  .mch-del{flex:none; width:46px; border:1px solid var(--line); background:#fff; border-radius:14px; color:#C0392B; cursor:pointer; display:grid; place-items:center;}
+  .mch-thread{display:flex; flex-direction:column; gap:10px;}
+  .mch-acts{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .mch-acts button{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:10px 18px; font:inherit; font-weight:700; font-size:15px; color:var(--navy-deep); cursor:pointer; min-height:44px;}
+  .mch-acts button.main{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .mch-empty{color:var(--muted); text-align:center; padding:48px 12px; margin:0;}
+  .mch-note{margin:0; padding:10px max(16px,calc((100% - 880px)/2)) max(12px,env(safe-area-inset-bottom)); font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); background:#fff;}
 </style>
 </head>
 <body>
@@ -2902,9 +2928,15 @@ document.addEventListener('click', function(e){
 <button type="button" id="mcDock" class="mc-dock on" aria-label="Chat with the Chemistry Competition Prep scientist" aria-expanded="false"></button>
 <div id="mcTip" class="mc-tip" aria-hidden="true"><span class="tip-av mc-wave" id="mcTipAv"></span><span class="tip-txt"><small>Hello!</small><b>I am the ChemPrep Scientist <i class="tip-hand">&#128075;</i></b></span></div>
 <div id="mcChat" class="mc-chat" role="dialog" aria-label="Chat about the programme, the International Chemistry Competition and chemistry">
-  <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><select id="mcLang" aria-label="Chat language" style="margin-left:auto; background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:999px; padding:5px 8px; font-size:12px;"><option value="English" style="color:#000">English</option><option value="Français" style="color:#000">Français</option><option value="Twi" style="color:#000">Twi</option><option value="Ga" style="color:#000">Ga</option><option value="Ewe" style="color:#000">Ewe</option></select><button type="button" id="mcChatX" aria-label="Close chat" style="margin-left:6px;">&times;</button></div>
+  <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><select id="mcLang" aria-label="Chat language" style="margin-left:auto; background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:999px; padding:5px 8px; font-size:12px;"><option value="English" style="color:#000">English</option><option value="Français" style="color:#000">Français</option><option value="Twi" style="color:#000">Twi</option><option value="Ga" style="color:#000">Ga</option><option value="Ewe" style="color:#000">Ewe</option></select><button type="button" id="mcAutoBtn" class="mc-hbtn" aria-pressed="false" aria-label="Read replies aloud automatically" title="Read replies aloud: off"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button><button type="button" id="mcHistBtn" class="mc-hbtn" aria-label="Chat history" title="Chat history" style="margin-left:6px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button><button type="button" id="mcChatX" aria-label="Close chat" style="margin-left:6px;">&times;</button></div>
   <div class="mc-msgs" id="mcMsgs" aria-live="polite"></div>
+  <div class="mc-hist" id="mcHist" hidden role="dialog" aria-label="Chat history">
+    <div class="mch-top"><button type="button" id="mchBack" aria-label="Back">&larr; Back</button><b id="mchTitle">Chat history</b><button type="button" id="mchDelAll" hidden>Delete all</button></div>
+    <div class="mch-body" id="mchBody"></div>
+    <p class="mch-note">Your chats are saved on this device so you can come back to them. Our team also keeps a copy to review for updates and a better experience. When you delete a chat here, it is removed from both.</p>
+  </div>
   <div class="mc-chips" id="mcChips"></div>
+  <p class="mc-priv">Chats are saved so you can revisit them, and our team reviews them to make updates and improve your experience. You can delete any chat from History.</p>
   <div class="mc-voice" id="mcVoice" hidden data-s="idle" aria-live="polite">
     <div class="mcv-top"><i class="mcv-dot"></i><b id="mcvState"></b><span class="mcv-time" id="mcvTime">0:00</span></div>
     <audio id="mcvAudio" preload="auto"></audio>
@@ -3183,7 +3215,7 @@ function mcSvg(l, cls){
     if(!q) q = 'What can you tell me about this image?';
     if(typeof vReset==='function') vReset();
     $('mcChips').style.display = 'none';
-    const mine = add(q, 'me');
+    const mine = add(q, 'me'); recMsg('me', q + (att ? ' [image attached]' : ''));
     if(att){ const th = document.createElement('img'); th.className = 'mc-th'; th.src = att.url; th.alt = 'Your image'; mine.insertBefore(th, mine.firstChild); }
     setAtt(null); $('mcQ').value = ''; $('mcSend').disabled = true;
     const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
@@ -3197,24 +3229,149 @@ function mcSvg(l, cls){
       const needsAI = !!att || /https?:\/\//i.test(q);   // images and links can only be handled by the AI, never by the on-page search
       const r = res ? { text: String(res.reply) } : needsAI ? { text: 'Sorry, I couldn\'t look at that just now. Please try again in a moment.' } : answer(q); // last resort: answer from the page text
       hist.push({ role:'user', text: q + (att ? ' [the visitor attached an image]' : '') }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);
-      const bubble = add(r.text, 'bot', r.href); if(res) addExtras(bubble, res);
+      const bubble = add(r.text, 'bot', r.href); if(res) addExtras(bubble, res); finishBot(bubble, r.text, null, true); recMsg('bot', r.text);
       $('mcSend').disabled = false; $('mcQ').focus(); msgs.scrollTop = msgs.scrollHeight;
     })();
   }
+  // ---- reply footer: time (right corner) + read-aloud button ----
+  const ICO_SPK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>', ICO_STOP = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+  const ICO_BIN = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+  const fmtT = iso => new Date(iso).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+  function footer(text, iso){
+    const f = document.createElement('div'); f.className = 'mc-foot';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mc-spk'; b.title = 'Read this reply aloud'; b.setAttribute('aria-label', 'Read this reply aloud'); b.innerHTML = ICO_SPK;
+    b.addEventListener('click', ()=>toggleSpeak(text, b));
+    const t = document.createElement('time'); t.dateTime = iso; t.textContent = fmtT(iso);
+    f.append(b, t); f._btn = b; return f;
+  }
+  function finishBot(bubble, text, iso, live){
+    const f = footer(text, iso || new Date().toISOString()); bubble.appendChild(f);
+    if(live && AUTO_READ) toggleSpeak(text, f._btn);
+    return bubble;
+  }
+
+  // ---- read aloud: sentence by sentence so it sounds smooth, one voice at a time ----
+  const TTS = 'speechSynthesis' in window; let spkBtn = null;
+  let AUTO_READ = false; try{ AUTO_READ = localStorage.getItem('ichc_tts_auto') === '1'; }catch(e){}
+  function stopSpeak(){ if(TTS) speechSynthesis.cancel(); if(spkBtn){ spkBtn.classList.remove('on'); spkBtn.innerHTML = ICO_SPK; spkBtn.title = 'Read this reply aloud'; spkBtn = null; } }
+  function speechText(t){
+    return String(t || '').replace(/https?:\/\/\S+/g, ' link ').replace(/[*_`#>~]+/g, '')
+      .replace(/\p{Extended_Pictographic}|\uFE0F/gu, '')
+      .replace(/[\u2080-\u2089]/g, c=>String(c.charCodeAt(0) - 8320)).replace(/\u00B2/g, ' squared').replace(/\u00B3/g, ' cubed')
+      .replace(/\u2192/g, ' gives ').replace(/\u21CC/g, ' is in equilibrium with ').replace(/\u0394/g, ' delta ')
+      .replace(/\u00B0C/g, ' degrees Celsius').replace(/\u00D7/g, ' times ').replace(/\u2212/g, ' minus ').replace(/\s+/g, ' ').trim();
+  }
+  function speechChunks(t){
+    const parts = t.match(/[^.!?;:\n]+[.!?;:]*\s*/g) || [t], out = []; let cur = '';
+    parts.forEach(p=>{ if((cur + p).length > 170 && cur){ out.push(cur.trim()); cur = p; } else cur += p; });
+    if(cur.trim()) out.push(cur.trim()); return out;
+  }
+  function pickVoice(){
+    const L = mcLang === 'Français' ? ['fr-FR','fr-CA','fr'] : ['en-GH','en-NG','en-GB','en-US','en'], vs = speechSynthesis.getVoices();
+    for(const l of L){ const m = vs.filter(v=>v.lang.replace('_','-').toLowerCase().startsWith(l.toLowerCase())); if(m.length) return m.find(v=>/natural|google|online/i.test(v.name)) || m[0]; }
+    return null;
+  }
+  function flash(msg){ $('mcQ').placeholder = msg; setTimeout(()=>{ if(VT.st === 'idle') $('mcQ').placeholder = IDLE; }, 3500); }
+  function toggleSpeak(text, btn){
+    if(!TTS){ flash('Reading aloud is not supported in this browser.'); return; }
+    if(spkBtn === btn){ stopSpeak(); return; }
+    if(mcLang !== 'English' && mcLang !== 'Français'){ flash('Reading aloud is not available in ' + mcLang + ' on this device yet.'); return; }
+    stopSpeak(); const parts = speechChunks(speechText(text)); if(!parts.length) return;
+    spkBtn = btn; btn.classList.add('on'); btn.innerHTML = ICO_STOP; btn.title = 'Stop reading';
+    const v = pickVoice();
+    parts.forEach((p, i)=>{
+      const u = new SpeechSynthesisUtterance(p);
+      if(v){ u.voice = v; u.lang = v.lang; } else u.lang = mcLang === 'Français' ? 'fr-FR' : 'en-GB';
+      u.rate = 0.97; u.pitch = 1;
+      if(i === parts.length - 1) u.onend = u.onerror = ()=>{ if(spkBtn === btn) stopSpeak(); };
+      speechSynthesis.speak(u);
+    });
+  }
+  function paintAuto(){ const b = $('mcAutoBtn'); b.classList.toggle('on', AUTO_READ); b.setAttribute('aria-pressed', AUTO_READ ? 'true' : 'false'); b.title = 'Read replies aloud: ' + (AUTO_READ ? 'on' : 'off'); }
+  $('mcAutoBtn').addEventListener('click', ()=>{ AUTO_READ = !AUTO_READ; try{ localStorage.setItem('ichc_tts_auto', AUTO_READ ? '1' : '0'); }catch(e){} if(!AUTO_READ) stopSpeak(); paintAuto(); flash(AUTO_READ ? 'Replies will be read aloud.' : 'Reading aloud is off.'); });
+  paintAuto(); window.addEventListener('pagehide', stopSpeak);
+
+  // ---- chat history: saved on this device, copied for the Ambassador, deletable by the visitor ----
+  const HK = 'ichc_chat_hist_v1', VKEY = 'ichc_vid';
+  const vid = (()=>{ let v = null; try{ v = localStorage.getItem(VKEY); }catch(e){} if(!v){ v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10); try{ localStorage.setItem(VKEY, v); }catch(e){} } return v; })();
+  const hLoad = ()=>{ try{ const a = JSON.parse(localStorage.getItem(HK) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } };
+  const hSave = a=>{ try{ localStorage.setItem(HK, JSON.stringify(a.slice(0, 40))); }catch(e){} };
+  let CONV = null, cloudOK = true;
+  function cloud(fn, args){
+    if(!cloudOK || typeof sbReady === 'undefined' || !sbReady) return;
+    try{ sb.rpc(fn, args).then(r=>{ if(r && r.error){ cloudOK = false; console.warn('Chat copy for the Ambassador is off:', r.error.message); } }); }catch(e){ cloudOK = false; }
+  }
+  function recMsg(r, t){
+    const now = new Date().toISOString();
+    if(!CONV) CONV = { id:'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), started:now, lang:mcLang, msgs:[] };
+    CONV.msgs.push({ r, t:String(t).slice(0, 6000), ts:now }); if(CONV.msgs.length > 200) CONV.msgs.shift(); CONV.updated = now;
+    hSave([CONV].concat(hLoad().filter(c=>c.id !== CONV.id)));
+    cloud('log_chat_message', { p_visitor:vid, p_conv:CONV.id, p_role:r === 'me' ? 'user' : 'bot', p_body:String(t).slice(0, 6000), p_lang:mcLang });
+  }
+  function dayLabel(iso){
+    const d = new Date(iso), n = new Date(), y = new Date(n - 864e5), same = (a, b)=>a.toDateString() === b.toDateString();
+    const day = same(d, n) ? 'Today' : same(d, y) ? 'Yesterday' : d.toLocaleDateString([], { day:'numeric', month:'short', year:d.getFullYear() === n.getFullYear() ? undefined : 'numeric' });
+    return day + ', ' + fmtT(iso);
+  }
+  let hMode = 'list';
+  function hOpen(){ stopSpeak(); $('mcHist').hidden = false; hList(); }
+  function hClose(){ $('mcHist').hidden = true; }
+  function hList(){
+    hMode = 'list'; const all = hLoad().filter(c=>c.msgs && c.msgs.length), body = $('mchBody');
+    $('mchTitle').textContent = 'Chat history'; $('mchDelAll').hidden = !all.length; body.innerHTML = '';
+    if(!all.length){ body.innerHTML = '<p class="mch-empty">No saved chats yet. Your conversations will appear here every time you come back.</p>'; return; }
+    all.forEach(c=>{
+      const first = (c.msgs.find(m=>m.r === 'me') || c.msgs[0]).t, row = document.createElement('div'); row.className = 'mch-row';
+      const open = document.createElement('button'); open.type = 'button'; open.className = 'mch-open'; open.innerHTML = '<b></b><small></small>';
+      open.firstChild.textContent = first.slice(0, 80); open.lastChild.textContent = dayLabel(c.updated || c.started) + ' · ' + c.msgs.length + ' message' + (c.msgs.length === 1 ? '' : 's');
+      open.addEventListener('click', ()=>hView(c.id));
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'mch-del'; del.setAttribute('aria-label', 'Delete this chat'); del.title = 'Delete this chat'; del.innerHTML = ICO_BIN;
+      del.addEventListener('click', ()=>{ if(confirm('Delete this chat? This cannot be undone.')) hDelete(c.id); });
+      row.append(open, del); body.appendChild(row);
+    });
+  }
+  function hView(id){
+    const c = hLoad().find(x=>x.id === id); if(!c) return hList();
+    hMode = 'view'; $('mchTitle').textContent = dayLabel(c.started); $('mchDelAll').hidden = true;
+    const body = $('mchBody'); body.innerHTML = ''; const th = document.createElement('div'); th.className = 'mch-thread';
+    c.msgs.forEach(m=>{ const d = document.createElement('div'); d.className = 'mc-m ' + (m.r === 'me' ? 'me' : 'bot'); d.textContent = m.r === 'bot' ? chemify(m.t) : m.t; if(m.r === 'bot') d.appendChild(footer(m.t, m.ts)); th.appendChild(d); });
+    const acts = document.createElement('div'); acts.className = 'mch-acts';
+    const go = document.createElement('button'); go.type = 'button'; go.className = 'main'; go.textContent = 'Continue this chat'; go.addEventListener('click', ()=>hContinue(c));
+    const del = document.createElement('button'); del.type = 'button'; del.textContent = 'Delete this chat'; del.addEventListener('click', ()=>{ if(confirm('Delete this chat? This cannot be undone.')) hDelete(c.id); });
+    acts.append(go, del); body.append(th, acts); body.scrollTop = 0;
+  }
+  function newChat(){ stopSpeak(); msgs.innerHTML = ''; hist.length = 0; CONV = null; started = false; $('mcChips').style.display = ''; open(); }
+  function hContinue(c){
+    stopSpeak(); if(!chunks) build(); msgs.innerHTML = ''; hist.length = 0; CONV = c; started = true; $('mcChips').style.display = 'none';
+    c.msgs.forEach(m=>{ const b = add(m.t, m.r === 'me' ? 'me' : 'bot'); if(m.r === 'bot') b.appendChild(footer(m.t, m.ts)); });
+    c.msgs.slice(-8).forEach(m=>hist.push({ role:m.r === 'me' ? 'user' : 'bot', text:m.t }));
+    hClose(); msgs.scrollTop = msgs.scrollHeight; $('mcQ').focus();
+  }
+  function hDelete(id){
+    hSave(hLoad().filter(c=>c.id !== id)); cloud('delete_my_chat', { p_visitor:vid, p_conv:id });
+    if(CONV && CONV.id === id) newChat(); hList();
+  }
+  $('mcHistBtn').addEventListener('click', hOpen);
+  $('mchBack').addEventListener('click', ()=>{ if(hMode === 'view') hList(); else hClose(); });
+  $('mchDelAll').addEventListener('click', ()=>{
+    if(!confirm('Delete ALL your saved chats from this device and from the programme\'s copy? This cannot be undone.')) return;
+    hSave([]); cloud('delete_my_chat', { p_visitor:vid, p_conv:null }); newChat(); hList();
+  });
+
   let started = false;
   function open(){
     document.body.classList.add('mc-open'); $('mcChat').classList.add('on'); $('mcDock').setAttribute('aria-expanded','true'); $('mcTip').classList.remove('on');
     sessionStorage.setItem('ichc_tip','1');
     if(!started){
       started = true; if(!chunks) build();
-      add('Hi there! 👋 I\'m your ChemPrep Scientist. I love chemistry, and I\'m happy to help with the programme, the International Chemistry Competition, or any chemistry idea you\'d like explained. What are you curious about?', 'bot');
+      const gb = add('Hi there! 👋 I\'m your ChemPrep Scientist. I love chemistry, and I\'m happy to help with the programme, the International Chemistry Competition, or any chemistry idea you\'d like explained. What are you curious about?', 'bot'); finishBot(gb, gb.textContent);
       const faqQs = [...document.querySelectorAll('#faq summary')].map(x=>x.textContent.trim()).slice(0,4);
       const chips = faqQs.slice(0,2).concat(['Who are the coordinators?', 'What are the IChC rounds?', 'Show me the structure of aspirin', 'Explain what a mole is']);
       $('mcChips').innerHTML = ''; chips.forEach(c=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.addEventListener('click', ()=>ask(c)); $('mcChips').appendChild(b); });
     }
     setTimeout(()=>$('mcQ').focus(), 50);
   }
-  function close(){ if(VT.st!=='idle') vCancel(); document.body.classList.remove('mc-open'); $('mcChat').classList.remove('on'); $('mcDock').setAttribute('aria-expanded','false'); }
+  function close(){ stopSpeak(); if(VT.st!=='idle') vCancel(); document.body.classList.remove('mc-open'); $('mcChat').classList.remove('on'); $('mcDock').setAttribute('aria-expanded','false'); }
   $('mcDock').addEventListener('click', ()=> $('mcChat').classList.contains('on') ? close() : open());
   $('mcChatX').addEventListener('click', close);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
@@ -3264,7 +3421,7 @@ function mcSvg(l, cls){
     if(VT.st==='review') $('mcvState').textContent = $('mcQ').value ? LABEL.review : 'No words found. Listen back, record again, or type your question.';
     hint(IDLE);
   }
-  async function vStart(){
+  async function vStart(){ stopSpeak();
     if(!navigator.mediaDevices || !window.MediaRecorder){ hint('Voice recording is not available on this device. Please type your question.'); return; }
     try{ VT.stream = await navigator.mediaDevices.getUserMedia({ audio:true }); }catch(e){ hint('Please allow microphone access in your browser settings, then tap the mic again.'); return; }
     const mt = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].find(t=>MediaRecorder.isTypeSupported(t));
