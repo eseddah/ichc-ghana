@@ -3269,6 +3269,7 @@ function renderLegacy(tab){
   else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
+  else if(tab==='aichats' && ME.role==='ambassador') html = '<div id="aiChatsRoot"></div>';
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
@@ -3280,6 +3281,7 @@ function renderLegacy(tab){
   renderUpdateToast();
   wireHandlers(tab);
   if(typeof wireDuty==='function') wireDuty(tab);
+  if(tab==='aichats') aiChatsMount();
 }
 
 function escapeHtml(str){
@@ -3507,6 +3509,55 @@ function coordLoadView(){
         <div style="height:8px; background:rgba(15,36,56,.08); border-radius:999px; margin-top:8px; overflow:hidden;"><div style="height:100%; width:${Math.round(n/max*100)}%; background:var(--teal); border-radius:999px;"></div></div>
       </div>`).join('') : '<div class="empty">No coordinators yet.</div>'}
   </div>`;
+}
+
+// ---- Scientist chats: every conversation visitors have with the ChemPrep Scientist (Ambassador only) ----
+async function aiChatsMount(){
+  const root = document.getElementById('aiChatsRoot'); if(!root || !ME || ME.role!=='ambassador') return;
+  const head = (extra)=>`<div class="section-title"><div><h2>Scientist chats</h2><p>Every conversation visitors have had with the ChemPrep Scientist on the public site, newest first, with the exact time each message was saved.</p></div></div>${extra||''}`;
+  if(!sbReady){ root.innerHTML = head('<div class="empty">Live data isn\'t connected yet.</div>'); return; }
+  root.innerHTML = head('<div class="empty">Loading chats…</div>');
+  let rows = [], err = null;
+  try{
+    for(let from=0; from<50000; from+=1000){
+      const { data, error } = await sb.from('chat_logs').select('visitor_id,conv_id,role,body,lang,created_at').order('created_at',{ascending:true}).range(from, from+999);
+      if(error){ err = error; break; }
+      rows = rows.concat(data||[]); if(!data || data.length<1000) break;
+    }
+  }catch(e){ err = e; }
+  if(err){ root.innerHTML = head(`<div class="empty">Couldn't load the chat history (${escapeHtml(err.message||'error')}). Run chat_history_setup.sql in Supabase once, then reopen this page.</div>`); return; }
+  const by = {};
+  rows.forEach(r=>{ const c = by[r.conv_id] || (by[r.conv_id] = { id:r.conv_id, visitor:r.visitor_id, lang:r.lang||'', msgs:[] }); c.msgs.push(r); });
+  const convs = Object.values(by).sort((a,b)=> new Date(b.msgs[b.msgs.length-1].created_at) - new Date(a.msgs[a.msgs.length-1].created_at));
+  const visitors = new Set(convs.map(c=>c.visitor)).size;
+  const fmt = iso => new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const vname = id => 'Visitor ' + String(id).replace(/[^a-z0-9]/gi,'').slice(0,4).toUpperCase();
+  const card = c => {
+    const first = (c.msgs.find(m=>m.role==='user') || c.msgs[0]).body, last = c.msgs[c.msgs.length-1];
+    return `<details class="item" style="padding:0;">
+      <summary style="cursor:pointer; padding:12px 14px; display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:baseline;">
+        <span class="item-title">${escapeHtml(vname(c.visitor))} · ${escapeHtml(first.slice(0,90))}</span>
+        <span class="item-meta">${fmt(last.created_at)} · ${c.msgs.length} message${c.msgs.length===1?'':'s'}${c.lang && c.lang!=='English' ? ' · '+escapeHtml(c.lang) : ''}</span>
+      </summary>
+      <div style="padding:0 14px 14px; display:flex; flex-direction:column; gap:8px;">
+        ${c.msgs.map(m=>{ const u = m.role==='user'; return `<div style="align-self:${u?'flex-end':'flex-start'}; max-width:88%; background:${u?'var(--teal,#1F8A70)':'#fff'}; color:${u?'#fff':'inherit'}; border:1px solid var(--line,#ddd); border-radius:14px; padding:9px 12px; white-space:pre-wrap; font-size:14px;">${escapeHtml(m.body)}<div style="font-size:11px; opacity:.75; margin-top:4px; text-align:right;">${u?'Visitor':'ChemPrep Scientist'} · ${fmt(m.created_at)}</div></div>`; }).join('')}
+      </div></details>`;
+  };
+  const draw = (q)=>{
+    q = (q||'').trim().toLowerCase();
+    const list = q ? convs.filter(c=>(vname(c.visitor)+' '+c.msgs.map(m=>m.body).join(' ')).toLowerCase().includes(q)) : convs;
+    document.getElementById('aiChatList').innerHTML = list.length ? list.map(card).join('') : `<div class="empty">${convs.length ? 'No chats match your search.' : 'No chats yet. They appear here as soon as someone talks to the Scientist.'}</div>`;
+  };
+  root.innerHTML = head(`
+    <p class="note" style="margin-bottom:12px;">${convs.length} conversation${convs.length===1?'':'s'} from ${visitors} visitor${visitors===1?'':'s'} · ${rows.length} messages. A visitor who deletes a chat removes it from here too.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+      <input type="search" id="aiChatSearch" placeholder="Search all chats…" style="flex:1; min-width:200px; max-width:420px; padding:10px 14px; border:1px solid var(--line,#ddd); border-radius:999px; font:inherit;">
+      <button type="button" class="btn ghost small" id="aiChatRefresh">Refresh</button>
+    </div>
+    <div class="list" id="aiChatList"></div>`);
+  draw('');
+  document.getElementById('aiChatSearch').addEventListener('input', e=>draw(e.target.value));
+  document.getElementById('aiChatRefresh').addEventListener('click', aiChatsMount);
 }
 
 function smsLogView(){
@@ -9881,7 +9932,7 @@ const NAV = {
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
-    { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge']] },
+    { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
