@@ -544,6 +544,21 @@
   .mc-in input{flex:1; min-width:0; border:1.5px solid var(--line); border-radius:999px; padding:10px 14px; font:inherit; font-size:14px;}
   .mc-in button{background:var(--teal); color:#fff; border:none; border-radius:999px; padding:0 18px; font-weight:700; cursor:pointer;}
   .mc-in button:disabled{opacity:.5; cursor:default;}
+  .mc-att{display:flex; align-items:center; gap:10px; padding:8px 12px; border-top:1px solid var(--line); background:#fff; font-size:12.5px; color:var(--muted);}
+  .mc-att[hidden]{display:none;}
+  .mc-att img{width:46px; height:46px; object-fit:cover; border-radius:10px; border:1.5px solid var(--line);}
+  .mc-att span{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mc-att button{background:#fff; color:var(--ink); border:1.5px solid var(--line); border-radius:999px; padding:4px 11px; font-size:12px; cursor:pointer;}
+  .mc-th{display:block; max-width:170px; max-height:130px; border-radius:10px; margin-bottom:6px;}
+  .mc-figs{display:grid; gap:10px; margin-top:10px;}
+  .mc-fig{margin:0; background:#fff; color:var(--ink); border:1.5px solid var(--line); border-radius:12px; overflow:hidden;}
+  .mc-fig img{display:block; width:100%; height:auto; max-height:300px; object-fit:contain; background:#fff; cursor:zoom-in;}
+  .mc-fig.big img{max-height:none; cursor:zoom-out;}
+  .mc-fig figcaption{padding:8px 10px; font-size:12px; line-height:1.45; color:var(--muted); border-top:1px solid var(--line);}
+  .mc-fig figcaption b{display:block; color:var(--ink); font-weight:600; margin-bottom:2px;}
+  .mc-fig figcaption a{color:var(--teal-deep);}
+  .mc-read{margin-top:8px; font-size:12px; opacity:.8;}
+  .mc-read a{color:inherit;}
   .mc-dots span{display:inline-block; width:6px; height:6px; margin:0 2px; border-radius:50%; background:#9aa5b1; animation:mcBob 1s infinite;}
   .mc-dots span:nth-child(2){animation-delay:.15s;} .mc-dots span:nth-child(3){animation-delay:.3s;}
   @media (max-width:520px){ .mc-chat{right:8px; bottom:84px; height:min(70vh, calc(100vh - 110px));} .mc-tip{right:80px;} }
@@ -2902,7 +2917,8 @@ document.addEventListener('click', function(e){
       <button type="button" id="mcvCancel" data-show="recording paused review">Cancel</button>
     </div>
   </div>
-  <div class="mc-in"><input id="mcQ" type="text" maxlength="500" placeholder="Ask me anything about chemistry…" autocomplete="off" aria-label="Your question"><button type="button" id="mcMic" aria-label="Speak your question" title="Speak your question" style="background:#fff; color:var(--teal); border:1.5px solid var(--line); padding:0 12px; font-size:16px;">&#127908;</button><button type="button" id="mcSend">Send</button></div>
+  <div class="mc-att" id="mcAtt" hidden></div>
+  <div class="mc-in"><input id="mcFile" type="file" accept="image/*" hidden><button type="button" id="mcAttach" aria-label="Attach a chemistry image" title="Attach a chemistry image (structures, lab work, notes)" style="background:#fff; color:var(--teal); border:1.5px solid var(--line); padding:0 11px; display:flex; align-items:center;"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.500l-8.600 8.600a5.500 5.500 0 0 1-7.800-7.800l8.800-8.800a3.700 3.700 0 0 1 5.200 5.200l-8.800 8.800a1.800 1.800 0 0 1-2.600-2.600l8.100-8.100"/></svg></button><input id="mcQ" type="text" maxlength="800" placeholder="Ask about chemistry, paste a link, or attach an image…" autocomplete="off" aria-label="Your question"><button type="button" id="mcMic" aria-label="Speak your question" title="Speak your question" style="background:#fff; color:var(--teal); border:1.5px solid var(--line); padding:0 12px; font-size:16px;">&#127908;</button><button type="button" id="mcSend">Send</button></div>
 </div>
 <script>
 // ---- Chemistry notation: turns plain text like H2SO4, Ca2+, ->, 10^-3 into real symbols (H₂SO₄, Ca²⁺, →, 10⁻³) ----
@@ -3079,17 +3095,82 @@ function mcSvg(l, cls){
     return { text: trim(best.body, 460), href: best.href };
   }
   const hist = []; let mcLang = 'English';
-  let aiTimedOut = false;
-  async function aiAnswer(q){
+  let aiTimedOut = false, ATT = null;   // ATT = the image the visitor has attached but not yet sent
+  async function aiAnswer(q, att){
     aiTimedOut = false;
     if(typeof sbReady === 'undefined' || !sbReady) return null;
     try{
-      const msgs = hist.concat([{ role:'user', text:q }]).slice(-8);
-      if(mcLang !== 'English') msgs[msgs.length-1] = { role:'user', text:`[Please reply in ${mcLang==='Twi'?'Twi (Akan)':mcLang}.] ` + q };
-      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>{ aiTimedOut = true; rej(new Error('timeout')); }, 26000)) ]);
-      if(r && !r.error && r.data && r.data.reply) return String(r.data.reply);
+      const last = { role:'user', text: (mcLang !== 'English' ? `[Please reply in ${mcLang==='Twi'?'Twi (Akan)':mcLang}.] ` : '') + q };
+      if(att) last.image = { mime:att.mime, data:att.data };
+      const msgs = hist.concat([last]).slice(-8);
+      const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>{ aiTimedOut = true; rej(new Error('timeout')); }, 36000)) ]);
+      if(r && !r.error && r.data && r.data.reply) return r.data;
     }catch(e){ console.warn('AI chat unavailable, using on-page answers', e); }
     return null;
+  }
+  // Shrinks a photo to at most 1280px and re-encodes it as JPEG so it uploads fast.
+  function prepImage(file){
+    return new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onerror = ()=>rej(new Error('read'));
+      fr.onload = ()=>{
+        const img = new Image();
+        img.onerror = ()=>rej(new Error('decode'));
+        img.onload = ()=>{
+          const sc = Math.min(1, 1280/Math.max(img.width, img.height)), w = Math.max(1, Math.round(img.width*sc)), h = Math.max(1, Math.round(img.height*sc));
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,w,h); x.drawImage(img, 0, 0, w, h);
+          const url = c.toDataURL('image/jpeg', 0.82);
+          res({ mime:'image/jpeg', data:url.split(',')[1], url, name:file.name || 'image' });
+        };
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  function setAtt(a){
+    ATT = a; const box = $('mcAtt');
+    if(!a){ box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false; box.innerHTML = '';
+    const im = document.createElement('img'); im.src = a.url; im.alt = 'Attached image';
+    const sp = document.createElement('span'); sp.textContent = 'Image attached. Add a question, or just send it.';
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = 'Remove'; x.addEventListener('click', ()=>{ setAtt(null); $('mcFile').value = ''; });
+    box.append(im, sp, x);
+  }
+  $('mcAttach').addEventListener('click', ()=>$('mcFile').click());
+  $('mcFile').addEventListener('change', async ()=>{
+    const f = $('mcFile').files && $('mcFile').files[0]; if(!f) return;
+    if(!/^image\//.test(f.type)){ add('Please choose a picture (a photo or screenshot).', 'bot'); $('mcFile').value = ''; return; }
+    if(f.size > 15*1024*1024){ add('That picture is too large. Please choose one under 15 MB.', 'bot'); $('mcFile').value = ''; return; }
+    try{ setAtt(await prepImage(f)); $('mcQ').focus(); }
+    catch(e){ add('I couldn\'t open that picture. Please try a JPG or PNG.', 'bot'); setAtt(null); }
+    $('mcFile').value = '';
+  });
+  // Pictures that come back with an answer (structures, diagrams, drawings) and the pages that were read.
+  function addExtras(bubble, res){
+    const imgs = (res && res.images || []).filter(i=>i && (i.url || i.svg));
+    if(imgs.length){
+      const wrap = document.createElement('div'); wrap.className = 'mc-figs';
+      imgs.forEach(i=>{
+        const fig = document.createElement('figure'); fig.className = 'mc-fig';
+        const im = document.createElement('img'); im.loading = 'lazy'; im.alt = i.caption || 'Chemistry illustration';
+        im.src = i.svg ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(i.svg) : i.url;
+        im.addEventListener('error', ()=>fig.remove());
+        im.addEventListener('click', ()=>fig.classList.toggle('big'));
+        const cap = document.createElement('figcaption');
+        const b = document.createElement('b'); b.textContent = i.caption || ''; cap.appendChild(b);
+        cap.appendChild(document.createTextNode(i.source || ''));
+        if(i.link){ cap.appendChild(document.createTextNode(' · ')); const a = document.createElement('a'); a.href = i.link; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = 'View source'; cap.appendChild(a); }
+        fig.append(im, cap); wrap.appendChild(fig);
+      });
+      bubble.appendChild(wrap);
+    }
+    const read = (res && res.links || []).filter(l=>l && l.ok);
+    if(read.length){
+      const d = document.createElement('div'); d.className = 'mc-read'; d.appendChild(document.createTextNode('Page read: '));
+      read.forEach((l,k)=>{ if(k) d.appendChild(document.createTextNode(', ')); const a = document.createElement('a'); a.href = l.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; let h = l.url; try{ h = new URL(l.url).hostname; }catch(e){} a.textContent = l.title ? l.title.slice(0,60) : h; d.appendChild(a); });
+      bubble.appendChild(d);
+    }
   }
   const msgs = $('mcMsgs');
   function add(text, who, href){
@@ -3098,21 +3179,26 @@ function mcSvg(l, cls){
     msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d;
   }
   function ask(q){
-    q = q.trim(); if(!q) return;
+    q = q.trim(); const att = ATT; if(!q && !att) return;
+    if(!q) q = 'What can you tell me about this image?';
     if(typeof vReset==='function') vReset();
     $('mcChips').style.display = 'none';
-    add(q, 'me'); $('mcQ').value = ''; $('mcSend').disabled = true;
+    const mine = add(q, 'me');
+    if(att){ const th = document.createElement('img'); th.className = 'mc-th'; th.src = att.url; th.alt = 'Your image'; mine.insertBefore(th, mine.firstChild); }
+    setAtt(null); $('mcQ').value = ''; $('mcSend').disabled = true;
     const dots = document.createElement('div'); dots.className = 'mc-m bot mc-dots'; dots.innerHTML = '<span></span><span></span><span></span>'; msgs.appendChild(dots); msgs.scrollTop = msgs.scrollHeight;
     (async ()=>{
       const slow = setTimeout(()=>{ const n = document.createElement('em'); n.textContent = ' Still thinking…'; n.style.cssText = 'font-size:12px; opacity:.7; margin-left:8px; font-style:normal;'; dots.appendChild(n); }, 7000);
-      let [ai] = await Promise.all([aiAnswer(q), new Promise(r=>setTimeout(r, 300))]);
+      let [res] = await Promise.all([aiAnswer(q, att), new Promise(r=>setTimeout(r, 300))]);
       // One quick retry only when the first try failed fast (a timeout means the AI is busy, so go straight to the on-page answer).
-      if(!ai && !aiTimedOut){ await new Promise(r=>setTimeout(r, 800)); ai = await aiAnswer(q); }
+      if(!res && !aiTimedOut){ await new Promise(r=>setTimeout(r, 800)); res = await aiAnswer(q, att); }
       clearTimeout(slow);
       dots.remove();
-      const r = ai ? { text: ai } : answer(q); // last resort only: answer from the page text
-      hist.push({ role:'user', text:q }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);
-      add(r.text, 'bot', r.href); $('mcSend').disabled = false; $('mcQ').focus();
+      const needsAI = !!att || /https?:\/\//i.test(q);   // images and links can only be handled by the AI, never by the on-page search
+      const r = res ? { text: String(res.reply) } : needsAI ? { text: 'Sorry, I couldn\'t look at that just now. Please try again in a moment.' } : answer(q); // last resort: answer from the page text
+      hist.push({ role:'user', text: q + (att ? ' [the visitor attached an image]' : '') }, { role:'bot', text:r.text }); if(hist.length > 8) hist.splice(0, hist.length - 8);
+      const bubble = add(r.text, 'bot', r.href); if(res) addExtras(bubble, res);
+      $('mcSend').disabled = false; $('mcQ').focus(); msgs.scrollTop = msgs.scrollHeight;
     })();
   }
   let started = false;
@@ -3123,7 +3209,7 @@ function mcSvg(l, cls){
       started = true; if(!chunks) build();
       add('Hi there! 👋 I\'m your ChemPrep Scientist. I love chemistry, and I\'m happy to help with the programme, the International Chemistry Competition, or any chemistry idea you\'d like explained. What are you curious about?', 'bot');
       const faqQs = [...document.querySelectorAll('#faq summary')].map(x=>x.textContent.trim()).slice(0,4);
-      const chips = faqQs.slice(0,2).concat(['Who are the coordinators?', 'What are the IChC rounds?', 'What prizes can you win?', 'Explain what a mole is']);
+      const chips = faqQs.slice(0,2).concat(['Who are the coordinators?', 'What are the IChC rounds?', 'Show me the structure of aspirin', 'Explain what a mole is']);
       $('mcChips').innerHTML = ''; chips.forEach(c=>{ const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.addEventListener('click', ()=>ask(c)); $('mcChips').appendChild(b); });
     }
     setTimeout(()=>$('mcQ').focus(), 50);
