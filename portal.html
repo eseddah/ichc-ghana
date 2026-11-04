@@ -1013,6 +1013,33 @@
   .int-wa-row{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-bottom:6px;}
   .int-wa-st{font-size:12px; color:var(--teal-deep); font-weight:700;}
   .int-past{margin-top:10px; padding:8px 12px; border-radius:12px; background:var(--butter); border:2px solid var(--amber); color:#6B4A00; font-size:13px; font-weight:700;}
+
+  /* ---- lesson player: banner over the top bar, reactions and comments beside the video ---- */
+  #lvModal{position:fixed; inset:0; z-index:2000; background:rgba(14,12,40,.78); display:flex; justify-content:center; align-items:flex-start; padding:10px; overflow:auto;}
+  .lv-dlg{background:#fff; border-radius:18px; width:min(1080px,100%); margin:auto; padding:14px; display:flex; flex-direction:column; gap:12px;}
+  .lv-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .lv-head h3{margin:0; font-size:19px; line-height:1.25;}
+  .lv-x{flex:none; width:38px; height:38px; border-radius:50%; border:none; background:#EFEAFF; color:var(--navy-deep); font-size:24px; line-height:1; cursor:pointer;}
+  .lv-main{display:grid; grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr); gap:16px; align-items:start;}
+  .lv-media{min-width:0;}
+  .lv-cap{white-space:pre-wrap; font-size:14px; line-height:1.55; margin:12px 0 0;}
+  .lv-side{display:flex; flex-direction:column; min-width:0; border:1px solid var(--line); border-radius:14px; background:#fff;}
+  .lv-tabs{display:flex; gap:6px; flex-wrap:wrap; padding:10px; border-bottom:1px solid var(--line);}
+  .lv-pane{padding:12px; overflow:auto; max-height:min(560px,62vh); min-height:160px;}
+  .lv-player{position:relative; background:#000; border-radius:12px; overflow:hidden; line-height:0;}
+  .lv-player video{display:block; width:100%; max-height:62vh; background:#000;}
+  .lv-banner{position:absolute; top:0; left:0; right:0; height:clamp(32px,12%,64px); display:flex; align-items:center; gap:10px; padding:0 52px 0 12px; background:linear-gradient(90deg,#1D1B3A,#4527B8); border-bottom:3px solid var(--amber); color:#fff; line-height:1.15; pointer-events:none;}
+  .lv-hex{width:42px; flex:none; color:var(--amber);} .lv-hex svg{display:block; width:100%; height:auto;} .lv-hex text{fill:#fff;}
+  .lv-bt{display:flex; flex-direction:column; min-width:0;} .lv-bt b{font-size:clamp(11.5px,2.4vw,15px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;} .lv-bt small{font-size:11px; opacity:.8;}
+  .lv-fs{position:absolute; top:0; right:4px; width:44px; height:clamp(32px,12%,64px); border:none; background:transparent; color:#fff; cursor:pointer; display:grid; place-items:center; padding:0; z-index:2;}
+  .lv-player:fullscreen,.lv-player.full{border-radius:0; display:flex; align-items:center;}
+  .lv-player.full{position:fixed; inset:0; z-index:3000;}
+  .lv-player:fullscreen video,.lv-player.full video{max-height:100vh; height:100%;}
+  @media (max-width:860px){
+    .lv-main{grid-template-columns:1fr;} .lv-dlg{padding:12px; border-radius:14px;}
+    .lv-side{overflow:visible;} .lv-tabs{position:sticky; top:0; z-index:3; background:#fff; border-radius:14px 14px 0 0;}
+    .lv-pane{max-height:none; overflow:visible; min-height:120px;}
+  }
 </style>
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
@@ -10868,7 +10895,7 @@ function lvUploadCardHtml(){
     <div class="field"><label for="lvTitle">Lesson title</label><input id="lvTitle" maxlength="80" placeholder="e.g. Mole concept: worked examples"></div>
     <div class="field"><label for="lvCaption">Caption (shown above the video)</label><textarea id="lvCaption" rows="3" maxlength="600" placeholder="What this lesson covers and what students should do after watching"></textarea><div class="note" id="lvCapCount" style="margin:4px 0 0;"></div></div>
     <div class="field"><label for="lvFile">Video file</label><input id="lvFile" type="file" accept="video/mp4,video/webm,video/quicktime"><div class="note" id="lvFileInfo" style="margin:6px 0 0;">${u.file ? lvEsc(lvFileInfoText()) : 'No video chosen yet.'}</div></div>
-    <video id="lvPrev" controls preload="metadata" playsinline style="display:${u.objUrl?'block':'none'}; width:100%; max-width:420px; border-radius:10px; margin:6px 0 10px; background:#000;" ${u.objUrl?`src="${lvEsc(u.objUrl)}"`:''}></video>
+    <div class="lv-player" id="lvPrevWrap" style="display:${u.objUrl?'block':'none'}; max-width:420px; margin:6px 0 10px;"><video id="lvPrev" controls controlsList="nodownload nofullscreen" disablepictureinpicture preload="metadata" playsinline ${u.objUrl?`src="${lvEsc(u.objUrl)}"`:''}></video>${lvBannerHtml('lvPrevWrap')}</div>
     <label class="eb-check"><input type="checkbox" id="lvNotify" checked> ${amb ? 'Notify all students (app notification)' : 'Notify my students (app notification)'}</label>
     <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px;"><button class="btn teal small" id="lvUpBtn" type="button" ${u.busy?'disabled':''}>Upload lesson</button><span class="note" id="lvUpMsg" style="margin:0;">${lvEsc(u.msg)}</span></div>
   </div>`;
@@ -10917,7 +10944,7 @@ async function lvRefreshList(){
 
 // ---------- upload ----------
 function lvWireLessons(){
-  const q = id=>document.getElementById(id);
+  const q = id=>document.getElementById(id); lvFillHex(document);
   const box = q('lvListBox');
   if(box && !box.dataset.wired){ box.dataset.wired = '1'; box.addEventListener('click', lvListClick); }
   if(q('lvCaption')){
@@ -10930,7 +10957,7 @@ function lvWireLessons(){
       if(u.objUrl){ try{ URL.revokeObjectURL(u.objUrl); }catch(e){} }
       u.file = f || null; u.dur = 0; u.objUrl = f ? URL.createObjectURL(f) : ''; u.msg = '';
       q('lvFileInfo').textContent = f ? lvFileInfoText() : 'No video chosen yet.';
-      const pv = q('lvPrev'); pv.style.display = f ? 'block' : 'none'; if(f) pv.src = u.objUrl; else pv.removeAttribute('src');
+      const pv = q('lvPrev'); q('lvPrevWrap').style.display = f ? 'block' : 'none'; if(f) pv.src = u.objUrl; else pv.removeAttribute('src');
       if(f){
         const probe = document.createElement('video'); probe.preload = 'metadata';
         probe.onloadedmetadata = ()=>{ u.dur = isFinite(probe.duration) ? probe.duration : 0; if(q('lvFileInfo')) q('lvFileInfo').textContent = lvFileInfoText(); };
@@ -11007,6 +11034,25 @@ async function lvListClick(ev){
   }
 }
 
+// ---------- player banner: the Chemistry Competition Prep strip that covers the top bar of every video ----------
+function lvBannerHtml(wrapId){
+  return `<div class="lv-banner" aria-hidden="true"><span class="hexlogo lv-hex"></span><span class="lv-bt"><b>Chemistry Competition Prep</b><small>Ghana Chapter</small></span></div>
+  <button type="button" class="lv-fs" data-lv-fs="${wrapId}" aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>`;
+}
+function lvFillHex(root){
+  const tpl = document.getElementById('hexlogo-tpl'); if(!tpl) return;
+  (root||document).querySelectorAll('.lv-hex').forEach(el=>{ if(!el.firstChild) el.appendChild(tpl.content.cloneNode(true)); });
+}
+// Full screen is done on the whole player (not the bare video) so the banner stays on top.
+function lvFull(id){
+  const w = document.getElementById(id); if(!w) return;
+  if(document.fullscreenElement === w){ document.exitFullscreen(); return; }
+  if(w.classList.contains('full')){ w.classList.remove('full'); return; }
+  if(w.requestFullscreen){ w.requestFullscreen().catch(()=>w.classList.add('full')); } else w.classList.add('full');
+}
+document.addEventListener('click', e=>{ const b = e.target.closest && e.target.closest('[data-lv-fs]'); if(b && !b.closest('#lvModal')) lvFull(b.dataset.lvFs); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const w = document.querySelector('.lv-player.full'); if(w) w.classList.remove('full'); } });
+
 // ---------- the player window ----------
 function lvClose(){
   const m = document.getElementById('lvModal'); if(m) m.remove();
@@ -11021,17 +11067,24 @@ async function lvOpen(id){
   LV.openId = id; LV.tab = 'reactions';
   const staff = lvIsStaffFor(v), o = document.createElement('div');
   o.id = 'lvModal';
-  o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.72); overflow:auto; padding:12px; display:flex; justify-content:center; align-items:flex-start;';
-  o.innerHTML = `<div role="dialog" aria-modal="true" aria-label="${lvEsc(v.title)}" style="background:#fff; border-radius:16px; width:min(780px,100%); margin:6px auto; padding:16px;">
-    <div style="display:flex; gap:10px; justify-content:space-between; align-items:flex-start;"><div><h3 style="margin:0; font-size:19px;">${lvEsc(v.title)}</h3><div class="note" style="margin:3px 0 0;">${lvEsc(v.byRole==='ambassador'?'Ambassador':(v.coordinatorId?coordName(v.coordinatorId):v.by))} \u00B7 ${lvEsc(fmtDateTime(v.createdAt))} \u00B7 ${v.cohort?'Whole cohort':'Group only'}</div></div><button class="btn ghost small" type="button" id="lvX">Close</button></div>
-    <p style="margin:10px 0; font-size:14px; line-height:1.55; white-space:pre-wrap;">${linkify(v.caption||'')}</p>
-    <video id="lvVideo" controls controlsList="nodownload" playsinline preload="metadata" src="${lvEsc(v.url)}" style="width:100%; max-height:60vh; border-radius:10px; background:#000;"></video>
-    <div id="lvStatsLine" class="note" style="margin:10px 0;"></div>
-    <div style="display:flex; gap:8px; margin:6px 0 10px;"><button class="mc-chip" type="button" data-lv-tab="reactions">Reactions</button><button class="mc-chip" type="button" data-lv-tab="comments">Comments</button>${staff?'<button class="mc-chip" type="button" data-lv-tab="watchers">Who watched</button>':''}</div>
-    <div id="lvPane"></div></div>`;
-  document.body.appendChild(o);
+  const who = v.byRole==='ambassador' ? 'Ambassador' : (v.coordinatorId ? coordName(v.coordinatorId) : v.by);
+  o.innerHTML = `<div class="lv-dlg" role="dialog" aria-modal="true" aria-label="${lvEsc(v.title)}">
+    <div class="lv-head"><div class="lv-ht"><h3>${lvEsc(v.title)}</h3><div class="note" style="margin:3px 0 0;">${lvEsc(who)} \u00B7 ${lvEsc(fmtDateTime(v.createdAt))} \u00B7 ${lvDur(v.durationSec)}</div></div><button type="button" id="lvX" class="lv-x" aria-label="Close">&times;</button></div>
+    <div class="lv-main">
+      <div class="lv-media">
+        <div class="lv-player" id="lvPlayerWrap"><video id="lvVideo" controls controlsList="nodownload nofullscreen" disablepictureinpicture playsinline preload="metadata" src="${lvEsc(v.url)}"></video>${lvBannerHtml('lvPlayerWrap')}</div>
+        <p class="lv-cap">${linkify(v.caption||'')}</p>
+        <div id="lvStatsLine" class="note" style="margin:6px 0 0;"></div>
+      </div>
+      <div class="lv-side">
+        <div class="lv-tabs"><button class="mc-chip" type="button" data-lv-tab="reactions">Reactions</button><button class="mc-chip" type="button" data-lv-tab="comments">Comments</button>${staff?'<button class="mc-chip" type="button" data-lv-tab="watchers">Who watched</button>':''}</div>
+        <div id="lvPane" class="lv-pane"></div>
+      </div>
+    </div></div>`;
+  document.body.appendChild(o); lvFillHex(o);
   o.addEventListener('click', e=>{
-    if(e.target===o || e.target.id==='lvX') return lvClose();
+    if(e.target===o || e.target.closest('#lvX')) return lvClose();
+    const fsb = e.target.closest('[data-lv-fs]'); if(fsb) return lvFull(fsb.dataset.lvFs);
     const tb = e.target.closest('[data-lv-tab]'); if(tb){ LV.tab = tb.dataset.lvTab; return lvPaintPane(v, true); }
     const rb = e.target.closest('[data-lv-react]'); if(rb) return lvReact(v, rb.dataset.lvReact);
     if(e.target.closest('#lvPost')) return lvPostComment(v);

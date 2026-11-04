@@ -707,6 +707,24 @@
   .mch-acts button.main{background:var(--teal); border-color:var(--teal); color:#fff;}
   .mch-empty{color:var(--muted); text-align:center; padding:48px 12px; margin:0;}
   .mch-note{margin:0; padding:10px max(16px,calc((100% - 880px)/2)) max(12px,env(safe-area-inset-bottom)); font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); background:#fff;}
+
+  /* chat heading */
+  .mc-ch{border-bottom:4px solid; border-image:var(--spectrum) 1;}
+  .mc-id{position:relative; flex:none;}
+  .mc-dot{position:absolute; right:0; bottom:1px; width:13px; height:13px; border-radius:50%; background:#4CB944; border:2px solid #2A2760;}
+  .mc-ttl{min-width:0; display:flex; flex-direction:column; gap:3px;}
+  .mc-ch .mc-ttl b{display:flex; align-items:center; gap:8px; font-family:'Bricolage Grotesque',sans-serif; font-size:19px; font-weight:800; letter-spacing:-.01em; line-height:1.1;}
+  .mc-ai{font-family:'DM Sans',sans-serif; font-size:10.5px; font-weight:800; letter-spacing:.06em; padding:3px 7px; border-radius:999px; background:var(--amber); color:var(--navy-deep);}
+  .mc-ch small.mc-sub{display:block; font-size:12.5px; opacity:.85;}
+  .mc-ch small.mc-status{display:none; align-items:center; gap:6px; font-size:12.5px; opacity:.9;}
+  .mc-status i{width:8px; height:8px; border-radius:50%; background:#4CB944; display:block;}
+  @media(max-width:640px){
+    .mc-ch{display:grid; grid-template-columns:auto 1fr auto auto auto; grid-template-areas:"id ttl auto hist x" "id lang lang lang lang"; gap:4px 8px; align-items:center;}
+    .mc-id{grid-area:id;} .mc-ttl{grid-area:ttl;} #mcAutoBtn{grid-area:auto;} #mcHistBtn{grid-area:hist;} #mcChatX{grid-area:x;}
+    #mcLang{grid-area:lang; justify-self:start; margin:0!important;} .mc-ch #mcAutoBtn,.mc-ch #mcHistBtn,.mc-ch #mcChatX{margin:0!important;}
+    .mc-ch small.mc-sub,.mc-ch .mc-ai{display:none;} .mc-ch small.mc-status{display:flex;}
+    .mc-ch .mc-ttl b{font-size:17px;}
+  }
 </style>
 </head>
 <body>
@@ -2928,7 +2946,7 @@ document.addEventListener('click', function(e){
 <button type="button" id="mcDock" class="mc-dock on" aria-label="Chat with the Chemistry Competition Prep scientist" aria-expanded="false"></button>
 <div id="mcTip" class="mc-tip" aria-hidden="true"><span class="tip-av mc-wave" id="mcTipAv"></span><span class="tip-txt"><small>Hello!</small><b>I am the ChemPrep Scientist <i class="tip-hand">&#128075;</i></b></span></div>
 <div id="mcChat" class="mc-chat" role="dialog" aria-label="Chat about the programme, the International Chemistry Competition and chemistry">
-  <div class="mc-ch"><div class="mc-av" id="mcAv"></div><div><b>ChemPrep Scientist</b><small>Ask about the programme, the IChC or chemistry</small></div><select id="mcLang" aria-label="Chat language" style="margin-left:auto; background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:999px; padding:5px 8px; font-size:12px;"><option value="English" style="color:#000">English</option><option value="Français" style="color:#000">Français</option><option value="Twi" style="color:#000">Twi</option><option value="Ga" style="color:#000">Ga</option><option value="Ewe" style="color:#000">Ewe</option></select><button type="button" id="mcAutoBtn" class="mc-hbtn" aria-pressed="false" aria-label="Read replies aloud automatically" title="Read replies aloud: off"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button><button type="button" id="mcHistBtn" class="mc-hbtn" aria-label="Chat history" title="Chat history" style="margin-left:6px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button><button type="button" id="mcChatX" aria-label="Close chat" style="margin-left:6px;">&times;</button></div>
+  <div class="mc-ch"><div class="mc-id"><div class="mc-av" id="mcAv"></div><i class="mc-dot" aria-hidden="true"></i></div><div class="mc-ttl"><b>ChemPrep Scientist <span class="mc-ai">AI</span></b><small class="mc-sub">Ask about the programme, the IChC or chemistry</small><small class="mc-status"><i></i>AI assistant · online</small></div><select id="mcLang" aria-label="Chat language" style="margin-left:auto; background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:999px; padding:5px 8px; font-size:12px;"><option value="English" style="color:#000">English</option><option value="Français" style="color:#000">Français</option><option value="Twi" style="color:#000">Twi</option><option value="Ga" style="color:#000">Ga</option><option value="Ewe" style="color:#000">Ewe</option></select><button type="button" id="mcAutoBtn" class="mc-hbtn" aria-pressed="false" aria-label="Read replies aloud automatically" title="Read replies aloud: off"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></button><button type="button" id="mcHistBtn" class="mc-hbtn" aria-label="Chat history" title="Chat history" style="margin-left:6px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button><button type="button" id="mcChatX" aria-label="Close chat" style="margin-left:6px;">&times;</button></div>
   <div class="mc-msgs" id="mcMsgs" aria-live="polite"></div>
   <div class="mc-hist" id="mcHist" hidden role="dialog" aria-label="Chat history">
     <div class="mch-top"><button type="button" id="mchBack" aria-label="Back">&larr; Back</button><b id="mchTitle">Chat history</b><button type="button" id="mchDelAll" hidden>Delete all</button></div>
