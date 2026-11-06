@@ -36,10 +36,17 @@
   input,textarea,select{width:100%;min-height:52px;padding:13px 14px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font:inherit;color:var(--ink);}
   input:focus,textarea:focus,select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,36,56,.12);}
   textarea{resize:vertical;min-height:110px;}
-  .phone{display:flex;}
-  .phone .cc{flex:none;display:flex;align-items:center;padding:0 14px;min-height:52px;border:1.5px solid var(--line);border-right:0;border-radius:10px 0 0 10px;background:#F4F6F9;font-weight:700;color:var(--navy);}
-  .phone input{border-radius:0 10px 10px 0;}
-  .phone:focus-within .cc{border-color:var(--navy);}
+  .phone{display:flex;position:relative;}
+  .phone input#fPhone{border-radius:0 10px 10px 0;}
+  .phone .cc-btn{flex:none;display:flex;align-items:center;gap:6px;padding:0 12px;min-height:52px;border:1.5px solid var(--line);border-right:0;border-radius:10px 0 0 10px;background:#F4F6F9;font:inherit;font-weight:700;color:var(--navy);cursor:pointer;}
+  .phone .cc-btn[aria-expanded=true]{border-color:var(--navy);background:#EAF0F6;}
+  .phone .cc-btn:active{filter:brightness(.92);}
+  .cc-panel{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:#fff;border:2px solid var(--navy);border-radius:12px;box-shadow:0 12px 28px rgba(15,36,56,.22);max-height:320px;overflow:auto;}
+  .cc-panel[hidden]{display:none;}
+  .cc-search{position:sticky;top:0;border:0 !important;border-bottom:1.5px solid var(--line) !important;border-radius:0 !important;box-shadow:none !important;}
+  .cc-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;min-height:48px;cursor:pointer;border-top:1px solid #EEE9DB;}
+  .cc-item:first-child{border-top:0;} .cc-item b{color:var(--navy);} .cc-item:active{background:#FDF1DE;} .cc-item.on{background:#EAF0F6;box-shadow:inset 5px 0 0 var(--amber);}
+  .cc-empty{padding:14px;color:var(--muted);font-size:14px;}
 
   .chip-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
   .chip{border:1.5px solid var(--line);border-radius:10px;padding:13px 8px;min-height:50px;text-align:center;cursor:pointer;background:#fff;font-weight:600;font-size:15px;color:var(--ink);transition:background .12s,border-color .12s,transform .08s;}
@@ -88,7 +95,7 @@
     <section class="sec" data-sec="1"><h2 class="sec-h">1. About you</h2>
       <div class="field"><label for="fName">Full name <span class="star">*</span></label><input id="fName" placeholder="e.g. Ama Owusu" autocomplete="name"></div>
       <div class="field"><label for="fEmail">Email <span class="star">*</span></label><input id="fEmail" type="email" placeholder="e.g. ama.owusu@gmail.com" autocomplete="email"></div>
-      <div class="field"><label for="fPhone">Phone number <span class="star">*</span></label><div class="phone"><span class="cc" aria-hidden="true">+233</span><input id="fPhone" type="tel" inputmode="tel" placeholder="24 000 0000" autocomplete="tel-national"></div></div>
+      <div class="field"><label for="fPhone">Phone number <span class="star">*</span></label><div class="phone" id="phoneBox"><button type="button" class="cc-btn" id="ccBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code">+233 &#9662;</button><input id="fPhone" type="tel" inputmode="tel" placeholder="24 123 4567" autocomplete="tel-national"><div class="cc-panel" id="ccPanel" hidden><input type="search" class="cc-search" id="ccSearch" placeholder="Search country or code" aria-label="Search country"><div id="ccList"></div></div></div></div>
       <label class="check"><input type="checkbox" id="fNotifySms" checked> Send me text message updates, including my interview details</label>
       <div class="field" style="margin-top:14px;"><label>Age range <span class="star">*</span></label><div class="chip-row" id="ageChips"><button type="button" class="chip" data-age="14-17">14-17</button><button type="button" class="chip" data-age="18-21">18-21</button><button type="button" class="chip" data-age="22-24">22-24</button></div></div>
     </section>
@@ -346,13 +353,73 @@ function paintSteps(){
   $('errMsg').textContent = ''; window.scrollTo({top:0, behavior:'smooth'});
   if(step === 6 && CAPTCHA_ON) renderCaptcha();
 }
-function nationalPhone(){ let d = (document.getElementById('fPhone').value || '').replace(/\D/g,''); if(d.indexOf('233') === 0 && d.length >= 12) d = d.slice(3); return d.replace(/^0+/,''); }
-function fullPhone(){ return '+233 ' + nationalPhone(); }
+const DIAL = 'Afghanistan:93|Albania:355|Algeria:213|Andorra:376|Angola:244|Antigua and Barbuda:1|Argentina:54|Armenia:374|Australia:61|Austria:43|Azerbaijan:994|Bahamas:1|Bahrain:973|Bangladesh:880|Barbados:1|Belarus:375|Belgium:32|Belize:501|Benin:229|Bhutan:975|Bolivia:591|Bosnia and Herzegovina:387|Botswana:267|Brazil:55|Brunei:673|Bulgaria:359|Burkina Faso:226|Burundi:257|Cambodia:855|Cameroon:237|Canada:1|Cape Verde:238|Central African Republic:236|Chad:235|Chile:56|China:86|Colombia:57|Comoros:269|Congo (Republic):242|Congo (DR):243|Costa Rica:506|Côte d’Ivoire:225|Croatia:385|Cuba:53|Cyprus:357|Czechia:420|Denmark:45|Djibouti:253|Dominica:1|Dominican Republic:1|Ecuador:593|Egypt:20|El Salvador:503|Equatorial Guinea:240|Eritrea:291|Estonia:372|Eswatini:268|Ethiopia:251|Fiji:679|Finland:358|France:33|Gabon:241|Gambia:220|Georgia:995|Germany:49|Ghana:233|Greece:30|Grenada:1|Guatemala:502|Guinea:224|Guinea-Bissau:245|Guyana:592|Haiti:509|Honduras:504|Hungary:36|Iceland:354|India:91|Indonesia:62|Iran:98|Iraq:964|Ireland:353|Israel:972|Italy:39|Jamaica:1|Japan:81|Jordan:962|Kazakhstan:7|Kenya:254|Kiribati:686|Kosovo:383|Kuwait:965|Kyrgyzstan:996|Laos:856|Latvia:371|Lebanon:961|Lesotho:266|Liberia:231|Libya:218|Liechtenstein:423|Lithuania:370|Luxembourg:352|Madagascar:261|Malawi:265|Malaysia:60|Maldives:960|Mali:223|Malta:356|Marshall Islands:692|Mauritania:222|Mauritius:230|Mexico:52|Micronesia:691|Moldova:373|Monaco:377|Mongolia:976|Montenegro:382|Morocco:212|Mozambique:258|Myanmar:95|Namibia:264|Nauru:674|Nepal:977|Netherlands:31|New Zealand:64|Nicaragua:505|Niger:227|Nigeria:234|North Korea:850|North Macedonia:389|Norway:47|Oman:968|Pakistan:92|Palau:680|Palestine:970|Panama:507|Papua New Guinea:675|Paraguay:595|Peru:51|Philippines:63|Poland:48|Portugal:351|Qatar:974|Romania:40|Russia:7|Rwanda:250|Saint Kitts and Nevis:1|Saint Lucia:1|Saint Vincent and the Grenadines:1|Samoa:685|San Marino:378|São Tomé and Príncipe:239|Saudi Arabia:966|Senegal:221|Serbia:381|Seychelles:248|Sierra Leone:232|Singapore:65|Slovakia:421|Slovenia:386|Solomon Islands:677|Somalia:252|South Africa:27|South Korea:82|South Sudan:211|Spain:34|Sri Lanka:94|Sudan:249|Suriname:597|Sweden:46|Switzerland:41|Syria:963|Taiwan:886|Tajikistan:992|Tanzania:255|Thailand:66|Timor-Leste:670|Togo:228|Tonga:676|Trinidad and Tobago:1|Tunisia:216|Turkey:90|Turkmenistan:993|Tuvalu:688|Uganda:256|Ukraine:380|United Arab Emirates:971|United Kingdom:44|United States:1|Uruguay:598|Uzbekistan:998|Vanuatu:678|Vatican City:39|Venezuela:58|Vietnam:84|Yemen:967|Zambia:260|Zimbabwe:263'.split('|').map(x => x.split(':'));
+const CODESET = new Set(DIAL.map(x => x[1]));
+// A number typed with a country code ("+233 24...", "00233 24...") is split into code + number.
+function splitCode(raw) {
+  let t = String(raw).trim(); if (t.indexOf('00') === 0) t = '+' + t.slice(2);
+  if (t.charAt(0) !== '+') return null;
+  const d = t.slice(1).replace(/\D/g, '');
+  for (const n of [3, 2, 1]) { const c = d.slice(0, n); if (c.length === n && CODESET.has(c)) return { code: c, rest: d.slice(n) }; }
+  return null;
+}
+let CC = '233';
+function nationalPhone(){ return (document.getElementById('fPhone').value || '').replace(/\D/g,''); }
+function fullPhone(){ return '+' + CC + nationalPhone(); }
+function phoneProblem(){
+  const d = nationalPhone();
+  if(!d) return 'Please enter your phone number.';
+  if(CC === '233') return d.length === 9 ? '' : 'A Ghana number has 9 digits after +233, for example 24 123 4567. Leave out the first 0.';
+  return (d.length >= 6 && d.length <= 12) ? '' : 'Check your phone number. It should be 6 to 12 digits after the country code.';
+}
+function refreshCC(){ document.getElementById('ccBtn').innerHTML = '+' + CC + ' &#9662;'; }
+// Keeps only the digits after the selected country code: a typed code or a leading 0 is removed automatically.
+function normalizePhone(){
+  const inp = document.getElementById('fPhone'), raw = inp.value, sp = splitCode(raw);
+  let digits;
+  if(sp){ if(sp.code !== CC){ CC = sp.code; refreshCC(); } digits = sp.rest; }
+  else if(/^\s*(\+|00)/.test(raw)) return;
+  else {
+    digits = raw.replace(/\D/g,'');
+    if(CC === '233' && digits.indexOf('233') === 0 && digits.length >= 12) digits = digits.slice(3);
+    else if(CC !== '233' && digits.indexOf(CC) === 0 && digits.length > 12) digits = digits.slice(CC.length);
+  }
+  digits = digits.replace(/^0+/,'');
+  digits = digits.slice(0, CC === '233' ? (digits.indexOf('233') === 0 ? 12 : 9) : 12);
+  if(inp.value !== digits) inp.value = digits;
+}
+function initPhone(){
+  const btn = document.getElementById('ccBtn'), panel = document.getElementById('ccPanel'), search = document.getElementById('ccSearch'), list = document.getElementById('ccList'), inp = document.getElementById('fPhone');
+  if(!btn || !panel) return;
+  const close = () => { panel.hidden = true; btn.setAttribute('aria-expanded','false'); };
+  const pick = c => { CC = c; refreshCC(); close(); normalizePhone(); inp.focus(); };
+  const paint = () => {
+    const q = search.value.trim().toLowerCase(), qd = q.replace(/\D/g,'');
+    list.innerHTML = '';
+    DIAL.filter(x => !q || x[0].toLowerCase().indexOf(q) > -1 || (qd && x[1].indexOf(qd) === 0)).forEach(x => {
+      const row = document.createElement('div'); row.className = 'cc-item' + (x[1] === CC ? ' on' : ''); row.setAttribute('role','option'); row.tabIndex = 0;
+      row.innerHTML = '<span></span><b></b>'; row.firstChild.textContent = x[0]; row.lastChild.textContent = '+' + x[1];
+      row.addEventListener('click', () => pick(x[1]));
+      row.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(x[1]); } });
+      list.appendChild(row);
+    });
+    if(!list.children.length){ const e = document.createElement('div'); e.className = 'cc-empty'; e.textContent = 'No match. Try the country name.'; list.appendChild(e); }
+  };
+  btn.addEventListener('click', () => {
+    if(panel.hidden){ panel.hidden = false; btn.setAttribute('aria-expanded','true'); search.value = ''; paint(); search.focus(); const on = list.querySelector('.cc-item.on'); if(on) on.scrollIntoView({ block:'center' }); } else close();
+  });
+  search.addEventListener('input', paint);
+  inp.addEventListener('input', normalizePhone);
+  inp.addEventListener('blur', normalizePhone);
+  document.addEventListener('click', e => { if(!document.getElementById('phoneBox').contains(e.target)) close(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPhone); else initPhone();
 function validate(n){
   if(n===1){
     if(val('fName').length < 3) return 'Please enter your full name.';
     if(!validEmail(val('fEmail'))) return 'Please enter a valid email address.';
-    if(nationalPhone().length !== 9) return 'Enter your 9-digit Ghana phone number, for example 24 000 0000.';
+    { normalizePhone(); const pp = phoneProblem(); if(pp) return pp; }
     if(!chosenAge) return 'Please select your age range.';
   }
   if(n===2){ if(val('fSchool').length < 2) return 'Please enter your school.'; if(!val('fLevel')) return 'Please choose your class or level.'; if(val('fRegion').length < 2) return 'Please enter your region or town.'; }
