@@ -797,6 +797,32 @@
     </div>
   </div>
 </header>
+<style>
+  #seriesPop .np-card{max-width:420px; text-align:left;}
+  #seriesPop .sp-kicker{font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--amber-deep); margin:0 0 6px;}
+  #seriesPop h3{margin:0 0 10px;}
+  #seriesPop p{margin:0 0 14px;}
+  #seriesPop ul{margin:0 0 16px; padding:0; list-style:none; display:grid; gap:8px;}
+  #seriesPop li{font-size:14.5px; line-height:1.5; color:var(--navy-deep); padding-left:26px; position:relative;}
+  #seriesPop li::before{content:'\2713'; position:absolute; left:0; top:1px; width:18px; height:18px; border-radius:50%; background:var(--amber); color:var(--navy-deep); font-size:11px; font-weight:800; display:grid; place-items:center;}
+  #seriesPop .sp-note{font-size:13.5px; color:var(--muted); margin:0 0 18px;}
+  #seriesPop .btn{width:100%; justify-content:center; text-decoration:none; box-sizing:border-box;}
+</style>
+<div id="seriesPop" class="np-backdrop" aria-hidden="true">
+  <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="spTitle">
+    <button class="tm-close" id="spClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <p class="sp-kicker">Chemistry Competition Prep</p>
+    <h3 id="spTitle">The Chemistry Series</h3>
+    <p>A series of live chemistry sessions for students, graduates and teachers. Sign up to take part in the way that suits you:</p>
+    <ul>
+      <li><b>Attend</b> a session and put your questions to the speakers.</li>
+      <li><b>Suggest a topic</b> you would like the series to cover.</li>
+      <li><b>Speak</b> and share your expertise with the community.</li>
+    </ul>
+    <p class="sp-note">Open to people anywhere in the world. Session details are sent to your email once your registration is complete.</p>
+    <a class="btn amber" id="spGo" href="series.html">Proceed</a>
+  </div>
+</div>
 <div id="notifyPop" class="np-backdrop" aria-hidden="true">
   <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="npTitle">
     <button class="tm-close" id="npClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
@@ -829,6 +855,7 @@
         <p class="lead" id="edit-heroLead" data-edit="heroLead">Real competition practice, a personal mentor and a community of Ghanaian students, all working towards the International Chemistry Competition.</p>
         <div class="ctas">
           <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">Join the programme now</button>
+          <button type="button" class="btn outline dark" id="seriesBtn" aria-haspopup="dialog" aria-controls="seriesPop">Sign up to Chemistry Series</button>
         </div>
         <div id="dlBox" class="dl-box" style="display:none;" role="status" aria-live="polite"><div id="dlLabel" class="dl-label"></div><div id="dlClock" class="dl-clock"></div></div>
       </div>
@@ -3599,6 +3626,17 @@ function mcSvg(l, cls){
   };
   window.renderAmbSpot();
   const sa = $('startAsk'); if(sa) sa.addEventListener('click', e=>{ e.preventDefault(); $('mcDock').click(); });
+})();
+</script>
+<script>
+(function(){
+  var pop=document.getElementById('seriesPop'), btn=document.getElementById('seriesBtn');
+  if(!pop||!btn) return;
+  function set(o){ pop.classList.toggle('open',o); pop.setAttribute('aria-hidden',o?'false':'true'); document.body.classList.toggle('tm-open',o); if(o) document.getElementById('spGo').focus(); else btn.focus(); }
+  btn.addEventListener('click',function(){ set(true); });
+  document.getElementById('spClose').addEventListener('click',function(){ set(false); });
+  pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
 })();
 </script>
 </body>
