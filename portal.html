@@ -11539,9 +11539,10 @@ function appsStatusCard(){
 function seriesMount(){
   const r = document.getElementById('seriesRoot'); if(!r) return;
   if(!window.SeriesAdmin){ r.innerHTML = '<div class="empty">series-admin.js is missing. Upload it next to portal.html.</div>'; return; }
-  r.innerHTML = '<div class="section-title"><div><h2>Chemistry Series</h2><p>Sign-up window, form wording and everyone who has signed up. The public page is series.html.</p></div></div><div id="sWin"></div><div id="sResp"></div><div style="margin-top:18px;" id="sCont"></div>';
+  r.innerHTML = '<div class="section-title"><div><h2>Chemistry Series</h2><p>Sign-up window, form wording and everyone who has signed up. The public page is series.html.</p></div></div><div id="sWin"></div><div id="sResp"></div><div style="margin-top:18px;" id="sMail"></div><div style="margin-top:18px;" id="sCont"></div>';
   SeriesAdmin.windowCard(document.getElementById('sWin'), sb);
   SeriesAdmin.responses(document.getElementById('sResp'), sb);
+  SeriesAdmin.emailCard(document.getElementById('sMail'), sb);
   SeriesAdmin.contentCard(document.getElementById('sCont'), sb);
 }
 function seriesMgrMount(){

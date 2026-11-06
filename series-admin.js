@@ -109,6 +109,7 @@
     root.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
         ${box('Total sign-ups', `<li style="list-style:none;margin-left:-18px;font-size:28px;font-weight:700;">${S.total}</li>` + Object.entries(S.by_intent || {}).map(([k, v]) => `<li>${esc(INTENT[k] || k)}: <b>${v}</b></li>`).join(''))}
         ${box('Most suggested topics', topics)}
+        ${box('Sign-ups by country', tally(S.by_country, 'No countries yet'))}
         ${box('Best day and time', tally(S.best_times, 'No answers yet'))}
         ${box('Speaker offers by track', tally(S.speakers_by_track, 'No speaker offers yet'))}</div>
       <div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;" data-tabs>
@@ -121,11 +122,11 @@
     const view = () => {
       const q = st.q.toLowerCase();
       const L = all.filter(r => (st.tab === 'all' || r.intent === st.tab) && (!st.status || r.status === st.status) &&
-        (!q || [r.full_name, r.email, r.institution, r.topic, r.speak_title, r.speak_field].some(x => (x || '').toLowerCase().includes(q))));
+        (!q || [r.full_name, r.email, r.institution, r.country, r.city, r.topic, r.speak_title, r.speak_field].some(x => (x || '').toLowerCase().includes(q))));
       root.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === st.tab));
       $(root, '[data-count]').textContent = L.length + ' shown';
       $(root, '[data-list]').innerHTML = L.length ? `<table style="width:100%;border-collapse:collapse;font-size:13.5px;"><thead><tr style="text-align:left;"><th>Person</th><th>Joining as</th><th>Details</th><th>Best times</th><th>Status</th></tr></thead><tbody>` +
-        L.map(r => `<tr style="vertical-align:top;border-top:1px solid #DDD8C9;"><td style="padding:8px 8px 8px 0;"><b>${esc(r.full_name)}</b><br>${esc(r.email)}${r.whatsapp ? '<br>' + esc(r.whatsapp) : ''}<br><span class="note">${esc(r.institution)} · ${esc(r.role)}</span></td>
+        L.map(r => `<tr style="vertical-align:top;border-top:1px solid #DDD8C9;"><td style="padding:8px 8px 8px 0;"><b>${esc(r.full_name)}</b><br>${esc(r.email)}${r.whatsapp ? '<br>' + esc(r.whatsapp) : ''}<br><span class="note">${esc(r.institution)} · ${esc(r.role === 'other' && r.role_other ? 'other: ' + r.role_other : r.role)}</span>${r.country ? '<br><span class="note">' + esc([r.city, r.country].filter(Boolean).join(', ')) + '</span>' : ''}</td>
           <td>${esc(INTENT[r.intent])}<br><span class="note">${esc(when(r.created_at))}</span></td><td style="max-width:280px;">${detail(r).filter(Boolean).map(esc).join('<br>')}</td>
           <td>${esc((r.best_times || []).join(', '))}</td>
           <td><select data-id="${r.id}">${STATUS.map(s => `<option value="${s}"${r.status === s ? ' selected' : ''}>${cap(s)}</option>`).join('')}</select></td></tr>`).join('') + '</tbody></table>'
@@ -140,7 +141,7 @@
     $(root, '[data-q]').addEventListener('input', e => { st.q = e.target.value; view(); });
     $(root, '[data-st]').addEventListener('change', e => { st.status = e.target.value; view(); });
     $(root, '[data-csv]').addEventListener('click', () => {
-      const cols = ['created_at', 'intent', 'status', 'full_name', 'email', 'whatsapp', 'institution', 'role', 'best_times', 'attend_session', 'attend_question', 'attend_reminder', 'topic', 'topic_reason', 'speak_field', 'speak_title', 'speak_track', 'speak_bio', 'speak_link', 'speak_month'];
+      const cols = ['created_at', 'intent', 'status', 'full_name', 'email', 'whatsapp', 'country', 'city', 'timezone', 'institution', 'role', 'role_other', 'best_times', 'attend_session', 'attend_question', 'attend_reminder', 'topic', 'topic_reason', 'speak_field', 'speak_title', 'speak_track', 'speak_bio', 'speak_link', 'speak_month'];
       const cell = v => { let t = Array.isArray(v) ? v.join('; ') : String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
       const L = all.filter(r => (st.tab === 'all' || r.intent === st.tab) && (!st.status || r.status === st.status));
       const csv = '\ufeff' + cols.join(',') + '\n' + L.map(r => cols.map(c => cell(r[c])).join(',')).join('\n');
@@ -195,5 +196,105 @@
     });
   }
 
-  window.SeriesAdmin = { windowCard, contentCard, responses, managerCard };
+
+  // ---------------------------------------------------------------- emails: confirmation wording + emailing sign-ups
+  const FN_ERR = {
+    not_signed_in: 'Please sign in again.', not_allowed: 'You do not have access to send these emails.',
+    subject_too_short: 'Write a subject first.', message_too_short: 'Write a message first.',
+    nobody_matches: 'No one matches that audience.', too_many: 'That is more than 500 people. Narrow it with the filters and send in parts.',
+    email_not_configured: 'The email sender is not set up on the server.', server_error: 'Something went wrong on the server. Please try again.'
+  };
+  async function callMail(sb, body) {
+    const { data, error } = await sb.functions.invoke('series-email', { body });
+    if (!error) return data;
+    let code = ''; try { code = (await error.context.json()).error; } catch (e) {}
+    throw new Error(FN_ERR[code] || code || error.message || 'Something went wrong.');
+  }
+  const HELP = 'You can use {first_name}, {full_name}, {email} and {country} in the subject and message. Each person gets their own details filled in.';
+  async function emailCard(root, sb) {
+    const [t, lg] = await Promise.all([
+      sb.from('series_email_template').select('*').eq('id', 1).maybeSingle(),
+      sb.from('series_email_log').select('*').order('at', { ascending: false }).limit(8)]);
+    if (t.error || !t.data) { root.innerHTML = '<div class="card"><p class="note">Could not load the email settings.</p></div>'; return; }
+    const T = t.data, L = lg.data || [];
+    root.innerHTML = `<div class="card" style="margin-bottom:18px;"><h3 style="margin:0 0 4px;">Confirmation email</h3>
+      <p class="note" style="margin:0 0 8px;">Sent automatically to everyone who completes the sign-up form. <b>{details}</b> fills in what they chose (session, topic or talk). ${HELP}</p>
+      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;"><input type="checkbox" data-t-on ${T.enabled ? 'checked' : ''}> Send the confirmation email automatically</label>
+      <label style="display:block;margin-top:8px;">Subject<input data-t-sub value="${esc(T.subject)}" maxlength="150" style="width:100%;"></label>
+      <label style="display:block;margin-top:8px;">Message<textarea data-t-body rows="9" maxlength="4000" style="width:100%;">${esc(T.body)}</textarea></label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+        <button class="btn amber small" type="button" data-t-save>Save confirmation email</button>
+        <button class="btn ghost small" type="button" data-t-test>Email me a preview</button></div>
+      <p class="note" data-t-note style="margin:10px 0 0;"></p></div>
+
+      <div class="card"><h3 style="margin:0 0 4px;">Email the people who signed up</h3>
+      <p class="note" style="margin:0 0 8px;">Send an announcement, session details or a reminder. ${HELP}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <select data-m-intent><option value="">Everyone</option><option value="attend">Attending</option><option value="suggest">Suggested a topic</option><option value="speak">Speakers</option></select>
+        <select data-m-status><option value="">Any status</option>${STATUS.map(s => `<option value="${s}">${cap(s)}</option>`).join('')}</select>
+        <input data-m-country placeholder="Country (optional)" style="min-width:170px;"></div>
+      <p class="note" data-m-count style="margin:8px 0;"></p>
+      <label style="display:block;">Subject<input data-m-sub maxlength="150" style="width:100%;"></label>
+      <label style="display:block;margin-top:8px;">Message<textarea data-m-body rows="8" maxlength="5000" style="width:100%;" placeholder="Hi {first_name},"></textarea></label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+        <button class="btn ghost small" type="button" data-m-test>Email me a preview</button>
+        <button class="btn amber small" type="button" data-m-send>Send</button></div>
+      <p class="note" data-m-note style="margin:10px 0 0;"></p>
+      ${L.length ? '<details style="margin-top:12px;"><summary><b>Recently sent</b></summary><ul style="margin:8px 0 0 18px;padding:0;font-size:13.5px;">' + L.map(x => `<li>${esc(when(x.at))}: ${esc(x.kind === 'test' ? 'Preview' : x.recipients + ' sent' + (x.failed ? ', ' + x.failed + ' failed' : ''))} · “${esc(x.subject)}” · by ${esc(x.by_email)}</li>`).join('') + '</ul></details>' : ''}</div>`;
+
+    const say = (sel, text, bad) => { const n = $(root, sel); n.textContent = text; n.style.color = bad ? '#B42318' : ''; };
+    const busy = (btn, on, label) => { btn.disabled = on; if (label) btn.textContent = on ? 'Working…' : label; };
+    const aud = () => ({ intent: $(root, '[data-m-intent]').value, status: $(root, '[data-m-status]').value, country: $(root, '[data-m-country]').value.trim() });
+
+    $(root, '[data-t-save]').addEventListener('click', async e => {
+      const b = e.currentTarget, subject = $(root, '[data-t-sub]').value.trim(), body = $(root, '[data-t-body]').value.trim();
+      if (subject.length < 3 || body.length < 3) return say('[data-t-note]', 'Write a subject and a message.', true);
+      busy(b, true, 'Save confirmation email');
+      const { error } = await sb.from('series_email_template').update({ enabled: $(root, '[data-t-on]').checked, subject, body }).eq('id', 1);
+      busy(b, false, 'Save confirmation email');
+      say('[data-t-note]', error ? error.message : 'Saved. New sign-ups get this wording.', !!error);
+    });
+    $(root, '[data-t-test]').addEventListener('click', async e => {
+      const b = e.currentTarget; busy(b, true, 'Email me a preview'); say('[data-t-note]', 'Sending a preview of the saved version…');
+      try { const r = await callMail(sb, { action: 'test_template' }); say('[data-t-note]', r.ok ? 'Preview sent to ' + r.sentTo + '. It shows the last saved version.' : 'The preview could not be sent.', !r.ok); }
+      catch (x) { say('[data-t-note]', x.message, true); }
+      busy(b, false, 'Email me a preview');
+    });
+
+    const recount = async () => {
+      const a = aud();
+      let q = sb.from('series_signups').select('id', { count: 'exact', head: true }).eq('consent', true);
+      if (a.intent) q = q.eq('intent', a.intent); if (a.status) q = q.eq('status', a.status); if (a.country) q = q.eq('country', a.country);
+      const { count, error } = await q;
+      say('[data-m-count]', error ? '' : (count || 0) + (count === 1 ? ' person matches.' : ' people match.'));
+      return count || 0;
+    };
+    ['[data-m-intent]', '[data-m-status]'].forEach(s => $(root, s).addEventListener('change', recount));
+    $(root, '[data-m-country]').addEventListener('change', recount);
+    recount();
+
+    $(root, '[data-m-test]').addEventListener('click', async e => {
+      const b = e.currentTarget, subject = $(root, '[data-m-sub]').value.trim(), message = $(root, '[data-m-body]').value.trim();
+      busy(b, true, 'Email me a preview');
+      try { const r = await callMail(sb, { action: 'test_message', subject, message }); say('[data-m-note]', r.ok ? 'Preview sent to ' + r.sentTo + '.' : 'The preview could not be sent.', !r.ok); }
+      catch (x) { say('[data-m-note]', x.message, true); }
+      busy(b, false, 'Email me a preview');
+    });
+    $(root, '[data-m-send]').addEventListener('click', async e => {
+      const b = e.currentTarget, subject = $(root, '[data-m-sub]').value.trim(), message = $(root, '[data-m-body]').value.trim();
+      if (subject.length < 3 || message.length < 3) return say('[data-m-note]', 'Write a subject and a message first.', true);
+      const n = await recount();
+      if (!n) return say('[data-m-note]', 'No one matches that audience.', true);
+      if (!confirm('Send this email to ' + n + (n === 1 ? ' person?' : ' people?') + ' This cannot be undone.')) return;
+      busy(b, true, 'Send'); say('[data-m-note]', 'Sending… keep this page open.');
+      try {
+        const r = await callMail(sb, { action: 'send', subject, message, audience: aud() });
+        say('[data-m-note]', 'Done: ' + r.sent + ' sent' + (r.failed ? ', ' + r.failed + ' could not be delivered.' : '.'), !!r.failed);
+        setTimeout(() => emailCard(root, sb), 2500);
+      } catch (x) { say('[data-m-note]', x.message, true); }
+      busy(b, false, 'Send');
+    });
+  }
+
+  window.SeriesAdmin = { windowCard, contentCard, responses, managerCard, emailCard };
 })();

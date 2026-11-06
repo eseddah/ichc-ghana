@@ -124,9 +124,10 @@ function dashView() {
   main.innerHTML = `<div class="section-title"><h2>Sign-ups</h2><p>Set when sign-ups open and close, and follow everyone who has registered.</p></div>
     <div class="card" style="margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;"><div style="flex:1;min-width:220px;"><b>Notifications</b><br><span class="note" id="pushNote">Get a push notification on this device for every new sign-up.</span></div>
       <button class="btn amber small" id="push" type="button">Turn on notifications</button></div>
-    <div id="win"></div><div id="resp"></div>`;
+    <div id="win"></div><div id="resp"></div><div id="mail" style="margin-top:18px;"></div>`;
   SeriesAdmin.windowCard($('#win'), sb);
   SeriesAdmin.responses($('#resp'), sb);
+  SeriesAdmin.emailCard($('#mail'), sb);
   $('#push').addEventListener('click', () => {
     (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async OS => {
       try {
