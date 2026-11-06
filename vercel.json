@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/series", "destination": "/series.html" },
+    { "source": "/series-manager", "destination": "/series-manager.html" }
+  ]
+}

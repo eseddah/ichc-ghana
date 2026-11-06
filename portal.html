@@ -1531,7 +1531,7 @@ async function uploadProfilePhoto(file, stablePath){
 
 // ---- Live sync: keep every open dashboard current the moment anyone posts an update ----
 let realtimeChannel = null;
-const LIVE_RERENDER_TABS = new Set(['overview','applications','people','feed','announce','library','notifications',
+const LIVE_RERENDER_TABS = new Set(['overview','applications','appcontrol','people','feed','announce','library','notifications',
   'space','students','calls','materials','practice','messages',
   'welcome','hub','ask','alerts','lounge','smslog']);
 // 'exams' is deliberately excluded: a student's in-progress exam textarea would get
@@ -3290,6 +3290,7 @@ function renderLegacy(tab){
   else if(tab==='actreach' && canSeeActivity()) html = actReachView();
   else if(tab==='reactivate' && canReactivate()) html = reactivateView();
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
+  else if(tab==='series' && ME.role==='ambassador') html = '<div id="seriesRoot"></div>';
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
   else if(tab==='lessons') html = lessonsView();
@@ -3309,6 +3310,8 @@ function renderLegacy(tab){
   wireHandlers(tab);
   if(typeof wireDuty==='function') wireDuty(tab);
   if(tab==='aichats') aiChatsMount();
+  if(tab==='series' && typeof seriesMount==='function') seriesMount();
+  if(tab==='duties' && typeof seriesMgrMount==='function') seriesMgrMount();
 }
 
 function escapeHtml(str){
@@ -6510,6 +6513,7 @@ function applicationsView(){
   return `
   ${ME.role==='coordinator' ? dutyCardHtml('applications') : ''}
   <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining opens a window where you write the email and the text message separately and send each one yourself.</p></div></div>
+  ${typeof appsStatusCard==='function' ? appsStatusCard() : ''}
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
     ${sorted.length ? sorted.map(a=>`
@@ -9647,6 +9651,8 @@ function dutiesAdminView(){
   ${dutyCard('reactivation')}${dutyCard('applications')}${dutyCard('activity')}
   <div class="section-title" style="margin-top:26px;"><div><h2>Programme portfolios</h2><p>Appoint coordinators to lead an area of the programme. Each person gets the same appointment message, a workspace under their own menu, and a way to report back to you.</p></div></div>
   ${PORTFOLIO_KEYS.map(dutyCard).join('')}
+  <div class="section-title" style="margin-top:26px;"><div><h2>Series Manager</h2><p>Appoint one person to run the Chemistry Series sign-ups. They get a separate sign-in that opens only the series responses.</p></div></div>
+  <div id="seriesMgrRoot"></div>
   <div class="section-title" style="margin-top:26px;"><div><h2>Act as a coordinator</h2><p>Have students assigned to you like any coordinator, while you keep full Ambassador access to every student in the programme.</p></div></div>
   <div class="card" style="margin-bottom:22px;">${meCoord
     ? `<p style="margin:0 0 10px;">You are on the coordinator roster. Assign students to yourself under <b>People</b>, then switch to your coordinator view to work with them.</p><button class="btn teal small" type="button" id="dcSwitchCoord">Switch to my coordinator view</button>`
@@ -9961,7 +9967,7 @@ const NAV = {
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
-    { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
+    { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
 };
 Object.assign(TAB_ICONS, {
@@ -11512,6 +11518,36 @@ function lvWire(tab){
 setInterval(()=>{ try{ crTick(); crStudentBanner(); }catch(e){} }, 60000);
 setTimeout(()=>{ try{ crTick(); crStudentBanner(); }catch(e){} }, 9000);
 
+</script>
+<script>
+// Shows whether the public application form is open, paused or past its deadline, read from the same settings the main site and
+// the application form use, so what the coordinator sets under "Open & deadline" is visible to everyone who works on Applications.
+function appsStatusCard(){
+  const s = (typeof DB!=='undefined' && DB.settings) || {};
+  const dl = s.applicationDeadline ? new Date(s.applicationDeadline) : null, hasDl = dl && !isNaN(dl.getTime());
+  const fmt = d => d.toLocaleString('en-GB', { timeZone:'Africa/Accra', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' }) + ' (Ghana time)';
+  let state, tone, detail;
+  if(s.applicationsClosed){ state = 'Paused'; tone = '#B42318'; detail = 'New applications are paused. The main site and the application form say so.'; }
+  else if(hasDl && Date.now() > dl.getTime()){ state = 'Closed'; tone = '#B42318'; detail = 'The deadline passed on ' + fmt(dl) + '.'; }
+  else { state = 'Open'; tone = '#0A7F5A'; detail = hasDl ? 'Applications close on ' + fmt(dl) + '.' : 'There is no deadline, so applications stay open.'; }
+  return '<div class="card" style="margin-bottom:18px;border-left:5px solid ' + tone + ';"><b>Applications are ' + state.toLowerCase() + '</b><div class="note" style="margin-top:4px;">' + detail + ' Set under Open &amp; deadline.</div></div>';
+}
+</script>
+<script src="series-admin.js"></script>
+<script>
+// Chemistry Series: ambassador screens (tab "Chemistry Series" and the Series Manager card under Team & duties)
+function seriesMount(){
+  const r = document.getElementById('seriesRoot'); if(!r) return;
+  if(!window.SeriesAdmin){ r.innerHTML = '<div class="empty">series-admin.js is missing. Upload it next to portal.html.</div>'; return; }
+  r.innerHTML = '<div class="section-title"><div><h2>Chemistry Series</h2><p>Sign-up window, form wording and everyone who has signed up. The public page is series.html.</p></div></div><div id="sWin"></div><div id="sResp"></div><div style="margin-top:18px;" id="sCont"></div>';
+  SeriesAdmin.windowCard(document.getElementById('sWin'), sb);
+  SeriesAdmin.responses(document.getElementById('sResp'), sb);
+  SeriesAdmin.contentCard(document.getElementById('sCont'), sb);
+}
+function seriesMgrMount(){
+  const r = document.getElementById('seriesMgrRoot'); if(!r || !window.SeriesAdmin) return;
+  SeriesAdmin.managerCard(r, sb, { coordinators: DB.coordinators || [], students: DB.students || [] });
+}
 </script>
 </body>
 </html>

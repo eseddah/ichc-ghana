@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Series Manager | Chemistry Competition Prep</title>
+<meta name="theme-color" content="#0F2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0F2438;--amber:#E39A3B;--amber-deep:#C97F22;--ink:#1B2430;--line:#DDD8C9;--muted:#6B7280;--bad:#B42318}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:15px/1.55 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:#fff;min-height:100vh;display:flex;flex-direction:column}
+h1,h2,h3{font-family:Sora,'Plus Jakarta Sans',sans-serif;color:var(--navy);margin:0}
+header{background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 14px) 20px 14px}
+.hin{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hin b{font-family:Sora,sans-serif;font-size:17px}
+.hin .sp{flex:1}
+.hin small{color:#C7D0DA}
+.hex{width:34px;height:34px;flex:none}
+main{flex:1;width:100%;max-width:1100px;margin:0 auto;padding:22px 20px 40px}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:16px}
+.narrow{max-width:440px;margin:30px auto 0}
+.note{color:var(--muted);font-size:13.5px}
+.section-title{margin:0 0 14px}
+.section-title p{margin:4px 0 0;color:var(--muted)}
+.empty{padding:20px;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--ink);padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;min-height:46px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,36,56,.12)}
+.btn{font:inherit;font-weight:700;border:1.5px solid transparent;border-radius:10px;min-height:46px;padding:0 18px;cursor:pointer;background:var(--navy);color:#fff}
+.btn.small{min-height:40px;padding:0 14px;font-size:14px}
+.btn.amber{background:var(--amber);color:var(--navy)}
+.btn.teal{background:#0A7F5A}
+.btn.ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+.btn.ghost.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn:disabled{opacity:.6}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+table th{font-weight:600;color:var(--muted);padding:6px 8px 6px 0}
+table td{padding:8px 8px 8px 0}
+.err{color:var(--bad);font-weight:600;min-height:20px;margin-top:10px;font-size:14px}
+.flag{height:4px;background:linear-gradient(90deg,#CE1126 0 33.33%,#FCD116 33.33% 66.66%,#006B3F 66.66%)}
+.stack>*+*{margin-top:12px}
+</style>
+</head>
+<body>
+<header><div class="hin">
+  <svg class="hex" viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="#E39A3B"/><text x="24" y="30" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#0F2438">Ch</text></svg>
+  <div><b>Chemistry Series</b><br><small>Series Manager</small></div>
+  <span class="sp"></span><span id="who"></span>
+  <button class="btn ghost small" id="out" type="button" hidden>Sign out</button>
+</div></header>
+<main id="main"><p class="note">Loading…</p></main>
+<div class="flag" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="series-admin.js"></script>
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function (OneSignal) {
+  try { await OneSignal.init({ appId: 'c711029f-212c-4c50-8498-ea78aecbb153', serviceWorkerPath: 'OneSignalSDKWorker.js', notifyButton: { enable: false }, welcomeNotification: { disable: true } }); window.__OS = OneSignal; } catch (e) { console.warn('push unavailable', e); }
+});
+
+const SB_URL = 'https://ggbfzfzbquywzuxkoufp.supabase.co';
+const SB_KEY = 'sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn';
+// Own storage key: this page's session is separate from the portal's, so signing out here never signs anyone out of the portal.
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storageKey: 'sb-series-manager', persistSession: true, detectSessionInUrl: true } });
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+const main = $('#main');
+let me = null, timer = null;
+
+function loginView(email = '', sent = false) {
+  $('#out').hidden = true; $('#who').textContent = ''; clearInterval(timer);
+  main.innerHTML = `<div class="card narrow stack">
+    <h2>Sign in</h2>
+    <p class="note" style="margin:0;">This page is only for the Chemistry Series Manager. Use the email address you were appointed with.</p>
+    <input id="em" type="email" autocomplete="email" placeholder="Email address" value="${esc(email)}" style="width:100%;">
+    ${sent ? `<p class="note" style="margin:0;">We sent a sign-in email to <b>${esc(email)}</b>. Open the link in it, or type the code here.</p>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code" placeholder="Code from the email" style="width:100%;">
+      <button class="btn" id="verify" type="button" style="width:100%;">Verify code</button>
+      <button class="btn ghost small" id="send" type="button">Send a new code</button>`
+      : '<button class="btn" id="send" type="button" style="width:100%;">Email me a sign-in code</button>'}
+    <p class="note" style="margin:0;text-align:center;">or</p>
+    <button class="btn ghost" id="goog" type="button" style="width:100%;">Continue with your Google account</button>
+    <div class="err" id="err" role="alert"></div></div>`;
+  $('#send').addEventListener('click', async () => {
+    const em = $('#em').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) return $('#err').textContent = 'Enter a valid email address.';
+    $('#send').disabled = true;
+    const { error } = await sb.auth.signInWithOtp({ email: em, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
+    if (error) { $('#send').disabled = false; return $('#err').textContent = 'Could not send the email: ' + error.message; }
+    loginView(em, true);
+  });
+  if (sent) $('#verify').addEventListener('click', async () => {
+    const em = $('#em').value.trim().toLowerCase(), token = $('#code').value.replace(/\s/g, '');
+    if (!token) return $('#err').textContent = 'Type the code from the email.';
+    $('#verify').disabled = true;
+    const { error } = await sb.auth.verifyOtp({ email: em, token, type: 'email' });
+    if (error) { $('#verify').disabled = false; return $('#err').textContent = 'That code did not work. Check it or send a new one.'; }
+    start();
+  });
+  $('#goog').addEventListener('click', () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } }));
+}
+
+function deniedView(email) {
+  $('#out').hidden = false; $('#who').innerHTML = '<small>' + esc(email) + '</small>'; clearInterval(timer);
+  main.innerHTML = `<div class="card narrow stack"><h2>No access</h2>
+    <p style="margin:0;">${esc(email)} is not the Series Manager right now. If you were just appointed, ask the Ambassador to check the email address they used.</p>
+    <p class="note" style="margin:0;">Signing out here does not affect the portal.</p></div>`;
+}
+
+async function check() {
+  const { data, error } = await sb.rpc('series_me');
+  return error ? null : data;
+}
+
+function dashView() {
+  $('#out').hidden = false;
+  $('#who').innerHTML = '<small>' + esc(me.name || '') + '</small>';
+  main.innerHTML = `<div class="section-title"><h2>Sign-ups</h2><p>Set when sign-ups open and close, and follow everyone who has registered.</p></div>
+    <div class="card" style="margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;"><div style="flex:1;min-width:220px;"><b>Notifications</b><br><span class="note" id="pushNote">Get a push notification on this device for every new sign-up.</span></div>
+      <button class="btn amber small" id="push" type="button">Turn on notifications</button></div>
+    <div id="win"></div><div id="resp"></div>`;
+  SeriesAdmin.windowCard($('#win'), sb);
+  SeriesAdmin.responses($('#resp'), sb);
+  $('#push').addEventListener('click', () => {
+    (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async OS => {
+      try {
+        await OS.Notifications.requestPermission();
+        await OS.login(me.push_id);
+        $('#pushNote').textContent = OS.Notifications.permission ? 'Notifications are on for this device.' : 'Notifications are blocked in your browser settings.';
+      } catch (e) { $('#pushNote').textContent = 'Could not turn notifications on here.'; }
+    });
+  });
+  // Access can be withdrawn at any time: re-check regularly and when the tab comes back.
+  clearInterval(timer);
+  timer = setInterval(recheck, 60000);
+}
+async function recheck() {
+  const m = await check();
+  if (!m || (m.role !== 'manager' && m.role !== 'ambassador')) start();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && me) recheck(); });
+
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { me = null; return loginView(); }
+  me = await check();
+  if (!me || (me.role !== 'manager' && me.role !== 'ambassador')) { me = null; return deniedView(session.user.email); }
+  dashView();
+}
+$('#out').addEventListener('click', async () => { await sb.auth.signOut(); me = null; loginView(); });
+sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_IN' && !me) start(); });
+start();
+</script>
+</body>
+</html>

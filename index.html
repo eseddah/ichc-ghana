@@ -1251,8 +1251,9 @@
     <p><b>Who sees it:</b> your coordinator, the Local Ambassador, IChC, and the service providers listed below, which only process it to run the programme for us. No one else sees it. We do not sell your information.</p>
     <p><b>For students under 18:</b> if you're applying as a minor, we recommend a parent or guardian be aware of your participation and have visibility into your coordinator's contact details. Parents or guardians can reach the Ambassador at any time with questions about how their child's information is handled.</p>
         <p><b>Services we use:</b> you sign in to the portal with your Google account, and Google shares your name and email address with us (never your password). Your information is stored with our database provider, Supabase, and the website is hosted on Vercel. We send programme updates by email and text message through our messaging providers, and, if you allow them, by browser or phone push notifications through OneSignal. The application form may use Google reCAPTCHA to block spam.</p>
-<p><b>Your choices:</b> you can opt out of email or SMS notifications at any time, and can ask the Ambassador to remove your record from the programme at any time by emailing <a href="mailto:eseyram@amb.intchc.org" class="mailto-link" style="color:var(--teal-deep);">eseyram@amb.intchc.org</a>.</p>
-    <p style="font-size:13px; color:var(--text-secondary);">You can switch off push notifications at any time in your browser or phone settings. Last updated: 10 October 2026.</p>
+<p><b>Chemistry Series sign-up:</b> if you register for the Chemistry Series, we collect your full name, email address, school or university, your role, the days and times that suit you, and, if you choose to give it, your WhatsApp number. Depending on how you join, we also keep what you tell us: your preferred session and question, a topic you suggest and why, or your speaker details (field, talk title, short bio and link). We use this only to run the series: to confirm your registration, send session details and reminders, plan topics and speakers, and contact you about the series, as you agreed when you ticked the consent box. Only the Local Ambassador and the Series Manager appointed for the series can see these responses, and the Series Manager signs in with a one-time code sent to their email or with their Google account. Your confirmation is sent by email. We do not sell this information, and you can ask for your sign-up to be removed at any time.</p>
+    <p><b>Your choices:</b> you can opt out of email or SMS notifications at any time, and can ask the Ambassador to remove your record from the programme at any time by emailing <a href="mailto:eseyram@amb.intchc.org" class="mailto-link" style="color:var(--teal-deep);">eseyram@amb.intchc.org</a>.</p>
+    <p style="font-size:13px; color:var(--text-secondary);">You can switch off push notifications at any time in your browser or phone settings. Last updated: 5 November 2026.</p>
   </div>
 </div>
 
@@ -2916,9 +2917,25 @@ var APPS_OPEN = null;
   }
   init();
 })();
-document.addEventListener('click', function(e){
+document.addEventListener('click', async function(e){
   var b=e.target.closest && e.target.closest('#heroInterestBtn');
-  if(b && APPS_OPEN===true){ e.preventDefault(); e.stopImmediatePropagation(); window.location.href='apply.html'; }
+  if(!b) return;
+  if(APPS_OPEN===true){ e.preventDefault(); e.stopImmediatePropagation(); window.location.href='apply.html'; return; }
+  if(APPS_OPEN===false) return;               // known to be closed: let the "open soon" pop-up show
+  // Not known yet (the page is still loading, or the first check failed): ask the live settings now instead of
+  // assuming "closed", so a visitor is never shown "Applications will be open soon" while applications are open.
+  e.preventDefault(); e.stopImmediatePropagation();
+  var open=true;
+  try{
+    for(var n=0;n<40 && (typeof sbReady==='undefined' || !sbReady);n++) await new Promise(function(r){ setTimeout(r,150); });
+    if(typeof sbReady!=='undefined' && sbReady){
+      var r=await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle();
+      var set=(r.data&&r.data.value)||{}, dl=set.applicationDeadline?new Date(set.applicationDeadline).getTime():NaN;
+      if(set.applicationsClosed || (isFinite(dl) && Date.now()>dl)) open=false;
+    }
+  }catch(err){ open=true; }                   // if we cannot tell, the application form itself enforces the pause and deadline
+  APPS_OPEN=open;
+  if(open) window.location.href='apply.html'; else b.click();
 }, true);
 </script>
 <script>

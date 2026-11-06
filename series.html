@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chemistry Series | Chemistry Competition Prep</title>
+<meta name="theme-color" content="#0F2438">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0F2438;--navy-deep:#0A1826;--amber:#E39A3B;--amber-deep:#C97F22;--ink:#1B2430;--line:#DDD8C9;--muted:#6B7280;--bad:#B42318}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:16px/1.55 'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:#fff;min-height:100vh;display:flex;flex-direction:column}
+h1,h2{font-family:Sora,'Plus Jakarta Sans',sans-serif;color:var(--navy);margin:0}
+h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.01em}
+h2{font-size:24px;line-height:1.2;font-weight:700}
+.bars{display:flex;gap:6px;max-width:560px;width:100%;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 20px 12px}
+.bars i{flex:1;height:3px;border-radius:2px;background:#E5E1D4}
+.bars i.on{background:var(--navy)}
+.hero{position:relative;height:140px;background:var(--navy);overflow:hidden;margin-bottom:46px}
+.hero .img{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(1) contrast(1.05)}
+.hero .tint{position:absolute;inset:0;background:rgba(15,36,56,.82)}
+.hero svg.tex{position:absolute;inset:0;width:100%;height:100%}
+.hero-in{max-width:560px;margin:0 auto;position:relative;height:100%}
+.badge{position:absolute;left:20px;bottom:-36px;width:76px;height:76px;border-radius:50%;background:var(--navy);border:4px solid #fff;display:grid;place-items:center}
+.badge svg{width:46px;height:46px}
+main{flex:1;max-width:560px;width:100%;margin:0 auto;padding:0 20px 28px}
+p{margin:14px 0 0}
+.note{font-weight:700;color:var(--navy)}
+.field{margin-top:22px}
+label.l,.lg{display:block;font-weight:600;font-size:15px;margin-bottom:8px}
+input[type=text],input[type=email],input[type=tel],input[type=url],select,textarea{width:100%;min-height:52px;padding:13px 14px;font:inherit;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:10px}
+textarea{min-height:104px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,36,56,.12)}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;min-height:54px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:500}
+.opt input{width:20px;height:20px;accent-color:var(--navy);margin:0;flex:none}
+.opt.sel{border-color:var(--navy);background:#F4F6F9}
+.sub{font-size:14px;color:var(--muted);margin:6px 0 0}
+.rev{margin:18px 0 0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.rev li{display:flex;gap:12px;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.rev b{font-weight:600;color:var(--muted);flex:none;max-width:40%}
+.rev span{text-align:right;overflow-wrap:anywhere}
+.err{min-height:22px;margin-top:16px;color:var(--bad);font-size:14px;font-weight:600}
+.nav{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.nav-in{max-width:560px;margin:0 auto;display:flex;gap:10px}
+button{font:inherit;font-weight:700;min-height:52px;border-radius:10px;border:0;cursor:pointer;padding:0 22px}
+.next{flex:1;background:var(--navy);color:#fff}
+.next:disabled{opacity:.6}
+.back{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.flag{height:4px;background:linear-gradient(90deg,#CE1126 0 33.33%,#FCD116 33.33% 66.66%,#006B3F 66.66%)}
+@media (min-width:640px){h1{font-size:36px}.hero{height:170px}}
+</style>
+</head>
+<body>
+<div class="bars" id="bars"></div>
+<div class="hero" id="hero"></div>
+<main id="main"><p class="sub">Loading…</p></main>
+<div class="nav" id="nav" hidden><div class="nav-in"><button class="back" id="back" type="button">Back</button><button class="next" id="next" type="button">Next</button></div></div>
+<div class="flag" aria-hidden="true"></div>
+
+<script>
+const SB = 'https://ggbfzfzbquywzuxkoufp.supabase.co';
+const KEY = 'sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn';
+const $ = s => document.querySelector(s);
+const el = (t, a = {}, ...k) => {
+  const e = document.createElement(t);
+  for (const [x, v] of Object.entries(a)) {
+    if (x === 'class') e.className = v;
+    else if (x.startsWith('on')) e.addEventListener(x.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(x, v === true ? '' : v);
+  }
+  k.flat().forEach(c => e.append(c && c.nodeType ? c : document.createTextNode(c == null ? '' : c)));
+  return e;
+};
+const hdr = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+const fmt = d => new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Africa/Accra' }).format(new Date(d)) + ' (Ghana time)';
+let P, C, step = 0, done = false;
+const D = { best_times: [] };
+const STEPS = 5;
+
+const BADGE = '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="#E39A3B"/><text x="24" y="30" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="16" fill="#0F2438">Ch</text></svg>';
+const TEX = '<svg class="tex" aria-hidden="true"><defs><pattern id="p" width="60" height="104" patternUnits="userSpaceOnUse"><path d="M30 0l30 17v34L30 68 0 51V17zM30 68v36M0 51l-30 17M60 51l30 17" fill="none" stroke="#fff" stroke-opacity=".13" stroke-width="1.5"/><circle cx="30" cy="0" r="3.5" fill="#E39A3B" fill-opacity=".55"/><circle cx="0" cy="51" r="3.5" fill="#fff" fill-opacity=".35"/></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>';
+
+function shell() {
+  const h = $('#hero');
+  h.innerHTML = '';
+  if (P.hero_path) h.append(el('div', { class: 'img', style: `background-image:url('${SB}/storage/v1/object/public/series-assets/${encodeURI(P.hero_path)}')` }), el('div', { class: 'tint' }));
+  else h.insertAdjacentHTML('beforeend', TEX);
+  const inn = el('div', { class: 'hero-in' });
+  inn.innerHTML = '<div class="badge" role="img" aria-label="Chemistry Competition Prep">' + BADGE + '</div>';
+  h.append(inn);
+}
+function bars() {
+  const b = $('#bars'); b.innerHTML = '';
+  for (let i = 0; i < STEPS; i++) b.append(el('i', { class: (done || i <= step) ? 'on' : '' }));
+}
+
+const val = n => (D[n] || '').toString().trim();
+function text(n, label, type = 'text', ph = '') {
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label),
+    el('input', { id: n, name: n, type, value: D[n] || '', placeholder: ph, autocomplete: n === 'email' ? 'email' : n === 'full_name' ? 'name' : 'off', inputmode: n === 'whatsapp' ? 'tel' : null, onInput: e => D[n] = e.target.value }));
+}
+function area(n, label, ph = '') {
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label),
+    el('textarea', { id: n, name: n, placeholder: ph, onInput: e => D[n] = e.target.value }, D[n] || ''));
+}
+function choice(n, label, opts) {
+  const wrap = el('div', { class: 'opts' });
+  opts.forEach(o => {
+    const r = el('input', { type: 'radio', name: n, value: o.value, checked: D[n] === o.value, onChange: () => { D[n] = o.value; wrap.querySelectorAll('.opt').forEach(x => x.classList.toggle('sel', x.dataset.v === o.value)); } });
+    wrap.append(el('label', { class: 'opt' + (D[n] === o.value ? ' sel' : ''), 'data-v': o.value }, r, o.label));
+  });
+  return el('div', { class: 'field', role: 'radiogroup', 'aria-label': label }, el('div', { class: 'lg' }, label), wrap);
+}
+function multi(n, label, opts) {
+  const wrap = el('div', { class: 'opts' });
+  opts.forEach(o => {
+    const on = D[n].includes(o.value);
+    const c = el('input', { type: 'checkbox', value: o.value, checked: on, onChange: e => {
+      D[n] = e.target.checked ? D[n].concat(o.value) : D[n].filter(x => x !== o.value);
+      e.target.closest('.opt').classList.toggle('sel', e.target.checked);
+    } });
+    wrap.append(el('label', { class: 'opt' + (on ? ' sel' : '') }, c, o.label));
+  });
+  return el('div', { class: 'field' }, el('div', { class: 'lg' }, label), wrap);
+}
+function select(n, label, opts) {
+  const s = el('select', { id: n, onChange: e => D[n] = e.target.value }, el('option', { value: '' }, 'Choose…'),
+    opts.map(o => el('option', { value: o.value, selected: D[n] === o.value }, o.label)));
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label), s);
+}
+const lab = (list, v) => ((list || []).find(o => o.value === v) || {}).label || v;
+
+function view() {
+  const m = $('#main'); m.innerHTML = '';
+  const f = C.fields, o = C.options, br = C.branches;
+  if (step === 0) {
+    m.append(el('h1', {}, C.heading), el('p', {}, C.intro), el('p', { class: 'note' }, C.note));
+  } else if (step === 1) {
+    m.append(el('h2', {}, C.steps[1]), text('full_name', f.full_name), text('email', f.email, 'email'), text('whatsapp', f.whatsapp, 'tel', '+233'), text('institution', f.institution), choice('role', f.role, o.role));
+  } else if (step === 2) {
+    m.append(el('h2', {}, C.steps[2]), choice('intent', f.intent, o.intent));
+  } else if (step === 3) {
+    m.append(el('h2', {}, br[D.intent].title));
+    if (D.intent === 'attend') m.append(select('attend_session', br.attend.session, o.months), area('attend_question', br.attend.question), choice('attend_reminder', br.attend.reminder, o.reminder));
+    if (D.intent === 'suggest') m.append(text('topic', br.suggest.topic), area('topic_reason', br.suggest.reason));
+    if (D.intent === 'speak') m.append(text('speak_field', br.speak.field), text('speak_title', br.speak.talk_title), choice('speak_track', br.speak.track, o.track), area('speak_bio', br.speak.bio), text('speak_link', br.speak.link, 'url', 'https://'), select('speak_month', br.speak.month, o.months));
+    m.append(multi('best_times', f.best_times, o.best_times));
+  } else {
+    const rows = [[f.full_name, D.full_name], [f.email, D.email], [f.whatsapp.replace(' (optional)', ''), D.whatsapp || '–'], [f.institution, D.institution], [f.role, lab(o.role, D.role)], [f.intent, lab(o.intent, D.intent)]];
+    const map = { attend: [['attend_session', br.attend.session], ['attend_question', br.attend.question], ['attend_reminder', br.attend.reminder]], suggest: [['topic', br.suggest.topic], ['topic_reason', br.suggest.reason]], speak: [['speak_field', br.speak.field], ['speak_title', br.speak.talk_title], ['speak_track', br.speak.track], ['speak_bio', br.speak.bio], ['speak_link', br.speak.link], ['speak_month', br.speak.month]] };
+    map[D.intent].forEach(([k, l]) => { const v = D[k]; if (v) rows.push([l, k === 'attend_reminder' ? lab(o.reminder, v) : k === 'speak_track' ? lab(o.track, v) : v]); });
+    rows.push([f.best_times.replace(/ \(.*\)/, ''), D.best_times.join(', ')]);
+    m.append(el('h2', {}, C.review.title), el('ul', { class: 'rev' }, rows.map(r => el('li', {}, el('b', {}, r[0]), el('span', {}, r[1])))),
+      el('div', { class: 'field' }, el('label', { class: 'opt' + (D.consent ? ' sel' : '') }, el('input', { type: 'checkbox', checked: !!D.consent, onChange: e => { D.consent = e.target.checked; e.target.closest('.opt').classList.toggle('sel', D.consent); } }), f.consent)));
+  }
+  m.append(el('div', { class: 'err', id: 'err', role: 'alert' }));
+  $('#back').hidden = step === 0;
+  $('#next').textContent = step === 0 ? C.buttons.start : step === STEPS - 1 ? C.buttons.submit : C.buttons.next;
+  $('#back').textContent = C.buttons.back;
+  bars(); window.scrollTo(0, 0);
+}
+
+function check() {
+  const e = [];
+  if (step === 1) {
+    if (val('full_name').length < 2) e.push('Enter your full name.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('email'))) e.push('Enter a valid email address.');
+    if (val('whatsapp') && !/^\+?[0-9 ()-]{7,20}$/.test(val('whatsapp'))) e.push('Check your WhatsApp number.');
+    if (val('institution').length < 2) e.push('Enter your school or university.');
+    if (!D.role) e.push('Choose your role.');
+  } else if (step === 2) {
+    if (!D.intent) e.push('Choose how you would like to join.');
+  } else if (step === 3) {
+    if (D.intent === 'attend') {
+      if (!D.attend_session) e.push('Choose a preferred session or month.');
+      if (!D.attend_reminder) e.push('Choose how you want reminders.');
+      else if (D.attend_reminder === 'whatsapp' && !val('whatsapp')) e.push('Add your WhatsApp number on the earlier step to get WhatsApp reminders.');
+    }
+    if (D.intent === 'suggest') {
+      if (val('topic').length < 3) e.push('Tell us your topic or question.');
+      if (val('topic_reason').length < 3) e.push('Add a line on why it matters.');
+    }
+    if (D.intent === 'speak') {
+      if (val('speak_field').length < 2) e.push('Enter your field of expertise.');
+      if (val('speak_title').length < 3) e.push('Enter a talk title.');
+      if (!D.speak_track) e.push('Choose a track.');
+      if (val('speak_bio').length < 10) e.push('Write a short bio (at least a sentence).');
+      if (val('speak_link') && !/^https?:\/\/\S+$/i.test(val('speak_link'))) e.push('The link must start with https://');
+      if (!D.speak_month) e.push('Choose a preferred month.');
+    }
+    if (!D.best_times.length) e.push('Choose at least one day and time.');
+  } else if (step === 4 && !D.consent) e.push(C.review.consent_error);
+  return e[0] || '';
+}
+
+async function submit() {
+  const btn = $('#next'); btn.disabled = true; btn.textContent = 'Submitting…';
+  const body = Object.assign({}, D, { consent: true });
+  try {
+    const r = await fetch(SB + '/functions/v1/series-submit', { method: 'POST', headers: hdr, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.ok) return thanks();
+    const m = String(j.error || '');
+    if (m === 'duplicate') throw new Error('You have already registered for this option with this email address.');
+    if (m === 'series_closed' || m === 'series_not_open') { await load(); return; }
+    if (m.startsWith('invalid:')) throw new Error('Please check your details and try again (' + m.slice(8).replace(/_/g, ' ') + ').');
+    throw new Error('We could not submit your registration. Please try again.');
+  } catch (x) {
+    $('#err').textContent = x.message;
+    btn.disabled = false; btn.textContent = C.buttons.submit;
+  }
+}
+function thanks() {
+  done = true; bars(); $('#nav').hidden = true;
+  const m = $('#main'); m.innerHTML = '';
+  m.append(el('h1', {}, C.thankyou.title), el('p', {}, C.thankyou.text));
+  window.scrollTo(0, 0);
+}
+function closedView(kind) {
+  $('#nav').hidden = true; done = false; step = 0;
+  const x = C[kind], m = $('#main'); m.innerHTML = ''; $('#bars').innerHTML = '';
+  for (let i = 0; i < STEPS; i++) $('#bars').append(el('i'));
+  m.append(el('h1', {}, x.title), el('p', {}, x.text));
+  if (kind === 'not_open' && P.open_at) m.append(el('p', { class: 'note' }, x.opens_on + ' ' + fmt(P.open_at)));
+}
+
+$('#next').addEventListener('click', () => {
+  const m = check();
+  if (m) { $('#err').textContent = m; return; }
+  if (step === STEPS - 1) return submit();
+  step++; view();
+});
+$('#back').addEventListener('click', () => { if (step > 0) { step--; view(); } });
+
+async function load() {
+  try {
+    const r = await fetch(SB + '/rest/v1/rpc/series_public', { method: 'POST', headers: hdr, body: '{}' });
+    if (!r.ok) throw 0;
+    P = await r.json(); C = P.content;
+  } catch (e) {
+    $('#main').innerHTML = ''; $('#main').append(el('h2', {}, 'Something went wrong'), el('p', {}, 'We could not load this page. Please refresh and try again.')); return;
+  }
+  shell();
+  if (P.state === 'open') { $('#nav').hidden = false; view(); }
+  else closedView(P.state === 'not_open' ? 'not_open' : 'closed');
+}
+load();
+</script>
+</body>
+</html>
