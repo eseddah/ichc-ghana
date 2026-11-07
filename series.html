@@ -93,6 +93,11 @@ button,.opt,.cc-item{-webkit-tap-highlight-color:rgba(227,154,59,.35);touch-acti
 .cdw div+div{margin-top:2px;color:#C7D0DA}
 .cdmini{display:inline-flex;gap:8px;align-items:center;background:#FDF1DE;border:1px solid #F0D3A4;color:var(--navy);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:14px}
 .cdmini b{font-variant-numeric:tabular-nums}
+
+/* required marker */
+.req{color:#D92D20;font-weight:700;margin-left:3px}
+.reqnote{margin:10px 0 0;font-size:14px;color:var(--muted)}
+.reqnote .req{margin:0 4px 0 0}
 </style>
 </head>
 <body>
@@ -140,12 +145,33 @@ function bars() {
 }
 
 const val = n => (D[n] || '').toString().trim();
+// Questions that must be answered get a red asterisk.
+const REQ = new Set(['full_name', 'email', 'country', 'institution', 'role', 'role_other', 'intent', 'attend_session', 'topic', 'topic_reason', 'attend_reminder', 'speak_field', 'speak_title', 'speak_track', 'speak_track_other', 'speak_bio', 'speak_month', 'best_times', 'consent']);
+const star = n => REQ.has(n) ? el('span', { class: 'req', 'aria-hidden': 'true' }, '*') : '';
+const reqNote = () => el('p', { class: 'reqnote' }, el('span', { class: 'req', 'aria-hidden': 'true' }, '*'), 'Required');
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// Preferred-month choices begin from December 2026.
+function monthOpts() {
+  const FIRST = 2026 * 12 + 11, all = (C.options.months || []);
+  const idx = o => { const t = (o.label + ' ' + o.value).toLowerCase(), y = /(20\d\d)/.exec(t), m = MONTH_NAMES.findIndex(n => t.includes(n.toLowerCase())); return y && m >= 0 ? +y[1] * 12 + m : null; };
+  const kept = all.filter(o => { const i = idx(o); return i === null || i >= FIRST; });
+  if (kept.some(o => idx(o) !== null)) return kept;
+  const gen = []; for (let i = 0; i < 12; i++) { const n = FIRST + i, l = MONTH_NAMES[n % 12] + ' ' + Math.floor(n / 12); gen.push({ value: l, label: l }); }
+  return gen.concat(kept);
+}
+// Attending and suggesting a topic are now one option.
+const intentOpts = () => C.options.intent.filter(x => x.value !== 'suggest').map(x => x.value === 'attend' && !/topic/i.test(x.label) ? Object.assign({}, x, { label: 'Attend a session and suggest a topic' }) : x);
+const trackOpts = () => (C.options.track.some(x => x.value === 'other') ? C.options.track : C.options.track.concat([{ value: 'other', label: 'Other' }]));
+function trackOtherBox() {
+  const b = text('speak_track_other', 'Please tell us your profession', 'text', 'For example: pharmacist');
+  b.id = 'trackOtherBox'; b.style.display = D.speak_track === 'other' ? '' : 'none'; return b;
+}
 function text(n, label, type = 'text', ph = '') {
-  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label),
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label, star(n)),
     el('input', { id: n, name: n, type, value: D[n] || '', placeholder: ph, autocomplete: n === 'email' ? 'email' : n === 'full_name' ? 'name' : 'off', inputmode: n === 'whatsapp' ? 'tel' : null, onInput: e => { D[n] = e.target.value; e.target.closest('.field').classList.remove('bad'); } }));
 }
 function area(n, label, ph = '') {
-  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label),
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label, star(n)),
     el('textarea', { id: n, name: n, placeholder: ph, onInput: e => D[n] = e.target.value }, D[n] || ''));
 }
 const buzz = () => { try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} };
@@ -160,7 +186,7 @@ function choice(n, label, opts, cb) {
     } });
     wrap.append(el('label', { class: 'opt' + (D[n] === o.value ? ' sel' : ''), 'data-v': o.value }, r, o.label));
   });
-  return el('div', { class: 'field', id: 'g_' + n, role: 'radiogroup', 'aria-label': label }, el('div', { class: 'lg' }, label), wrap);
+  return el('div', { class: 'field', id: 'g_' + n, role: 'radiogroup', 'aria-label': label }, el('div', { class: 'lg' }, label, star(n)), wrap);
 }
 function multi(n, label, opts) {
   const wrap = el('div', { class: 'opts' });
@@ -173,12 +199,12 @@ function multi(n, label, opts) {
     } });
     wrap.append(el('label', { class: 'opt' + (on ? ' sel' : '') }, c, o.label));
   });
-  return el('div', { class: 'field', id: 'g_' + n }, el('div', { class: 'lg' }, label), wrap);
+  return el('div', { class: 'field', id: 'g_' + n }, el('div', { class: 'lg' }, label, star(n)), wrap);
 }
 function select(n, label, opts) {
   const s = el('select', { id: n, onChange: e => D[n] = e.target.value }, el('option', { value: '' }, 'Choose…'),
     opts.map(o => el('option', { value: o.value, selected: D[n] === o.value }, o.label)));
-  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label), s);
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: n }, label, star(n)), s);
 }
 const DIAL = 'Afghanistan:93|Albania:355|Algeria:213|Andorra:376|Angola:244|Antigua and Barbuda:1|Argentina:54|Armenia:374|Australia:61|Austria:43|Azerbaijan:994|Bahamas:1|Bahrain:973|Bangladesh:880|Barbados:1|Belarus:375|Belgium:32|Belize:501|Benin:229|Bhutan:975|Bolivia:591|Bosnia and Herzegovina:387|Botswana:267|Brazil:55|Brunei:673|Bulgaria:359|Burkina Faso:226|Burundi:257|Cambodia:855|Cameroon:237|Canada:1|Cape Verde:238|Central African Republic:236|Chad:235|Chile:56|China:86|Colombia:57|Comoros:269|Congo (Republic):242|Congo (DR):243|Costa Rica:506|Côte d’Ivoire:225|Croatia:385|Cuba:53|Cyprus:357|Czechia:420|Denmark:45|Djibouti:253|Dominica:1|Dominican Republic:1|Ecuador:593|Egypt:20|El Salvador:503|Equatorial Guinea:240|Eritrea:291|Estonia:372|Eswatini:268|Ethiopia:251|Fiji:679|Finland:358|France:33|Gabon:241|Gambia:220|Georgia:995|Germany:49|Ghana:233|Greece:30|Grenada:1|Guatemala:502|Guinea:224|Guinea-Bissau:245|Guyana:592|Haiti:509|Honduras:504|Hungary:36|Iceland:354|India:91|Indonesia:62|Iran:98|Iraq:964|Ireland:353|Israel:972|Italy:39|Jamaica:1|Japan:81|Jordan:962|Kazakhstan:7|Kenya:254|Kiribati:686|Kosovo:383|Kuwait:965|Kyrgyzstan:996|Laos:856|Latvia:371|Lebanon:961|Lesotho:266|Liberia:231|Libya:218|Liechtenstein:423|Lithuania:370|Luxembourg:352|Madagascar:261|Malawi:265|Malaysia:60|Maldives:960|Mali:223|Malta:356|Marshall Islands:692|Mauritania:222|Mauritius:230|Mexico:52|Micronesia:691|Moldova:373|Monaco:377|Mongolia:976|Montenegro:382|Morocco:212|Mozambique:258|Myanmar:95|Namibia:264|Nauru:674|Nepal:977|Netherlands:31|New Zealand:64|Nicaragua:505|Niger:227|Nigeria:234|North Korea:850|North Macedonia:389|Norway:47|Oman:968|Pakistan:92|Palau:680|Palestine:970|Panama:507|Papua New Guinea:675|Paraguay:595|Peru:51|Philippines:63|Poland:48|Portugal:351|Qatar:974|Romania:40|Russia:7|Rwanda:250|Saint Kitts and Nevis:1|Saint Lucia:1|Saint Vincent and the Grenadines:1|Samoa:685|San Marino:378|São Tomé and Príncipe:239|Saudi Arabia:966|Senegal:221|Serbia:381|Seychelles:248|Sierra Leone:232|Singapore:65|Slovakia:421|Slovenia:386|Solomon Islands:677|Somalia:252|South Africa:27|South Korea:82|South Sudan:211|Spain:34|Sri Lanka:94|Sudan:249|Suriname:597|Sweden:46|Switzerland:41|Syria:963|Taiwan:886|Tajikistan:992|Tanzania:255|Thailand:66|Timor-Leste:670|Togo:228|Tonga:676|Trinidad and Tobago:1|Tunisia:216|Turkey:90|Turkmenistan:993|Tuvalu:688|Uganda:256|Ukraine:380|United Arab Emirates:971|United Kingdom:44|United States:1|Uruguay:598|Uzbekistan:998|Vanuatu:678|Vatican City:39|Venezuela:58|Vietnam:84|Yemen:967|Zambia:260|Zimbabwe:263'.split('|').map(x => x.split(':'));
 const CODESET = new Set(DIAL.map(x => x[1]));
@@ -256,7 +282,7 @@ function countrySelect(label) {
     const hit = COUNTRIES.find(c => c[0] === D.country);
     if (hit && !(D.wa_num || '').trim()) { D.wa_cc = hit[1]; const b = document.getElementById('cc_btn'); if (b) b.textContent = hit[1] + ' \u25BE'; }
   } }, el('option', { value: '' }, 'Choose your country…'), list.map(c => el('option', { value: c, selected: D.country === c }, c)));
-  return el('div', { class: 'field' }, el('label', { class: 'l', for: 'country' }, label), sel);
+  return el('div', { class: 'field' }, el('label', { class: 'l', for: 'country' }, label, star('country')), sel);
 }
 // ---- deadline timer ----
 let cdTimer = null, cdReloads = 0;
@@ -301,26 +327,25 @@ function view() {
     m.append(el('h1', {}, C.heading), el('p', {}, C.intro)); const cc0 = P.state === 'open' ? cdCard('close') : null; if (cc0) m.append(cc0); m.append(el('p', { class: 'note' }, C.note));
   } else if (step === 1) {
     const mc = miniCd(); if (mc) m.append(mc);
-    m.append(el('h2', {}, C.steps[1]), text('full_name', f.full_name), text('email', f.email, 'email'), countrySelect(f.country || 'Country'), text('city', f.city || 'City or town (optional)'), waField(f.whatsapp), text('institution', f.institution), choice('role', f.role, roleOpts(), v => { $('#roleOtherBox').style.display = v === 'other' ? '' : 'none'; if (v === 'other') $('#role_other').focus(); }), roleOtherBox());
+    m.append(el('h2', {}, C.steps[1]), reqNote(), text('full_name', f.full_name), text('email', f.email, 'email'), countrySelect(f.country || 'Country'), text('city', f.city || 'City or town (optional)'), waField(f.whatsapp), text('institution', f.institution), choice('role', f.role, roleOpts(), v => { $('#roleOtherBox').style.display = v === 'other' ? '' : 'none'; if (v === 'other') $('#role_other').focus(); }), roleOtherBox());
   } else if (step === 2) {
     { const mc = miniCd(); if (mc) m.append(mc); }
-    m.append(el('h2', {}, C.steps[2]), choice('intent', f.intent, o.intent));
+    m.append(el('h2', {}, C.steps[2]), reqNote(), choice('intent', f.intent, intentOpts()));
   } else if (step === 3) {
     { const mc = miniCd(); if (mc) m.append(mc); }
-    m.append(el('h2', {}, br[D.intent].title));
-    if (D.intent === 'attend') m.append(select('attend_session', br.attend.session, o.months), area('attend_question', br.attend.question), choice('attend_reminder', br.attend.reminder, o.reminder));
-    if (D.intent === 'suggest') m.append(text('topic', br.suggest.topic), area('topic_reason', br.suggest.reason));
-    if (D.intent === 'speak') m.append(text('speak_field', br.speak.field), text('speak_title', br.speak.talk_title), choice('speak_track', br.speak.track, o.track), area('speak_bio', br.speak.bio), text('speak_link', br.speak.link, 'url', 'https://'), select('speak_month', br.speak.month, o.months));
+    m.append(el('h2', {}, D.intent === 'attend' ? 'Attend a session and suggest a topic' : br[D.intent].title), reqNote());
+    if (D.intent === 'attend') m.append(select('attend_session', br.attend.session, monthOpts()), text('topic', br.suggest.topic), area('topic_reason', br.suggest.reason), area('attend_question', br.attend.question), choice('attend_reminder', br.attend.reminder, o.reminder));
+    if (D.intent === 'speak') m.append(text('speak_field', br.speak.field), text('speak_title', br.speak.talk_title), choice('speak_track', br.speak.track, trackOpts(), v => { $('#trackOtherBox').style.display = v === 'other' ? '' : 'none'; if (v === 'other') $('#speak_track_other').focus(); }), trackOtherBox(), area('speak_bio', br.speak.bio), text('speak_link', br.speak.link, 'url', 'https://'), select('speak_month', br.speak.month, monthOpts()));
     { const bt = multi('best_times', f.best_times, o.best_times); const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').replace(/_/g, ' ');
       bt.querySelector('.lg').after(el('p', { class: 'sub', style: 'margin:-2px 0 10px;' }, (C.times_note || 'Session times are in Ghana time (GMT). Choose every slot that could work for you.') + (tz && tz !== 'Africa/Accra' ? ' Your device time zone: ' + tz + '.' : ''))); m.append(bt); }
   } else {
     const rows = [[f.full_name, D.full_name], [f.email, D.email], [f.country || 'Country', D.country], ...(val('city') ? [[(f.city || 'City').replace(' (optional)', ''), val('city')]] : []), [f.whatsapp.replace(' (optional)', ''), fullWa() || '–'], [f.institution, D.institution], [f.role, D.role === 'other' ? 'Other: ' + val('role_other') : lab(roleOpts(), D.role)], [f.intent, lab(o.intent, D.intent)]];
-    const map = { attend: [['attend_session', br.attend.session], ['attend_question', br.attend.question], ['attend_reminder', br.attend.reminder]], suggest: [['topic', br.suggest.topic], ['topic_reason', br.suggest.reason]], speak: [['speak_field', br.speak.field], ['speak_title', br.speak.talk_title], ['speak_track', br.speak.track], ['speak_bio', br.speak.bio], ['speak_link', br.speak.link], ['speak_month', br.speak.month]] };
-    map[D.intent].forEach(([k, l]) => { const v = D[k]; if (v) rows.push([l, k === 'attend_reminder' ? lab(o.reminder, v) : k === 'speak_track' ? lab(o.track, v) : v]); });
+    const map = { attend: [['attend_session', br.attend.session], ['topic', br.suggest.topic], ['topic_reason', br.suggest.reason], ['attend_question', br.attend.question], ['attend_reminder', br.attend.reminder]], suggest: [['topic', br.suggest.topic], ['topic_reason', br.suggest.reason]], speak: [['speak_field', br.speak.field], ['speak_title', br.speak.talk_title], ['speak_track', br.speak.track], ['speak_bio', br.speak.bio], ['speak_link', br.speak.link], ['speak_month', br.speak.month]] };
+    map[D.intent].forEach(([k, l]) => { const v = D[k]; if (v) rows.push([l, k === 'attend_reminder' ? lab(o.reminder, v) : k === 'speak_track' ? (v === 'other' ? 'Other: ' + val('speak_track_other') : lab(trackOpts(), v)) : v]); });
     rows.push([f.best_times.replace(/ \(.*\)/, ''), D.best_times.join(', ')]);
     { const mc = miniCd(); if (mc) m.append(mc); }
     m.append(el('h2', {}, C.review.title), el('ul', { class: 'rev' }, rows.map(r => el('li', {}, el('b', {}, r[0]), el('span', {}, r[1])))),
-      el('div', { class: 'field', id: 'g_consent' }, el('label', { class: 'opt' + (D.consent ? ' sel' : '') }, el('input', { type: 'checkbox', checked: !!D.consent, onChange: e => { D.consent = e.target.checked; e.target.closest('.opt').classList.toggle('sel', D.consent); buzz(); e.target.closest('.field').classList.remove('bad'); } }), f.consent)));
+      el('div', { class: 'field', id: 'g_consent' }, el('label', { class: 'opt' + (D.consent ? ' sel' : '') }, el('input', { type: 'checkbox', checked: !!D.consent, onChange: e => { D.consent = e.target.checked; e.target.closest('.opt').classList.toggle('sel', D.consent); buzz(); e.target.closest('.field').classList.remove('bad'); } }), f.consent, star('consent'))));
   }
   m.append(el('div', { class: 'err', id: 'err', role: 'alert' }));
   $('#back').hidden = step === 0;
@@ -354,17 +379,16 @@ function check() {
   } else if (step === 3) {
     if (D.intent === 'attend') {
       if (!D.attend_session) bad('Choose a preferred session or month.', 'attend_session');
+      if (val('topic').length < 3) bad('Suggest a topic you would like covered.', 'topic');
+      if (val('topic_reason').length < 3) bad('Add a line on why it matters.', 'topic_reason');
       if (!D.attend_reminder) bad('Choose how you want reminders.', 'g_attend_reminder');
       else if (D.attend_reminder === 'whatsapp' && !fullWa()) bad('You chose WhatsApp reminders, so go Back and add your WhatsApp number.', 'g_attend_reminder');
-    }
-    if (D.intent === 'suggest') {
-      if (val('topic').length < 3) bad('Tell us your topic or question.', 'topic');
-      if (val('topic_reason').length < 3) bad('Add a line on why it matters.', 'topic_reason');
     }
     if (D.intent === 'speak') {
       if (val('speak_field').length < 2) bad('Enter your field of expertise.', 'speak_field');
       if (val('speak_title').length < 3) bad('Enter a talk title.', 'speak_title');
       if (!D.speak_track) bad('Choose a track.', 'g_speak_track');
+      else if (D.speak_track === 'other' && val('speak_track_other').length < 2) bad('Tell us your profession in the box under “Other”.', 'speak_track_other');
       if (val('speak_bio').length < 10) bad('Write a short bio (at least a sentence).', 'speak_bio');
       if (val('speak_link') && !/^https?:\/\/\S+$/i.test(val('speak_link'))) bad('The link must start with https://', 'speak_link');
       if (!D.speak_month) bad('Choose a preferred month.', 'speak_month');
@@ -387,6 +411,7 @@ async function submit() {
   const btn = $('#next'); btn.disabled = true; btn.textContent = 'Submitting…';
   const body = Object.assign({}, D, { consent: true, whatsapp: fullWa() });
   delete body.wa_cc; delete body.wa_num;
+  if (body.speak_track !== 'other') delete body.speak_track_other;
   try { body.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
   try {
     const r = await fetch(SB + '/functions/v1/series-submit', { method: 'POST', headers: hdr, body: JSON.stringify(body) });

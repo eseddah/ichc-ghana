@@ -93,9 +93,9 @@
   }
 
   // ---------------------------------------------------------------- responses dashboard
-  const detail = r => r.intent === 'attend' ? [r.attend_session, r.attend_reminder && 'reminder by ' + r.attend_reminder, r.attend_question && 'Q: ' + r.attend_question]
+  const detail = r => r.intent === 'attend' ? [r.attend_session, r.topic && 'Topic: ' + r.topic, r.topic_reason && 'Why: ' + r.topic_reason, r.attend_reminder && 'reminder by ' + r.attend_reminder, r.attend_question && 'Q: ' + r.attend_question]
     : r.intent === 'suggest' ? [r.topic, r.topic_reason]
-    : [r.speak_title, r.speak_field, r.speak_track, r.speak_month, r.speak_bio, r.speak_link];
+    : [r.speak_title, r.speak_field, r.speak_track === 'other' && r.speak_track_other ? 'Other: ' + r.speak_track_other : r.speak_track, r.speak_month, r.speak_bio, r.speak_link];
   async function responses(root, sb) {
     root.innerHTML = '<div class="card"><p class="note">Loading responses…</p></div>';
     const [rows, sum] = await Promise.all([
@@ -141,7 +141,7 @@
     $(root, '[data-q]').addEventListener('input', e => { st.q = e.target.value; view(); });
     $(root, '[data-st]').addEventListener('change', e => { st.status = e.target.value; view(); });
     $(root, '[data-csv]').addEventListener('click', () => {
-      const cols = ['created_at', 'intent', 'status', 'full_name', 'email', 'whatsapp', 'country', 'city', 'timezone', 'institution', 'role', 'role_other', 'best_times', 'attend_session', 'attend_question', 'attend_reminder', 'topic', 'topic_reason', 'speak_field', 'speak_title', 'speak_track', 'speak_bio', 'speak_link', 'speak_month'];
+      const cols = ['created_at', 'intent', 'status', 'full_name', 'email', 'whatsapp', 'country', 'city', 'timezone', 'institution', 'role', 'role_other', 'best_times', 'attend_session', 'attend_question', 'attend_reminder', 'topic', 'topic_reason', 'speak_field', 'speak_title', 'speak_track', 'speak_track_other', 'speak_bio', 'speak_link', 'speak_month'];
       const cell = v => { let t = Array.isArray(v) ? v.join('; ') : String(v == null ? '' : v); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
       const L = all.filter(r => (st.tab === 'all' || r.intent === st.tab) && (!st.status || r.status === st.status));
       const csv = '\ufeff' + cols.join(',') + '\n' + L.map(r => cols.map(c => cell(r[c])).join(',')).join('\n');
