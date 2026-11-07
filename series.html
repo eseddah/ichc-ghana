@@ -94,6 +94,13 @@ button,.opt,.cc-item{-webkit-tap-highlight-color:rgba(227,154,59,.35);touch-acti
 .cdmini{display:inline-flex;gap:8px;align-items:center;background:#FDF1DE;border:1px solid #F0D3A4;color:var(--navy);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:14px}
 .cdmini b{font-variant-numeric:tabular-nums}
 
+/* back to main website */
+.site-back{position:absolute;left:20px;top:14px;z-index:2;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 16px 0 10px;border-radius:999px;background:#fff;color:var(--navy);font-weight:700;font-size:14px;text-decoration:none;border:1.5px solid var(--line);box-shadow:0 2px 0 rgba(10,24,38,.25);-webkit-tap-highlight-color:rgba(227,154,59,.35);touch-action:manipulation;transition:transform .08s,background .12s}
+.site-back svg{width:18px;height:18px;flex:none}
+.site-back:hover{background:#FDF1DE}
+.site-back:active{transform:scale(.97)}
+.site-back:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+
 /* required marker */
 .req{color:#D92D20;font-weight:700;margin-left:3px}
 .reqnote{margin:10px 0 0;font-size:14px;color:var(--muted)}
@@ -136,7 +143,7 @@ function shell() {
   if (P.hero_path) h.append(el('div', { class: 'img', style: `background-image:url('${SB}/storage/v1/object/public/series-assets/${encodeURI(P.hero_path)}')` }), el('div', { class: 'tint' }));
   else h.insertAdjacentHTML('beforeend', TEX);
   const inn = el('div', { class: 'hero-in' });
-  inn.innerHTML = '<div class="badge" role="img" aria-label="Chemistry Competition Prep">' + BADGE + '</div>';
+  inn.innerHTML = '<a class="site-back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back to website</a><div class="badge" role="img" aria-label="Chemistry Competition Prep">' + BADGE + '</div>';
   h.append(inn);
 }
 function bars() {
