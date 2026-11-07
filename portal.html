@@ -999,6 +999,14 @@
   .int-title svg{width:20px; height:20px;}
   .int-sum{margin-top:8px; padding:10px 12px; background:var(--lilac); border-radius:12px; color:var(--navy-deep); line-height:1.6;}
   .ob-lockcard{border-color:var(--amber); background:var(--butter); margin-bottom:16px;}
+  .watch-ic{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:3px 10px 3px 6px; border-radius:999px; background:rgba(31,138,112,.14); color:var(--teal-deep); vertical-align:middle;}
+  .watch-ic svg{width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
+  .onb-alert{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:0 0 18px; padding:14px 16px; border-radius:14px; border:1.5px solid var(--amber-deep); background:rgba(227,154,59,.14);}
+  .onb-alert b{display:block; font-size:15px;} .onb-alert span{display:block; font-size:13px; color:var(--muted); margin-top:2px;}
+  .join-card{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px;}
+  .join-kicker{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .set-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px; margin:6px 0 10px; padding-top:6px;} .set-head b{font-size:16px;} .set-head span{font-size:12.5px; color:var(--muted);}
+  .bc-sec{display:flex; justify-content:space-between; gap:10px; font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin:8px 2px 2px;} .bc-sec span{font-weight:600; text-transform:none; letter-spacing:0;}
   .ob-vblock video{display:block;}
 
   .int-panelists{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px;}
@@ -1562,7 +1570,7 @@ function mediaBusy(){
 }
 function renderOrDefer(tab){
   // The onboarding screen updates itself in place: background syncs never rebuild it, so the video never blinks or rewinds.
-  if(ME && ME.role==='student' && currentTab==='welcome' && obLocked() && document.getElementById('onbRoot')){ try{ paintOnboarding(); }catch(e){} return; }
+  if(ME && ME.role==='student' && currentTab==='onbme' && document.getElementById('onbRoot')){ try{ paintOnboarding(); }catch(e){} return; }
   if(isEditingScreen() || mediaBusy()){
     deferredRenderTab = tab;
     if(!deferredRenderTimer){
@@ -2450,10 +2458,10 @@ function applicantDecisionDraft({app, decision, reason}){
   const title = accepted ? `You're in! Your ${programName()} application was accepted` : `Update on your ${programName()} application`;
   // the email template already says "Hi <first name>", so the email body does not repeat the greeting
   const mail = accepted
-    ? [`Great news: your application has been accepted${after}, and your student portal is now switched on.`, `Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video. When you confirm the video, your roadmap and daily practice unlock, and you then meet your coordinator and get the official WhatsApp group invitation.`]
+    ? [`Great news: your application has been accepted${after}, and your student portal is now switched on.`, `Sign in with the Google account for ${app.email} and your full portal opens straight away. From your Home page you can join the official WhatsApp group and message your coordinator. Please also finish your onboarding, which is compulsory: confirm your place and watch the short orientation video to the end.`]
     : [`Thank you for applying to ${programName()}${app.interview ? ' and for taking the time to interview with us' : ''}.`, `We're unable to move forward with your application at this time.`];
   let sms = accepted
-    ? `Hi ${first}, great news: your ${programName()} application has been accepted${after} and your student portal is switched on. Sign in with the Google account for ${app.email}, confirm your place and watch the short orientation video.`
+    ? `Hi ${first}, great news: your ${programName()} application has been accepted${after} and your student portal is switched on. Sign in with the Google account for ${app.email}, join the WhatsApp group from your Home page and finish the compulsory onboarding video.`
     : `Hi ${first}, thank you for applying to ${programName()}. We're unable to move forward with your application at this time.`;
   if(reason){ mail.push(reason); sms += ' ' + reason; }
   return { title, mail: mail.join('\n\n'), sms };
@@ -3293,6 +3301,7 @@ function renderLegacy(tab){
   else if(tab==='series' && ME.role==='ambassador') html = '<div id="seriesRoot"></div>';
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
+  else if(tab==='onbme' && ME.role==='student') html = onbMeView();
   else if(tab==='lessons') html = lessonsView();
   else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
@@ -3716,7 +3725,7 @@ function psmsRecentHtml(){
       ${e.status!=='delivered' && e.detail ? `<div class="item-body" style="margin-top:6px; padding:8px 10px; background:rgba(192,57,43,.06); border-radius:8px; font-size:12.5px; color:#C0392B;">${escapeHtml(e.detail)}</div>` : ''}
     </div>`).join('');
 }
-function personalSmsView(){
+function personalSmsViewOld(){
   return `
   <div class="section-title"><div><h2>Text a student</h2><p>Send one text to one student. It goes only to the person you pick, never to a group.</p></div></div>
   ${psmsSmsOn() ? '' : `<p class="note" style="margin-bottom:14px;">Text messaging isn't connected yet. Add the SMS webhook in Settings, then come back to send.</p>`}
@@ -3784,7 +3793,7 @@ async function psmsSend(){
     if(r && currentTab==='personalsms') r.innerHTML = psmsRecentHtml();
   }, 2500);
 }
-function wirePersonalSms(){
+function wirePersonalSmsOld(){
   const q = id=>document.getElementById(id);
   q('psmsSearch').addEventListener('input', e=>{ PSMS.search = e.target.value; q('psmsList').innerHTML = psmsListHtml(); });
   q('psmsList').addEventListener('click', e=>{
@@ -4371,7 +4380,7 @@ function pemRecentHtml(){
     <div class="item-body" style="font-size:13px;">${escapeHtml(e.subject)} <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; ${e.status==='sent'?'background:rgba(31,138,112,.14); color:var(--teal-deep);':'background:rgba(192,57,43,.12); color:#C0392B;'}">${e.status==='sent'?'Sent':'Failed'}</span></div>
     ${e.status==='failed' ? `<div class="item-body" style="font-size:12px; color:#C0392B;">${escapeHtml(String(e.detail||'').slice(0,160))}</div><button type="button" class="mc-chip" style="margin-top:8px" data-pem-reuse="${escapeHtml(e.id)}">Put this email back in the box</button>` : ''}</div>`).join('');
 }
-function personalEmailView(){
+function personalEmailViewOld(){
   return `<div class="section-title"><div><h2>Email a student</h2><p>Send one email to one student. It goes only to the person you pick, never to a group.</p></div></div>
   <div class="psms-wrap">
     <div class="card">
@@ -4430,7 +4439,7 @@ async function pemSend(){
   pemRefresh();
   setTimeout(async ()=>{ try{ EMAILLOG = (await sGet('email:log', true)) || []; }catch(e){} const r = document.getElementById('pemRecent'); if(r && currentTab==='personalemail') r.innerHTML = pemRecentHtml(); }, 2500);
 }
-async function wirePersonalEmail(){
+async function wirePersonalEmailOld(){
   const q = id=>document.getElementById(id); if(!q('pemSend')) return;
   q('pemSearch').addEventListener('input', e=>{ PEM.search = e.target.value; q('pemList').innerHTML = pemListHtml(); });
   q('pemOnlyEmail').addEventListener('change', e=>{ PEM.onlyEmail = e.target.checked; q('pemList').innerHTML = pemListHtml(); });
@@ -4452,6 +4461,198 @@ async function wirePersonalEmail(){
   pemRefresh();
   try{ EMAILLOG = (await sGet('email:log', true)) || []; const r = q('pemRecent'); if(r) r.innerHTML = pemRecentHtml(); }catch(e){}
 }
+
+// ================= Broadcast: text or email several people at once =================
+// Pick any mix of students (first set or second set) and coordinators. Everyone ticked gets their own text or email.
+const BC = {
+  sms:{ sel:{}, search:'', group:'all', onlyContact:true, draft:'', sign:true, link:false, sending:false, status:null },
+  email:{ sel:{}, search:'', group:'all', onlyContact:true, subject:'', body:'', sign:true, link:false, sending:false, status:null }
+};
+function bcPeople(mode){
+  const hasC = mode==='sms' ? psmsHasPhone : pemHasEmail;
+  const mk = (rec, kind)=>{
+    const ok = hasC(rec), second = kind==='student' && isNewFlow(rec);
+    return { key:(kind==='student' ? 's:' : 'c:') + rec.id, kind, set: kind==='coordinator' ? 'coordinator' : (second ? 'second' : 'first'), rec,
+      name: rec.name || (kind==='student' ? 'Unnamed student' : 'Unnamed coordinator'), ok,
+      off: ok && (mode==='sms' ? !rec.notifySms : rec.notifyEmail===false),
+      sub: ok ? (mode==='sms' ? rec.phone : rec.email) : (mode==='sms' ? 'No phone number on file' : 'No email address on file') };
+  };
+  return (DB.coordinators||[]).map(c=>mk(c,'coordinator')).concat((DB.students||[]).filter(s=>!ghostedStudent(s)).map(s=>mk(s,'student')))
+    .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+}
+function bcShown(mode){
+  const S = BC[mode], term = S.search.trim().toLowerCase();
+  return bcPeople(mode).filter(p=>S.group==='all' || p.set===S.group)
+    .filter(p=>!S.onlyContact || p.ok)
+    .filter(p=>!term || [p.rec.name, p.rec.email, p.rec.phone, p.rec.group, p.kind==='student' ? coordName(p.rec.coordinatorId) : ''].some(v=>String(v||'').toLowerCase().includes(term)));
+}
+function bcSelected(mode){ const S = BC[mode]; return bcPeople(mode).filter(p=>S.sel[p.key] && p.ok); }
+function bcListHtml(mode){
+  const S = BC[mode];
+  if(!(DB.students||[]).length && !(DB.coordinators||[]).length) return '<div class="empty">No students or coordinators yet.</div>';
+  const rows = bcShown(mode);
+  if(!rows.length) return '<div class="empty">Nobody matches. Try another search or filter.</div>';
+  return [['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set (new applicants)']].map(([k,t])=>{
+    const r = rows.filter(p=>p.set===k); if(!r.length) return '';
+    const n = r.filter(p=>S.sel[p.key]).length;
+    return `<div class="bc-sec">${t}<span>${n} of ${r.length} ticked</span></div>` + r.map(p=>{
+      const on = !!S.sel[p.key];
+      return `<button type="button" class="psms-row${on?' on':''}" data-bc-pick="${escapeHtml(p.key)}" aria-pressed="${on}" ${p.ok?'':'disabled'}>
+        <span class="psms-name">${on?'&#10003; ':''}${escapeHtml(p.name)}</span>
+        <span class="psms-sub">${escapeHtml(p.sub)}${p.kind==='student' && p.rec.coordinatorId ? ' · ' + escapeHtml(coordName(p.rec.coordinatorId)) : ''}</span>
+        ${p.off ? `<span class="psms-flag">${mode==='sms' ? 'Texts off' : 'Emails off'}</span>` : ''}</button>`;
+    }).join('');
+  }).join('');
+}
+function bcToHtml(mode){
+  const sel = bcSelected(mode), word = mode==='sms' ? 'text' : 'email';
+  if(!sel.length) return `<div class="psms-empty">Tick the students and/or coordinators you want to ${word} from the list.</div>`;
+  const st = sel.filter(p=>p.kind==='student'), co = sel.filter(p=>p.kind==='coordinator'), two = st.filter(p=>p.set==='second').length;
+  const names = sel.slice(0,4).map(p=>escapeHtml(psmsFirst(p.rec))).join(', ') + (sel.length>4 ? ` and ${sel.length-4} more` : '');
+  return `<div class="psms-to-name">${sel.length} ${sel.length===1?'person':'people'} selected</div><div class="psms-to-sub">${st.length} student${st.length===1?'':'s'} (${st.length-two} first set, ${two} second set) · ${co.length} coordinator${co.length===1?'':'s'}</div><div class="psms-to-sub">${names}</div>`;
+}
+function bcSmsText(rec){
+  let t = BC.sms.draft.trim().replace(/\{name\}/g, psmsFirst(rec)); if(!t) return '';
+  if(BC.sms.sign && ME && ME.name) t += `\n— ${ME.name}`;
+  if(BC.sms.link) t = withPortalLink(t);
+  return t;
+}
+function bcView(mode){
+  const sms = mode==='sms', S = BC[mode], word = sms ? 'text' : 'email';
+  const chips = [['all','Everyone'],['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set']];
+  return `
+  <div class="section-title"><div><h2>${sms?'Text people':'Email people'}</h2><p>Pick the students and/or coordinators you want to ${word}. Everyone you tick gets their own ${word}, and nobody sees who else received it. Type {name} where you want each person's first name.</p></div></div>
+  ${sms && !psmsSmsOn() ? `<p class="note" style="margin-bottom:14px;">Text messaging isn't connected yet. Add the SMS webhook in Settings, then come back to send.</p>` : ''}
+  <div class="psms-wrap">
+    <div class="card">
+      <div class="field" style="margin-bottom:10px;"><label for="bcSearch">Find people</label>
+        <input id="bcSearch" type="search" autocomplete="off" placeholder="Name, ${sms?'phone':'email'}, group or coordinator" value="${escapeHtml(S.search)}"></div>
+      <div class="psms-opts" style="margin:0 0 10px;">${chips.map(([k,l])=>`<button type="button" class="mc-chip" data-bc-group="${k}" aria-pressed="${S.group===k}">${l}</button>`).join('')}</div>
+      <label class="psms-opts" style="margin:0 0 8px"><input type="checkbox" id="bcOnly" ${S.onlyContact?'checked':''}> Hide people without ${sms?'a phone number':'an email address'}</label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px;"><button type="button" class="mc-chip" id="bcAll">Select all shown</button><button type="button" class="mc-chip" id="bcNone">Clear selection</button></div>
+      <div id="bcList" class="psms-list">${bcListHtml(mode)}</div>
+    </div>
+    <div>
+      <div class="card">
+        <div id="bcTo" class="psms-to">${bcToHtml(mode)}</div>
+        ${sms ? `
+        <div class="field"><label for="bcTpl">Quick message</label><div class="psms-opts" style="margin:0; flex-wrap:nowrap"><select id="bcTpl" style="flex:1; min-width:0"><option value="">Choose a ready-made message…</option>${PSMS_TPL.concat(psmsCustomTpl()).map((t,i)=>`<option value="${i}">${escapeHtml(t.length>60?t.slice(0,57)+'…':t)}</option>`).join('')}</select><button type="button" class="mc-chip" id="bcSaveTpl">Save mine</button></div></div>
+        <div class="field"><label for="bcBody">Message</label><textarea id="bcBody" rows="5" maxlength="600" placeholder="Write your message">${escapeHtml(S.draft)}</textarea></div>` : `
+        <div class="field"><label for="bcSubject">Subject</label><input id="bcSubject" type="text" maxlength="150" placeholder="What is this about?" value="${escapeHtml(S.subject)}"></div>
+        <div class="field"><label for="bcBody">Message</label><textarea id="bcBody" rows="8" maxlength="3000" placeholder="Write your message">${escapeHtml(S.body)}</textarea></div>`}
+        <div class="psms-opts">
+          <label><input type="checkbox" id="bcSign" ${S.sign?'checked':''}> Sign with my name</label>
+          ${portalUrl() ? `<label><input type="checkbox" id="bcLink" ${S.link?'checked':''}> Add the portal link</label>` : ''}
+        </div>
+        <div class="psms-foot"><span id="bcCount" class="psms-count">${sms ? '' : 'People can reply to you directly.'}</span><button class="btn teal" id="bcSend" type="button">${sms?'Send text':'Send email'}</button></div>
+        <div id="bcStatus" class="psms-status" role="status" aria-live="polite"></div>
+      </div>
+      <h3 style="font-size:15px; margin:22px 0 10px;">${sms ? 'Recent personal texts' : 'Recent personal emails'}</h3>
+      <div id="bcRecent" class="list">${sms ? psmsRecentHtml() : pemRecentHtml()}</div>
+    </div>
+  </div>`;
+}
+function bcRefresh(mode){
+  const q = id=>document.getElementById(id); if(!q('bcSend')) return;
+  const S = BC[mode], sms = mode==='sms', sel = bcSelected(mode);
+  q('bcTo').innerHTML = bcToHtml(mode);
+  if(sms){
+    const sample = bcSmsText(sel[0] ? sel[0].rec : { name:'' }), seg = psmsSegments(sample);
+    q('bcCount').textContent = seg.len ? `${seg.len} characters, ${seg.parts} text${seg.parts>1?'s':''} each` : 'Nothing written yet';
+  }
+  const ready = sms ? !!S.draft.trim() && psmsSmsOn() : !!S.subject.trim() && !!S.body.trim();
+  const btn = q('bcSend'); btn.disabled = S.sending || !sel.length || !ready;
+  btn.textContent = S.sending ? 'Sending…' : (sel.length ? `${sms?'Send text':'Send email'} to ${sel.length} ${sel.length===1?'person':'people'}` : (sms?'Send text':'Send email'));
+  const stat = q('bcStatus'); stat.className = 'psms-status' + (S.status ? (S.status.ok ? ' ok' : ' bad') : ''); stat.textContent = S.status ? S.status.msg : '';
+}
+async function bcSend(mode){
+  const S = BC[mode], sms = mode==='sms', word = sms ? 'text' : 'email';
+  const url = DB.settings && DB.settings.webhookUrl; let list = bcSelected(mode);
+  if(S.sending || !list.length) return;
+  if(sms ? (!S.draft.trim() || !url) : (!S.subject.trim() || !S.body.trim())) return;
+  const off = list.filter(p=>p.off);
+  if(off.length && !confirm(`${off.length} of the ${list.length} people you picked have ${word} updates turned off. Press OK to ${word} them as well, or Cancel to skip them.`)) list = list.filter(p=>!p.off);
+  if(!list.length) return;
+  if(list.length>1 && !confirm(`Send this ${word} to ${list.length} people? Each person gets their own ${word}.`)) return;
+  S.sending = true; S.status = null; bcRefresh(mode);
+  if(sms){
+    let sent = 0; const failed = [];
+    for(let i=0; i<list.length; i++){
+      const p = list[i], text = bcSmsText(p.rec);
+      S.status = { ok:true, msg:`Sending ${i+1} of ${list.length}…` }; bcRefresh(mode); S.sending = true; document.getElementById('bcSend').disabled = true;
+      const res = await sendSmsNow(url, { to:p.rec.phone, name:p.rec.name, from:ME.name, subject:'Personal message', message:text, recipientId:p.rec.id, recipientRole:p.kind, studentCoordinatorId: p.kind==='student' ? (p.rec.coordinatorId||null) : null });
+      psmsSentAdd({ ts:Date.now(), phone:String(p.rec.phone).replace(/\D/g,'').slice(-9), text, studentId:p.rec.id });
+      if(res.ok) sent++; else failed.push(psmsFirst(p.rec));
+    }
+    S.sending = false;
+    S.status = failed.length ? { ok:false, msg:`Sent ${sent} of ${list.length}. Couldn't send to: ${failed.join(', ')}. Check the SMS connection in Settings and try those again. Your message is still here.` } : { ok:true, msg:`Texts sent to ${sent} ${sent===1?'person':'people'}. Delivery results will appear under Recent personal texts.` };
+    if(!failed.length){ S.draft = ''; S.sel = {}; const b = document.getElementById('bcBody'); if(b) b.value = ''; const l = document.getElementById('bcList'); if(l) l.innerHTML = bcListHtml(mode); }
+    bcRefresh(mode);
+    setTimeout(async ()=>{ try{ await reloadDbKey('sms:log'); }catch(e){} const r = document.getElementById('bcRecent'); if(r && currentTab==='personalsms') r.innerHTML = psmsRecentHtml(); }, 2500);
+  } else {
+    list.forEach(p=>{
+      let message = S.body.trim().replace(/\{name\}/g, psmsFirst(p.rec));
+      if(S.sign && ME && ME.name) message += `\n\n${ME.name}`;
+      dispatchEmails([Object.assign({}, p.rec, { notifyEmail:true })], { subject:S.subject.trim(), body:message, author:ME.name, kind:'personal', noPortalLink: !S.link });
+    });
+    S.sending = false;
+    S.status = { ok:true, msg:`${list.length} email${list.length===1?'':'s'} queued. They go out one after another, and each result will appear under Recent personal emails and in the Email Log.` };
+    S.subject = ''; S.body = ''; S.sel = {};
+    ['bcSubject','bcBody'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value = ''; });
+    const l = document.getElementById('bcList'); if(l) l.innerHTML = bcListHtml(mode);
+    bcRefresh(mode);
+    setTimeout(async ()=>{ try{ EMAILLOG = (await sGet('email:log', true)) || []; }catch(e){} const r = document.getElementById('bcRecent'); if(r && currentTab==='personalemail') r.innerHTML = pemRecentHtml(); }, 4000);
+  }
+}
+function wireBc(mode){
+  const q = id=>document.getElementById(id), S = BC[mode], sms = mode==='sms'; if(!q('bcSend')) return;
+  const relist = ()=>{ q('bcList').innerHTML = bcListHtml(mode); };
+  q('bcSearch').addEventListener('input', e=>{ S.search = e.target.value; relist(); });
+  document.querySelectorAll('[data-bc-group]').forEach(b=>b.addEventListener('click', ()=>{ S.group = b.dataset.bcGroup; document.querySelectorAll('[data-bc-group]').forEach(x=>x.setAttribute('aria-pressed', String(x.dataset.bcGroup===S.group))); relist(); }));
+  q('bcOnly').addEventListener('change', e=>{ S.onlyContact = e.target.checked; relist(); });
+  q('bcAll').addEventListener('click', ()=>{ bcShown(mode).forEach(p=>{ if(p.ok) S.sel[p.key] = true; }); relist(); bcRefresh(mode); });
+  q('bcNone').addEventListener('click', ()=>{ S.sel = {}; relist(); bcRefresh(mode); });
+  q('bcList').addEventListener('click', e=>{
+    const b = e.target.closest('[data-bc-pick]'); if(!b || b.disabled) return;
+    const k = b.dataset.bcPick; if(S.sel[k]) delete S.sel[k]; else S.sel[k] = true;
+    S.status = null; relist(); bcRefresh(mode);
+  });
+  q('bcBody').addEventListener('input', e=>{ if(sms) S.draft = e.target.value; else S.body = e.target.value; bcRefresh(mode); });
+  if(!sms) q('bcSubject').addEventListener('input', e=>{ S.subject = e.target.value; bcRefresh(mode); });
+  q('bcSign').addEventListener('change', e=>{ S.sign = e.target.checked; bcRefresh(mode); });
+  if(q('bcLink')) q('bcLink').addEventListener('change', e=>{ S.link = e.target.checked; bcRefresh(mode); });
+  q('bcSend').addEventListener('click', ()=>bcSend(mode));
+  if(sms){
+    q('bcTpl').addEventListener('change', e=>{ if(e.target.value==='') return; S.draft = PSMS_TPL.concat(psmsCustomTpl())[+e.target.value] || ''; q('bcBody').value = S.draft; e.target.value = ''; bcRefresh(mode); q('bcBody').focus(); });
+    q('bcSaveTpl').addEventListener('click', ()=>{
+      const t = S.draft.trim(); if(t.length<5) return alert('Write your message first, then save it as a template.');
+      const a = psmsCustomTpl(); if(!a.includes(t)) a.push(t);
+      try{ localStorage.setItem('ichc_psms_tpl', JSON.stringify(a.slice(-10))); }catch(e){}
+      render('personalsms');
+    });
+    q('bcRecent').addEventListener('click', e=>{
+      const b = e.target.closest('[data-psms-resend]'); if(!b) return;
+      const ent = (DB.smsLog||[]).find(x=>x.id===b.dataset.psmsResend), rec = ent && psmsFindSent(ent); if(!rec) return;
+      S.draft = rec.text; S.sign = false; S.link = false; S.status = null; S.sel = {};
+      S.sel[((DB.students||[]).some(x=>x.id===rec.studentId) ? 's:' : 'c:') + rec.studentId] = true;
+      render('personalsms');
+    });
+  } else {
+    q('bcRecent').addEventListener('click', e=>{
+      const b = e.target.closest('[data-pem-reuse]'); if(!b) return;
+      const ent = (EMAILLOG||[]).find(x=>x.id===b.dataset.pemReuse); if(!ent) return;
+      S.subject = ent.subject; S.body = ent.message; S.sign = false; S.link = false; S.status = null; S.sel = {};
+      if(ent.recipientId) S.sel[((DB.students||[]).some(x=>x.id===ent.recipientId) ? 's:' : 'c:') + ent.recipientId] = true;
+      render('personalemail');
+    });
+  }
+  bcRefresh(mode);
+  if(!sms) (async ()=>{ try{ EMAILLOG = (await sGet('email:log', true)) || []; const r = q('bcRecent'); if(r) r.innerHTML = pemRecentHtml(); }catch(e){} })();
+}
+function personalSmsView(){ return bcView('sms'); }
+function wirePersonalSms(){ wireBc('sms'); }
+function personalEmailView(){ return bcView('email'); }
+async function wirePersonalEmail(){ wireBc('email'); }
 
 
 // ================= Student access: active / inactive =================
@@ -4594,8 +4795,6 @@ function obState(s, d, videos){
   const steps = [
     { id:'confirm', label:'Confirm your place', done:!!d.confirmed },
     { id:'videos', label:'Watch the orientation video' + (req.length>1 ? 's' : ''), done: !!req.length && req.every(v=>d.videos && d.videos[v.id]) },
-    ...(hasCoord ? [{ id:'hello', label:'Say hello to your coordinator', done:!!(d.steps && d.steps.hello) }] : []),
-    { id:'whatsapp', label:'Join the official WhatsApp group', done:!!(d.steps && d.steps.whatsapp) }
   ];
   const done = steps.filter(x=>x.done).length, all = done === steps.length || !!d.completedAt;
   const stage = !s || !s.stage ? null : all ? 'Completed' : d.confirmed ? 'Onboarding' : 'Pending confirmation';
@@ -4616,12 +4815,12 @@ async function onbPreload(){
   }catch(e){ console.warn('onboarding load failed', e); ONB.loaded = false; }
 }
 // Fails closed: until the student's own onboarding record has loaded, the roadmap stays hidden.
-function obLocked(){
+// The full portal is open from the first sign-in. The onboarding steps are compulsory but live in their own section (see onbPending / onbAlertBar).
+function obLocked(){ return false; }
+function onbPending(){
   if(!ME || ME.role !== 'student') return false;
-  const st = onbStudent(); if(!isNewFlow(st)) return false;
-  if(!ONB.loaded || ONB.forId !== ME.id) return true;
-  const o = obState(st, ONB.data, ONB.videos);
-  return !(o.steps.find(x=>x.id==='videos').done || ONB.data.completedAt);
+  const st = onbStudent(); if(!isNewFlow(st) || !ONB.loaded || ONB.forId !== ME.id) return false;
+  return !obState(st, ONB.data, ONB.videos).all;
 }
 // Closing mode: students only see Certificates (coordinators and the Ambassador keep every section). Set to false to bring every section back.
 const CERT_ONLY_MODE = false;
@@ -4630,31 +4829,63 @@ function navList(){
   let n = ME && NAV[ME.role]; if(!n) return n;
   if(ME.role==='coordinator'){ const ex = dutyTabs(); if(ex.length){ const i = n.findIndex(t=>t.k==='certificates'); n = i<0 ? n.concat(ex) : [...n.slice(0,i), ...ex, ...n.slice(i)]; } }
   if(certOnlyUser()) return n.filter(t=>t.k === 'certificates');
-  return (ME.role === 'student' && obLocked()) ? n.filter(t=>t.k === 'welcome') : n;
+  if(ME.role === 'student' && isNewFlow(onbStudent())) n = [n[0], { k:'onboarding_me', l:'Onboarding', ic:'onboarding', subs:[['onbme','Onboarding']] }, ...n.slice(1)];
+  return n;
 }
 // If the lock changed since the menu was drawn (video confirmed, or the record finished loading), redraw menu and Home.
 function onbGateCheck(){ if(ME && ME.role==='student' && window.__obLockedShown !== obLocked()) buildTabs(); }
 // People who joined through the application flow only see what was posted after they were accepted.
-function newcomerCutoffMs(){ const st = onbStudent(); return (isNewFlow(st) && st.acceptedAt) ? st.acceptedAt : 0; }
+// New students start with a clean slate: nothing posted before they were accepted is shown to them (the ambassador's resource library is not affected).
+function newcomerCutoffMs(){
+  const st = onbStudent(); if(!isNewFlow(st)) return 0;
+  const t = st.acceptedAt || st.activatedAt || 0; if(t) return t;
+  if(!window.__newcomerFb) window.__newcomerFb = Date.now();
+  return window.__newcomerFb;
+}
 function afterCutoff(item){
   const c = newcomerCutoffMs(); if(!c) return true; if(!item) return false;
   const t = item.ts || item.createdAt || (item.created_at ? Date.parse(item.created_at) : 0);
   if(t) return t >= c;
   if(item.date){ const d = new Date(c), ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); return String(item.date) >= ds; }
-  return true;
+  return false;
 }
 function lockedHomeExtras(){
   return `<div class="card ob-lockcard"><b>&#128274; Your roadmap, daily practice and community unlock soon.</b><p class="note" style="margin:6px 0 0;">Finish the steps above: confirm your place, watch the orientation video, then press <b>I have finished watching</b>. Until then, the resource library below is yours to explore.</p></div>${libraryView()}`;
 }
 async function onbSave(){ ONB.data.updated = Date.now(); const st = obState(onbStudent(), ONB.data, ONB.videos); if(st.all && !ONB.data.completedAt) ONB.data.completedAt = Date.now(); await sSet('onboard:' + ME.id, ONB.data, true); }
-function studentCoordinatorCard(){ return isNewFlow(onbStudent()) ? '<div id="coordRoot"></div>' : studentCoordinatorCardPlain(); }
-function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbRoot" class="card" style="margin-bottom:16px;"><p class="note">Loading your onboarding…</p></div>' : ''; }
+function studentCoordinatorCard(){ return studentCoordinatorCardPlain(); }
+function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbHomeRoot"></div>' : ''; }
+function onbMeView(){
+  return `<div class="section-title"><div><h2>Onboarding</h2><p>These steps are compulsory. Confirm your place, then watch the orientation video to the end and press the confirm button. Your coordinator and the Ambassador can see your progress.</p></div></div>
+  <div id="onbRoot" class="card" style="margin-bottom:16px;"><p class="note">Loading your onboarding…</p></div>`;
+}
+// Home: join the WhatsApp group straight away (the coordinator card with the text button sits right under it).
+function paintOnbHome(){
+  const box = document.getElementById('onbHomeRoot'), s = onbStudent(); if(!box || !s) return;
+  const url = waUrlFor(s), joined = !!(ONB.data.steps && ONB.data.steps.whatsapp);
+  const html = `<div class="card join-card"><div><div class="join-kicker">Join the community</div><div style="font-size:17px; font-weight:700;">Official WhatsApp group</div><p class="note" style="margin:4px 0 0;">Announcements and updates happen here. Join now, and message your coordinator from the card below whenever you like.</p></div><a class="wa-btn wa-big" id="obWa" href="${escapeHtml(url)}" target="_blank" rel="noopener">${WA_ICON}${joined ? 'Open the WhatsApp group' : 'Join the WhatsApp group'}</a></div>`;
+  if(box.__h !== html){ box.__h = html; box.innerHTML = html; }
+  if(!box.__wired){
+    box.__wired = true;
+    box.addEventListener('click', ev=>{
+      const a = ev.target.closest && ev.target.closest('#obWa'); if(!a || !ONB.loaded) return;
+      ONB.data.steps = ONB.data.steps || {};
+      if(!ONB.data.steps.whatsapp){ ONB.data.steps.whatsapp = Date.now(); setTimeout(()=>{ onbSave().then(paintOnbHome).catch(()=>{}); }, 600); }
+    });
+  }
+}
+// Compulsory-onboarding alert: shown on every page until the steps are finished.
+function onbAlertBar(){
+  const sc = document.getElementById('screen'); if(!sc) return;
+  const old = sc.querySelector('.onb-alert'), need = onbPending() && currentTab !== 'onbme';
+  if(!need){ if(old) old.remove(); return; }
+  if(old) return;
+  sc.insertAdjacentHTML('afterbegin', '<div class="onb-alert" role="alert"><div><b>Action needed: finish your onboarding</b><span>It is compulsory. Confirm your place and watch the orientation video to the end.</span></div><button type="button" class="btn amber small" data-go-tab="onbme">Open onboarding</button></div>');
+}
 async function wireOnboarding(){
   const st = onbStudent(); if(!isNewFlow(st)) return;
-  const wasLocked = obLocked();
   await onbPreload();
-  if(wasLocked !== obLocked()){ buildTabs(); return; }   // the lock changed once the record loaded: redraw the menu and Home
-  paintOnboarding();
+  paintOnboarding(); paintOnbHome(); onbAlertBar(); renderNavBadges();
 }
 // Each video is created once and never rebuilt by a repaint, so a repaint can never restart playback.
 function wireObVideo(vd){
@@ -4687,7 +4918,7 @@ function paintOnboarding(){
   if(!root.querySelector('#obHead')){
     root.innerHTML = '<div id="obHead"></div><div id="obBar"></div><div class="ob-step" id="obS1"></div>'
       + '<div class="ob-step" id="obS2"><span id="obT2"></span><div style="flex:1; min-width:0;"><b>2. Watch the video and confirm</b><div id="obS2msg"></div><div id="obVids"></div><div id="obS2done"></div></div></div>'
-      + '<div class="ob-step" id="obS3"></div><div class="ob-step" id="obS4"></div>';
+      ;
   }
   const q = id=>root.querySelector('#'+id);
   const put = (el, html)=>{ if(el && el.__h !== html){ el.__h = html; el.innerHTML = html; } };
@@ -4697,8 +4928,8 @@ function paintOnboarding(){
       ${d.confirmed ? '<p class="note" style="margin:4px 0 0;">Confirmed. Welcome to the programme!</p>' : `<p class="note" style="margin:4px 0 8px;">You've been accepted. By confirming, you promise to ${(s.commitments ? 'attend the sessions, stay in touch with your coordinator and complete the activities' : 'take part fully')}.</p><button class="btn teal small" id="obConfirm">Yes, I confirm my place</button>`}</div>`);
   // step 2: the video elements live in #obVids and are only recreated if the list of videos itself changes
   put(q('obT2'), tick(videosDone));
-  put(q('obS2msg'), !d.confirmed ? lock('Confirm your place to unlock the video.') : !req.length ? '<p class="note" style="margin:4px 0 0;">Your orientation video is being prepared. Please check back soon.</p>' : '');
-  const vids = d.confirmed ? [...req, ...extra] : [], box = q('obVids'), sig = JSON.stringify(vids.map(v=>[v.id, v.url, v.required!==false]));
+  put(q('obS2msg'), !req.length ? '<p class="note" style="margin:4px 0 0;">Your orientation video is being prepared. Please check back soon.</p>' : '');
+  const vids = [...req, ...extra], box = q('obVids'), sig = JSON.stringify(vids.map(v=>[v.id, v.url, v.required!==false]));
   if(box.__sig !== sig){
     box.__sig = sig;
     box.innerHTML = vids.map((v,i)=>`<div class="ob-vblock" data-vblock="${v.id}" style="margin-top:10px;">${(v.required===false && (i===0 || vids[i-1].required!==false)) ? '<div style="margin:12px 0 4px; font-size:13px; font-weight:700;">More videos for you</div>' : ''}<div class="ob-vtitle" style="font-weight:600; font-size:14px;"></div><video class="ob-video" data-vid="${v.id}" src="${escapeHtml(v.url)}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsinline preload="metadata" style="width:100%; max-width:560px; border-radius:10px; margin-top:6px; background:#000;"></video><div class="ob-vstatus"></div></div>`).join('');
@@ -4716,12 +4947,9 @@ function paintOnboarding(){
     }
     put(blk.querySelector('.ob-vstatus'), status);
   });
-  put(q('obS2done'), videosDone ? '<p class="note" style="margin:10px 0 0; color:var(--teal-deep); font-weight:700;">&#10003; Confirmed. Your roadmap, daily practice and community are now unlocked: find them on your Home page and in the menu.</p>' : '');
-  put(q('obS3'), `${tick(!!(d.steps && d.steps.hello))}<div style="flex:1;"><b>3. Meet your coordinator</b>
-      ${!videosDone ? lock('Confirm the video to unlock your coordinator\'s name and number.') : !coord ? '<p class="note" style="margin:4px 0 0;">A coordinator will be assigned to you soon. We\'ll let you know.</p>' : `<div style="display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:6px;"><div><div style="font-size:16px; font-weight:700;">${escapeHtml(coord.name||'')}</div><div style="font-size:13px; color:var(--muted);">${[coord.subject, coord.region].filter(Boolean).map(escapeHtml).join(' · ')}</div>${coord.phone ? `<div style="margin-top:2px;">&#128222; ${escapeHtml(coord.phone)}</div>` : ''}</div>${coord.phone ? `<a class="wa-btn wa-big" id="obHello" href="${waLink(coord.phone, `Hello ${first}, this is ${ME.name} from Chemistry Competition Prep.`)}" target="_blank" rel="noopener">${WA_ICON}TEXT NOW</a>` : '<span class="note">Your coordinator hasn\'t added a number yet.</span>'}</div>`}</div>`);
-  put(q('obS4'), `${tick(!!(d.steps && d.steps.whatsapp))}<div style="flex:1;"><b>${coord ? '4' : '3'}. Join the official WhatsApp group</b>
-      ${!videosDone ? lock('Confirm the video to get the group invitation.') : `<p class="note" style="margin:4px 0 8px;">This is where announcements and updates happen day to day.</p><a class="wa-btn" id="obWa" href="${escapeHtml(waUrl)}" target="_blank" rel="noopener">${WA_ICON}Join the WhatsApp group</a>`}</div>`);
+  put(q('obS2done'), videosDone ? '<p class="note" style="margin:10px 0 0; color:var(--teal-deep); font-weight:700;">&#10003; Thank you. Your compulsory onboarding is complete.</p>' : '');
   put(coordRoot, st.all ? studentCoordinatorCardPlain() : '');
+  onbAlertBar(); renderNavBadges();
   if(!root.__wired){
     root.__wired = true;
     root.addEventListener('click', async (ev)=>{
@@ -4749,15 +4977,16 @@ async function paintStages(){
   }catch(e){ console.warn('stage load failed', e); }
   list.forEach(s=>{
     const st = obState(s, map[s.id], videos), c = DB.coordinators.find(x=>x.id===s.coordinatorId);
+    const watched = st.steps.find(x=>x.id==='videos').done ? ' <span class="watch-ic" title="Has watched the onboarding video"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>Watched</span>' : '';
     document.querySelectorAll(`[data-stage-for="${s.id}"]`).forEach(el=>{
-      el.innerHTML = `${stageChip(st.stage)} <span class="ob-mini"><i style="width:${st.pct}%"></i></span> <span style="font-size:12px; color:var(--muted);">${st.done}/${st.total} onboarding steps · ${c ? 'Coordinator: ' + escapeHtml(c.name) : '<b style="color:#C0392B;">No coordinator assigned yet</b>'}</span>`;
+      el.innerHTML = `${stageChip(st.stage)}${watched} <span class="ob-mini"><i style="width:${st.pct}%"></i></span> <span style="font-size:12px; color:var(--muted);">${st.done}/${st.total} onboarding steps · ${c ? 'Coordinator: ' + escapeHtml(c.name) : '<b style="color:#C0392B;">No coordinator assigned yet</b>'}</span>`;
     });
   });
 }
 
 // ---- Ambassador: onboarding videos ----
 function onboardingSetupView(){
-  return `<div class="section-title"><div><h2>Onboarding setup</h2><p>Videos newly accepted students watch before they unlock their coordinator and the WhatsApp group. Required videos must be watched to the end, with no skipping ahead. The WhatsApp group link is set under Settings.</p></div></div><div id="obSetupRoot"></div>`;
+  return `<div class="section-title"><div><h2>Onboarding setup</h2><p>Compulsory videos that newly accepted students must watch in their Onboarding section. You see a small Watched icon beside each student once they have. Required videos must be watched to the end, with no skipping ahead. The WhatsApp group link is set under Settings.</p></div></div><div id="obSetupRoot"></div>`;
 }
 async function wireOnboardingSetup(){
   const root = document.getElementById('obSetupRoot'); if(!root) return;
@@ -5777,8 +6006,8 @@ function ambassadorView(tab){
       <span id="smsCountStudents" style="font-size:12.5px; color:var(--muted);">${smsCountLabel('student')}</span>
       <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Ticking or unticking a box saves straight away. Only people with a phone number can be switched on. Use the search box first to act on just a group.</span>
     </div>
-    <div class="list">
-      ${shownStudents.length ? shownStudents.map(s=>`
+    <div>
+      ${[['First set','Students accepted before the application flow.', shownStudents.filter(s=>!s.stage)],['Second set · new applicants','Accepted through the application flow. They start with no old chats or messages, only your materials.', shownStudents.filter(s=>s.stage)]].map(([ttl,sub,arr])=>`<div class="set-head"><b>${ttl}</b><span>${arr.length} student${arr.length===1?'':'s'} · ${sub}</span></div><div class="list" style="margin-bottom:26px;">${arr.length ? arr.map(s=>`
         <div class="item">
           <div class="item-head"><span class="item-title">${escapeHtml(s.name)}</span><span class="item-meta">${s.group?('Group '+escapeHtml(s.group)+' · '):''}joined ${fmtDate(s.joined)}</span></div>
           <div class="item-body" style="font-size:12.5px; color:var(--muted);">${escapeHtml(s.email||'no email on file')}${s.phone?(' · '+escapeHtml(s.phone)):''}${s.ageRange?(' · Age '+escapeHtml(s.ageRange)):''}${s.school?(' · '+escapeHtml(s.school)):''}${s.region?(' · '+escapeHtml(s.region)):''}</div>
@@ -5820,7 +6049,7 @@ function ambassadorView(tab){
           </div>
           <div class="item-body" style="margin-top:6px; font-size:12px; color:var(--muted);">Stage: <b>${currentStageLabel(s)}</b></div>
           <div class="item-actions"><button class="btn ghost small" data-remove-student="${s.id}">Remove</button></div>
-        </div>`).join('') : `<div class="empty">${pq ? 'No students match your search.' : 'No students yet. Once applications close, <b>add each confirmed student</b> above.'}</div>`}
+        </div>`).join('') : `<div class="empty">${pq ? 'No students match your search.' : (ttl.startsWith('Second') ? 'No new applicants have been accepted yet.' : 'No students in this set yet.')}</div>`}</div>`).join('')}
     </div>`;
   }
   if(tab==='feed'){
@@ -6112,7 +6341,7 @@ function studentView(tab){
   }
   if(tab==='hub'){
     const calls = callsForStudent().sort((a,b)=>(a.startAt||'').localeCompare(b.startAt||''));
-    const mats = DB.materials.filter(m=>m.coordinatorId===myCoordinatorId()).sort((a,b)=>b.date.localeCompare(a.date));
+    const mats = DB.materials.filter(m=>m.coordinatorId===myCoordinatorId()).filter(afterCutoff).sort((a,b)=>b.date.localeCompare(a.date));
     return `
     <div class="section-title"><div><h2>Call sheets</h2><p>Your coordinator's session schedule — status updates automatically.</p></div></div>
     <div class="list" style="margin-bottom:26px;">
@@ -6512,7 +6741,7 @@ function applicationsView(){
   const notJoined = real.filter(a=>a.whatsappRedirected===false).length;
   return `
   ${ME.role==='coordinator' ? dutyCardHtml('applications') : ''}
-  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: they confirm their place, watch the orientation video, meet their coordinator and join the WhatsApp group during onboarding. Accepting or declining opens a window where you write the email and the text message separately and send each one yourself.</p></div></div>
+  <div class="section-title"><div><h2>Applications</h2><p>Submissions from the public application form. Mark an applicant in review, invite them to an interview (the applicant gets the details by email, text or WhatsApp, you invite the panel coordinators on WhatsApp, and nobody gets portal access yet), then accept them after the interview to switch on their student portal: their full portal opens straight away, they can join the WhatsApp group and text their coordinator, and they finish the compulsory onboarding (confirm their place and watch the video) in their Onboarding section. Accepting or declining opens a window where you write the email and the text message separately and send each one yourself.</p></div></div>
   ${typeof appsStatusCard==='function' ? appsStatusCard() : ''}
   ${notJoined ? `<div class="card" style="margin-bottom:18px; border-color:var(--amber-deep); background:rgba(227,154,59,.08);"><b>${notJoined} applicant${notJoined===1?'':'s'}</b> haven't joined the WhatsApp group yet — look for the ⚠ badge below.</div>` : ''}
   <div class="list">
@@ -8224,7 +8453,7 @@ function xpFsChange(){
 
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
-  if(tab==='welcome') wireOnboarding();
+  if(tab==='welcome' || tab==='onbme') wireOnboarding();
   if(tab==='learn') wireLearn();
   if(tab==='roadmap' || tab==='welcome') wireRoadmap();
   if(tab==='onboarding') wireOnboardingSetup();
@@ -9964,7 +10193,7 @@ const NAV = {
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
-    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text a student'],['personalemail','Email a student']] },
+    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
@@ -10024,6 +10253,7 @@ function shellSubnav(top, sub){
 // count-up on stat tiles + staggered entrance are CSS/JS only; they never change what the numbers say
 function shellPolish(){
   const s = document.getElementById('screen'); if(!s) return;
+  if(typeof onbAlertBar === 'function') onbAlertBar();
   s.querySelectorAll('.stat .n').forEach(el=>{
     const raw = el.textContent.trim();
     if(!/^\d{1,6}$/.test(raw) || el.dataset.counted) return;
@@ -10038,7 +10268,7 @@ function shellPolish(){
 function navCount(t){
   let keys = (t.subs||[]).map(s=>s[0]);
   if(t.host) keys = keys.concat(['exams','practice','materials','library']);
-  return [...new Set(keys)].reduce((a,k)=>a+tabUnreadCount(k),0);
+  return [...new Set(keys)].reduce((a,k)=>a+tabUnreadCount(k),0) + (t.k==='onboarding_me' && typeof onbPending==='function' && onbPending() ? 1 : 0);
 }
 function renderNavBadges(){
   if(!ME || !NAV[ME.role]) return;
@@ -10860,6 +11090,7 @@ function lvVisibleTo(v){
   if(ME.role==='ambassador') return true;
   if(v.cohort) return true;
   if(ME.role==='coordinator') return v.coordinatorId===ME.id;
+  if(ME.role==='student' && isNewFlow(onbStudent()) && v.byRole==='ambassador') return true;   // new students always see the Ambassador's videos
   return !!v.coordinatorId && v.coordinatorId===myCoordinatorId();
 }
 function lvCanManage(v){ return ME.role==='ambassador' || (ME.role==='coordinator' && v.coordinatorId===ME.id); }
@@ -10874,7 +11105,7 @@ function lvStats(id){
     if(e.t==='view' && e.role==='student' && !started.has(e.sid)) started.set(e.sid, e);
     else if(e.t==='done' && e.role==='student' && !done.has(e.sid)) done.set(e.sid, e);
     else if(e.t==='react') react.set(e.sid, e);
-    else if(e.t==='comment' && !gone.has(e.id)) comments.push(e);
+    else if(e.t==='comment' && !gone.has(e.id) && afterCutoff(e)) comments.push(e);   // new students don't see comments written before they joined
   });
   const counts = {}; LV_REACTS.forEach(r=>counts[r[0]] = 0);
   react.forEach(e=>{ if(e.key && counts[e.key]!=null) counts[e.key]++; });
