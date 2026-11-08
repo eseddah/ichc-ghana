@@ -4684,7 +4684,7 @@ function nlFirst(rec){ return psmsFirst(rec); }
 // ---- the email itself: four different designs, all table-based with inline styles so mail apps show them properly ----
 function nlBuildEmail(d, rec){
   const T = NL_TYPES[d.type] || NL_TYPES.general, first = nlFirst(rec), c = T.color;
-  const sub = t=>String(t||'').replace(/\{name\}/g, first), P = t=>escapeHtml(sub(t)).replace(/\n/g,'<br>'), E = t=>escapeHtml(sub(t));
+  const sub = t=>String(t||'').replace(/\{name\}/g, first), P = t=>escapeHtml(sub(t)).replace(/\n{2,}/g,'<br><br>').replace(/\n/g,'<br>'), E = t=>escapeHtml(sub(t));
   const blocks = (d.blocks||[]).filter(b=>String(b.title||'').trim() || String(b.body||'').trim());
   const prog = escapeHtml(programName()), me = (ME && ME.name) ? escapeHtml(ME.name) : '';
   const issue = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
@@ -4778,7 +4778,7 @@ function nlBlockHtml(b, i, n){
     <span><button type="button" class="mc-chip" data-nl-mv="-1" ${i===0?'disabled':''} aria-label="Move up">&uarr;</button> <button type="button" class="mc-chip" data-nl-mv="1" ${i===n-1?'disabled':''} aria-label="Move down">&darr;</button> <button type="button" class="mc-chip" data-nl-rm="1" ${n<2?'disabled':''}>Remove</button></span></div>
     <div class="field"><label>Title</label><input data-f="title" maxlength="160" value="${escapeHtml(b.title)}" placeholder="Headline for this item"></div>
     <div class="field"><label>${escapeHtml(T.metaLabel)}</label><input data-f="meta" maxlength="120" value="${escapeHtml(b.meta)}" placeholder="${escapeHtml(T.metaPh)}"></div>
-    <div class="field"><label>Summary</label><textarea data-f="body" rows="4" maxlength="900" placeholder="Write it in your own words. Keep it short and clear.">${escapeHtml(b.body)}</textarea></div>
+    <div class="field"><label>Summary</label><textarea data-f="body" rows="10" maxlength="12000" style="min-height:180px; resize:vertical;" placeholder="Write the full summary here. Leave a blank line between paragraphs.">${escapeHtml(b.body)}</textarea></div>
     <div class="nl-two"><div class="field"><label>Link (optional)</label><input data-f="link" type="url" maxlength="400" value="${escapeHtml(b.link)}" placeholder="https://"></div>
     <div class="field"><label>Button text</label><input data-f="btn" maxlength="40" value="${escapeHtml(b.btn)}" placeholder="${escapeHtml(T.btn)}"></div></div></div>`;
 }
@@ -4821,10 +4821,10 @@ function newsletterView(){
         <div class="field"><label for="nlSubject">Email subject</label><input id="nlSubject" maxlength="150" value="${escapeHtml(NL.subject)}" placeholder="What the email subject line should say"></div>
         <div class="field"><label for="nlPre">Preview line (the grey text shown beside the subject)</label><input id="nlPre" maxlength="140" value="${escapeHtml(NL.preheader)}" placeholder="Optional"></div>
         <div class="field"><label for="nlHead">Big headline</label><input id="nlHead" maxlength="120" value="${escapeHtml(NL.headline)}"></div>
-        <div class="field"><label for="nlIntro">Opening message</label><textarea id="nlIntro" rows="3" maxlength="800">${escapeHtml(NL.intro)}</textarea></div></div>
+        <div class="field"><label for="nlIntro">Opening message</label><textarea id="nlIntro" rows="4" maxlength="4000" style="resize:vertical;">${escapeHtml(NL.intro)}</textarea></div></div>
       <h3 style="font-size:15px; margin:18px 0 10px;">Items in this newsletter</h3>
       <div id="nlBlocks">${nlBlocksHtml()}</div>
-      <div class="card" style="margin-top:12px;"><div class="field"><label for="nlClose">Closing message</label><textarea id="nlClose" rows="3" maxlength="600">${escapeHtml(NL.closing)}</textarea></div>
+      <div class="card" style="margin-top:12px;"><div class="field"><label for="nlClose">Closing message</label><textarea id="nlClose" rows="4" maxlength="3000" style="resize:vertical;">${escapeHtml(NL.closing)}</textarea></div>
         <label class="eb-check"><input type="checkbox" id="nlSign" ${NL.sign?'checked':''}> Sign with my name</label></div>
     </div>
     <div>
