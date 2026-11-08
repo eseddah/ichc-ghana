@@ -487,6 +487,36 @@
   .vid-move{position:absolute; top:10px; right:48px; z-index:3; display:flex; gap:4px;}
   .vid-move button{width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,.6); color:#fff; font-size:18px; line-height:1; cursor:pointer;}
   .vp-dl{display:block; text-align:center; margin-top:12px; background:var(--teal); color:#fff; border-radius:999px; padding:11px 18px; font-weight:600; font-size:14px; text-decoration:none;}
+
+  /* ---------- Picture gallery pop-up (View pictures) ---------- */
+  .pg-bar{margin:0 0 22px;}
+  .pg-btn{display:inline-flex; align-items:center; gap:9px; background:var(--amber); color:#1D1B3A; border:none; border-radius:999px; padding:11px 20px 11px 16px; font:inherit; font-weight:700; font-size:14px; cursor:pointer; box-shadow:0 6px 18px rgba(0,0,0,.12);}
+  .pg-btn svg{width:20px; height:20px;}
+  .pg-btn:focus-visible{outline:2px solid var(--navy-deep); outline-offset:3px;}
+  .activity-card .activity-img{cursor:zoom-in;}
+  .pg-card{position:relative; width:min(780px,100%); max-height:96vh; background:#0b1620; color:#fff; border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:10px;}
+  .pg-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 44px 0 4px; font-weight:700; font-size:14.5px;}
+  .pg-count{font-size:12.5px; font-weight:600; opacity:.75;}
+  .pg-card .vp-x{background:rgba(255,255,255,.95); color:#1D1B3A;}
+  .pg-stage{position:relative; overflow:hidden; border-radius:12px; background:#000; aspect-ratio:4/3; max-height:72vh; touch-action:pan-y; user-select:none; -webkit-user-select:none; cursor:zoom-in;}
+  .pg-track{display:flex; height:100%; will-change:transform; transition:transform .5s cubic-bezier(.22,.8,.3,1);}
+  .pg-track.drag{transition:none;}
+  .pg-slide{flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center;}
+  .pg-slide img{max-width:100%; max-height:100%; object-fit:contain; display:block; -webkit-user-drag:none; pointer-events:none;}
+  .pg-nav{position:absolute; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; border:none; background:rgba(255,255,255,.88); color:#1D1B3A; font-size:22px; line-height:1; cursor:pointer; z-index:3; display:flex; align-items:center; justify-content:center;}
+  .pg-prev{left:10px;} .pg-next{right:10px;}
+  .pg-full{position:absolute; right:10px; bottom:10px; z-index:3; height:34px; padding:0 12px; border-radius:999px; border:none; background:rgba(255,255,255,.88); color:#1D1B3A; font:inherit; font-weight:700; font-size:12.5px; cursor:pointer;}
+  .pg-prog{position:absolute; left:0; bottom:0; height:3px; width:0; background:var(--amber); z-index:3;}
+  .pg-cap{min-height:20px; font-size:14px; line-height:1.45; padding:0 4px; color:#E6EAEE;}
+  .pg-dots{display:flex; flex-wrap:wrap; justify-content:center; gap:7px; padding:0 4px 4px;}
+  .pg-dots button{width:9px; height:9px; border-radius:50%; border:none; padding:0; background:rgba(255,255,255,.35); cursor:pointer;}
+  .pg-dots button[aria-current="true"]{background:var(--amber); transform:scale(1.25);}
+  .pg-empty{padding:40px 16px; text-align:center; color:#C9D2DA; font-size:14.5px;}
+  /* full screen (also used where the browser has no Fullscreen API, e.g. iPhone Safari) */
+  .pg-card.pg-fs{position:fixed; inset:0; width:100%; max-height:none; border-radius:0; padding:10px; background:#000; z-index:1100;}
+  .pg-card.pg-fs .pg-stage{flex:1; aspect-ratio:auto; max-height:none; border-radius:0; cursor:zoom-out;}
+  .pg-card.pg-fs .pg-prev{left:12px;} .pg-card.pg-fs .pg-next{right:12px;}
+  @media(max-width:640px){ .pg-nav{width:36px; height:36px; font-size:19px;} .pg-stage{aspect-ratio:1/1;} }
 /* Lab mascot: welcome pop-up, round dock icon, and customiser */
   .mc-back{position:fixed; inset:0; background:rgba(8,20,30,.55); display:none; align-items:center; justify-content:center; z-index:1200; padding:16px;}
   .mc-back.on{display:flex;}
@@ -1155,6 +1185,7 @@
         <h2 data-edit="e_activities_1">Moments from the programme.</h2>
         <p data-edit="e_activities_2">Sessions, mock rounds, and coordinator meetups — posted by the ambassador as they happen.</p>
       </div>
+      <div class="pg-bar"><button type="button" class="pg-btn" id="viewPicsBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>View pictures</button></div>
       <div id="activityAmbassadorBar" style="display:none; margin-bottom:20px;">
         <button type="button" id="addActivityBtn" style="background:var(--navy-deep); color:var(--chalk); border:none; border-radius:999px; padding:11px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">+ Add activity photo</button>
       </div>
@@ -1249,6 +1280,16 @@
   <div id="videoPop" class="vp-back" aria-hidden="true"><div class="vp-card" role="dialog" aria-modal="true" aria-label="Video player">
     <button type="button" class="vp-x" id="videoPopClose" aria-label="Close video">&times;</button>
     <div class="vp-title" id="videoPopTitle"></div><div id="videoPopStage"></div></div></div>
+
+  <div id="picPop" class="vp-back" aria-hidden="true"><div class="pg-card" id="picCard" role="dialog" aria-modal="true" aria-label="Programme pictures">
+    <button type="button" class="vp-x" id="picClose" aria-label="Close pictures">&times;</button>
+    <div class="pg-head"><span>Moments from the programme</span><span class="pg-count" id="picCount"></span></div>
+    <div class="pg-stage" id="picStage"><div class="pg-track" id="picTrack"></div>
+      <button type="button" class="pg-nav pg-prev" id="picPrev" aria-label="Previous picture">&#8249;</button>
+      <button type="button" class="pg-nav pg-next" id="picNext" aria-label="Next picture">&#8250;</button>
+      <button type="button" class="pg-full" id="picFull">Full screen</button>
+      <div class="pg-prog" id="picProg"></div></div>
+    <div class="pg-cap" id="picCap"></div><div class="pg-dots" id="picDots"></div></div></div>
 
 </main>
 
@@ -1420,10 +1461,12 @@ function renderActivities(list){
   const grid = document.getElementById('activityGrid');
   if(!grid) return;
   grid.innerHTML = '';
+  window.__pics = list.slice().reverse();
   if(!list.length){
     grid.innerHTML = '<div class="activity-empty">No activity photos yet — check back soon.</div>';
     return;
   }
+  window.__pics = list.slice().reverse();
   list.slice().reverse().forEach(item=>{
     const card = document.createElement('div');
     card.className = 'activity-card';
@@ -1434,6 +1477,7 @@ function renderActivities(list){
     `;
     grid.appendChild(card);
   });
+  grid.querySelectorAll('.activity-img').forEach((im,i)=>im.addEventListener('click', ()=>{ if(window.openPics) window.openPics(i); }));
   if(window.__isAmbassador){
     grid.querySelectorAll('[data-remove-id]').forEach(btn=>{
       btn.addEventListener('click', ()=>removeActivity(btn.getAttribute('data-remove-id')));
@@ -3637,6 +3681,97 @@ function mcSvg(l, cls){
   document.getElementById('spClose').addEventListener('click',function(){ set(false); });
   pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
+})();
+</script>
+<script>
+/* View pictures: pop-up slideshow. Auto-advances, swipe or arrows to move, tap a picture for full screen. */
+(function(){
+  const $ = id=>document.getElementById(id);
+  const pop=$('picPop'), card=$('picCard'), track=$('picTrack'), stage=$('picStage'), prog=$('picProg');
+  if(!pop || !$('viewPicsBtn')) return;
+  const AUTO_MS = 4500, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let list=[], idx=0, timer=null, resumeT=null, dragging=false, startX=0, dx=0, moved=false, fs=false;
+
+  function paint(animate){
+    track.classList.toggle('drag', !animate);
+    track.style.transform = `translateX(${-idx*100}%)`;
+    $('picCount').textContent = list.length ? `${idx+1} / ${list.length}` : '';
+    $('picCap').textContent = (list[idx] && list[idx].caption) || '';
+    $('picDots').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-current', String(i===idx)));
+  }
+  function go(n, manual){
+    if(!list.length) return;
+    const wrap = (n<0 || n>=list.length); idx = (n+list.length)%list.length;
+    paint(!wrap); if(manual) pauseThenResume(); else restartBar();
+  }
+  function restartBar(){
+    prog.style.transition='none'; prog.style.width='0';
+    if(reduce || !timer) return;
+    void prog.offsetWidth; prog.style.transition=`width ${AUTO_MS}ms linear`; prog.style.width='100%';
+  }
+  function start(){
+    stop(); if(reduce || list.length<2) return;
+    timer = setInterval(()=>go(idx+1,false), AUTO_MS); restartBar();
+  }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; } prog.style.transition='none'; prog.style.width='0'; }
+  function pauseThenResume(){ stop(); clearTimeout(resumeT); resumeT=setTimeout(start, 7000); }
+
+  function open(i){
+    list = (window.__pics||[]).filter(p=>p && p.url);
+    track.innerHTML = list.map(p=>`<div class="pg-slide"><img src="${esc(p.url)}" alt="${esc(p.caption||'Programme picture')}" decoding="async"></div>`).join('');
+    if(!list.length){ track.innerHTML=''; $('picCap').textContent=''; $('picCount').textContent=''; $('picDots').innerHTML=''; stage.style.display='none';
+      let e=$('picEmpty'); if(!e){ e=document.createElement('div'); e.id='picEmpty'; e.className='pg-empty'; e.textContent='No pictures yet. Check back soon.'; card.insertBefore(e,$('picCap')); } e.style.display='block'; }
+    else { stage.style.display=''; const e=$('picEmpty'); if(e) e.style.display='none';
+      $('picDots').innerHTML = list.length>1 ? list.map((_,k)=>`<button type="button" aria-label="Go to picture ${k+1}" aria-current="false" data-k="${k}"></button>`).join('') : ''; }
+    idx = Math.min(Math.max(+i||0,0), Math.max(list.length-1,0)); paint(false);
+    $('picPrev').style.display = $('picNext').style.display = list.length>1 ? '' : 'none';
+    pop.classList.add('on'); pop.setAttribute('aria-hidden','false'); start();
+  }
+  function close(){
+    if(fs) setFs(false);
+    stop(); clearTimeout(resumeT); pop.classList.remove('on'); pop.setAttribute('aria-hidden','true'); track.innerHTML='';
+  }
+  function setFs(on){
+    fs=on; card.classList.toggle('pg-fs', on); $('picFull').textContent = on ? 'Exit full screen' : 'Full screen';
+    try{
+      if(on && card.requestFullscreen) card.requestFullscreen().catch(()=>{});
+      else if(!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+    }catch(e){}
+  }
+  document.addEventListener('fullscreenchange', ()=>{ if(fs && !document.fullscreenElement){ fs=false; card.classList.remove('pg-fs'); $('picFull').textContent='Full screen'; } });
+
+  stage.addEventListener('pointerdown', e=>{
+    if(e.target.closest('.pg-nav,.pg-full')) return;
+    dragging=true; moved=false; startX=e.clientX; dx=0; stop(); clearTimeout(resumeT);
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+    track.classList.add('drag');
+  });
+  stage.addEventListener('pointermove', e=>{
+    if(!dragging) return; dx=e.clientX-startX; if(Math.abs(dx)>8) moved=true;
+    const w=stage.clientWidth||1; track.style.transform=`translateX(calc(${-idx*100}% + ${dx}px))`;
+  });
+  function end(){
+    if(!dragging) return; dragging=false; const w=stage.clientWidth||1;
+    if(moved && Math.abs(dx)>Math.min(60,w*.15)){ go(dx<0 ? idx+1 : idx-1, true); }
+    else { paint(true); if(!moved) setFs(!fs); pauseThenResume(); }
+  }
+  stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+
+  $('picPrev').addEventListener('click', ()=>go(idx-1,true));
+  $('picNext').addEventListener('click', ()=>go(idx+1,true));
+  $('picFull').addEventListener('click', ()=>{ setFs(!fs); pauseThenResume(); });
+  $('picDots').addEventListener('click', e=>{ const b=e.target.closest('[data-k]'); if(b) go(+b.dataset.k,true); });
+  $('picClose').addEventListener('click', close);
+  pop.addEventListener('click', e=>{ if(e.target===pop) close(); });
+  document.addEventListener('keydown', e=>{
+    if(!pop.classList.contains('on')) return;
+    if(e.key==='Escape'){ if(fs) setFs(false); else close(); }
+    else if(e.key==='ArrowRight') go(idx+1,true); else if(e.key==='ArrowLeft') go(idx-1,true);
+  });
+  document.addEventListener('visibilitychange', ()=>{ if(!pop.classList.contains('on')) return; if(document.hidden) stop(); else start(); });
+  $('viewPicsBtn').addEventListener('click', ()=>open(0));
+  window.openPics = open;
 })();
 </script>
 </body>

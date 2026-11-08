@@ -1705,7 +1705,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], classes:['callsheets','students','coordinators'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], load:['students','coordinators']
+  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], newsletter:['students','coordinators','applications'], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -3200,7 +3200,7 @@ function tabIconSvg(k){
 }
 function buildTabsLegacy(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['newsletter','Newsletters'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -3291,6 +3291,7 @@ function renderLegacy(tab){
   else if(tab==='applicantmsg' && canAdminApps()) html = applicantMsgView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
+  else if(tab==='newsletter' && ME.role==='ambassador') html = newsletterView();
   else if(tab==='classes' && ME.role==='ambassador') html = classesAdminView();
   else if(tab==='load' && canSeeActivity()) html = coordLoadView();
   else if(tab==='appcontrol' && canAdminApps()) html = appControlView();
@@ -4654,6 +4655,271 @@ function wirePersonalSms(){ wireBc('sms'); }
 function personalEmailView(){ return bcView('email'); }
 async function wirePersonalEmail(){ wireBc('email'); }
 
+
+// ================= Newsletters: designed emails about research papers, competitions, scholarships and more =================
+// The Ambassador picks a layout, edits every line, chooses which groups get it, previews it, sends a test to themselves, then sends.
+// Each layout is its own email design (different from the plain branded announcement emails).
+const NL_SANS = "'Segoe UI',Helvetica,Arial,sans-serif", NL_SERIF = "Georgia,'Times New Roman',serif";
+const NL_TYPES = {
+  research:{ label:'Research papers', blurb:'Paper spotlights with authors and a short "why it matters".', color:'#0F766E', metaLabel:'Authors · Journal · Year', metaPh:'e.g. Mensah et al. · Nature Chemistry · 2026', btn:'Read the paper',
+    headline:'Research worth reading this month', intro:'Here are a few recent papers our community should know about, each with a short note on why it matters.', closing:'Got a paper you would like us to feature? Reply to this email and tell us.' },
+  competition:{ label:'Competitions', blurb:'Bold call-to-action layout with a date badge for each event.', color:'#5B3FD8', metaLabel:'Date · Place · Level', metaPh:'e.g. 14 Mar · Online · National round', btn:'See details and register',
+    headline:'Competition news: get ready', intro:'New chemistry competitions and key dates are open to you. Take a look and plan your preparation early.', closing:'Need help preparing? Talk to your coordinator and we will build a plan with you.' },
+  scholarship:{ label:'Scholarships', blurb:'Warm layout with a deadline ribbon and an apply button.', color:'#15803D', metaLabel:'Deadline · Award', metaPh:'e.g. Closes 30 Apr · Full tuition', btn:'Apply for this scholarship',
+    headline:'Scholarships open for you', intro:'These scholarships are open to students like you. Check the deadlines carefully and apply early.', closing:'If you want help with an application, reply to this email and we will point you to the right person.' },
+  general:{ label:'General update', blurb:'Clean editorial layout for any other news.', color:'#1D1B3A', metaLabel:'Tag', metaPh:'e.g. Programme news', btn:'Read more',
+    headline:'News from the programme', intro:'Here is what has been happening and what is coming up.', closing:'Thank you for being part of this community.' }
+};
+const NL = { loaded:false, type:'research', subject:'', preheader:'', headline:NL_TYPES.research.headline, intro:NL_TYPES.research.intro,
+  blocks:[{ title:'', meta:'', body:'', link:'', btn:'' }], closing:NL_TYPES.research.closing, sign:true, sel:{}, status:null, sending:false, history:[], histLoaded:false };
+const NL_FIELDS = ['type','subject','preheader','headline','intro','blocks','closing','sign'];
+function nlSaveDraft(){ try{ const d = {}; NL_FIELDS.forEach(k=>d[k]=NL[k]); localStorage.setItem('ichc:newsletter:draft', JSON.stringify(d)); }catch(e){} }
+function nlLoadDraft(){
+  if(NL.loaded) return; NL.loaded = true;
+  try{ const d = JSON.parse(localStorage.getItem('ichc:newsletter:draft')||'null'); if(d && NL_TYPES[d.type]){ NL_FIELDS.forEach(k=>{ if(d[k]!==undefined) NL[k]=d[k]; }); if(!Array.isArray(NL.blocks)||!NL.blocks.length) NL.blocks=[{title:'',meta:'',body:'',link:'',btn:''}]; } }catch(e){}
+}
+function nlUrl(u){ u = String(u||'').trim(); return /^https?:\/\//i.test(u) ? u : ''; }
+function nlFirst(rec){ return psmsFirst(rec); }
+
+// ---- the email itself: four different designs, all table-based with inline styles so mail apps show them properly ----
+function nlBuildEmail(d, rec){
+  const T = NL_TYPES[d.type] || NL_TYPES.general, first = nlFirst(rec), c = T.color;
+  const sub = t=>String(t||'').replace(/\{name\}/g, first), P = t=>escapeHtml(sub(t)).replace(/\n/g,'<br>'), E = t=>escapeHtml(sub(t));
+  const blocks = (d.blocks||[]).filter(b=>String(b.title||'').trim() || String(b.body||'').trim());
+  const prog = escapeHtml(programName()), me = (ME && ME.name) ? escapeHtml(ME.name) : '';
+  const issue = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  const btn = (b, bg, fg, outline)=>{ const u = nlUrl(b.link); if(!u) return ''; const label = E(b.btn || T.btn);
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td style="background:${outline?'#ffffff':bg}; border:2px solid ${bg}; border-radius:8px;"><a href="${escapeHtml(u)}" style="display:inline-block; padding:11px 22px; font:700 14px ${NL_SANS}; color:${fg}; text-decoration:none;">${label}</a></td></tr></table>`; };
+  const pre = d.preheader ? `<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">${E(d.preheader)}</div>` : '';
+  const greet = (col)=>`<p style="margin:0 0 12px; font:600 16px ${NL_SANS}; color:${col};">Hi ${escapeHtml(first)},</p>`;
+  const closing = (col, mut)=> (d.closing ? `<p style="margin:0 0 14px; font:15px/1.6 ${NL_SANS}; color:${col};">${P(d.closing)}</p>` : '') + (d.sign && me ? `<p style="margin:0; font:600 15px ${NL_SANS}; color:${col};">${me}<br><span style="font-weight:400; color:${mut};">${prog}</span></p>` : '');
+  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.</td></tr>`;
+  const shell = (outer, inner)=>`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(d.subject||'Newsletter')}</title></head><body style="margin:0; padding:0; background:${outer};">${pre}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${outer};"><tr><td align="center" style="padding:24px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;">${inner}</table></td></tr></table></body></html>`;
+  let inner = '';
+  if(d.type==='research'){
+    const items = blocks.map((b,i)=>`<tr><td style="padding:0 0 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-left:5px solid ${c}; border-radius:6px;"><tr><td style="padding:20px 22px;">
+      <div style="font:700 12px ${NL_SANS}; letter-spacing:.14em; color:${c};">PAPER ${String(i+1).padStart(2,'0')}</div>
+      <h2 style="margin:6px 0 4px; font:700 22px/1.25 ${NL_SERIF}; color:#0B2A3A;">${E(b.title)}</h2>
+      ${b.meta?`<div style="font:italic 14px ${NL_SERIF}; color:${c}; margin-bottom:10px;">${E(b.meta)}</div>`:''}
+      <div style="font:15px/1.65 ${NL_SANS}; color:#334155;">${P(b.body)}</div>${btn(b, c, '#ffffff', true)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td style="background:#0B2A3A; border-radius:10px 10px 0 0; padding:30px 28px;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.2em; color:#5EEAD4;">RESEARCH BRIEF &middot; ${escapeHtml(issue.toUpperCase())}</div><h1 style="margin:10px 0 0; font:700 30px/1.2 ${NL_SERIF}; color:#ffffff;">${E(d.headline)}</h1></td></tr>
+      <tr><td style="background:#F3F6F8; padding:24px 22px 8px;">${greet('#0B2A3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#334155;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td style="background:#ffffff; padding:22px 28px; border-radius:0 0 10px 10px;">${closing('#334155','#64748B')}</td></tr>${foot('#64748B','#F3F6F8')}`;
+    return shell('#E2E8EE', inner);
+  }
+  if(d.type==='competition'){
+    const items = blocks.map(b=>`<tr><td style="padding:0 0 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:12px;"><tr>
+      <td width="104" valign="top" style="padding:16px 0 16px 16px;"><div style="background:#F5A524; color:#1D1B3A; border-radius:10px; padding:14px 8px; text-align:center; font:800 14px/1.3 ${NL_SANS};">${b.meta?E(b.meta):'DATE TBA'}</div></td>
+      <td valign="top" style="padding:16px 18px;"><h2 style="margin:0 0 6px; font:800 20px/1.25 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.6 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${btn(b, c, '#ffffff', false)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td style="background:${c}; border-radius:14px 14px 0 0; padding:34px 28px; text-align:left;"><div style="display:inline-block; background:#F5A524; color:#1D1B3A; font:800 12px ${NL_SANS}; letter-spacing:.12em; padding:5px 12px; border-radius:999px;">COMPETITION ALERT</div><h1 style="margin:14px 0 6px; font:800 32px/1.15 ${NL_SANS}; color:#ffffff;">${E(d.headline)}</h1><div style="font:14px ${NL_SANS}; color:#E4DDFB;">${prog} &middot; ${escapeHtml(issue)}</div></td></tr>
+      <tr><td style="background:#EFEAFD; padding:24px 22px 6px;">${greet('#1D1B3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td style="background:#1D1B3A; padding:24px 28px; border-radius:0 0 14px 14px;">${closing('#F2EFFF','#B9B2E0')}</td></tr>${foot('#B9B2E0','#1D1B3A')}`;
+    return shell('#1D1B3A', inner);
+  }
+  if(d.type==='scholarship'){
+    const items = blocks.map(b=>`<tr><td style="padding:0 0 22px; border-bottom:2px dashed #CDE3D3;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 0 0;">
+      ${b.meta?`<span style="display:inline-block; background:${c}; color:#ffffff; font:700 12px ${NL_SANS}; letter-spacing:.06em; padding:5px 12px; border-radius:999px;">${E(b.meta)}</span>`:''}
+      <h2 style="margin:12px 0 6px; font:700 21px/1.3 ${NL_SERIF}; color:#14532D;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(b.body)}</div>${btn(b, c, c, true)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td style="background:${c}; height:10px; line-height:10px; font-size:0; border-radius:12px 12px 0 0;">&nbsp;</td></tr>
+      <tr><td style="background:#FBF7EE; padding:34px 28px 10px; text-align:center;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.22em; color:${c};">SCHOLARSHIP NEWS</div><h1 style="margin:10px 0 8px; font:700 31px/1.2 ${NL_SERIF}; color:#14532D;">${E(d.headline)}</h1><div style="width:60px; height:3px; background:#F5A524; margin:0 auto;"></div></td></tr>
+      <tr><td style="background:#FBF7EE; padding:18px 28px 8px;">${greet('#14532D')}<p style="margin:0 0 6px; font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td style="background:#FBF7EE; padding:22px 28px 26px; border-radius:0 0 12px 12px;">${closing('#3F4A3F','#6B7A6B')}</td></tr>${foot('#6B7A6B','#F1EBDB')}`;
+    return shell('#EDE6D3', inner);
+  }
+  const items = blocks.map(b=>`<tr><td style="padding:0 0 24px;">${b.meta?`<div style="font:700 11px ${NL_SANS}; letter-spacing:.14em; text-transform:uppercase; color:#7C5CF0;">${E(b.meta)}</div>`:''}<h2 style="margin:4px 0 6px; font:700 20px/1.3 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${nlUrl(b.link)?`<div style="margin-top:8px;"><a href="${escapeHtml(nlUrl(b.link))}" style="font:700 14px ${NL_SANS}; color:#7C5CF0; text-decoration:none;">${E(b.btn||T.btn)} &rarr;</a></div>`:''}</td></tr>`).join('');
+  inner = `<tr><td style="background:#ffffff; padding:34px 32px 8px; border-top:6px solid #1D1B3A;"><div style="font:600 13px ${NL_SANS}; color:#64748B;">${prog} &middot; ${escapeHtml(issue)}</div><h1 style="margin:10px 0 14px; font:800 30px/1.2 ${NL_SANS}; color:#1D1B3A;">${E(d.headline)}</h1><div style="height:1px; background:#E2E5EA;"></div></td></tr>
+    <tr><td style="background:#ffffff; padding:20px 32px 4px;">${greet('#1D1B3A')}<p style="margin:0 0 22px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+    <tr><td style="background:#ffffff; padding:8px 32px 30px;"><div style="height:1px; background:#E2E5EA; margin-bottom:20px;"></div>${closing('#39424D','#64748B')}</td></tr>${foot('#64748B','#F4F5F7')}`;
+  return shell('#F4F5F7', inner);
+}
+function nlBuildText(d, rec){
+  const sub = t=>String(t||'').replace(/\{name\}/g, nlFirst(rec));
+  const out = [`Hi ${nlFirst(rec)},`, '', sub(d.intro), ''];
+  (d.blocks||[]).filter(b=>String(b.title||'').trim()||String(b.body||'').trim()).forEach(b=>{
+    out.push(sub(b.title).toUpperCase()); if(b.meta) out.push(sub(b.meta)); if(b.body) out.push(sub(b.body)); if(nlUrl(b.link)) out.push(nlUrl(b.link)); out.push('');
+  });
+  if(d.closing) out.push(sub(d.closing)); if(d.sign && ME && ME.name) out.push('', ME.name);
+  return out.join('\n').trim();
+}
+
+// ---- who it goes to: groups of people ----
+function nlGroups(){
+  const students = (DB.students||[]).filter(s=>!ghostedStudent(s)), coords = DB.coordinators||[], apps = DB.applications||[];
+  const g = [];
+  const add = (sec, key, label, list)=>g.push({ sec, key, label, list });
+  add('People', 'coords', 'All coordinators', coords);
+  add('People', 'students', 'All students', students);
+  add('People', 'first', 'Students · first set', students.filter(s=>!isNewFlow(s)));
+  add('People', 'second', 'Students · second set (new applicants)', students.filter(s=>isNewFlow(s)));
+  coords.forEach(c=>{ const l = students.filter(s=>s.coordinatorId===c.id); if(l.length) add('Students of a coordinator', 'co:'+c.id, `${c.name||'Coordinator'}'s students`, l); });
+  [...new Set(students.map(s=>s.group).filter(Boolean))].sort().forEach(n=>add('Student groups', 'gr:'+n, 'Group '+n, students.filter(s=>s.group===n)));
+  add('Joining the programme', 'interest', 'Interest list (from the website)', apps.filter(a=>a.status==='interested'));
+  add('Joining the programme', 'applicants', 'Applicants waiting for a decision', apps.filter(a=>a.status!=='interested'));
+  add('Joining the programme', 'onboarding', 'Accepted students still onboarding', students.filter(s=>s.stage && s.stage!=='Completed'));
+  return g;
+}
+function nlRecipients(){
+  const seen = new Set(), out = []; let noEmail = 0, off = 0;
+  nlGroups().filter(g=>NL.sel[g.key]).forEach(g=>g.list.forEach(r=>{
+    const em = String(r.email||'').trim().toLowerCase(); const k = em || ('id:'+r.id);
+    if(seen.has(k)) return; seen.add(k);
+    if(!em){ noEmail++; return; }
+    if(r.notifyEmail===false){ off++; return; }
+    const isCoord = (DB.coordinators||[]).some(c=>c.id===r.id), isStudent = !isCoord && r.coordinatorId!==undefined;
+    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null });
+  }));
+  return { list:out, noEmail, off };
+}
+
+// ---- the screen ----
+function nlBlockHtml(b, i, n){
+  const T = NL_TYPES[NL.type];
+  return `<div class="nl-block" data-bi="${i}"><div class="nl-block-h"><b>${NL.type==='research'?'Paper':NL.type==='competition'?'Competition':NL.type==='scholarship'?'Scholarship':'Item'} ${i+1}</b>
+    <span><button type="button" class="mc-chip" data-nl-mv="-1" ${i===0?'disabled':''} aria-label="Move up">&uarr;</button> <button type="button" class="mc-chip" data-nl-mv="1" ${i===n-1?'disabled':''} aria-label="Move down">&darr;</button> <button type="button" class="mc-chip" data-nl-rm="1" ${n<2?'disabled':''}>Remove</button></span></div>
+    <div class="field"><label>Title</label><input data-f="title" maxlength="160" value="${escapeHtml(b.title)}" placeholder="Headline for this item"></div>
+    <div class="field"><label>${escapeHtml(T.metaLabel)}</label><input data-f="meta" maxlength="120" value="${escapeHtml(b.meta)}" placeholder="${escapeHtml(T.metaPh)}"></div>
+    <div class="field"><label>Summary</label><textarea data-f="body" rows="4" maxlength="900" placeholder="Write it in your own words. Keep it short and clear.">${escapeHtml(b.body)}</textarea></div>
+    <div class="nl-two"><div class="field"><label>Link (optional)</label><input data-f="link" type="url" maxlength="400" value="${escapeHtml(b.link)}" placeholder="https://"></div>
+    <div class="field"><label>Button text</label><input data-f="btn" maxlength="40" value="${escapeHtml(b.btn)}" placeholder="${escapeHtml(T.btn)}"></div></div></div>`;
+}
+function nlBlocksHtml(){ return NL.blocks.map((b,i)=>nlBlockHtml(b,i,NL.blocks.length)).join('') + (NL.blocks.length<8 ? `<button type="button" class="btn ghost small" id="nlAdd">+ Add another item</button>` : ''); }
+function nlAudienceHtml(){
+  let sec = '', html = '';
+  nlGroups().forEach(g=>{
+    if(g.sec!==sec){ sec = g.sec; html += `<div class="bc-sec" style="margin-top:10px;">${escapeHtml(sec)}</div>`; }
+    const on = !!NL.sel[g.key], withEmail = g.list.filter(r=>String(r.email||'').trim()).length;
+    html += `<button type="button" class="psms-row${on?' on':''}" data-nl-g="${escapeHtml(g.key)}" aria-pressed="${on}" ${withEmail?'':'disabled'}><span class="psms-name">${on?'&#10003; ':''}${escapeHtml(g.label)}</span><span class="psms-sub">${withEmail} with an email address${g.list.length!==withEmail?` (${g.list.length} in the group)`:''}</span></button>`;
+  });
+  return html;
+}
+function nlTypesHtml(){
+  return Object.entries(NL_TYPES).map(([k,t])=>`<button type="button" class="nl-type${NL.type===k?' on':''}" data-nl-type="${k}" aria-pressed="${NL.type===k}" style="--nlc:${t.color}"><b>${escapeHtml(t.label)}</b><span>${escapeHtml(t.blurb)}</span></button>`).join('');
+}
+function nlHistoryHtml(){
+  if(!NL.history.length) return `<div class="empty">Nothing sent yet. Newsletters you send will be listed here so you can reuse them.</div>`;
+  return NL.history.slice().reverse().map(h=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(h.subject||'(no subject)')}</span><span class="item-meta">${escapeHtml(new Date(h.ts).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}</span></div>
+    <div class="item-body">${escapeHtml((NL_TYPES[h.type]||NL_TYPES.general).label)} &middot; ${h.count} email${h.count===1?'':'s'} queued &middot; ${escapeHtml((h.groups||[]).join(', '))}</div>
+    <div class="item-actions"><button type="button" class="btn ghost small" data-nl-reuse="${escapeHtml(h.id)}">Reuse this newsletter</button></div></div>`).join('');
+}
+function newsletterView(){
+  nlLoadDraft();
+  return `<style>
+    .nl-types{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px;}
+    .nl-type{text-align:left; border:2px solid var(--line); background:#fff; border-radius:12px; padding:12px; cursor:pointer; font:inherit; display:flex; flex-direction:column; gap:4px; border-top:5px solid var(--nlc);}
+    .nl-type span{font-size:12.5px; color:var(--muted); line-height:1.4;} .nl-type b{color:var(--navy-deep); font-size:14px;}
+    .nl-type.on{border-color:var(--nlc); box-shadow:0 0 0 3px color-mix(in srgb,var(--nlc) 22%, transparent);}
+    .nl-block{border:1.5px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; background:#fff;}
+    .nl-block-h{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+    .nl-two{display:grid; grid-template-columns:1fr 1fr; gap:10px;} @media(max-width:560px){ .nl-two{grid-template-columns:1fr;} }
+    .nl-prev{width:100%; height:640px; border:1.5px solid var(--line); border-radius:12px; background:#fff;}
+    .nl-aud{max-height:340px; overflow:auto;}
+  </style>
+  <div class="section-title"><div><h2>Newsletters</h2><p>Send a designed newsletter about research papers, competitions, scholarships or other news. You write and edit every line, choose which groups receive it, preview it, and send yourself a test first. Type {name} anywhere to insert each person's first name.</p></div></div>
+  <div class="psms-wrap">
+    <div>
+      <div class="card"><div class="nl-types" id="nlTypes">${nlTypesHtml()}</div>
+        <div class="field"><label for="nlSubject">Email subject</label><input id="nlSubject" maxlength="150" value="${escapeHtml(NL.subject)}" placeholder="What the email subject line should say"></div>
+        <div class="field"><label for="nlPre">Preview line (the grey text shown beside the subject)</label><input id="nlPre" maxlength="140" value="${escapeHtml(NL.preheader)}" placeholder="Optional"></div>
+        <div class="field"><label for="nlHead">Big headline</label><input id="nlHead" maxlength="120" value="${escapeHtml(NL.headline)}"></div>
+        <div class="field"><label for="nlIntro">Opening message</label><textarea id="nlIntro" rows="3" maxlength="800">${escapeHtml(NL.intro)}</textarea></div></div>
+      <h3 style="font-size:15px; margin:18px 0 10px;">Items in this newsletter</h3>
+      <div id="nlBlocks">${nlBlocksHtml()}</div>
+      <div class="card" style="margin-top:12px;"><div class="field"><label for="nlClose">Closing message</label><textarea id="nlClose" rows="3" maxlength="600">${escapeHtml(NL.closing)}</textarea></div>
+        <label class="eb-check"><input type="checkbox" id="nlSign" ${NL.sign?'checked':''}> Sign with my name</label></div>
+    </div>
+    <div>
+      <div class="card"><h3 style="font-size:15px; margin:0 0 4px;">Send to</h3><p class="note" style="margin:0 0 8px;">Tick one or more groups. Someone in several groups gets it once.</p>
+        <div id="nlAud" class="psms-list nl-aud">${nlAudienceHtml()}</div><div id="nlCount" class="note" style="margin-top:10px;"></div></div>
+      <div class="card" style="margin-top:12px;"><div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;"><h3 style="font-size:15px; margin:0;">Preview</h3><span class="note" style="margin:0;">Exactly how it will look in an email</span></div>
+        <iframe id="nlPrev" class="nl-prev" sandbox="" title="Newsletter preview"></iframe>
+        <div class="psms-foot" style="margin-top:12px; gap:8px; flex-wrap:wrap;"><button class="btn ghost" id="nlTest" type="button">Send a test to me</button><button class="btn teal" id="nlSend" type="button">Send newsletter</button></div>
+        <div id="nlStatus" class="psms-status" role="status" aria-live="polite"></div></div>
+    </div>
+  </div>
+  <h3 style="font-size:15px; margin:24px 0 10px;">Sent newsletters</h3><div id="nlHist" class="list">${nlHistoryHtml()}</div>`;
+}
+function nlRefresh(){
+  const q = id=>document.getElementById(id); if(!q('nlSend')) return;
+  const r = nlRecipients(), ready = !!NL.subject.trim() && NL.blocks.some(b=>b.title.trim()||b.body.trim());
+  q('nlCount').textContent = r.list.length ? `${r.list.length} ${r.list.length===1?'person':'people'} will get this${r.noEmail?` (${r.noEmail} skipped: no email)`:''}${r.off?` (${r.off} skipped: emails turned off)`:''}.` : 'No groups ticked yet.';
+  q('nlSend').disabled = NL.sending || !r.list.length || !ready; q('nlSend').textContent = NL.sending ? 'Sending…' : (r.list.length ? `Send to ${r.list.length} ${r.list.length===1?'person':'people'}` : 'Send newsletter');
+  q('nlTest').disabled = NL.sending || !ready || !(ME && ME.email);
+  const st = q('nlStatus'); st.className = 'psms-status' + (NL.status ? (NL.status.ok ? ' ok' : ' bad') : ''); st.textContent = NL.status ? NL.status.msg : '';
+}
+let _nlPrevT = null;
+function nlPreview(now){
+  clearTimeout(_nlPrevT);
+  const run = ()=>{ const f = document.getElementById('nlPrev'); if(f) f.srcdoc = nlBuildEmail(NL, { name:(ME && ME.name) || 'Ama' }); };
+  if(now) run(); else _nlPrevT = setTimeout(run, 350);
+}
+function wireNewsletter(){
+  const q = id=>document.getElementById(id); if(!q('nlSend')) return;
+  const touch = ()=>{ NL.status = null; nlSaveDraft(); nlPreview(false); nlRefresh(); };
+  q('nlSubject').addEventListener('input', e=>{ NL.subject = e.target.value; touch(); });
+  q('nlPre').addEventListener('input', e=>{ NL.preheader = e.target.value; touch(); });
+  q('nlHead').addEventListener('input', e=>{ NL.headline = e.target.value; touch(); });
+  q('nlIntro').addEventListener('input', e=>{ NL.intro = e.target.value; touch(); });
+  q('nlClose').addEventListener('input', e=>{ NL.closing = e.target.value; touch(); });
+  q('nlSign').addEventListener('change', e=>{ NL.sign = e.target.checked; touch(); });
+  q('nlTypes').addEventListener('click', e=>{
+    const b = e.target.closest('[data-nl-type]'); if(!b || b.dataset.nlType===NL.type) return;
+    const old = NL_TYPES[NL.type], nu = NL_TYPES[b.dataset.nlType];
+    if(!NL.headline.trim() || NL.headline===old.headline){ NL.headline = nu.headline; q('nlHead').value = NL.headline; }
+    if(!NL.intro.trim() || NL.intro===old.intro){ NL.intro = nu.intro; q('nlIntro').value = NL.intro; }
+    if(!NL.closing.trim() || NL.closing===old.closing){ NL.closing = nu.closing; q('nlClose').value = NL.closing; }
+    NL.type = b.dataset.nlType; q('nlTypes').innerHTML = nlTypesHtml(); q('nlBlocks').innerHTML = nlBlocksHtml(); touch(); nlPreview(true);
+  });
+  const blocks = q('nlBlocks');
+  blocks.addEventListener('input', e=>{ const w = e.target.closest('[data-bi]'), f = e.target.dataset.f; if(!w || !f) return; NL.blocks[+w.dataset.bi][f] = e.target.value; touch(); });
+  blocks.addEventListener('click', e=>{
+    if(e.target.id==='nlAdd'){ NL.blocks.push({ title:'', meta:'', body:'', link:'', btn:'' }); blocks.innerHTML = nlBlocksHtml(); touch(); return; }
+    const w = e.target.closest('[data-bi]'); if(!w) return; const i = +w.dataset.bi;
+    if(e.target.closest('[data-nl-rm]') && NL.blocks.length>1){ if(!confirm('Remove this item?')) return; NL.blocks.splice(i,1); }
+    else if(e.target.closest('[data-nl-mv]')){ const j = i + (+e.target.closest('[data-nl-mv]').dataset.nlMv); if(j<0||j>=NL.blocks.length) return; [NL.blocks[i],NL.blocks[j]] = [NL.blocks[j],NL.blocks[i]]; }
+    else return;
+    blocks.innerHTML = nlBlocksHtml(); touch(); nlPreview(true);
+  });
+  q('nlAud').addEventListener('click', e=>{
+    const b = e.target.closest('[data-nl-g]'); if(!b || b.disabled) return;
+    const k = b.dataset.nlG; if(NL.sel[k]) delete NL.sel[k]; else NL.sel[k] = true;
+    NL.status = null; q('nlAud').innerHTML = nlAudienceHtml(); nlRefresh();
+  });
+  q('nlTest').addEventListener('click', ()=>{
+    if(!(ME && ME.email)) return;
+    const rec = { email:ME.email, name:ME.name, id:ME.id, role:ME.role };
+    nlQueue(rec, true); NL.status = { ok:true, msg:`Test queued to ${ME.email}. Check your inbox in a minute.` }; nlRefresh();
+  });
+  q('nlSend').addEventListener('click', nlSend);
+  q('nlHist').addEventListener('click', e=>{
+    const b = e.target.closest('[data-nl-reuse]'); if(!b) return; const h = NL.history.find(x=>x.id===b.dataset.nlReuse); if(!h || !h.content) return;
+    NL_FIELDS.forEach(k=>{ if(h.content[k]!==undefined) NL[k] = JSON.parse(JSON.stringify(h.content[k])); }); NL.sel = {}; NL.status = null; nlSaveDraft(); render('newsletter'); window.scrollTo({ top:0, behavior:'smooth' });
+  });
+  nlPreview(true); nlRefresh();
+  if(!NL.histLoaded){ NL.histLoaded = true; (async ()=>{ try{ const h = await sGet('posts:newsletters', true); if(Array.isArray(h)){ NL.history = h; const el = q('nlHist'); if(el) el.innerHTML = nlHistoryHtml(); } }catch(e){} })(); }
+}
+// Queues one newsletter email. The designed version goes in `html`; `message` is the plain-text version used if the server can't show HTML.
+function nlQueue(rec, isTest){
+  const subject = NL.subject.trim(), html = nlBuildEmail(NL, rec), text = nlBuildText(NL, rec), s = DB.settings || {};
+  const useServer = s.emailMode !== 'emailjs' && typeof sbReady !== 'undefined' && sbReady;
+  const fallback = ()=>dispatchEmails([Object.assign({}, rec, { notifyEmail:true })], { subject, body:text, author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', noPortalLink:true });
+  if(!useServer){ fallback(); return; }
+  queueServerEmail({ to:rec.email, name:rec.name, subject, message:text, html, layout:'newsletter', author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', replyTo: ME && ME.email,
+    recipientId:rec.id, recipientRole:rec.role, studentCoordinatorId:rec.coordinatorId||null }, fallback);
+}
+async function nlSend(){
+  if(NL.sending) return; const r = nlRecipients(); if(!r.list.length) return;
+  if(!NL.subject.trim()){ NL.status = { ok:false, msg:'Add an email subject first.' }; return nlRefresh(); }
+  if(!NL.blocks.some(b=>b.title.trim()||b.body.trim())){ NL.status = { ok:false, msg:'Add at least one item to the newsletter.' }; return nlRefresh(); }
+  if(!confirm(`Send "${NL.subject.trim()}" to ${r.list.length} ${r.list.length===1?'person':'people'}? Each person gets their own email. Have you sent yourself a test?`)) return;
+  NL.sending = true; nlRefresh();
+  r.list.forEach(rec=>nlQueue(rec,false));
+  const groups = nlGroups().filter(g=>NL.sel[g.key]).map(g=>g.label), content = {}; NL_FIELDS.forEach(k=>content[k] = JSON.parse(JSON.stringify(NL[k])));
+  NL.history = (NL.history||[]).concat([{ id:uid(), ts:Date.now(), type:NL.type, subject:NL.subject.trim(), count:r.list.length, groups, content }]).slice(-30);
+  try{ await sSet('posts:newsletters', NL.history, true); }catch(e){}
+  NL.sending = false; NL.sel = {};
+  NL.status = { ok:true, msg:`${r.list.length} email${r.list.length===1?'':'s'} queued. They go out one after another, and each result will appear in the Email Log.` };
+  const a = document.getElementById('nlAud'); if(a) a.innerHTML = nlAudienceHtml(); const h = document.getElementById('nlHist'); if(h) h.innerHTML = nlHistoryHtml(); nlRefresh();
+}
 
 // ================= Student access: active / inactive =================
 // Active   = signed in (or manually activated) within the last 14 days.
@@ -8460,6 +8726,7 @@ function wireHandlers(tab){
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
   if(tab==='personalemail') wirePersonalEmail();
+  if(tab==='newsletter') wireNewsletter();
   if(tab==='people' || tab==='students') wireAccess(tab);
   if(tab==='mock' || window.RM_HOSTED==='mock') wireMock();
   if(tab==='chat') wireChat();
@@ -10193,13 +10460,14 @@ const NAV = {
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
-    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people']] },
+    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['newsletter','Newsletters']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
 };
 Object.assign(TAB_ICONS, {
+  newsletter:'<path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0 1 1H7a2 2 0 0 1-2-2z"/><path d="M18 8h2v11a1 1 0 0 1-1 1"/><path d="M8 8h7M8 12h7M8 16h4"/>',
   lessons:'<rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10,9 16,12 10,15"/>',
   home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13V10"/><path d="M10 20.5v-6h4v6"/>',
   roadmap:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5"/>'
