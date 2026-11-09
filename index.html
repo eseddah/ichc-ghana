@@ -8,6 +8,22 @@
 <meta property="og:title" content="Chemistry Competition Prep — Ghana">
 <meta property="og:description" content="Founded by the IChC Local Ambassador for Ghana to train students toward the competition — practice, prep, mentorship, community.">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Chemistry Competition Prep — Ghana">
+<meta property="og:url" content="https://ichc-ghana.vercel.app/">
+<meta property="og:image" content="https://ichc-ghana.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Chemistry Competition Prep, Ghana: three linked hexagons spelling I Ch C on a dark blue background">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Chemistry Competition Prep — Ghana">
+<meta name="twitter:description" content="Free practice, mentorship and community to train Ghanaian students for the International Chemistry Competition.">
+<meta name="twitter:image" content="https://ichc-ghana.vercel.app/og-image.png">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://ichc-ghana.vercel.app/">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"EducationalOrganization","name":"Chemistry Competition Prep — Ghana","alternateName":"ChemPrep Ghana","url":"https://ichc-ghana.vercel.app/","logo":"https://ichc-ghana.vercel.app/icon-512.png","description":"A free, volunteer-run programme founded by the IChC Local Ambassador for Ghana to train Ghanaian students for the International Chemistry Competition.","areaServed":"GH","email":"eseyram@amb.intchc.org","founder":{"@type":"Person","name":"Eddah Edmond Seyram"}}</script>
 <meta name="theme-color" content="#1D1B3A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&family=Fraunces:ital,opsz,wght@1,9..144,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -517,6 +533,51 @@
   .pg-card.pg-fs .pg-stage{flex:1; aspect-ratio:auto; max-height:none; border-radius:0; cursor:zoom-out;}
   .pg-card.pg-fs .pg-prev{left:12px;} .pg-card.pg-fs .pg-next{right:12px;}
   @media(max-width:640px){ .pg-nav{width:36px; height:36px; font-size:19px;} .pg-stage{aspect-ratio:1/1;} }
+
+  /* ---------- New site features: dates, stories, contact form, newsletter, language, hand-off ---------- */
+  .lang-sel{border:1.5px solid var(--line); background:#fff; color:var(--navy-deep); border-radius:999px; padding:7px 10px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; margin-right:8px;}
+  .ev-bar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px;}
+  .ev-filters{display:flex; gap:8px; flex-wrap:wrap;}
+  .ev-chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:8px 15px; font:inherit; font-size:13.5px; font-weight:700; cursor:pointer; color:var(--navy-deep);}
+  .ev-chip[aria-pressed="true"]{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep);}
+  .ev-next{background:var(--navy-deep); color:#fff; border-radius:18px; padding:22px 26px; margin-bottom:18px; display:flex; gap:22px; align-items:center; flex-wrap:wrap;}
+  .ev-next .cd{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:44px; line-height:1; color:var(--amber); min-width:96px; text-align:center;}
+  .ev-next .cd small{display:block; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:#C9C5EE; font-weight:700; margin-top:4px;}
+  .ev-next h3{color:#fff; font-size:20px; margin:2px 0 4px;} .ev-next p{margin:0; color:#D9D6F3; font-size:14.5px;}
+  .ev-list{display:grid; gap:14px;}
+  .ev-card{display:grid; grid-template-columns:76px 1fr auto; gap:16px; align-items:center; background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px;}
+  .ev-date{background:var(--tint,#F5F2FF); border-radius:12px; padding:9px 4px; text-align:center; color:var(--navy-deep);}
+  .ev-date b{display:block; font-family:'Bricolage Grotesque',sans-serif; font-size:28px; line-height:1;} .ev-date span{font-size:11.5px; text-transform:uppercase; font-weight:800; letter-spacing:.08em;}
+  .ev-body h3{font-size:17px; margin:4px 0 4px;} .ev-body p{margin:0 0 4px; color:var(--muted); font-size:14px; line-height:1.55;} .ev-meta{font-size:13px; color:var(--muted);}
+  .ev-tag{display:inline-block; font-size:11.5px; font-weight:800; padding:3px 10px; border-radius:999px; background:#EDE9FE; color:#4527B8;}
+  .ev-tag.t-scholarship{background:#DCFCE7; color:#166534;} .ev-tag.t-deadline{background:#FEE2E2; color:#991B1B;} .ev-tag.t-class{background:#E0F2FE; color:#075985;} .ev-tag.t-other{background:#F3F4F6; color:#374151;}
+  .ev-act{display:flex; flex-direction:column; gap:6px; min-width:150px;}
+  .ev-act a,.ev-act button{display:block; text-align:center; border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 12px; font:inherit; font-size:12.5px; font-weight:700; color:var(--navy-deep); cursor:pointer; text-decoration:none;}
+  .ev-act .primary{background:var(--amber); border-color:var(--amber-deep);}
+  .ev-empty{text-align:center; color:var(--muted); padding:24px 0;}
+  @media(max-width:640px){ .ev-card{grid-template-columns:64px 1fr;} .ev-act{grid-column:1/-1; flex-direction:row; flex-wrap:wrap;} .ev-act a,.ev-act button{flex:1;} }
+  .st-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px;}
+  .st-card{background:#fff; border:1px solid var(--line); border-radius:18px; padding:24px; display:flex; flex-direction:column; gap:16px; position:relative;}
+  .st-card q{font-size:16px; line-height:1.65; color:var(--ink); quotes:none; display:block;} .st-card q::before{content:"\201C"; font-family:'Fraunces',serif; font-size:44px; line-height:0; color:var(--amber-deep); display:block; margin:14px 0 6px;}
+  .st-who{display:flex; align-items:center; gap:12px; margin-top:auto;} .st-av{width:46px; height:46px; border-radius:50%; background:var(--navy-deep); color:var(--amber); display:flex; align-items:center; justify-content:center; font-weight:800; flex:none; overflow:hidden;} .st-av img{width:100%; height:100%; object-fit:cover;}
+  .st-who b{display:block; color:var(--navy-deep); font-size:14.5px;} .st-who span{font-size:13px; color:var(--muted);}
+  .st-res{align-self:flex-start; background:#FEF3C7; color:#92400E; font-size:12px; font-weight:800; border-radius:999px; padding:4px 11px;}
+  .cf-card{margin-top:30px; background:#fff; border:1px solid var(--line); border-radius:18px; padding:28px;}
+  .cf-card h3{font-size:20px; margin:0 0 14px;} .cf-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;} @media(max-width:640px){ .cf-row{grid-template-columns:1fr;} }
+  .cf-field{margin-bottom:12px;} .cf-field label{display:block; font-size:13px; font-weight:700; color:var(--navy-deep); margin-bottom:5px;}
+  .cf-in{width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit; font-size:15px; background:#fff; color:var(--ink);} .cf-in:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  .cf-hp{position:absolute !important; left:-9999px; width:1px; height:1px; opacity:0; pointer-events:none;}
+  .cf-msg{font-size:14px; min-height:20px; margin:10px 0 0;} .cf-msg.ok{color:#166534; font-weight:700;} .cf-msg.bad{color:#C0392B; font-weight:700;} .cf-small{font-size:12.5px; color:var(--muted); margin:10px 0 0;}
+  main section.nl-band, section.nl-band{background:var(--navy-deep) !important; color:#fff; padding:56px 0;} .nl-band .wrap{display:grid; grid-template-columns:1.1fr 1fr; gap:34px; align-items:center;} @media(max-width:820px){ .nl-band .wrap{grid-template-columns:1fr;} }
+  .nl-band h2{color:#fff; font-size:clamp(24px,3vw,32px); margin:10px 0 10px;} .nl-band p{color:#D9D6F3; margin:0; font-size:15.5px; line-height:1.65;} .nl-band .eyebrow{background:rgba(255,181,46,.16); color:var(--amber);}
+  .nl-band .cf-in{background:#fff;} .nl-band .cf-msg.ok{color:#86EFAC;} .nl-band .cf-msg.bad{color:#FCA5A5;} .nl-band .cf-small{color:#B9B5E3;}
+  #msgPop .np-card{max-width:480px; text-align:left;} #msgPop .np-card h3{margin-bottom:6px;} #msgPop .np-card p.lead{margin:0 0 14px;}
+  .mg-card{position:relative; width:100%; max-width:680px; max-height:92vh; overflow:auto; background:#fff; border-radius:20px; padding:26px; box-shadow:0 30px 70px -20px rgba(0,0,0,.55);} .mg-card h3{margin:0 0 12px; font-size:20px;}
+  .mg-list{display:grid; gap:8px; margin:0 0 16px; max-height:210px; overflow:auto;} .mg-row{display:flex; justify-content:space-between; gap:10px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:9px 12px; font-size:13.5px;} .mg-row span{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mg-row button{border:1px solid var(--line); background:#fff; border-radius:999px; padding:5px 11px; font:inherit; font-size:12px; font-weight:700; cursor:pointer;} .mg-row button.del{color:#C0392B;}
+  .mc-hand{padding:2px 14px 6px; text-align:center;} .mc-hand button{border:1.5px solid var(--line); background:#fff; color:var(--navy-deep); border-radius:999px; padding:7px 14px; font:inherit; font-size:12.5px; font-weight:700; cursor:pointer;}
+  #unsubPop .np-card{text-align:center;}
+  #newsletter .eyebrow{color:var(--amber) !important; background:rgba(255,181,46,.16) !important;}
 /* Lab mascot: welcome pop-up, round dock icon, and customiser */
   .mc-back{position:fixed; inset:0; background:rgba(8,20,30,.55); display:none; align-items:center; justify-content:center; z-index:1200; padding:16px;}
   .mc-back.on{display:flex;}
@@ -624,8 +685,8 @@
 
   /* sections: one calm rhythm, white and tint */
   main>section:not(.hero){padding:84px 0;}
-  main>section:not(.hero):not(#chemist):not(#impact){background:#fff!important; border:0!important;}
-  main>section.alt:not(#chemist):not(#impact){background:var(--tint)!important;}
+  main>section:not(.hero):not(#chemist):not(#impact):not(#newsletter){background:#fff!important; border:0!important;}
+  main>section.alt:not(#chemist):not(#impact):not(#newsletter){background:var(--tint)!important;}
   .section-head{text-align:left; margin:0 0 40px; max-width:680px;}
   .section-head h2,main section h2{font-size:clamp(28px,3.4vw,42px); line-height:1.1;}
   .section-head p{font-size:18px; color:#5A5880;}
@@ -823,7 +884,8 @@
       <div class="name">Chemistry Competition Prep<small>Ghana Chapter</small></div>
     </a>
     <div class="navcta">
-      <a href="portal.html" class="btn amber" style="padding:9px 18px; font-size:13.5px;">Portal login</a>
+      <select id="langSel" class="lang-sel" aria-label="Language"><option value="en">English</option><option value="fr">Français</option></select>
+      <a href="portal.html" class="btn amber" style="padding:9px 18px; font-size:13.5px;" data-i18n="portal_login">Portal login</a>
     </div>
   </div>
 </header>
@@ -874,7 +936,7 @@
   </div>
 </div>
 <div id="menuScrim"></div>
-<nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span>Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#ambassador">From the Ambassador</a><a href="#about">About</a><a href="#how">Programme</a><a href="#tools">Explore</a><a href="#activities">Gallery</a><a href="#team">Team</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></nav>
+<nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span data-i18n="menu_sections">Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#ambassador" data-i18n="n_amb">From the Ambassador</a><a href="#about" data-i18n="n_about">About</a><a href="#how" data-i18n="n_prog">Programme</a><a href="#tools" data-i18n="n_explore">Explore</a><a href="#activities" data-i18n="n_gallery">Gallery</a><a href="#events" data-i18n="n_events">Dates</a><a href="#stories" data-i18n="n_stories">Stories</a><a href="#team" data-i18n="n_team">Team</a><a href="#faq" data-i18n="n_faq">FAQ</a><a href="#contact" data-i18n="n_contact">Contact</a></nav>
 
 <main id="top">
 <section class="hero hx-hero">
@@ -1185,7 +1247,7 @@
         <h2 data-edit="e_activities_1">Moments from the programme.</h2>
         <p data-edit="e_activities_2">Sessions, mock rounds, and coordinator meetups — posted by the ambassador as they happen.</p>
       </div>
-      <div class="pg-bar"><button type="button" class="pg-btn" id="viewPicsBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg>View pictures</button></div>
+      <div class="pg-bar"><button type="button" class="pg-btn" id="viewPicsBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg><span data-i18n="pg_btn">View pictures</span></button></div>
       <div id="activityAmbassadorBar" style="display:none; margin-bottom:20px;">
         <button type="button" id="addActivityBtn" style="background:var(--navy-deep); color:var(--chalk); border:none; border-radius:999px; padding:11px 20px; font-weight:600; font-size:13.5px; cursor:pointer;">+ Add activity photo</button>
       </div>
@@ -1205,6 +1267,32 @@
         </div>
       </div>
       <div class="grid cols-3" id="activityGrid"></div>
+    </div>
+  </section>
+
+  <section id="events" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" data-i18n="ev_eyebrow">Dates &amp; deadlines</div>
+        <h2 data-i18n="ev_title">What's coming up</h2>
+        <p data-i18n="ev_sub">Competitions, scholarship deadlines and programme dates. Add them to your calendar so you never miss one.</p>
+      </div>
+      <div class="ev-bar"><div class="ev-filters" id="evFilters" role="group" aria-label="Filter by type"></div><button type="button" class="btn amber" id="evManage" hidden data-i18n="ev_manage">Manage events</button></div>
+      <div class="ev-next" id="evNext" hidden></div>
+      <div class="ev-list" id="evList"></div>
+      <p class="ev-empty" id="evEmpty" hidden>No upcoming dates yet. Check back soon.</p>
+    </div>
+  </section>
+
+  <section id="stories">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow" data-i18n="st_eyebrow">Student stories</div>
+        <h2 data-i18n="st_title">In their own words</h2>
+        <p data-i18n="st_sub">What students say about preparing with us.</p>
+      </div>
+      <div class="st-grid" id="stGrid"></div>
+      <div style="text-align:center; margin-top:24px;"><button type="button" class="btn amber" id="stManage" hidden data-i18n="st_manage">Manage stories</button></div>
     </div>
   </section>
 
@@ -1274,6 +1362,35 @@
           <p><b data-edit="e_contact_5">Chapter</b><br>Ghana</p>
         </div>
       </div>
+      <div class="cf-card" id="contactForm">
+        <h3 data-i18n="cf_title">Send us a message</h3>
+        <form id="cfForm" novalidate>
+          <div class="cf-row">
+            <div class="cf-field"><label for="cfName" data-i18n="cf_name">Your name</label><input class="cf-in" id="cfName" maxlength="80" autocomplete="name"></div>
+            <div class="cf-field"><label for="cfEmail" data-i18n="cf_email">Your email</label><input class="cf-in" id="cfEmail" type="email" maxlength="160" autocomplete="email" required></div>
+          </div>
+          <div class="cf-field"><label for="cfTopic" data-i18n="cf_topic">What is it about?</label><select class="cf-in" id="cfTopic"><option value="Applying to the programme" data-i18n="cf_t1">Applying to the programme</option><option value="Parent or teacher question" data-i18n="cf_t2">Question as a parent or teacher</option><option value="Partnership or sponsorship" data-i18n="cf_t3">Partnership or sponsorship</option><option value="Press or media" data-i18n="cf_t4">Press or media</option><option value="Something else" data-i18n="cf_t5">Something else</option></select></div>
+          <div class="cf-field"><label for="cfText" data-i18n="cf_msg">Your message</label><textarea class="cf-in" id="cfText" rows="5" maxlength="4000" required></textarea></div>
+          <input class="cf-hp" id="cfHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button type="submit" class="btn amber" id="cfSend" data-i18n="cf_send">Send message</button>
+          <div class="cf-msg" id="cfMsg" role="status" aria-live="polite"></div>
+          <p class="cf-small" data-i18n="cf_note">We use your email only to reply to you.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section id="newsletter" class="nl-band">
+    <div class="wrap">
+      <div><div class="eyebrow" data-i18n="nl_eyebrow">Stay in the loop</div><h2 data-i18n="nl_title">Research, competitions and scholarships in your inbox</h2><p data-i18n="nl_sub">A short email when there is something worth knowing. Unsubscribe any time.</p></div>
+      <form id="nlForm" novalidate>
+        <div class="cf-field"><input class="cf-in" id="nlName" maxlength="80" autocomplete="given-name" placeholder="Your first name (optional)" data-i18n-ph="nl_name" aria-label="First name"></div>
+        <div class="cf-field"><input class="cf-in" id="nlEmail" type="email" maxlength="160" autocomplete="email" placeholder="Your email address" data-i18n-ph="nl_email" aria-label="Email address" required></div>
+        <input class="cf-hp" id="nlHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button type="submit" class="btn amber" id="nlBtn" style="width:100%; justify-content:center;" data-i18n="nl_btn">Subscribe</button>
+        <div class="cf-msg" id="nlMsg" role="status" aria-live="polite"></div>
+        <p class="cf-small" data-i18n="nl_note">We use your email only to send the newsletter.</p>
+      </form>
     </div>
   </section>
 
@@ -1293,6 +1410,25 @@
 
 </main>
 
+<div id="msgPop" class="np-backdrop" style="z-index:1300;" aria-hidden="true">
+  <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="msgTitle">
+    <button class="tm-close" id="msgClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
+    <h3 id="msgTitle">Report a problem</h3><p class="lead" id="msgSub"></p>
+    <div class="cf-field"><input class="cf-in" id="msgName" maxlength="80" autocomplete="name" placeholder="Your name (optional)" data-i18n-ph="cf_name" aria-label="Your name"></div>
+    <div class="cf-field"><input class="cf-in" id="msgEmail" type="email" maxlength="160" autocomplete="email" placeholder="Your email" data-i18n-ph="cf_email" aria-label="Your email" required></div>
+    <div class="cf-field"><textarea class="cf-in" id="msgText" rows="6" maxlength="4000" aria-label="Message"></textarea></div>
+    <input class="cf-hp" id="msgHp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button type="button" class="btn amber" id="msgSend" style="width:100%; justify-content:center;" data-i18n="m_send">Send</button>
+    <div class="cf-msg" id="msgStatus" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<div id="unsubPop" class="np-backdrop" style="z-index:1300;" aria-hidden="true">
+  <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="unsubTitle">
+    <h3 id="unsubTitle" data-i18n="unsub_title">Unsubscribe</h3><p id="unsubText"></p>
+    <button type="button" class="btn amber" id="unsubClose" style="width:100%; justify-content:center;">OK</button>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <div class="fbrand">
@@ -1302,7 +1438,7 @@
       </div>
       <p style="font-size:13px; line-height:1.6; opacity:.7; max-width:280px;">Founded by the IChC Local Ambassador for Ghana — practice, mentorship, and a community built to train students toward the international stage.</p>
     </div>
-    <div><h4>More</h4><ul><li><a href="#impact">Our impact</a></li><li><a href="#videos">How-to videos</a></li><li><a href="#parents">For parents and teachers</a></li><li><a href="#" id="openPrivacy">Privacy policy</a></li></ul></div>
+    <div><h4 data-i18n="f_more">More</h4><ul><li><a href="#impact" data-i18n="f_impact">Our impact</a></li><li><a href="#events" data-i18n="f_dates">Dates &amp; deadlines</a></li><li><a href="#videos" data-i18n="f_videos">How-to videos</a></li><li><a href="#parents" data-i18n="f_parents">For parents and teachers</a></li><li><a href="#" id="openPrivacy" data-i18n="f_privacy">Privacy policy</a></li><li><a href="#" id="reportProblem" data-i18n="f_problem">Report a problem</a></li></ul></div>
   </div>
   <div class="fbottom">
     <span>© <span id="year"></span> Chemistry Competition Prep — Ghana Chapter. All rights reserved.</span>
@@ -1320,8 +1456,9 @@
     <p><b>For students under 18:</b> if you're applying as a minor, we recommend a parent or guardian be aware of your participation and have visibility into your coordinator's contact details. Parents or guardians can reach the Ambassador at any time with questions about how their child's information is handled.</p>
         <p><b>Services we use:</b> you sign in to the portal with your Google account, and Google shares your name and email address with us (never your password). Your information is stored with our database provider, Supabase, and the website is hosted on Vercel. We send programme updates by email and text message through our messaging providers, and, if you allow them, by browser or phone push notifications through OneSignal. The application form may use Google reCAPTCHA to block spam.</p>
 <p><b>Chemistry Series sign-up:</b> if you register for the Chemistry Series, we collect your full name, email address, school or university, your role, the days and times that suit you, and, if you choose to give it, your WhatsApp number. Depending on how you join, we also keep what you tell us: your preferred session and question, a topic you suggest and why, or your speaker details (field, talk title, short bio and link). We use this only to run the series: to confirm your registration, send session details and reminders, plan topics and speakers, and contact you about the series, as you agreed when you ticked the consent box. Only the Local Ambassador and the Series Manager appointed for the series can see these responses, and the Series Manager signs in with a one-time code sent to their email or with their Google account. Your confirmation is sent by email. We do not sell this information, and you can ask for your sign-up to be removed at any time.</p>
+    <p><b>Website messages, newsletter and visits:</b> if you send us a message, report a problem or ask to speak to a person from the chat, we keep your name (if you give it), your email address, your message, and the page and type of device you were using, so we can reply and fix problems. If you subscribe to the newsletter we keep your email address and first name (if you give it) until you unsubscribe, which you can do from any newsletter. We also count visits to this website without cookies, without your IP address and without any way to identify you: we record only a random code for your browser session, the section you viewed, your device type and the website you came from. This counting is switched off if your browser sends a Do Not Track signal.</p>
     <p><b>Your choices:</b> you can opt out of email or SMS notifications at any time, and can ask the Ambassador to remove your record from the programme at any time by emailing <a href="mailto:eseyram@amb.intchc.org" class="mailto-link" style="color:var(--teal-deep);">eseyram@amb.intchc.org</a>.</p>
-    <p style="font-size:13px; color:var(--text-secondary);">You can switch off push notifications at any time in your browser or phone settings. Last updated: 5 November 2026.</p>
+    <p style="font-size:13px; color:var(--text-secondary);">You can switch off push notifications at any time in your browser or phone settings. Last updated: 9 November 2026.</p>
   </div>
 </div>
 
@@ -1775,6 +1912,7 @@ async function initAmbassadorEditing(){
   if(!isAmbassador) return;
   initActivityEditor();
   initVideoEditor();
+  if(window.initEventsStoriesEditors) window.initEventsStoriesEditors();
 
   const bar = document.createElement('div');
   bar.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:500; display:flex; gap:10px; align-items:center;';
@@ -3041,6 +3179,7 @@ document.addEventListener('click', async function(e){
     <div class="mch-body" id="mchBody"></div>
     <p class="mch-note">Your chats are saved on this device so you can come back to them. Our team also keeps a copy to review for updates and a better experience. When you delete a chat here, it is removed from both.</p>
   </div>
+  <div class="mc-hand"><button type="button" id="mcHand" data-i18n="mc_hand">Talk to a real person</button></div>
   <div class="mc-chips" id="mcChips"></div>
   <p class="mc-priv">Chats are saved so you can revisit them, and our team reviews them to make updates and improve your experience. You can delete any chat from History.</p>
   <div class="mc-voice" id="mcVoice" hidden data-s="idle" aria-live="polite">
@@ -3403,6 +3542,7 @@ function mcSvg(l, cls){
   const hLoad = ()=>{ try{ const a = JSON.parse(localStorage.getItem(HK) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } };
   const hSave = a=>{ try{ localStorage.setItem(HK, JSON.stringify(a.slice(0, 40))); }catch(e){} };
   let CONV = null, cloudOK = true;
+  window.__chatForHandoff = ()=>CONV ? { id:CONV.id, msgs:CONV.msgs.slice(-8) } : null;
   function cloud(fn, args){
     if(!cloudOK || typeof sbReady === 'undefined' || !sbReady) return;
     try{ sb.rpc(fn, args).then(r=>{ if(r && r.error){ cloudOK = false; console.warn('Chat copy for the Ambassador is off:', r.error.message); } }); }catch(e){ cloudOK = false; }
@@ -3772,6 +3912,299 @@ function mcSvg(l, cls){
   document.addEventListener('visibilitychange', ()=>{ if(!pop.classList.contains('on')) return; if(document.hidden) stop(); else start(); });
   $('viewPicsBtn').addEventListener('click', ()=>open(0));
   window.openPics = open;
+})();
+</script>
+<script>
+/* Dates and deadlines, student stories, contact form, newsletter sign-up, report a problem, chat hand-off,
+   language switch (English / Français) and anonymous visit counting. */
+(function(){
+  const $ = id=>document.getElementById(id);
+  const esc = t=>String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const ready = ()=>typeof sbReady !== 'undefined' && sbReady;
+
+  /* ---------- Language ---------- */
+  const I18N = {
+    en:{ ev_all:'All', ev_competition:'Competitions', ev_scholarship:'Scholarships', ev_deadline:'Deadlines', ev_class:'Programme', ev_other:'Other', ev_none:'No upcoming dates yet. Check back soon.',
+      ev_next:'Next up', ev_today:'Today', ev_tomorrow:'Tomorrow', ev_days:'days', ev_in:'in {n} days', ev_more:'More info', ev_cal:'Add to calendar', ev_google:'Google Calendar', ev_ics:'Apple / Outlook (.ics)',
+      cf_ok:'Thank you! Your message has been sent. We will reply by email.', cf_err_email:'Please enter a valid email address.', cf_err_short:'Please write a little more.',
+      cf_err_rate:'You have sent several messages recently. Please try again later.', cf_err:'Could not send. Please check your connection and try again.',
+      nl_ok:'You are subscribed. Thank you!', nl_unsub_ok:'You have been unsubscribed. You will not get any more newsletters.', nl_unsub_bad:'This unsubscribe link is not valid.',
+      m_problem_ph:'What went wrong? What were you trying to do?', m_chat_ph:'Write your question for the team here.', m_sending:'Sending…' },
+    fr:{ ev_all:'Tout', ev_competition:'Concours', ev_scholarship:'Bourses', ev_deadline:'Échéances', ev_class:'Programme', ev_other:'Autre', ev_none:'Aucune date à venir pour le moment. Revenez bientôt.',
+      ev_next:'Prochain rendez-vous', ev_today:'Aujourd’hui', ev_tomorrow:'Demain', ev_days:'jours', ev_in:'dans {n} jours', ev_more:'Plus d’infos', ev_cal:'Ajouter au calendrier', ev_google:'Google Agenda', ev_ics:'Apple / Outlook (.ics)',
+      cf_ok:'Merci ! Votre message a été envoyé. Nous répondrons par e-mail.', cf_err_email:'Veuillez saisir une adresse e-mail valide.', cf_err_short:'Veuillez écrire un peu plus.',
+      cf_err_rate:'Vous avez envoyé plusieurs messages récemment. Réessayez plus tard.', cf_err:'Envoi impossible. Vérifiez votre connexion et réessayez.',
+      nl_ok:'Vous êtes abonné(e). Merci !', nl_unsub_ok:'Vous êtes désabonné(e). Vous ne recevrez plus de lettres d’information.', nl_unsub_bad:'Ce lien de désabonnement n’est pas valide.',
+      m_problem_ph:'Qu’est-ce qui n’a pas fonctionné ? Que tentiez-vous de faire ?', m_chat_ph:'Écrivez ici votre question pour l’équipe.', m_sending:'Envoi…',
+      n_amb:'Mot de l’Ambassadeur', n_about:'À propos', n_prog:'Programme', n_explore:'Explorer', n_gallery:'Galerie', n_events:'Dates', n_stories:'Témoignages', n_team:'Équipe', n_faq:'FAQ', n_contact:'Contact', menu_sections:'Rubriques', portal_login:'Connexion au portail',
+      ev_eyebrow:'Dates et échéances', ev_title:'À venir', ev_sub:'Concours, dates limites de bourses et dates du programme. Ajoutez-les à votre calendrier pour n’en manquer aucune.', ev_manage:'Gérer les événements',
+      st_eyebrow:'Témoignages d’élèves', st_title:'Dans leurs propres mots', st_sub:'Ce que disent les élèves de leur préparation avec nous.', st_manage:'Gérer les témoignages',
+      cf_title:'Envoyez-nous un message', cf_name:'Votre nom', cf_email:'Votre e-mail', cf_topic:'Sujet', cf_t1:'Candidature au programme', cf_t2:'Question de parent ou d’enseignant', cf_t3:'Partenariat ou parrainage', cf_t4:'Presse et médias', cf_t5:'Autre chose', cf_msg:'Votre message', cf_send:'Envoyer le message', cf_note:'Nous utilisons votre e-mail uniquement pour vous répondre.',
+      nl_eyebrow:'Restez informé', nl_title:'Recherche, concours et bourses dans votre boîte mail', nl_sub:'Un court e-mail quand il y a du nouveau. Désabonnez-vous à tout moment.', nl_name:'Votre prénom (facultatif)', nl_email:'Votre adresse e-mail', nl_btn:'S’abonner', nl_note:'Nous utilisons votre e-mail uniquement pour vous envoyer la lettre d’information.',
+      f_more:'Plus', f_impact:'Notre impact', f_videos:'Vidéos pratiques', f_parents:'Pour les parents et enseignants', f_privacy:'Politique de confidentialité', f_problem:'Signaler un problème', f_dates:'Dates et échéances',
+      m_problem_title:'Signaler un problème', m_problem_sub:'Dites-nous ce qui ne va pas. Nous joignons la page et l’appareil pour mieux comprendre.', m_chat_title:'Parler à une vraie personne', m_chat_sub:'Laissez votre e-mail et nous vous répondrons. Votre conversation récente est jointe pour que vous n’ayez pas à vous répéter.', m_send:'Envoyer', mc_hand:'Parler à une vraie personne', pg_btn:'Voir les photos', unsub_title:'Désabonnement' }
+  };
+  let LANG = 'en'; try{ LANG = localStorage.getItem('ichc_lang') || 'en'; }catch(e){} if(!I18N[LANG]) LANG = 'en';
+  const T = (k, v)=>{ let s = (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k; if(v) Object.keys(v).forEach(x=>{ s = s.replace('{'+x+'}', v[x]); }); return s; };
+  function applyLang(){
+    document.documentElement.lang = LANG;
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      if(!el.hasAttribute('data-en')) el.setAttribute('data-en', el.textContent);
+      const k = el.getAttribute('data-i18n'); el.textContent = (LANG !== 'en' && I18N[LANG][k]) || el.getAttribute('data-en');
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+      if(!el.hasAttribute('data-en-ph')) el.setAttribute('data-en-ph', el.getAttribute('placeholder') || '');
+      const k = el.getAttribute('data-i18n-ph'); el.setAttribute('placeholder', (LANG !== 'en' && I18N[LANG][k]) || el.getAttribute('data-en-ph'));
+    });
+    const sel = $('langSel'); if(sel) sel.value = LANG;
+    renderEvents();
+  }
+
+  /* ---------- Anonymous visit counting (no cookies, no IP, off if Do Not Track is on) ---------- */
+  const dnt = navigator.doNotTrack === '1' || window.doNotTrack === '1';
+  let sid = null; try{ sid = sessionStorage.getItem('ichc_sid'); if(!sid){ sid = ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,32); sessionStorage.setItem('ichc_sid', sid); } }catch(e){}
+  const devClass = innerWidth < 700 ? 'mobile' : innerWidth < 1100 ? 'tablet' : 'desktop';
+  let refHost = ''; try{ const u = new URL(document.referrer); if(u.hostname && u.hostname !== location.hostname) refHost = u.hostname.replace(/^www\./,''); }catch(e){}
+  let isAmb = false, seen = {};
+  function track(ev, path){
+    if(dnt || isAmb || !sid || !ready()) return;
+    const key = ev + '|' + (path||''); if(ev === 'section' && seen[key]) return; seen[key] = 1;
+    try{ sb.rpc('log_site_visit', { p_sid:sid, p_event:ev, p_path:path||'', p_ref: ev === 'view' ? refHost : '', p_device:devClass }).then(()=>{}, ()=>{}); }catch(e){}
+  }
+  window.siteTrack = track;
+  async function startTracking(){
+    if(dnt || !ready()) return;
+    try{ const { data } = await sb.auth.getSession(); const em = data && data.session && data.session.user && data.session.user.email; if(em && typeof AMBASSADOR_EMAIL_PUBLIC !== 'undefined' && em.toLowerCase() === AMBASSADOR_EMAIL_PUBLIC.toLowerCase()) isAmb = true; }catch(e){}
+    track('view', '/');
+    if('IntersectionObserver' in window){
+      const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ track('section', e.target.id); io.unobserve(e.target); } }), { threshold:.35 });
+      document.querySelectorAll('main section[id]').forEach(s=>io.observe(s));
+    }
+    document.addEventListener('click', e=>{
+      const a = e.target.closest && e.target.closest('a[href]'); if(a && /apply\.html/.test(a.getAttribute('href')||'')) track('apply_click', 'apply');
+      if(e.target.closest && e.target.closest('[data-vid]')) track('video', 'video');
+      if(e.target.closest && e.target.closest('#viewPicsBtn')) track('photos', 'photos');
+      if(e.target.closest && e.target.closest('#mcDock')) track('chat', 'chat');
+    });
+  }
+
+  /* ---------- Shared data helpers ---------- */
+  async function kvGet(key){ const { data, error } = await sb.from('ichc_kv').select('value').eq('key', key).maybeSingle(); if(error) throw error; return Array.isArray(data && data.value) ? data.value : []; }
+  async function kvSet(key, val){ const { error } = await sb.from('ichc_kv').upsert({ key, value:val }); if(error) throw error; }
+  const rid = ()=>Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function imgToBlob(file, maxDim, q){ return new Promise((res, rej)=>{ const fr = new FileReader(); fr.onerror = ()=>rej(new Error('read')); fr.onload = ()=>{ const im = new Image(); im.onerror = ()=>rej(new Error('decode')); im.onload = ()=>{ const sc = Math.min(1, maxDim/Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width*sc)); c.height = Math.max(1, Math.round(im.height*sc)); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im, 0, 0, c.width, c.height); c.toBlob(b=>b ? res(b) : rej(new Error('blob')), 'image/jpeg', q); }; im.src = fr.result; }; fr.readAsDataURL(file); }); }
+  let AMB = false;
+
+  /* ---------- Dates and deadlines ---------- */
+  let EV = [], evFilter = 'all';
+  const EV_TYPES = ['competition','scholarship','deadline','class','other'];
+  const pad = n=>String(n).padStart(2,'0');
+  const todayStr = ()=>{ const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); };
+  const parseD = s=>{ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); };
+  const daysUntil = s=>Math.round((parseD(s) - parseD(todayStr())) / 864e5);
+  const loc = ()=>LANG === 'fr' ? 'fr-FR' : 'en-GB';
+  const upcoming = ()=>EV.filter(e=>e && e.date && e.date >= todayStr()).sort((a,b)=>(a.date + (a.time||'00:00')).localeCompare(b.date + (b.time||'00:00')));
+  function calParts(e){
+    const p = e.date.split('-').map(Number);
+    if(e.time){ const h = e.time.split(':').map(Number), s = new Date(Date.UTC(p[0], p[1]-1, p[2], h[0], h[1])), f = new Date(s.getTime() + 3600000), fmt = x=>x.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); return { allDay:false, s:fmt(s), e:fmt(f) }; }   // Ghana time is GMT (UTC) all year
+    const n = new Date(Date.UTC(p[0], p[1]-1, p[2] + 1)); return { allDay:true, s:e.date.replace(/-/g,''), e:n.getUTCFullYear() + pad(n.getUTCMonth()+1) + pad(n.getUTCDate()) };
+  }
+  const gcalUrl = e=>{ const c = calParts(e); return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(e.title) + '&dates=' + c.s + '/' + c.e + '&details=' + encodeURIComponent((e.desc||'') + (e.link ? '\n' + e.link : '')) + '&location=' + encodeURIComponent(e.place||''); };
+  function downloadIcs(e){
+    const c = calParts(e), ic = t=>String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+    const txt = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chemistry Competition Prep//EN','BEGIN:VEVENT','UID:' + e.id + '@ichc-ghana.vercel.app','DTSTAMP:' + new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),
+      c.allDay ? 'DTSTART;VALUE=DATE:' + c.s : 'DTSTART:' + c.s, c.allDay ? 'DTEND;VALUE=DATE:' + c.e : 'DTEND:' + c.e, 'SUMMARY:' + ic(e.title), 'DESCRIPTION:' + ic((e.desc||'') + (e.link ? '\n' + e.link : '')), 'LOCATION:' + ic(e.place), 'END:VEVENT','END:VCALENDAR'].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type:'text/calendar' })); a.download = (e.title||'event').replace(/[^\w]+/g,'-').slice(0,40) + '.ics'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function whenText(e){ const d = parseD(e.date); let s = d.toLocaleDateString(loc(), { weekday:'long', day:'numeric', month:'long', year:'numeric' }); if(e.time) s += ' · ' + e.time; return s; }
+  function renderEvents(){
+    const sec = $('events'); if(!sec) return;
+    const up = upcoming(), nav = document.querySelector('#siteMenu a[href="#events"]');
+    const show = up.length > 0 || AMB; sec.style.display = show ? '' : 'none'; if(nav) nav.style.display = show ? '' : 'none';
+    const fl = $('evFilters'), types = EV_TYPES.filter(t=>up.some(e=>e.type === t));
+    if(evFilter !== 'all' && !types.includes(evFilter)) evFilter = 'all';
+    fl.innerHTML = types.length > 1 ? ['all'].concat(types).map(t=>`<button type="button" class="ev-chip" data-f="${t}" aria-pressed="${evFilter === t}">${esc(T('ev_' + t))}</button>`).join('') : '';
+    const list = up.filter(e=>evFilter === 'all' || e.type === evFilter), first = list[0], rest = list.slice(1);
+    const nx = $('evNext');
+    if(first){ const n = daysUntil(first.date); nx.hidden = false;
+      nx.innerHTML = `<div class="cd">${n <= 0 ? '0' : n}<small>${esc(n <= 0 ? T('ev_today') : n === 1 ? T('ev_tomorrow') : T('ev_days'))}</small></div><div style="flex:1; min-width:200px;"><div class="ev-tag t-${esc(first.type)}" style="margin-bottom:4px;">${esc(T('ev_next'))} · ${esc(T('ev_' + first.type))}</div><h3>${esc(first.title)}</h3><p>${esc(whenText(first))}${first.place ? ' · ' + esc(first.place) : ''}</p></div><div class="ev-act" style="min-width:170px;"><button type="button" class="primary" data-cal="${esc(first.id)}">${esc(T('ev_cal'))}</button></div>`;
+    } else nx.hidden = true;
+    $('evList').innerHTML = rest.map(e=>{ const d = parseD(e.date); return `<article class="ev-card"><div class="ev-date"><b>${d.getDate()}</b><span>${esc(d.toLocaleDateString(loc(), { month:'short' }))}</span></div>
+      <div class="ev-body"><span class="ev-tag t-${esc(e.type)}">${esc(T('ev_' + e.type))}</span><h3>${esc(e.title)}</h3>${e.desc ? `<p>${esc(e.desc)}</p>` : ''}<div class="ev-meta">${esc(whenText(e))}${e.place ? ' · ' + esc(e.place) : ''} · ${esc(daysUntil(e.date) === 1 ? T('ev_tomorrow') : T('ev_in', { n:daysUntil(e.date) }))}</div></div>
+      <div class="ev-act">${/^https:\/\//.test(e.link||'') ? `<a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(T('ev_more'))}</a>` : ''}<button type="button" class="primary" data-cal="${esc(e.id)}">${esc(T('ev_cal'))}</button></div></article>`; }).join('');
+    $('evEmpty').hidden = list.length > 0; $('evEmpty').textContent = T('ev_none');
+  }
+  function calMenu(id, anchor){
+    const e = EV.find(x=>x.id === id); if(!e) return;
+    const old = $('evCalMenu'); if(old) old.remove();
+    const m = document.createElement('div'); m.id = 'evCalMenu'; m.style.cssText = 'position:absolute; z-index:60; background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 18px 40px -16px rgba(29,27,58,.45); padding:8px; display:grid; gap:6px; min-width:190px;';
+    m.innerHTML = `<a href="${esc(gcalUrl(e))}" target="_blank" rel="noopener" style="padding:9px 12px; border-radius:10px; font-weight:700; font-size:13.5px; color:var(--navy-deep);">${esc(T('ev_google'))}</a><button type="button" style="text-align:left; border:none; background:none; padding:9px 12px; border-radius:10px; font:inherit; font-weight:700; font-size:13.5px; color:var(--navy-deep); cursor:pointer;">${esc(T('ev_ics'))}</button>`;
+    const r = anchor.getBoundingClientRect(); m.style.top = (window.scrollY + r.bottom + 6) + 'px'; m.style.left = Math.max(8, Math.min(window.scrollX + r.left, window.scrollX + innerWidth - 210)) + 'px';
+    document.body.appendChild(m); track('event_cal', 'calendar');
+    m.querySelector('a').addEventListener('click', ()=>m.remove()); m.querySelector('button').addEventListener('click', ()=>{ downloadIcs(e); m.remove(); });
+    setTimeout(()=>document.addEventListener('click', function h(ev){ if(!m.contains(ev.target)){ m.remove(); document.removeEventListener('click', h); } }), 0);
+  }
+  async function loadEvents(){ if(!ready()) return; try{ EV = await kvGet('site:events'); }catch(e){ EV = []; } renderEvents(); }
+
+  /* ---------- Student stories ---------- */
+  let ST = [];
+  function renderStories(){
+    const sec = $('stories'); if(!sec) return; const nav = document.querySelector('#siteMenu a[href="#stories"]');
+    const show = ST.length > 0 || AMB; sec.style.display = show ? '' : 'none'; if(nav) nav.style.display = show ? '' : 'none';
+    $('stGrid').innerHTML = ST.map(s=>`<figure class="st-card" style="margin:0;">${s.result ? `<span class="st-res">${esc(s.result)}</span>` : ''}<q>${esc(s.quote)}</q><figcaption class="st-who"><div class="st-av">${s.photo && /^https:\/\//.test(s.photo) ? `<img src="${esc(s.photo)}" alt="" loading="lazy">` : esc((s.name||'?').trim().charAt(0).toUpperCase())}</div><div><b>${esc(s.name)}</b><span>${esc(s.role||'')}</span></div></figcaption></figure>`).join('');
+  }
+  async function loadStories(){ if(!ready()) return; try{ ST = await kvGet('site:testimonials'); }catch(e){ ST = []; } renderStories(); }
+
+  /* ---------- Ambassador: manage events and stories ---------- */
+  function mgOverlay(id){ let o = $(id); if(o) return o; o = document.createElement('div'); o.id = id; o.className = 'np-backdrop'; o.style.zIndex = '1200'; o.setAttribute('aria-hidden','true'); document.body.appendChild(o); o.addEventListener('click', e=>{ if(e.target === o){ o.classList.remove('open'); } }); return o; }
+  const fld = (id, label, inner)=>`<div class="cf-field"><label for="${id}">${label}</label>${inner}</div>`;
+  async function openEvManage(){
+    const o = mgOverlay('evMg'); let list = []; try{ list = await kvGet('site:events'); }catch(e){ alert('Could not load events: ' + (e.message||e)); return; }
+    let editing = null;
+    const paint = ()=>{
+      const sorted = list.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      const ed = editing ? list.find(x=>x.id === editing) || {} : {};
+      o.innerHTML = `<div class="mg-card" role="dialog" aria-modal="true" aria-label="Manage events"><button type="button" class="tm-close" id="mgX" aria-label="Close">&times;</button><h3>Manage dates and deadlines</h3>
+        <div class="mg-list">${sorted.length ? sorted.map(e=>`<div class="mg-row"><span><b>${esc(e.date)}</b> · ${esc(e.title)}</span><span style="flex:none;"><button type="button" data-ed="${esc(e.id)}">Edit</button> <button type="button" class="del" data-del="${esc(e.id)}">Delete</button></span></div>`).join('') : '<div class="cf-small">No events yet.</div>'}</div>
+        <h3 style="font-size:16px;">${editing ? 'Edit event' : 'Add an event'}</h3>
+        ${fld('mgTitle','Title','<input class="cf-in" id="mgTitle" maxlength="120" value="' + esc(ed.title||'') + '">')}
+        <div class="cf-row">${fld('mgType','Type','<select class="cf-in" id="mgType">' + EV_TYPES.map(t=>'<option value="' + t + '"' + ((ed.type||'competition') === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('') + '</select>')}${fld('mgPlace','Place or "Online" (optional)','<input class="cf-in" id="mgPlace" maxlength="100" value="' + esc(ed.place||'') + '">')}</div>
+        <div class="cf-row">${fld('mgDate','Date','<input class="cf-in" id="mgDate" type="date" value="' + esc(ed.date||'') + '">')}${fld('mgTime','Time, Ghana time (optional)','<input class="cf-in" id="mgTime" type="time" value="' + esc(ed.time||'') + '">')}</div>
+        ${fld('mgLink','Link for more information (optional, https)','<input class="cf-in" id="mgLink" type="url" maxlength="300" placeholder="https://" value="' + esc(ed.link||'') + '">')}
+        ${fld('mgDesc','Short description (optional)','<textarea class="cf-in" id="mgDesc" rows="3" maxlength="300">' + esc(ed.desc||'') + '</textarea>')}
+        <div class="cf-msg" id="mgMsg" role="status"></div><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn amber" id="mgSave">${editing ? 'Save changes' : 'Add event'}</button>${editing ? '<button type="button" class="btn outline dark" id="mgNew">Cancel editing</button>' : ''}</div></div>`;
+      o.classList.add('open'); o.setAttribute('aria-hidden','false');
+    };
+    paint();
+    o.onclick = async e=>{
+      if(e.target === o || e.target.closest('#mgX')){ o.classList.remove('open'); return; }
+      const ed = e.target.closest('[data-ed]'), del = e.target.closest('[data-del]');
+      if(ed){ editing = ed.dataset.ed; paint(); return; }
+      if(e.target.closest('#mgNew')){ editing = null; paint(); return; }
+      if(del){ if(!confirm('Delete this event?')) return; try{ list = (await kvGet('site:events')).filter(x=>x.id !== del.dataset.del); await kvSet('site:events', list); EV = list; renderEvents(); editing = null; paint(); }catch(er){ alert('Could not delete: ' + (er.message||er)); } return; }
+      if(e.target.closest('#mgSave')){
+        const m = $('mgMsg'), v = id=>$(id).value.trim(), ev = { id: editing || rid(), title:v('mgTitle'), type:v('mgType'), place:v('mgPlace'), date:v('mgDate'), time:v('mgTime'), link:v('mgLink'), desc:v('mgDesc') };
+        if(!ev.title || !ev.date){ m.className = 'cf-msg bad'; m.textContent = 'Add a title and a date.'; return; }
+        if(ev.link && !/^https:\/\//.test(ev.link)){ m.className = 'cf-msg bad'; m.textContent = 'The link must start with https://'; return; }
+        try{ const cur = await kvGet('site:events'); list = editing ? cur.map(x=>x.id === editing ? ev : x) : cur.concat([ev]); await kvSet('site:events', list); EV = list; renderEvents(); editing = null; paint(); $('mgMsg').className = 'cf-msg ok'; $('mgMsg').textContent = 'Saved.'; }
+        catch(er){ m.className = 'cf-msg bad'; m.textContent = 'Could not save: ' + (er.message||er); }
+      }
+    };
+  }
+  async function openStManage(){
+    const o = mgOverlay('stMg'); let list = []; try{ list = await kvGet('site:testimonials'); }catch(e){ alert('Could not load stories: ' + (e.message||e)); return; }
+    const paint = ()=>{
+      o.innerHTML = `<div class="mg-card" role="dialog" aria-modal="true" aria-label="Manage stories"><button type="button" class="tm-close" id="mgX" aria-label="Close">&times;</button><h3>Manage student stories</h3>
+        <div class="mg-list">${list.length ? list.map(s=>`<div class="mg-row"><span><b>${esc(s.name)}</b> · ${esc((s.quote||'').slice(0,60))}</span><span style="flex:none;"><button type="button" class="del" data-del="${esc(s.id)}">Delete</button></span></div>`).join('') : '<div class="cf-small">No stories yet.</div>'}</div>
+        <h3 style="font-size:16px;">Add a story</h3>
+        <div class="cf-row">${fld('stName','Name as it should appear (first name and initial is fine)','<input class="cf-in" id="stName" maxlength="60">')}${fld('stRole','School, year or role (optional)','<input class="cf-in" id="stRole" maxlength="80">')}</div>
+        ${fld('stQuote','What they said','<textarea class="cf-in" id="stQuote" rows="4" maxlength="400"></textarea>')}
+        <div class="cf-row">${fld('stRes','Result or achievement (optional)','<input class="cf-in" id="stRes" maxlength="80" placeholder="e.g. National round finalist">')}${fld('stPhoto','Photo (optional)','<input class="cf-in" id="stPhoto" type="file" accept="image/*">')}</div>
+        <label style="display:flex; gap:8px; align-items:flex-start; font-size:13.5px; margin:6px 0;"><input type="checkbox" id="stOk" style="margin-top:3px;"> I have this person's permission to publish their words, name and photo (and a parent or guardian's if they are under 18).</label>
+        <div class="cf-msg" id="mgMsg" role="status"></div><div style="margin-top:8px;"><button type="button" class="btn amber" id="stSave">Add story</button></div></div>`;
+      o.classList.add('open'); o.setAttribute('aria-hidden','false');
+    };
+    paint();
+    o.onclick = async e=>{
+      if(e.target === o || e.target.closest('#mgX')){ o.classList.remove('open'); return; }
+      const del = e.target.closest('[data-del]');
+      if(del){ if(!confirm('Delete this story?')) return; try{ list = (await kvGet('site:testimonials')).filter(x=>x.id !== del.dataset.del); await kvSet('site:testimonials', list); ST = list; renderStories(); paint(); }catch(er){ alert('Could not delete: ' + (er.message||er)); } return; }
+      if(e.target.closest('#stSave')){
+        const m = $('mgMsg'), btn = $('stSave'), v = id=>$(id).value.trim();
+        if(!v('stName') || !v('stQuote')){ m.className = 'cf-msg bad'; m.textContent = 'Add a name and what they said.'; return; }
+        if(!$('stOk').checked){ m.className = 'cf-msg bad'; m.textContent = 'Please confirm you have permission to publish this.'; return; }
+        btn.disabled = true; m.className = 'cf-msg'; m.textContent = 'Saving…';
+        try{
+          let photo = ''; const f = $('stPhoto').files && $('stPhoto').files[0];
+          if(f){ const blob = await imgToBlob(f, 400, .85), path = 'story-' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.jpg'; const up = await sb.storage.from(ACTIVITY_BUCKET).upload(path, blob, { upsert:false, contentType:'image/jpeg' }); if(up.error) throw up.error; photo = sb.storage.from(ACTIVITY_BUCKET).getPublicUrl(path).data.publicUrl; }
+          const cur = await kvGet('site:testimonials'); list = cur.concat([{ id:rid(), name:v('stName'), role:v('stRole'), quote:v('stQuote'), result:v('stRes'), photo }]);
+          await kvSet('site:testimonials', list); ST = list; renderStories(); paint(); $('mgMsg').className = 'cf-msg ok'; $('mgMsg').textContent = 'Added.';
+        }catch(er){ btn.disabled = false; m.className = 'cf-msg bad'; m.textContent = 'Could not save: ' + (er.message||er); }
+      }
+    };
+  }
+  window.initEventsStoriesEditors = function(){
+    AMB = true; isAmb = true;
+    ['evManage','stManage'].forEach(id=>{ const b = $(id); if(b) b.hidden = false; });
+    renderEvents(); renderStories();
+  };
+
+  /* ---------- Messages: contact form, report a problem, talk to a person ---------- */
+  function deviceLabel(){ const ua = navigator.userAgent, br = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'Browser'; return devClass + ' · ' + br; }
+  async function sendMsg(o){
+    if(!ready()) return { ok:false, error:'network' };
+    try{ const r = await sb.rpc('submit_site_message', { p_kind:o.kind, p_name:o.name || '', p_email:o.email, p_topic:o.topic || '', p_message:o.message, p_page:location.pathname + location.hash, p_device:deviceLabel(), p_conv:o.conv || '', p_hp:o.hp || '' }); return r.error ? { ok:false, error:'network' } : (r.data || { ok:false }); }
+    catch(e){ return { ok:false, error:'network' }; }
+  }
+  const errText = c=>c === 'bad_email' ? T('cf_err_email') : c === 'too_short' ? T('cf_err_short') : c === 'rate_limited' ? T('cf_err_rate') : T('cf_err');
+  function wireContact(){
+    const f = $('cfForm'); if(!f) return;
+    f.addEventListener('submit', async e=>{
+      e.preventDefault(); const m = $('cfMsg'), b = $('cfSend'); b.disabled = true; m.className = 'cf-msg'; m.textContent = T('m_sending');
+      const r = await sendMsg({ kind:'contact', name:$('cfName').value, email:$('cfEmail').value, topic:$('cfTopic').value, message:$('cfText').value, hp:$('cfHp').value });
+      b.disabled = false;
+      if(r.ok){ m.className = 'cf-msg ok'; m.textContent = T('cf_ok'); f.reset(); track('contact', 'contact'); } else { m.className = 'cf-msg bad'; m.textContent = errText(r.error); }
+    });
+  }
+  let msgKind = 'problem', msgConv = '';
+  function openMsg(kind, pre, conv){
+    msgKind = kind; msgConv = conv || ''; const o = $('msgPop');
+    $('msgTitle').textContent = T(kind === 'chat' ? 'm_chat_title' : 'm_problem_title'); $('msgSub').textContent = T(kind === 'chat' ? 'm_chat_sub' : 'm_problem_sub');
+    const t = $('msgText'); t.value = pre || ''; t.placeholder = T(kind === 'chat' ? 'm_chat_ph' : 'm_problem_ph'); $('msgStatus').textContent = ''; $('msgStatus').className = 'cf-msg';
+    o.classList.add('open'); o.setAttribute('aria-hidden','false'); setTimeout(()=>($('msgEmail').value ? t : $('msgEmail')).focus(), 50);
+  }
+  function wireMsg(){
+    const o = $('msgPop'); if(!o) return;
+    const close = ()=>{ o.classList.remove('open'); o.setAttribute('aria-hidden','true'); };
+    $('msgClose').addEventListener('click', close); o.addEventListener('click', e=>{ if(e.target === o) close(); });
+    $('msgSend').addEventListener('click', async ()=>{
+      const m = $('msgStatus'), b = $('msgSend'); b.disabled = true; m.className = 'cf-msg'; m.textContent = T('m_sending');
+      const r = await sendMsg({ kind:msgKind, name:$('msgName').value, email:$('msgEmail').value, topic: msgKind === 'chat' ? 'Chat hand-off' : 'Problem report', message:$('msgText').value, conv:msgConv, hp:$('msgHp').value });
+      b.disabled = false;
+      if(r.ok){ m.className = 'cf-msg ok'; m.textContent = T('cf_ok'); track(msgKind === 'chat' ? 'handoff' : 'problem', msgKind); setTimeout(close, 2200); } else { m.className = 'cf-msg bad'; m.textContent = errText(r.error); }
+    });
+    const rp = $('reportProblem'); if(rp) rp.addEventListener('click', e=>{ e.preventDefault(); openMsg('problem', ''); });
+    const mh = $('mcHand'); if(mh) mh.addEventListener('click', ()=>{
+      const c = window.__chatForHandoff && window.__chatForHandoff(); let pre = '';
+      if(c && c.msgs && c.msgs.length) pre = '\n\n--- My recent chat with the assistant ---\n' + c.msgs.map(x=>(x.r === 'me' ? 'Me: ' : 'Assistant: ') + String(x.t).replace(/\s+/g,' ').slice(0, 280)).join('\n');
+      openMsg('chat', 'Hello, I would like to speak with a person.' + pre, c && c.id);
+    });
+  }
+
+  /* ---------- Newsletter sign-up and unsubscribe ---------- */
+  function wireNewsletter(){
+    const f = $('nlForm'); if(f) f.addEventListener('submit', async e=>{
+      e.preventDefault(); const m = $('nlMsg'), b = $('nlBtn'); b.disabled = true; m.className = 'cf-msg'; m.textContent = T('m_sending');
+      try{ const r = await sb.rpc('subscribe_newsletter', { p_email:$('nlEmail').value, p_name:$('nlName').value, p_source:'website', p_hp:$('nlHp').value }); const d = r.error ? { ok:false } : (r.data || { ok:false });
+        if(d.ok){ m.className = 'cf-msg ok'; m.textContent = T('nl_ok'); f.reset(); track('subscribe', 'newsletter'); } else { m.className = 'cf-msg bad'; m.textContent = errText(d.error); } }
+      catch(er){ m.className = 'cf-msg bad'; m.textContent = T('cf_err'); }
+      b.disabled = false;
+    });
+    const tok = new URLSearchParams(location.search).get('unsubscribe');
+    if(tok && ready()){
+      sb.rpc('unsubscribe_newsletter', { p_token:tok }).then(r=>{ const ok = !r.error && r.data && r.data.ok; $('unsubText').textContent = ok ? T('nl_unsub_ok') : T('nl_unsub_bad'); const p = $('unsubPop'); p.classList.add('open'); p.setAttribute('aria-hidden','false'); try{ history.replaceState(null, '', location.pathname + location.hash); }catch(e){} }, ()=>{});
+      $('unsubClose').addEventListener('click', ()=>$('unsubPop').classList.remove('open'));
+    }
+  }
+
+  /* ---------- Search engines: FAQ as structured data ---------- */
+  function faqSchema(){
+    try{
+      const items = [...document.querySelectorAll('#faq details.faqitem')].map(d=>({ '@type':'Question', name:(d.querySelector('summary')||{}).textContent, acceptedAnswer:{ '@type':'Answer', text:(d.querySelector('p')||{}).textContent } })).filter(q=>q.name && q.acceptedAnswer.text);
+      if(!items.length) return; const s = document.createElement('script'); s.type = 'application/ld+json'; s.textContent = JSON.stringify({ '@context':'https://schema.org', '@type':'FAQPage', mainEntity:items }); document.head.appendChild(s);
+    }catch(e){}
+  }
+
+  /* ---------- Start ---------- */
+  document.addEventListener('click', e=>{
+    const chip = e.target.closest && e.target.closest('.ev-chip'); if(chip){ evFilter = chip.dataset.f; renderEvents(); return; }
+    const cal = e.target.closest && e.target.closest('[data-cal]'); if(cal){ e.stopPropagation(); calMenu(cal.dataset.cal, cal); return; }
+    if(e.target.closest && e.target.closest('#evManage')) openEvManage();
+    if(e.target.closest && e.target.closest('#stManage')) openStManage();
+  });
+  const ls = $('langSel'); if(ls) ls.addEventListener('change', ()=>{ LANG = ls.value; try{ localStorage.setItem('ichc_lang', LANG); }catch(e){} applyLang(); });
+  wireContact(); wireMsg(); wireNewsletter(); faqSchema(); applyLang(); loadEvents(); loadStories(); startTracking();
+  if(window.__isAmbassador) window.initEventsStoriesEditors();
 })();
 </script>
 </body>

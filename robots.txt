@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /portal.html
+
+Sitemap: https://ichc-ghana.vercel.app/sitemap.xml

@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chemistry Competition Prep — Ghana</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1D1B3A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ChemPrep">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3"></script>
@@ -1705,7 +1713,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], classes:['callsheets','students','coordinators'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], newsletter:['students','coordinators','applications'], load:['students','coordinators']
+  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], newsletter:['students','coordinators','applications'], push:['students','coordinators'], inbox:[], visitors:[], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -2778,6 +2786,7 @@ function showEmailNotFoundScreen(email){
 }
 
 async function signOutEverywhere(){
+  try{ if(window.__OS) await window.__OS.logout(); }catch(e){}
   if(sbReady) await sb.auth.signOut();
   googleUser = null;
   sessionStorage.removeItem('ichc_pending_role');
@@ -2964,7 +2973,7 @@ function showApp(){
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
   // push notifications: link this device to the signed-in person and ask once for permission
-  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); } initPushUi(); }); }catch(e){}
+  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); } try{ if(!window.__pushListen){ window.__pushListen = true; OS.User.PushSubscription.addEventListener('change', ()=>{ paintBell(); pushReport(); }); } }catch(e){} initPushUi(); }); }catch(e){}
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -2976,6 +2985,7 @@ async function switchUser(ev, forceFull){
     delete DB.presence[ME.email.toLowerCase()];
     await sDelete(presenceKeyFor(ME.email), true);
   }
+  if(!keepSession){ try{ if(window.__OS) await window.__OS.logout(); }catch(e){} }
   if(sbReady && !keepSession) await sb.auth.signOut();
   await sDelete('me', false);
   ME = null;
@@ -3200,7 +3210,7 @@ function tabIconSvg(k){
 }
 function buildTabsLegacy(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['newsletter','Newsletters'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['newsletter','Newsletters'],['push','App notifications'],['inbox','Website inbox'],['visitors','Website visitors'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -3292,6 +3302,9 @@ function renderLegacy(tab){
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
   else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
   else if(tab==='newsletter' && ME.role==='ambassador') html = newsletterView();
+  else if(tab==='push' && ME.role==='ambassador') html = pushAdminView();
+  else if(tab==='inbox' && ME.role==='ambassador') html = siteInboxView();
+  else if(tab==='visitors' && ME.role==='ambassador') html = siteVisitorsView();
   else if(tab==='classes' && ME.role==='ambassador') html = classesAdminView();
   else if(tab==='load' && canSeeActivity()) html = coordLoadView();
   else if(tab==='appcontrol' && canAdminApps()) html = appControlView();
@@ -4656,9 +4669,237 @@ function personalEmailView(){ return bcView('email'); }
 async function wirePersonalEmail(){ wireBc('email'); }
 
 
+// ================= Website: inbox, newsletter subscribers and visitor statistics =================
+const SITEA = { msgs:null, subs:null, stats:null, days:30, filter:'new' };
+async function siteRpc(fn, args){ try{ const r = await sb.rpc(fn, args || {}); if(r.error) throw r.error; return r.data; }catch(e){ console.warn(fn, e); return null; } }
+const SITE_KIND = { contact:'Message', problem:'Problem report', chat:'Chat: wants a person' };
+function siteInboxView(){
+  return `<style>.si-tag{display:inline-block; border-radius:999px; padding:2px 10px; font-size:11.5px; font-weight:800; background:#EDE9FE; color:#4527B8;} .si-tag.problem{background:#FEE2E2; color:#991B1B;} .si-tag.chat{background:#FEF3C7; color:#92400E;}
+    .si-msg{white-space:pre-wrap; word-break:break-word; font-size:14.5px; line-height:1.6; margin:8px 0;} .si-meta{font-size:12.5px; color:var(--muted);}</style>
+  <div class="section-title"><div><h2>Website inbox</h2><p>Messages from the contact form, problem reports, and visitors who asked the chat for a real person. You also get an app notification when a new one arrives.</p></div></div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;" id="siFilters"></div>
+  <div id="siList" class="list"><div class="note">Loading…</div></div>
+  <h3 style="font-size:15px; margin:28px 0 10px;">Newsletter subscribers</h3>
+  <div class="card"><div id="siSubsHead" class="note">Loading…</div><div id="siSubs" style="margin-top:10px; max-height:340px; overflow:auto;"></div>
+    <div class="psms-foot" style="margin-top:12px; gap:8px; flex-wrap:wrap;"><button class="btn ghost small" id="siSubsCsv" type="button">Download list (CSV)</button></div>
+    <p class="note" style="margin-top:10px;">People join from the box at the bottom of the website. To email them, open Newsletters and tick "Website newsletter subscribers". Every newsletter to them includes an unsubscribe link.</p></div>`;
+}
+function siteFiltersPaint(){
+  const el = document.getElementById('siFilters'); if(!el) return; const n = (SITEA.msgs||[]).filter(m=>m.status==='new').length;
+  el.innerHTML = [['new', `New (${n})`], ['all', 'All']].map(([k,l])=>`<button type="button" class="mc-chip${SITEA.filter===k?' on':''}" data-si-f="${k}" aria-pressed="${SITEA.filter===k}">${l}</button>`).join('');
+}
+function siteMsgsPaint(){
+  const el = document.getElementById('siList'); if(!el) return; siteFiltersPaint();
+  if(!SITEA.msgs){ el.innerHTML = '<div class="note">Loading…</div>'; return; }
+  const list = SITEA.msgs.filter(m=>SITEA.filter==='all' || m.status==='new');
+  if(!list.length){ el.innerHTML = `<div class="empty">${SITEA.filter==='new' ? 'No new messages.' : 'No messages yet.'}</div>`; return; }
+  el.innerHTML = list.map(m=>{
+    const when = new Date(m.created_at).toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short' }), subj = encodeURIComponent('Re: ' + (m.topic || 'Your message to Chemistry Competition Prep'));
+    const body = encodeURIComponent(`Hi ${(m.name||'').trim().split(/\s+/)[0] || 'there'},\n\n\n\n---\nYou wrote on ${when}:\n${m.message}`);
+    return `<div class="item" data-si-id="${escapeHtml(m.id)}"><div class="item-head"><span class="item-title"><span class="si-tag ${escapeHtml(m.kind)}">${escapeHtml(SITE_KIND[m.kind]||m.kind)}</span> ${escapeHtml(m.name||m.email)}</span><span class="item-meta">${escapeHtml(when)}</span></div>
+      <div class="si-meta">${escapeHtml(m.email)}${m.topic?' · '+escapeHtml(m.topic):''}</div><div class="si-msg">${escapeHtml(m.message)}</div>
+      <div class="si-meta">${m.page?'Page: '+escapeHtml(m.page):''}${m.device?' · '+escapeHtml(m.device):''}${m.conv_id?' · Chat ID '+escapeHtml(m.conv_id):''}</div>
+      <div class="field" style="margin:10px 0 0;"><label>Private note (only you see this)</label><input data-si-note maxlength="1000" value="${escapeHtml(m.note||'')}" placeholder="Optional"></div>
+      <div class="item-actions"><a class="btn teal small" href="mailto:${escapeHtml(m.email)}?subject=${subj}&body=${body}">Reply by email</a> <button type="button" class="btn ghost small" data-si-done="${m.status==='new'?'done':'new'}">${m.status==='new'?'Mark as done':'Reopen'}</button></div></div>`;
+  }).join('');
+}
+function siteSubsPaint(){
+  const head = document.getElementById('siSubsHead'), el = document.getElementById('siSubs'); if(!head) return;
+  if(!SITEA.subs){ head.textContent = 'Loading…'; return; }
+  const act = SITEA.subs.filter(s=>s.status==='active').length; head.textContent = `${act} active subscriber${act===1?'':'s'}${SITEA.subs.length-act?` · ${SITEA.subs.length-act} unsubscribed`:''}`;
+  el.innerHTML = SITEA.subs.length ? `<table class="pa-log" style="width:100%; border-collapse:collapse; font-size:13px;"><tbody>${SITEA.subs.map(s=>`<tr><td style="padding:7px 4px; border-bottom:1px solid var(--line);">${escapeHtml(s.email)}${s.name?`<div class="note" style="margin:0;">${escapeHtml(s.name)}</div>`:''}</td><td style="padding:7px 4px; border-bottom:1px solid var(--line); white-space:nowrap;">${escapeHtml(new Date(s.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))}</td><td style="padding:7px 4px; border-bottom:1px solid var(--line);">${s.status==='active'?'Active':'<span class="note" style="margin:0;">Unsubscribed</span>'}</td><td style="padding:7px 4px; border-bottom:1px solid var(--line); text-align:right;"><button type="button" class="btn ghost small" data-si-rm="${escapeHtml(s.id)}">Remove</button></td></tr>`).join('')}</tbody></table>` : '<div class="empty">No subscribers yet.</div>';
+}
+async function siteLoadInbox(){
+  const m = await siteRpc('site_messages_list', { p_limit:200 }); SITEA.msgs = Array.isArray(m) ? m : []; siteMsgsPaint();
+  const s = await siteRpc('subscribers_list'); SITEA.subs = Array.isArray(s) ? s : []; siteSubsPaint(); NL.subs = SITEA.subs;
+}
+function wireSiteInbox(){
+  const root = document.getElementById('siList'); if(!root) return;
+  document.getElementById('siFilters').addEventListener('click', e=>{ const b = e.target.closest('[data-si-f]'); if(!b) return; SITEA.filter = b.dataset.siF; siteMsgsPaint(); });
+  root.addEventListener('click', async e=>{
+    const b = e.target.closest('[data-si-done]'); if(!b) return; const id = b.closest('[data-si-id]').dataset.siId, note = b.closest('[data-si-id]').querySelector('[data-si-note]').value;
+    b.disabled = true; await siteRpc('site_message_update', { p_id:id, p_status:b.dataset.siDone, p_note:note });
+    const m = SITEA.msgs.find(x=>x.id===id); if(m){ m.status = b.dataset.siDone; m.note = note; } siteMsgsPaint();
+  });
+  root.addEventListener('change', async e=>{ const i = e.target.closest('[data-si-note]'); if(!i) return; const w = i.closest('[data-si-id]'), m = SITEA.msgs.find(x=>x.id===w.dataset.siId); if(m){ m.note = i.value; await siteRpc('site_message_update', { p_id:m.id, p_status:m.status, p_note:i.value }); } });
+  document.getElementById('siSubs').addEventListener('click', async e=>{
+    const b = e.target.closest('[data-si-rm]'); if(!b) return; if(!confirm('Remove this subscriber? They will no longer be in your list.')) return;
+    await siteRpc('subscriber_remove', { p_id:b.dataset.siRm }); SITEA.subs = SITEA.subs.filter(s=>s.id!==b.dataset.siRm); NL.subs = SITEA.subs; siteSubsPaint();
+  });
+  document.getElementById('siSubsCsv').addEventListener('click', ()=>{
+    const q = v=>'"' + String(v==null?'':v).replace(/"/g,'""') + '"', rows = [['Email','Name','Status','Joined'].map(q).join(',')].concat((SITEA.subs||[]).map(s=>[s.email,s.name,s.status,s.created_at].map(q).join(',')));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type:'text/csv' })); a.download = 'newsletter-subscribers.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+  siteMsgsPaint(); siteSubsPaint(); siteLoadInbox();
+}
+
+const SITE_SECTIONS = { ambassador:'From the Ambassador', about:'About', why:'Why chemistry', ichc:'The competition', gain:'What you gain', how:'The programme', videos:'How-to videos', tools:'Explore', chemist:'Meet a chemist', activities:'Gallery', events:'Dates and deadlines', stories:'Student stories', impact:'Our impact', team:'Team', faq:'FAQ', parents:'Parents and teachers', contact:'Contact', newsletter:'Newsletter box' };
+const SITE_ACTIONS = { contact:'Messages sent', problem:'Problem reports', subscribe:'Newsletter sign-ups', apply_click:'Clicks on Apply', photos:'Opened the pictures', video:'Played a video', event_cal:'Added a date to calendar', chat:'Opened the chat', handoff:'Asked the chat for a person' };
+function siteVisitorsView(){
+  return `<style>.sv-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px;} .sv-grid div{background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:12px;} .sv-grid b{display:block; font-size:26px; color:var(--navy-deep);} .sv-grid span{font-size:12.5px; color:var(--muted);}
+    .sv-bars{display:flex; align-items:flex-end; gap:3px; height:150px; padding:6px 0;} .sv-bar{flex:1; background:var(--teal); border-radius:4px 4px 0 0; min-height:2px; position:relative;} .sv-bar:hover{background:var(--amber-deep);}
+    .sv-row{display:flex; align-items:center; gap:10px; margin:7px 0; font-size:13.5px;} .sv-row .lab{width:46%; min-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;} .sv-row .bar{flex:1; background:#EDE9FE; border-radius:999px; height:10px;} .sv-row .bar i{display:block; height:100%; background:var(--teal); border-radius:999px;} .sv-row .n{width:36px; text-align:right; font-weight:700;}</style>
+  <div class="section-title"><div><h2>Website visitors</h2><p>A private, simple count of visits to the public website. It uses no cookies and no IP addresses, and skips anyone whose browser says Do Not Track. Your own visits are not counted.</p></div></div>
+  <div style="display:flex; gap:8px; margin-bottom:14px;" id="svDays">${[7,30,90].map(d=>`<button type="button" class="mc-chip${SITEA.days===d?' on':''}" data-sv-d="${d}" aria-pressed="${SITEA.days===d}">Last ${d} days</button>`).join('')}</div>
+  <div id="svBody"><div class="note">Loading…</div></div>`;
+}
+function siteBars(list, nameMap){
+  if(!list || !list.length) return '<div class="note">Nothing yet.</div>'; const max = Math.max(...list.map(x=>x.n));
+  return list.map(x=>`<div class="sv-row"><span class="lab">${escapeHtml((nameMap && nameMap[x.name]) || x.name || '(direct)')}</span><span class="bar"><i style="width:${Math.max(3, Math.round(x.n/max*100))}%"></i></span><span class="n">${x.n}</span></div>`).join('');
+}
+function siteStatsPaint(){
+  const el = document.getElementById('svBody'); if(!el) return; const d = SITEA.stats;
+  if(!d){ el.innerHTML = '<div class="note">Loading…</div>'; return; }
+  const t = d.totals || {}, days = d.days || [], max = Math.max(1, ...days.map(x=>x.views));
+  el.innerHTML = `<div class="sv-grid"><div><b>${t.visitors||0}</b><span>visitors</span></div><div><b>${t.views||0}</b><span>visits</span></div><div><b>${t.messages||0}</b><span>messages received</span></div><div><b>${t.new_subscribers||0}</b><span>new newsletter sign-ups</span></div><div><b>${t.subscribers||0}</b><span>subscribers in total</span></div></div>
+    <div class="card"><h3 style="font-size:15px; margin:0 0 4px;">Visits per day</h3><div class="sv-bars" role="img" aria-label="Visits per day">${days.map(x=>`<div class="sv-bar" style="height:${Math.round(x.views/max*100)}%" title="${escapeHtml(new Date(x.day).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))}: ${x.views} visits, ${x.visitors} visitors"></div>`).join('')}</div>
+      <div class="note" style="display:flex; justify-content:space-between; margin:0;"><span>${escapeHtml(new Date(days[0]&&days[0].day).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))}</span><span>Today</span></div></div>
+    <div class="psms-wrap" style="margin-top:12px;"><div><div class="card"><h3 style="font-size:15px; margin:0 0 6px;">Most viewed parts of the page</h3>${siteBars(d.sections, SITE_SECTIONS)}</div>
+      <div class="card" style="margin-top:12px;"><h3 style="font-size:15px; margin:0 0 6px;">What people did</h3>${siteBars(d.actions, SITE_ACTIONS)}</div></div>
+      <div><div class="card"><h3 style="font-size:15px; margin:0 0 6px;">Where visitors came from</h3>${siteBars(d.referrers)}<p class="note" style="margin-top:6px;">Visits with no website listed (typed the address, or opened a link in a chat app) are not shown.</p></div>
+      <div class="card" style="margin-top:12px;"><h3 style="font-size:15px; margin:0 0 6px;">Devices</h3>${siteBars(d.devices, { mobile:'Phone', tablet:'Tablet', desktop:'Computer' })}</div></div></div>`;
+}
+function wireSiteVisitors(){
+  const root = document.getElementById('svBody'); if(!root) return;
+  document.getElementById('svDays').addEventListener('click', async e=>{ const b = e.target.closest('[data-sv-d]'); if(!b) return; SITEA.days = +b.dataset.svD; SITEA.stats = null; render('visitors'); });
+  siteStatsPaint(); (async ()=>{ const d = await siteRpc('site_stats', { p_days:SITEA.days }); SITEA.stats = d || { totals:{}, days:[], sections:[], actions:[], referrers:[], devices:[] }; siteStatsPaint(); })();
+}
+
+// ================= App notifications (web push): device reporting + Ambassador tools =================
+function pushDeviceKey(){
+  let k = null; try{ k = localStorage.getItem('ichc_push_dev'); }catch(e){}
+  if(!k){ k = ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))).replace(/-/g,'').slice(0,32); try{ localStorage.setItem('ichc_push_dev', k); }catch(e){} }
+  return k;
+}
+// Tells the server whether THIS device can receive notifications, so the Ambassador can see who is reachable.
+let _pushRepT = null;
+function pushReport(){
+  clearTimeout(_pushRepT);
+  _pushRepT = setTimeout(async ()=>{
+    try{
+      if(!ME || !sbReady) return;
+      const st = pushState(), ua = navigator.userAgent, plat = /iPhone|iPad|iPod/.test(ua) ? 'ios' : /Android/.test(ua) ? 'android' : 'desktop';
+      await sb.rpc('push_register', { p_external_id:String(ME.id), p_device_key:pushDeviceKey(), p_platform:plat, p_subscribed:!!st.on });
+    }catch(e){ console.warn('push report skipped', e); }
+  }, 800);
+}
+const PUSHA = { subs:null, log:null, loading:false, sel:{}, title:'', msg:'', status:null, sending:false, checks:null, showMissing:false };
+function pushaGroups(){ return nlGroups().filter(g=>(g.sec!=='Joining the programme' && g.sec!=='Website') || g.key==='onboarding'); }
+function pushaIds(){
+  const seen = new Set(); nlGroups(); 
+  pushaGroups().filter(g=>PUSHA.sel[g.key]).forEach(g=>g.list.forEach(r=>{ if(r && r.id!=null) seen.add(String(r.id)); }));
+  return [...seen];
+}
+function pushaPeople(){
+  const out = []; (DB.coordinators||[]).forEach(c=>out.push({ id:String(c.id), name:c.name, role:'Coordinator' }));
+  (DB.students||[]).filter(s=>!ghostedStudent(s)).forEach(s=>out.push({ id:String(s.id), name:s.name, role:'Student' }));
+  return out;
+}
+function pushAdminView(){
+  return `<style>.pa-stat{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:12px;} .pa-stat div{background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:12px;} .pa-stat b{display:block; font-size:24px; color:var(--navy-deep);} .pa-stat span{font-size:12.5px; color:var(--muted);}
+    .pa-chk{display:flex; gap:8px; align-items:flex-start; font-size:13.5px; margin:6px 0;} .pa-chk i{font-style:normal; font-weight:800; width:18px;} .pa-ok{color:#15803D;} .pa-bad{color:#C0392B;} .pa-wait{color:#92710C;}
+    .pa-log{width:100%; border-collapse:collapse; font-size:13px;} .pa-log th,.pa-log td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:top;} .pa-tag{display:inline-block; border-radius:999px; padding:2px 9px; font-size:11.5px; font-weight:700;}
+    .pa-t-sent{background:#DCFCE7; color:#166534;} .pa-t-failed{background:#FEE2E2; color:#991B1B;} .pa-t-no_device{background:#FEF3C7; color:#92400E;} .pa-t-queued,.pa-t-unknown{background:#E5E7EB; color:#374151;}</style>
+  <div class="section-title"><div><h2>App notifications</h2><p>See who can receive notifications, send one to a group, and check that every notification really went out. Notifications for announcements, alerts, exams, materials, polls, quizzes, class notices and results are sent automatically.</p></div></div>
+  <div class="psms-wrap"><div>
+    <div class="card"><h3 style="font-size:15px; margin:0 0 10px;">Who can receive them</h3><div id="paStats" class="pa-stat"><div><b>…</b><span>Loading</span></div></div>
+      <div id="paMissingWrap"></div></div>
+    <div class="card" style="margin-top:12px;"><h3 style="font-size:15px; margin:0 0 6px;">Is everything set up?</h3><div id="paChecks"><div class="note">Checking…</div></div></div>
+  </div><div>
+    <div class="card"><h3 style="font-size:15px; margin:0 0 4px;">Send a notification</h3>
+      <div class="field"><label for="paTitle">Title</label><input id="paTitle" maxlength="80" value="${escapeHtml(PUSHA.title)}" placeholder="Short and clear"></div>
+      <div class="field"><label for="paMsg">Message</label><textarea id="paMsg" rows="3" maxlength="180" placeholder="One or two sentences (180 characters at most)">${escapeHtml(PUSHA.msg)}</textarea><div class="note" id="paCount" style="margin-top:4px;"></div></div>
+      <p class="note" style="margin:8px 0;">Send to</p><div id="paAud" class="psms-list nl-aud" style="max-height:260px; overflow:auto;"></div><div id="paWho" class="note" style="margin-top:8px;"></div>
+      <div class="psms-foot" style="margin-top:12px; gap:8px; flex-wrap:wrap;"><button class="btn ghost" id="paTest" type="button">Send a test to me</button><button class="btn teal" id="paSend" type="button">Send notification</button></div>
+      <div id="paStatus" class="psms-status" role="status" aria-live="polite"></div></div>
+  </div></div>
+  <h3 style="font-size:15px; margin:24px 0 10px;">Recent notifications and what happened to them</h3>
+  <div class="card" style="overflow:auto;"><div id="paLog"><div class="note">Loading…</div></div><div style="margin-top:10px;"><button class="btn ghost small" id="paRefresh" type="button">Refresh</button></div>
+  <p class="note" style="margin-top:10px;">Sent means OneSignal accepted it for at least one device. "No device" means none of those people have turned notifications on yet. Nobody gets a notification for something they posted themselves.</p></div>`;
+}
+function pushaPaintStats(){
+  const el = document.getElementById('paStats'); if(!el) return;
+  if(!PUSHA.subs){ el.innerHTML = '<div><b>…</b><span>Loading</span></div>'; return; }
+  const on = new Set(PUSHA.subs), people = pushaPeople();
+  const c = people.filter(p=>p.role==='Coordinator'), s = people.filter(p=>p.role==='Student');
+  const cOn = c.filter(p=>on.has(p.id)).length, sOn = s.filter(p=>on.has(p.id)).length, tot = people.length, totOn = cOn + sOn;
+  el.innerHTML = `<div><b>${totOn} of ${tot}</b><span>people have notifications on</span></div><div><b>${sOn} of ${s.length}</b><span>students</span></div><div><b>${cOn} of ${c.length}</b><span>coordinators</span></div>`;
+  const missing = people.filter(p=>!on.has(p.id)), w = document.getElementById('paMissingWrap');
+  if(w) w.innerHTML = missing.length ? `<button type="button" class="btn ghost small" id="paMissBtn">${PUSHA.showMissing?'Hide':'Show'} the ${missing.length} who have not turned them on</button>${PUSHA.showMissing?`<ul style="margin:10px 0 0; padding-left:18px; font-size:13.5px; max-height:220px; overflow:auto;">${missing.map(p=>`<li>${escapeHtml(p.name||'(no name)')} <span class="note" style="margin:0;">${p.role}</span></li>`).join('')}</ul><p class="note" style="margin-top:8px;">Ask them to open the portal, tap the bell at the bottom left, and choose Turn on notifications. On iPhone they must first add the portal to the Home Screen.</p>`:''}` : '<div class="note">Everyone has them on.</div>';
+}
+function pushaPaintAud(){
+  const el = document.getElementById('paAud'); if(!el) return; const on = new Set(PUSHA.subs||[]);
+  let sec = '', html = '';
+  pushaGroups().forEach(g=>{
+    if(g.sec!==sec){ sec = g.sec; html += `<div class="bc-sec" style="margin-top:10px;">${escapeHtml(sec)}</div>`; }
+    const ids = g.list.map(r=>String(r.id)), reach = ids.filter(i=>on.has(i)).length, sel = !!PUSHA.sel[g.key];
+    html += `<button type="button" class="psms-row${sel?' on':''}" data-pa-g="${escapeHtml(g.key)}" aria-pressed="${sel}" ${ids.length?'':'disabled'}><span class="psms-name">${sel?'&#10003; ':''}${escapeHtml(g.label)}</span><span class="psms-sub">${reach} of ${ids.length} have notifications on</span></button>`;
+  });
+  el.innerHTML = html;
+}
+function pushaRefreshForm(){
+  const q = id=>document.getElementById(id); if(!q('paSend')) return;
+  const ids = pushaIds(), on = new Set(PUSHA.subs||[]), reach = ids.filter(i=>on.has(i)).length, ok = !!PUSHA.title.trim() && !!PUSHA.msg.trim();
+  q('paCount').textContent = `${PUSHA.msg.length}/180 characters`;
+  q('paWho').textContent = ids.length ? `${ids.length} ${ids.length===1?'person':'people'} selected. ${reach} of them can receive it right now.` : 'Tick one or more groups.';
+  q('paSend').disabled = PUSHA.sending || !ok || !ids.length; q('paSend').textContent = PUSHA.sending ? 'Sending…' : (ids.length ? `Send to ${ids.length} ${ids.length===1?'person':'people'}` : 'Send notification');
+  q('paTest').disabled = PUSHA.sending || !ok;
+  const st = q('paStatus'); st.className = 'psms-status' + (PUSHA.status ? (PUSHA.status.ok ? ' ok' : ' bad') : ''); st.textContent = PUSHA.status ? PUSHA.status.msg : '';
+}
+function pushaPaintLog(){
+  const el = document.getElementById('paLog'); if(!el) return;
+  if(!PUSHA.log){ el.innerHTML = '<div class="note">Loading…</div>'; return; }
+  if(!PUSHA.log.length){ el.innerHTML = '<div class="empty">Nothing has been sent yet.</div>'; return; }
+  const lab = { sent:'Sent', failed:'Failed', no_device:'No device', queued:'Sending…', unknown:'Unknown' };
+  el.innerHTML = `<table class="pa-log"><thead><tr><th>When</th><th>Notification</th><th>To</th><th>Result</th></tr></thead><tbody>${PUSHA.log.map(r=>`<tr><td>${escapeHtml(new Date(r.ts).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td><b>${escapeHtml(r.heading||'')}</b><div class="note" style="margin:2px 0 0;">${escapeHtml(String(r.source||'').replace('auto:','automatic · '))}</div></td><td>${r.recipients}</td><td><span class="pa-tag pa-t-${escapeHtml(r.status)}">${lab[r.status]||escapeHtml(r.status)}</span>${r.status==='sent' && r.no_device ? `<div class="note" style="margin:3px 0 0;">${r.no_device} without a device</div>`:''}${r.detail?`<div class="note" style="margin:3px 0 0; word-break:break-word;">${escapeHtml(String(r.detail).slice(0,160))}</div>`:''}</td></tr>`).join('')}</tbody></table>`;
+}
+async function pushaChecks(){
+  const el = document.getElementById('paChecks'); if(!el) return;
+  const head = async u=>{ try{ const r = await fetch(u, { method:'GET', cache:'no-store' }); return r.ok; }catch(e){ return false; } };
+  const st = pushState(), items = [];
+  items.push([!window.__OS_ERR && !!window.__OS, 'OneSignal started in this browser', 'Reload the page. If it still fails, check the OneSignal app settings and that this site address matches the one saved in OneSignal.']);
+  items.push([await head('/OneSignalSDKWorker.js'), 'OneSignalSDKWorker.js is on your site', 'Upload the file OneSignalSDKWorker.js to the same folder as portal.html on your host. Without it nobody can turn notifications on.']);
+  items.push([await head('/manifest.webmanifest'), 'Home-screen app file (manifest) is on your site', 'Upload manifest.webmanifest and the icon files next to portal.html. iPhones need this before they can receive notifications.']);
+  items.push([st.perm!=='denied', 'Notifications are not blocked in this browser', 'Tap the lock icon by the address bar and allow Notifications.']);
+  el.innerHTML = items.map(([ok,t,fix])=>`<div class="pa-chk"><i class="${ok?'pa-ok':'pa-bad'}">${ok?'&#10003;':'&#10007;'}</i><div>${escapeHtml(t)}${ok?'':`<div class="note" style="margin:2px 0 0;">${escapeHtml(fix)}</div>`}</div></div>`).join('') + `<div class="pa-chk"><i class="pa-ok">&#10003;</i><div>The server key is stored and the sending service is running</div></div>`;
+}
+async function pushaLoad(){
+  try{ const r = await sb.rpc('push_subscribed_ids'); if(!r.error) PUSHA.subs = Array.isArray(r.data) ? r.data : []; else PUSHA.subs = []; }catch(e){ PUSHA.subs = []; }
+  pushaPaintStats(); pushaPaintAud(); pushaRefreshForm();
+  try{ const r = await sb.rpc('push_log_recent', { p_limit:40 }); PUSHA.log = (!r.error && Array.isArray(r.data)) ? r.data : []; }catch(e){ PUSHA.log = []; }
+  pushaPaintLog();
+}
+async function pushaSend(test){
+  if(PUSHA.sending) return;
+  const ids = test ? [String(ME.id)] : pushaIds(); if(!ids.length || !PUSHA.title.trim() || !PUSHA.msg.trim()) return;
+  if(!test && !confirm(`Send "${PUSHA.title.trim()}" to ${ids.length} ${ids.length===1?'person':'people'}?`)) return;
+  PUSHA.sending = true; PUSHA.status = null; pushaRefreshForm();
+  let msg = '', ok = false;
+  try{
+    const r = await sb.rpc('ambassador_push_send', { p_external_ids:ids, p_heading:PUSHA.title.trim(), p_message:PUSHA.msg.trim() });
+    if(r.error) msg = 'Could not send: ' + r.error.message;
+    else if(r.data && r.data.sent){ ok = true; msg = test ? 'Test sent. It should appear on your devices within a few seconds.' : `Sent to ${r.data.recipients} ${r.data.recipients===1?'person':'people'}. The table below shows how it went.`; }
+    else msg = r.data && r.data.reason==='push_not_configured' ? 'The OneSignal key is missing on the server.' : r.data && r.data.reason==='no_recipients' ? 'No one to send to.' : 'It was not sent.';
+  }catch(e){ msg = 'Could not send. Check your connection.'; }
+  PUSHA.sending = false; PUSHA.status = { ok, msg }; if(ok && !test) PUSHA.sel = {};
+  pushaPaintAud(); pushaRefreshForm();
+  setTimeout(async ()=>{ try{ const r = await sb.rpc('push_log_recent', { p_limit:40 }); if(!r.error && Array.isArray(r.data)){ PUSHA.log = r.data; pushaPaintLog(); } }catch(e){} }, 4000);
+}
+function wirePushAdmin(){
+  const q = id=>document.getElementById(id); if(!q('paSend')) return;
+  q('paTitle').addEventListener('input', e=>{ PUSHA.title = e.target.value; PUSHA.status = null; pushaRefreshForm(); });
+  q('paMsg').addEventListener('input', e=>{ PUSHA.msg = e.target.value; PUSHA.status = null; pushaRefreshForm(); });
+  q('paAud').addEventListener('click', e=>{ const b = e.target.closest('[data-pa-g]'); if(!b || b.disabled) return; const k = b.dataset.paG; if(PUSHA.sel[k]) delete PUSHA.sel[k]; else PUSHA.sel[k] = true; PUSHA.status = null; pushaPaintAud(); pushaRefreshForm(); });
+  q('paMissingWrap').addEventListener('click', e=>{ if(e.target.closest('#paMissBtn')){ PUSHA.showMissing = !PUSHA.showMissing; pushaPaintStats(); } });
+  q('paTest').addEventListener('click', ()=>pushaSend(true)); q('paSend').addEventListener('click', ()=>pushaSend(false));
+  q('paRefresh').addEventListener('click', ()=>{ PUSHA.log = null; pushaPaintLog(); pushaLoad(); });
+  pushaPaintAud(); pushaRefreshForm(); pushaLoad(); pushaChecks();
+}
+
 // ================= Newsletters: designed emails about research papers, competitions, scholarships and more =================
 // The Ambassador picks a layout, edits every line, chooses which groups get it, previews it, sends a test to themselves, then sends.
 // Each layout is its own email design (different from the plain branded announcement emails).
+const NL_LOGO = 'https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/brand-logo';
 const NL_SANS = "'Segoe UI',Helvetica,Arial,sans-serif", NL_SERIF = "Georgia,'Times New Roman',serif";
 const NL_TYPES = {
   research:{ label:'Research papers', blurb:'Paper spotlights with authors and a short "why it matters".', color:'#0F766E', metaLabel:'Authors · Journal · Year', metaPh:'e.g. Mensah et al. · Nature Chemistry · 2026', btn:'Read the paper',
@@ -4671,7 +4912,7 @@ const NL_TYPES = {
     headline:'News from the programme', intro:'Here is what has been happening and what is coming up.', closing:'Thank you for being part of this community.' }
 };
 const NL = { loaded:false, type:'research', subject:'', preheader:'', headline:NL_TYPES.research.headline, intro:NL_TYPES.research.intro,
-  blocks:[{ title:'', meta:'', body:'', link:'', btn:'' }], closing:NL_TYPES.research.closing, sign:true, sel:{}, status:null, sending:false, history:[], histLoaded:false };
+  blocks:[{ title:'', meta:'', body:'', link:'', btn:'' }], closing:NL_TYPES.research.closing, sign:true, sel:{}, status:null, sending:false, history:[], histLoaded:false, subs:null };
 const NL_FIELDS = ['type','subject','preheader','headline','intro','blocks','closing','sign'];
 function nlSaveDraft(){ try{ const d = {}; NL_FIELDS.forEach(k=>d[k]=NL[k]); localStorage.setItem('ichc:newsletter:draft', JSON.stringify(d)); }catch(e){} }
 function nlLoadDraft(){
@@ -4690,10 +4931,11 @@ function nlBuildEmail(d, rec){
   const issue = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
   const btn = (b, bg, fg, outline)=>{ const u = nlUrl(b.link); if(!u) return ''; const label = E(b.btn || T.btn);
     return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td style="background:${outline?'#ffffff':bg}; border:2px solid ${bg}; border-radius:8px;"><a href="${escapeHtml(u)}" style="display:inline-block; padding:11px 22px; font:700 14px ${NL_SANS}; color:${fg}; text-decoration:none;">${label}</a></td></tr></table>`; };
+  const logo = (center)=>`<img src="${NL_LOGO}" width="132" alt="${prog}" style="display:block; border:0; outline:none; width:132px; max-width:100%; height:auto; margin:${center?'0 auto 16px':'0 0 18px'};">`;
   const pre = d.preheader ? `<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">${E(d.preheader)}</div>` : '';
   const greet = (col)=>`<p style="margin:0 0 12px; font:600 16px ${NL_SANS}; color:${col};">Hi ${escapeHtml(first)},</p>`;
   const closing = (col, mut)=> (d.closing ? `<p style="margin:0 0 14px; font:15px/1.6 ${NL_SANS}; color:${col};">${P(d.closing)}</p>` : '') + (d.sign && me ? `<p style="margin:0; font:600 15px ${NL_SANS}; color:${col};">${me}<br><span style="font-weight:400; color:${mut};">${prog}</span></p>` : '');
-  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.</td></tr>`;
+  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">${rec && rec.unsub ? 'You are receiving this newsletter because you subscribed on our website.' : 'You are receiving this newsletter because you are part of '+prog+'.'}<br>${rec && rec.unsub ? `<a href="https://ichc-ghana.vercel.app/?unsubscribe=${escapeHtml(rec.unsub)}" style="color:${col}; text-decoration:underline;">Unsubscribe</a> if you no longer want these emails.` : 'Reply to this email if you would rather not receive newsletters.'}</td></tr>`;
   const shell = (outer, inner)=>`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(d.subject||'Newsletter')}</title></head><body style="margin:0; padding:0; background:${outer};">${pre}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${outer};"><tr><td align="center" style="padding:24px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;">${inner}</table></td></tr></table></body></html>`;
   let inner = '';
   if(d.type==='research'){
@@ -4702,7 +4944,7 @@ function nlBuildEmail(d, rec){
       <h2 style="margin:6px 0 4px; font:700 22px/1.25 ${NL_SERIF}; color:#0B2A3A;">${E(b.title)}</h2>
       ${b.meta?`<div style="font:italic 14px ${NL_SERIF}; color:${c}; margin-bottom:10px;">${E(b.meta)}</div>`:''}
       <div style="font:15px/1.65 ${NL_SANS}; color:#334155;">${P(b.body)}</div>${btn(b, c, '#ffffff', true)}</td></tr></table></td></tr>`).join('');
-    inner = `<tr><td style="background:#0B2A3A; border-radius:10px 10px 0 0; padding:30px 28px;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.2em; color:#5EEAD4;">RESEARCH BRIEF &middot; ${escapeHtml(issue.toUpperCase())}</div><h1 style="margin:10px 0 0; font:700 30px/1.2 ${NL_SERIF}; color:#ffffff;">${E(d.headline)}</h1></td></tr>
+    inner = `<tr><td style="background:#0B2A3A; border-radius:10px 10px 0 0; padding:30px 28px;">${logo(false)}<div style="font:700 12px ${NL_SANS}; letter-spacing:.2em; color:#5EEAD4;">RESEARCH BRIEF &middot; ${escapeHtml(issue.toUpperCase())}</div><h1 style="margin:10px 0 0; font:700 30px/1.2 ${NL_SERIF}; color:#ffffff;">${E(d.headline)}</h1></td></tr>
       <tr><td style="background:#F3F6F8; padding:24px 22px 8px;">${greet('#0B2A3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#334155;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
       <tr><td style="background:#ffffff; padding:22px 28px; border-radius:0 0 10px 10px;">${closing('#334155','#64748B')}</td></tr>${foot('#64748B','#F3F6F8')}`;
     return shell('#E2E8EE', inner);
@@ -4711,7 +4953,7 @@ function nlBuildEmail(d, rec){
     const items = blocks.map(b=>`<tr><td style="padding:0 0 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:12px;"><tr>
       <td width="104" valign="top" style="padding:16px 0 16px 16px;"><div style="background:#F5A524; color:#1D1B3A; border-radius:10px; padding:14px 8px; text-align:center; font:800 14px/1.3 ${NL_SANS};">${b.meta?E(b.meta):'DATE TBA'}</div></td>
       <td valign="top" style="padding:16px 18px;"><h2 style="margin:0 0 6px; font:800 20px/1.25 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.6 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${btn(b, c, '#ffffff', false)}</td></tr></table></td></tr>`).join('');
-    inner = `<tr><td style="background:${c}; border-radius:14px 14px 0 0; padding:34px 28px; text-align:left;"><div style="display:inline-block; background:#F5A524; color:#1D1B3A; font:800 12px ${NL_SANS}; letter-spacing:.12em; padding:5px 12px; border-radius:999px;">COMPETITION ALERT</div><h1 style="margin:14px 0 6px; font:800 32px/1.15 ${NL_SANS}; color:#ffffff;">${E(d.headline)}</h1><div style="font:14px ${NL_SANS}; color:#E4DDFB;">${prog} &middot; ${escapeHtml(issue)}</div></td></tr>
+    inner = `<tr><td style="background:${c}; border-radius:14px 14px 0 0; padding:34px 28px; text-align:left;">${logo(false)}<div style="display:inline-block; background:#F5A524; color:#1D1B3A; font:800 12px ${NL_SANS}; letter-spacing:.12em; padding:5px 12px; border-radius:999px;">COMPETITION ALERT</div><h1 style="margin:14px 0 6px; font:800 32px/1.15 ${NL_SANS}; color:#ffffff;">${E(d.headline)}</h1><div style="font:14px ${NL_SANS}; color:#E4DDFB;">${prog} &middot; ${escapeHtml(issue)}</div></td></tr>
       <tr><td style="background:#EFEAFD; padding:24px 22px 6px;">${greet('#1D1B3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
       <tr><td style="background:#1D1B3A; padding:24px 28px; border-radius:0 0 14px 14px;">${closing('#F2EFFF','#B9B2E0')}</td></tr>${foot('#B9B2E0','#1D1B3A')}`;
     return shell('#1D1B3A', inner);
@@ -4721,13 +4963,13 @@ function nlBuildEmail(d, rec){
       ${b.meta?`<span style="display:inline-block; background:${c}; color:#ffffff; font:700 12px ${NL_SANS}; letter-spacing:.06em; padding:5px 12px; border-radius:999px;">${E(b.meta)}</span>`:''}
       <h2 style="margin:12px 0 6px; font:700 21px/1.3 ${NL_SERIF}; color:#14532D;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(b.body)}</div>${btn(b, c, c, true)}</td></tr></table></td></tr>`).join('');
     inner = `<tr><td style="background:${c}; height:10px; line-height:10px; font-size:0; border-radius:12px 12px 0 0;">&nbsp;</td></tr>
-      <tr><td style="background:#FBF7EE; padding:34px 28px 10px; text-align:center;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.22em; color:${c};">SCHOLARSHIP NEWS</div><h1 style="margin:10px 0 8px; font:700 31px/1.2 ${NL_SERIF}; color:#14532D;">${E(d.headline)}</h1><div style="width:60px; height:3px; background:#F5A524; margin:0 auto;"></div></td></tr>
+      <tr><td style="background:#FBF7EE; padding:34px 28px 10px; text-align:center;">${logo(true)}<div style="font:700 12px ${NL_SANS}; letter-spacing:.22em; color:${c};">SCHOLARSHIP NEWS</div><h1 style="margin:10px 0 8px; font:700 31px/1.2 ${NL_SERIF}; color:#14532D;">${E(d.headline)}</h1><div style="width:60px; height:3px; background:#F5A524; margin:0 auto;"></div></td></tr>
       <tr><td style="background:#FBF7EE; padding:18px 28px 8px;">${greet('#14532D')}<p style="margin:0 0 6px; font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
       <tr><td style="background:#FBF7EE; padding:22px 28px 26px; border-radius:0 0 12px 12px;">${closing('#3F4A3F','#6B7A6B')}</td></tr>${foot('#6B7A6B','#F1EBDB')}`;
     return shell('#EDE6D3', inner);
   }
   const items = blocks.map(b=>`<tr><td style="padding:0 0 24px;">${b.meta?`<div style="font:700 11px ${NL_SANS}; letter-spacing:.14em; text-transform:uppercase; color:#7C5CF0;">${E(b.meta)}</div>`:''}<h2 style="margin:4px 0 6px; font:700 20px/1.3 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${nlUrl(b.link)?`<div style="margin-top:8px;"><a href="${escapeHtml(nlUrl(b.link))}" style="font:700 14px ${NL_SANS}; color:#7C5CF0; text-decoration:none;">${E(b.btn||T.btn)} &rarr;</a></div>`:''}</td></tr>`).join('');
-  inner = `<tr><td style="background:#ffffff; padding:34px 32px 8px; border-top:6px solid #1D1B3A;"><div style="font:600 13px ${NL_SANS}; color:#64748B;">${prog} &middot; ${escapeHtml(issue)}</div><h1 style="margin:10px 0 14px; font:800 30px/1.2 ${NL_SANS}; color:#1D1B3A;">${E(d.headline)}</h1><div style="height:1px; background:#E2E5EA;"></div></td></tr>
+  inner = `<tr><td style="background:#ffffff; padding:34px 32px 8px; border-top:6px solid #1D1B3A;">${logo(false)}<div style="font:600 13px ${NL_SANS}; color:#64748B;">${prog} &middot; ${escapeHtml(issue)}</div><h1 style="margin:10px 0 14px; font:800 30px/1.2 ${NL_SANS}; color:#1D1B3A;">${E(d.headline)}</h1><div style="height:1px; background:#E2E5EA;"></div></td></tr>
     <tr><td style="background:#ffffff; padding:20px 32px 4px;">${greet('#1D1B3A')}<p style="margin:0 0 22px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
     <tr><td style="background:#ffffff; padding:8px 32px 30px;"><div style="height:1px; background:#E2E5EA; margin-bottom:20px;"></div>${closing('#39424D','#64748B')}</td></tr>${foot('#64748B','#F4F5F7')}`;
   return shell('#F4F5F7', inner);
@@ -4738,7 +4980,7 @@ function nlBuildText(d, rec){
   (d.blocks||[]).filter(b=>String(b.title||'').trim()||String(b.body||'').trim()).forEach(b=>{
     out.push(sub(b.title).toUpperCase()); if(b.meta) out.push(sub(b.meta)); if(b.body) out.push(sub(b.body)); if(nlUrl(b.link)) out.push(nlUrl(b.link)); out.push('');
   });
-  if(d.closing) out.push(sub(d.closing)); if(d.sign && ME && ME.name) out.push('', ME.name);
+  if(d.closing) out.push(sub(d.closing)); if(d.sign && ME && ME.name) out.push('', ME.name); if(rec && rec.unsub) out.push('', 'Unsubscribe: https://ichc-ghana.vercel.app/?unsubscribe=' + rec.unsub);
   return out.join('\n').trim();
 }
 
@@ -4753,6 +4995,7 @@ function nlGroups(){
   add('People', 'second', 'Students · second set (new applicants)', students.filter(s=>isNewFlow(s)));
   coords.forEach(c=>{ const l = students.filter(s=>s.coordinatorId===c.id); if(l.length) add('Students of a coordinator', 'co:'+c.id, `${c.name||'Coordinator'}'s students`, l); });
   [...new Set(students.map(s=>s.group).filter(Boolean))].sort().forEach(n=>add('Student groups', 'gr:'+n, 'Group '+n, students.filter(s=>s.group===n)));
+  add('Website', 'subs', 'Website newsletter subscribers', (NL.subs||[]).filter(x=>x.status==='active').map(x=>({ id:'sub:'+x.id, email:x.email, name:x.name||'', unsubToken:x.token, notifyEmail:true })));
   add('Joining the programme', 'interest', 'Interest list (from the website)', apps.filter(a=>a.status==='interested'));
   add('Joining the programme', 'applicants', 'Applicants waiting for a decision', apps.filter(a=>a.status!=='interested'));
   add('Joining the programme', 'onboarding', 'Accepted students still onboarding', students.filter(s=>s.stage && s.stage!=='Completed'));
@@ -4766,7 +5009,7 @@ function nlRecipients(){
     if(!em){ noEmail++; return; }
     if(r.notifyEmail===false){ off++; return; }
     const isCoord = (DB.coordinators||[]).some(c=>c.id===r.id), isStudent = !isCoord && r.coordinatorId!==undefined;
-    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null });
+    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: r.unsubToken ? 'subscriber' : isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null, unsub: r.unsubToken||null });
   }));
   return { list:out, noEmail, off };
 }
@@ -4895,6 +5138,7 @@ function wireNewsletter(){
     NL_FIELDS.forEach(k=>{ if(h.content[k]!==undefined) NL[k] = JSON.parse(JSON.stringify(h.content[k])); }); NL.sel = {}; NL.status = null; nlSaveDraft(); render('newsletter'); window.scrollTo({ top:0, behavior:'smooth' });
   });
   nlPreview(true); nlRefresh();
+  siteRpc('subscribers_list').then(d=>{ if(Array.isArray(d)){ NL.subs = d; const a = q('nlAud'); if(a) a.innerHTML = nlAudienceHtml(); nlRefresh(); } });
   if(!NL.histLoaded){ NL.histLoaded = true; (async ()=>{ try{ const h = await sGet('posts:newsletters', true); if(Array.isArray(h)){ NL.history = h; const el = q('nlHist'); if(el) el.innerHTML = nlHistoryHtml(); } }catch(e){} })(); }
 }
 // Queues one newsletter email. The designed version goes in `html`; `message` is the plain-text version used if the server can't show HTML.
@@ -5354,14 +5598,14 @@ function openPushPanel(){
   if(go) go.addEventListener('click', async ()=>{
     go.disabled = true; go.textContent = 'Asking your browser…';
     try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
-    o.remove(); paintBell(); openPushPanel();
+    o.remove(); paintBell(); pushReport(); openPushPanel();
   });
 }
 // Students who have neither allowed nor blocked notifications get a proper pop-up asking them to allow it.
 // The browser only shows its own permission dialog after a tap, so the pop-up carries the button that triggers it.
 async function pushAllow(){
   try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
-  paintBell();
+  paintBell(); pushReport();
   return pushState();
 }
 function openPushAsk(){
@@ -5390,13 +5634,13 @@ function openPushAsk(){
   });
 }
 function initPushUi(){
-  paintBell();
+  paintBell(); pushReport();
   const st = pushState(), seenKey = 'ichc_push_prompted', isStu = !!ME && ME.role==='student';
   if(isStu){
     const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
     if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
   } else if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
-  setTimeout(paintBell, 6000);
+  setTimeout(()=>{ paintBell(); pushReport(); }, 6000);
 }
 
 
@@ -8727,6 +8971,9 @@ function wireHandlers(tab){
   if(tab==='personalsms') wirePersonalSms();
   if(tab==='personalemail') wirePersonalEmail();
   if(tab==='newsletter') wireNewsletter();
+  if(tab==='push') wirePushAdmin();
+  if(tab==='inbox') wireSiteInbox();
+  if(tab==='visitors') wireSiteVisitors();
   if(tab==='people' || tab==='students') wireAccess(tab);
   if(tab==='mock' || window.RM_HOSTED==='mock') wireMock();
   if(tab==='chat') wireChat();
@@ -10460,13 +10707,16 @@ const NAV = {
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
-    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['newsletter','Newsletters']] },
+    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['newsletter','Newsletters'],['push','App notifications'],['inbox','Website inbox'],['visitors','Website visitors']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
 };
 Object.assign(TAB_ICONS, {
+  inbox:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  visitors:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  push:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   newsletter:'<path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0 1 1H7a2 2 0 0 1-2-2z"/><path d="M18 8h2v11a1 1 0 0 1-1 1"/><path d="M8 8h7M8 12h7M8 16h4"/>',
   lessons:'<rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10,9 16,12 10,15"/>',
   home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13V10"/><path d="M10 20.5v-6h4v6"/>',
