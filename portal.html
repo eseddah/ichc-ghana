@@ -3308,6 +3308,7 @@ function renderLegacy(tab){
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
   else if(tab==='aichats' && ME.role==='ambassador') html = '<div id="aiChatsRoot"></div>';
+  else if(WEB_TABS.includes(tab) && ME.role==='ambassador') html = '<div id="webRoot"></div>';
   else if(ME.role==='ambassador') html = ambassadorView(tab);
   else if(ME.role==='coordinator') html = coordinatorView(tab);
   else if(ME.role==='student') html = studentView(tab);
@@ -3320,6 +3321,7 @@ function renderLegacy(tab){
   wireHandlers(tab);
   if(typeof wireDuty==='function') wireDuty(tab);
   if(tab==='aichats') aiChatsMount();
+  if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
   if(tab==='duties' && typeof seriesMgrMount==='function') seriesMgrMount();
 }
@@ -4693,7 +4695,7 @@ function nlBuildEmail(d, rec){
   const pre = d.preheader ? `<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">${E(d.preheader)}</div>` : '';
   const greet = (col)=>`<p style="margin:0 0 12px; font:600 16px ${NL_SANS}; color:${col};">Hi ${escapeHtml(first)},</p>`;
   const closing = (col, mut)=> (d.closing ? `<p style="margin:0 0 14px; font:15px/1.6 ${NL_SANS}; color:${col};">${P(d.closing)}</p>` : '') + (d.sign && me ? `<p style="margin:0; font:600 15px ${NL_SANS}; color:${col};">${me}<br><span style="font-weight:400; color:${mut};">${prog}</span></p>` : '');
-  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.</td></tr>`;
+  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.${rec && rec.unsubToken ? '<br><a href="https://ichc-ghana.vercel.app/?unsubscribe='+encodeURIComponent(rec.unsubToken)+'" style="color:inherit; text-decoration:underline;">Unsubscribe</a>' : ''}</td></tr>`;
   const shell = (outer, inner)=>`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(d.subject||'Newsletter')}</title></head><body style="margin:0; padding:0; background:${outer};">${pre}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${outer};"><tr><td align="center" style="padding:24px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;">${inner}</table></td></tr></table></body></html>`;
   let inner = '';
   if(d.type==='research'){
@@ -4739,6 +4741,7 @@ function nlBuildText(d, rec){
     out.push(sub(b.title).toUpperCase()); if(b.meta) out.push(sub(b.meta)); if(b.body) out.push(sub(b.body)); if(nlUrl(b.link)) out.push(nlUrl(b.link)); out.push('');
   });
   if(d.closing) out.push(sub(d.closing)); if(d.sign && ME && ME.name) out.push('', ME.name);
+  if(rec && rec.unsubToken) out.push('', 'Unsubscribe: https://ichc-ghana.vercel.app/?unsubscribe='+encodeURIComponent(rec.unsubToken));
   return out.join('\n').trim();
 }
 
@@ -4754,6 +4757,7 @@ function nlGroups(){
   coords.forEach(c=>{ const l = students.filter(s=>s.coordinatorId===c.id); if(l.length) add('Students of a coordinator', 'co:'+c.id, `${c.name||'Coordinator'}'s students`, l); });
   [...new Set(students.map(s=>s.group).filter(Boolean))].sort().forEach(n=>add('Student groups', 'gr:'+n, 'Group '+n, students.filter(s=>s.group===n)));
   add('Joining the programme', 'interest', 'Interest list (from the website)', apps.filter(a=>a.status==='interested'));
+  add('Joining the programme', 'websubs', 'Website newsletter subscribers', (window.WEB_SUBS||[]).map(x=>({ id:'sub:'+x.id, email:x.email, name:x.name||'', unsubToken:x.token })));
   add('Joining the programme', 'applicants', 'Applicants waiting for a decision', apps.filter(a=>a.status!=='interested'));
   add('Joining the programme', 'onboarding', 'Accepted students still onboarding', students.filter(s=>s.stage && s.stage!=='Completed'));
   return g;
@@ -4766,7 +4770,7 @@ function nlRecipients(){
     if(!em){ noEmail++; return; }
     if(r.notifyEmail===false){ off++; return; }
     const isCoord = (DB.coordinators||[]).some(c=>c.id===r.id), isStudent = !isCoord && r.coordinatorId!==undefined;
-    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null });
+    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null, unsubToken: r.unsubToken||null });
   }));
   return { list:out, noEmail, off };
 }
@@ -4852,8 +4856,16 @@ function nlPreview(now){
   const run = ()=>{ const f = document.getElementById('nlPrev'); if(f) f.srcdoc = nlBuildEmail(NL, { name:(ME && ME.name) || 'Ama' }); };
   if(now) run(); else _nlPrevT = setTimeout(run, 350);
 }
+async function nlLoadWebSubs(){
+  try{
+    const { data, error } = await sb.rpc('subscribers_list'); if(error) throw error;
+    window.WEB_SUBS = (data||[]).filter(x=>x.status==='active' && x.token);
+    const a = document.getElementById('nlAud'); if(a){ a.innerHTML = nlAudienceHtml(); nlRefresh(); }
+  }catch(e){ console.warn('subscribers load failed', e); }
+}
 function wireNewsletter(){
   const q = id=>document.getElementById(id); if(!q('nlSend')) return;
+  if(ME && ME.role==='ambassador') nlLoadWebSubs();
   const touch = ()=>{ NL.status = null; nlSaveDraft(); nlPreview(false); nlRefresh(); };
   q('nlSubject').addEventListener('input', e=>{ NL.subject = e.target.value; touch(); });
   q('nlPre').addEventListener('input', e=>{ NL.preheader = e.target.value; touch(); });
@@ -6117,6 +6129,8 @@ function ghanaRegionKey(text){
   return best;
 }
 async function syncPublicDirectory(){
+  // Never overwrite the live public directory with a failed or empty load
+  if(dbLoadError || !(DB.coordinators||[]).length) return;
   const regions = new Set(DB.coordinators.map(c=>c.region).filter(Boolean));
   // Region-level presence only, for the public Ghana map (no names, counts or contacts).
   const regionPresence = {
@@ -10461,17 +10475,154 @@ const NAV = {
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['newsletter','Newsletters']] },
+    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
   ]
 };
 Object.assign(TAB_ICONS, {
+  website:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
   newsletter:'<path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0 1 1H7a2 2 0 0 1-2-2z"/><path d="M18 8h2v11a1 1 0 0 1-1 1"/><path d="M8 8h7M8 12h7M8 16h4"/>',
   lessons:'<rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10,9 16,12 10,15"/>',
   home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5a1 1 0 0 0 1 1h13V10"/><path d="M10 20.5v-6h4v6"/>',
   roadmap:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5"/>'
 });
+// ================= Website: messages, visitors, subscribers, events & testimonials (ambassador) =================
+const WEB_TABS = ['webmsgs','websubs','webstats','webcontent'];
+const WEBST = { filter:'all', days:30 };
+function webToast(msg, bad){
+  const t = document.createElement('div'); t.textContent = msg; t.setAttribute('role','status');
+  t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:9999;background:'+(bad?'#B3261E':'#1D1B3A')+';color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;max-width:90vw;';
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 3500);
+}
+function webWhen(v){ try{ return fmtDateTime(new Date(v).getTime()); }catch(e){ return String(v||''); } }
+const WEB_CSS = `<style>
+  .wb-tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px;}
+  .wb-chip{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; color:var(--navy-deep);}
+  .wb-chip.on{background:var(--navy-deep); color:#fff; border-color:var(--navy-deep);}
+  .wb-msg{margin-bottom:12px;} .wb-msg.done{opacity:.65;}
+  .wb-top{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; font-size:13px; color:var(--muted);}
+  .wb-kind{font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:3px 9px; border-radius:999px; background:#EEEAFB; color:#4527B8;}
+  .wb-kind.problem{background:#FDE7E4; color:#B3261E;} .wb-kind.chat{background:#E4F4EA; color:#0B6B3A;}
+  .wb-body{white-space:pre-wrap; font-size:14.5px; line-height:1.6; margin:8px 0 12px; max-height:260px; overflow:auto;}
+  .wb-acts{display:flex; gap:8px; flex-wrap:wrap; align-items:center;} .wb-acts input{flex:1 1 200px; padding:8px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:13px;}
+  .wb-tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px;}
+  .wb-tile{background:#fff; border:2px solid var(--line); border-radius:14px; padding:14px;} .wb-tile b{display:block; font-size:26px; color:var(--navy-deep);} .wb-tile span{font-size:12.5px; color:var(--muted);}
+  .wb-bars{display:flex; align-items:flex-end; gap:3px; height:120px; margin:10px 0 4px;} .wb-bar{flex:1; background:var(--navy); border-radius:3px 3px 0 0; min-height:2px;}
+  .wb-two{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;}
+  .wb-list{list-style:none; margin:8px 0 0; padding:0;} .wb-list li{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .wb-tbl{width:100%; border-collapse:collapse; font-size:14px;} .wb-tbl th,.wb-tbl td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line);} .wb-tbl th{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted);}
+  .wb-row{display:grid; grid-template-columns:1.4fr 130px 90px 1.4fr 1.4fr auto; gap:8px; align-items:center; margin-bottom:8px;} .wb-row input,.wb-row textarea{padding:8px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:13.5px; width:100%; box-sizing:border-box;}
+  .wb-trow{display:grid; grid-template-columns:1fr 1fr 2fr auto; gap:8px; align-items:start; margin-bottom:8px;} .wb-trow input,.wb-trow textarea{padding:8px 10px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:13.5px; width:100%; box-sizing:border-box;}
+  @media(max-width:760px){ .wb-row,.wb-trow{grid-template-columns:1fr;} }
+</style>`;
+function webHead(tab){
+  const t = { webmsgs:['Website messages','Messages sent through the contact form, problem reports and the chat hand-off.'],
+    webstats:['Website visitors','Anonymous visit counts. No names or emails are linked to these numbers.'],
+    websubs:['Newsletter subscribers','People who signed up for updates on the public website.'],
+    webcontent:['Events and testimonials','What appears in the Events and Testimonials sections of the public website.'] }[tab];
+  return WEB_CSS+'<div class="section-title"><div><h2>'+t[0]+'</h2><p>'+t[1]+'</p></div></div>';
+}
+async function webMount(tab){
+  const root = document.getElementById('webRoot'); if(!root) return;
+  root.innerHTML = webHead(tab)+'<div class="card" id="webBody">Loading…</div>';
+  try{
+    if(tab==='webmsgs') await webMsgs();
+    else if(tab==='webstats') await webStats();
+    else if(tab==='websubs') await webSubs();
+    else if(tab==='webcontent') await webContent();
+  }catch(e){ console.error(e); const b=document.getElementById('webBody'); if(b) b.innerHTML = 'Could not load this. '+escapeHtml((e&&e.message)||'Please try again.'); }
+}
+async function webMsgs(){
+  const { data, error } = await sb.rpc('site_messages_list', { p_limit:200 }); if(error) throw error;
+  const all = data || [];
+  const body = document.getElementById('webBody');
+  const draw = ()=>{
+    const f = WEBST.filter;
+    const rows = all.filter(m=> f==='all' ? true : f==='new' ? m.status==='new' : m.kind===f);
+    const n = k=> all.filter(m=> k==='all'?true : k==='new'? m.status==='new' : m.kind===k).length;
+    const chips = [['all','All'],['new','Open'],['contact','Contact'],['problem','Problems'],['chat','Chat hand-offs']].map(c=>'<button type="button" class="wb-chip'+(f===c[0]?' on':'')+'" data-f="'+c[0]+'">'+c[1]+' ('+n(c[0])+')</button>').join('');
+    body.style.padding='0'; body.style.border='none'; body.style.boxShadow='none'; body.style.background='transparent';
+    body.innerHTML = '<div class="wb-tabs">'+chips+'</div>' + (rows.length ? rows.map(m=>
+      '<div class="card wb-msg'+(m.status==='done'?' done':'')+'" data-id="'+escapeHtml(m.id)+'">'+
+      '<div class="wb-top"><span class="wb-kind '+escapeHtml(m.kind)+'">'+escapeHtml(m.kind)+'</span><b style="color:var(--navy-deep)">'+escapeHtml(m.name||'No name')+'</b><span>'+escapeHtml(m.email)+'</span><span>· '+escapeHtml(webWhen(m.created_at))+'</span>'+(m.topic?'<span>· '+escapeHtml(m.topic)+'</span>':'')+(m.status==='done'?'<span>· handled</span>':'')+'</div>'+
+      '<div class="wb-body">'+escapeHtml(m.message)+'</div>'+
+      '<div class="wb-acts"><a class="btn small" href="mailto:'+encodeURIComponent(m.email).replace('%40','@')+'?subject='+encodeURIComponent('Re: '+(m.topic||'your message'))+'">Reply by email</a>'+
+      '<input type="text" maxlength="1000" placeholder="Private note (optional)" value="'+escapeHtml(m.note||'')+'" data-note>'+
+      '<button type="button" class="btn small secondary" data-done="'+(m.status==='done'?'new':'done')+'">'+(m.status==='done'?'Reopen':'Mark as handled')+'</button></div></div>').join('')
+      : '<div class="card">Nothing here yet.</div>');
+    body.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{ WEBST.filter=b.dataset.f; draw(); }));
+    body.querySelectorAll('[data-done]').forEach(b=>b.addEventListener('click', async ()=>{
+      const card=b.closest('[data-id]'); const id=card.dataset.id; const note=card.querySelector('[data-note]').value;
+      b.disabled=true;
+      const { error } = await sb.rpc('site_message_update', { p_id:id, p_status:b.dataset.done, p_note:note });
+      if(error){ webToast('Could not save that.', true); b.disabled=false; return; }
+      const m=all.find(x=>x.id===id); if(m){ m.status=b.dataset.done; m.note=note; } draw(); webToast(b.dataset.done==='done'?'Marked as handled.':'Reopened.');
+    }));
+  };
+  draw();
+}
+async function webStats(){
+  const days = WEBST.days;
+  const { data, error } = await sb.rpc('site_stats', { p_days:days }); if(error) throw error;
+  const d = data || {}; const t = d.totals || {}; const body = document.getElementById('webBody');
+  const max = Math.max(1, ...(d.days||[]).map(x=>x.views||0));
+  const list = arr=> (arr&&arr.length) ? '<ul class="wb-list">'+arr.map(x=>'<li><span>'+escapeHtml(x.name||'(none)')+'</span><b>'+x.n+'</b></li>').join('')+'</ul>' : '<p style="color:var(--muted);font-size:14px;margin:8px 0 0;">No data yet.</p>';
+  body.style.padding='0'; body.style.border='none'; body.style.boxShadow='none'; body.style.background='transparent';
+  body.innerHTML = '<div class="wb-tabs">'+[7,30,90].map(n=>'<button type="button" class="wb-chip'+(n===days?' on':'')+'" data-d="'+n+'">Last '+n+' days</button>').join('')+'</div>'+
+    '<div class="wb-tiles">'+[['Page views',t.views],['Visitors',t.visitors],['Messages',t.messages],['Subscribers',t.subscribers],['New subscribers',t.new_subscribers]].map(x=>'<div class="wb-tile"><b>'+(x[1]||0)+'</b><span>'+x[0]+'</span></div>').join('')+'</div>'+
+    '<div class="card" style="margin-bottom:14px;"><b style="color:var(--navy-deep)">Views per day</b><div class="wb-bars">'+(d.days||[]).map(x=>'<div class="wb-bar" title="'+escapeHtml(x.day)+': '+x.views+' views, '+x.visitors+' visitors" style="height:'+Math.round((x.views||0)/max*100)+'%"></div>').join('')+'</div><small style="color:var(--muted)">Hover a bar for the day.</small></div>'+
+    '<div class="wb-two"><div class="card"><b style="color:var(--navy-deep)">Sections opened</b>'+list(d.sections)+'</div><div class="card"><b style="color:var(--navy-deep)">Where visitors came from</b>'+list(d.referrers)+'</div><div class="card"><b style="color:var(--navy-deep)">Devices</b>'+list(d.devices)+'</div><div class="card"><b style="color:var(--navy-deep)">Actions</b>'+list(d.actions)+'</div></div>';
+  body.querySelectorAll('[data-d]').forEach(b=>b.addEventListener('click',()=>{ WEBST.days=+b.dataset.d; webMount('webstats'); }));
+}
+async function webSubs(){
+  const { data, error } = await sb.rpc('subscribers_list'); if(error) throw error;
+  const all = data || []; const active = all.filter(s=>s.status==='active');
+  const body = document.getElementById('webBody');
+  body.innerHTML = '<div class="wb-acts" style="margin-bottom:12px;"><b style="color:var(--navy-deep)">'+active.length+' active</b><span style="color:var(--muted);font-size:14px;">of '+all.length+' total</span><button type="button" class="btn small secondary" id="wsCsv" style="margin-left:auto;">Download active list (CSV)</button></div>'+
+    (all.length ? '<div style="overflow-x:auto;"><table class="wb-tbl"><thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>'+all.map(s=>'<tr data-id="'+escapeHtml(s.id)+'"><td>'+escapeHtml(s.email)+'</td><td>'+escapeHtml(s.name||'')+'</td><td>'+escapeHtml(s.status)+'</td><td>'+escapeHtml(webWhen(s.created_at))+'</td><td><button type="button" class="btn small secondary" data-rm>Remove</button></td></tr>').join('')+'</tbody></table></div>' : '<p>No subscribers yet.</p>');
+  const csv = document.getElementById('wsCsv');
+  csv.addEventListener('click',()=>{ const q=v=>'"'+String(v||'').replace(/"/g,'""')+'"'; downloadCSV('newsletter-subscribers.csv', ['email,name,joined'].concat(active.map(s=>[q(s.email),q(s.name),q(s.created_at)].join(','))).join('\n')); });
+  body.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', async ()=>{
+    const tr=b.closest('tr'); if(!confirm('Remove this subscriber permanently?')) return;
+    const { error } = await sb.rpc('subscriber_remove', { p_id:tr.dataset.id }); if(error){ webToast('Could not remove.', true); return; }
+    webToast('Subscriber removed.'); webMount('websubs');
+  }));
+}
+async function webContent(){
+  const body = document.getElementById('webBody');
+  const rd = async key=>{ const { data, error } = await sb.from('ichc_kv').select('value').eq('key', key).maybeSingle(); if(error) throw error; return Array.isArray(data&&data.value) ? data.value : []; };
+  const events = await rd('site:events'), tests = await rd('site:testimonials');
+  body.innerHTML =
+    '<h3 style="margin:0 0 4px;font-size:17px;">Events and deadlines</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px;">Only upcoming dates show on the website. Past ones disappear by themselves.</p><div id="wcEv"></div>'+
+    '<div class="wb-acts" style="margin:6px 0 24px;"><button type="button" class="btn small secondary" id="wcEvAdd">Add an event</button><button type="button" class="btn small" id="wcEvSave">Save events</button></div>'+
+    '<h3 style="margin:0 0 4px;font-size:17px;">Testimonials</h3><p style="color:var(--muted);font-size:14px;margin:0 0 12px;">Only add words that the person has agreed to share publicly.</p><div id="wcT"></div>'+
+    '<div class="wb-acts" style="margin-top:6px;"><button type="button" class="btn small secondary" id="wcTAdd">Add a testimonial</button><button type="button" class="btn small" id="wcTSave">Save testimonials</button></div>';
+  const evBox=document.getElementById('wcEv'), tBox=document.getElementById('wcT');
+  const evRow=e=>{ const d=document.createElement('div'); d.className='wb-row';
+    d.innerHTML='<input data-k="title" placeholder="Title" maxlength="100" value="'+escapeHtml(e.title||'')+'"><input data-k="date" type="date" value="'+escapeHtml(e.date||'')+'"><input data-k="time" type="time" value="'+escapeHtml(e.time||'')+'"><input data-k="note" placeholder="Short note (optional)" maxlength="140" value="'+escapeHtml(e.note||'')+'"><input data-k="link" type="url" placeholder="Link (optional)" maxlength="300" value="'+escapeHtml(e.link||'')+'"><button type="button" class="btn small secondary" data-x>Remove</button>';
+    d.querySelector('[data-x]').addEventListener('click',()=>d.remove()); return d; };
+  const tRow=t=>{ const d=document.createElement('div'); d.className='wb-trow';
+    d.innerHTML='<input data-k="name" placeholder="Name" maxlength="80" value="'+escapeHtml(t.name||'')+'"><input data-k="role" placeholder="Role, e.g. Student, KNUST" maxlength="100" value="'+escapeHtml(t.role||'')+'"><textarea data-k="text" rows="2" placeholder="What they said" maxlength="500">'+escapeHtml(t.text||'')+'</textarea><button type="button" class="btn small secondary" data-x>Remove</button>';
+    d.querySelector('[data-x]').addEventListener('click',()=>d.remove()); return d; };
+  events.forEach(e=>evBox.appendChild(evRow(e))); tests.forEach(t=>tBox.appendChild(tRow(t)));
+  document.getElementById('wcEvAdd').addEventListener('click',()=>evBox.appendChild(evRow({})));
+  document.getElementById('wcTAdd').addEventListener('click',()=>tBox.appendChild(tRow({})));
+  const collect=(box,keys)=>[...box.children].map(r=>{ const o={}; keys.forEach(k=>{ const el=r.querySelector('[data-k="'+k+'"]'); o[k]=el?el.value.trim():''; }); return o; });
+  const save=async (key,val,label)=>{ const { error } = await sb.from('ichc_kv').upsert({ key, value:val }); if(error){ console.error(error); webToast('Could not save '+label+'.', true); } else webToast(label+' saved.'); };
+  document.getElementById('wcEvSave').addEventListener('click',()=>{
+    const list=collect(evBox,['title','date','time','note','link']).filter(e=>e.title||e.date);
+    const bad=list.find(e=>!e.title||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)); if(bad){ webToast('Every event needs a title and a date.', true); return; }
+    const badLink=list.find(e=>e.link && !/^https:\/\//i.test(e.link)); if(badLink){ webToast('Links must start with https://', true); return; }
+    list.forEach((e,i)=>e.id=e.id||uid()); save('site:events', list, 'Events');
+  });
+  document.getElementById('wcTSave').addEventListener('click',()=>{
+    const list=collect(tBox,['name','role','text']).filter(t=>t.text);
+    list.forEach(t=>t.id=uid()); save('site:testimonials', list, 'Testimonials');
+  });
+}
+
 const RM_HOSTED_KEYS = ['practice','exams','materials','library','mock','learn','hub','roadmap'];
 const SUBSEL = {};
 window.RM_HOSTED = '';
