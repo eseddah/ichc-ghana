@@ -7582,9 +7582,10 @@ function exbWork(msg){ if(XG){ XG.msg = msg; XG.t0 = Date.now(); } exbStatus(msg
 function exbWorkStop(){ if(XG){ clearInterval(XG.iv); XG = null; } }
 // One call to the AI, retried twice when the service is merely busy (never when the quota is used up).
 async function exbDraftCall(spec, label){
-  const waits = [5000, 10000];
+  const waits = [3000, 7000];
+  const withTimeout = (p, ms)=>Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('unavailable')), ms))]);
   for(let k = 0; ; k++){
-    try{ return await examAi('draft', { spec }); }
+    try{ return await withTimeout(examAi('draft', { spec }), 110000); }
     catch(e){
       console.error('exam-ai draft failed:', e && e.message);
       if(!e || e.message !== 'unavailable' || k >= waits.length) throw e;
@@ -7594,6 +7595,16 @@ async function exbDraftCall(spec, label){
   }
 }
 const EXB_BATCH = 8;
+const EXB_PAR = 4;   // how many batches are requested at the same time
+// Runs fn(0..n-1) with at most `par` in flight, starting them 600 ms apart. Stops starting new ones once stop() is true.
+async function exbPool(n, par, fn, stop){
+  let next = 0;
+  const worker = async (w)=>{
+    if(w) await exbSleep(600*w);
+    while(next < n && !(stop && stop())){ const i = next++; await fn(i); }
+  };
+  await Promise.all(Array.from({length:Math.min(par,n)}, (_,w)=>worker(w)));
+}
 
 // ---------------------------------------------------------------- ambassador / coordinator screen
 function examManageItem(e){
@@ -8028,30 +8039,50 @@ async function exbGenerate(){
   const batches = []; let cur = {}, n = 0;
   Object.keys(want).forEach(k=>{ for(let i=0;i<want[k];i++){ cur[k] = (cur[k]||0)+1; if(++n === EXB_BATCH){ batches.push(cur); cur = {}; n = 0; } } });
   if(n) batches.push(cur);
-  exbBusy(true); exbWorkStart();
-  let added = 0;
-  try{
-    for(let b=0; b<batches.length; b++){
-      if(b > 0) await exbSleep(2500);
-      const mix = batches[b], cnt = Object.values(mix).reduce((x,y)=>x+y,0);
-      const label = `Writing questions, batch ${b+1} of ${batches.length}.`;
-      exbWork(label + ' This can take a minute.');
-      const marks = Object.keys(mix).reduce((m,k)=>m + mix[k]*EXAM_TYPE_MARKS[k], 0);
-      const stems = exbStems(EXB.questions, Math.max(0, 1380 - base.userInstr.length - 160));
-      const note = (batches.length > 1 ? `This is part ${b+1} of ${batches.length} of one larger exam. ` : '') + (stems ? `Do not repeat or closely resemble these existing questions: ${stems}.` : '');
-      const spec = { title:base.title, subject:base.subject, topics:base.topics, level:base.level, difficulty:base.difficulty, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt*1.5)), instructions:(base.userInstr + (base.userInstr && note ? '\n' : '') + note).slice(0,1490), dataSheet:base.dataSheet && b===0 && !EXB.dataLine, previous:'', refine:'' };
-      const data = await exbDraftCall(spec, label);
-      const parsed = exbFromDraft(data);
-      if(!parsed.questions.length) throw new Error('unavailable');
-      parsed.questions.slice(0, EXAM_MAX_Q - EXB.questions.length).forEach(q=>{ EXB.questions.push(q); added++; });
-      if(b===0 && parsed.data && !EXB.dataLine){ EXB.dataLine = parsed.data; const el = document.getElementById('exbData'); if(el) el.value = parsed.data; }
-      if(!EXB.title.trim() && data.title){ EXB.title = chemify(data.title); const el = document.getElementById('examTitle'); if(el) el.value = EXB.title; const u = document.getElementById('exbUsing'); if(u) u.innerHTML = exbUsingText(); }
+  const stems = exbStems(EXB.questions, Math.max(0, 1380 - base.userInstr.length - 220));
+  const ready = new Array(batches.length).fill(null);   // finished batches wait here so questions are added in order
+  let flushed = 0, finished = 0, added = 0, firstErr = null, fatal = false;
+  const FATAL = ['quota','offline','not_configured','rate_limited','forbidden','not_member','too_many'];
+  const flush = ()=>{
+    while(flushed < batches.length && ready[flushed]){
+      const r = ready[flushed]; ready[flushed] = null; flushed++;
+      if(r === 'skip') continue;
+      r.parsed.questions.slice(0, EXAM_MAX_Q - EXB.questions.length).forEach(q=>{ EXB.questions.push(q); added++; });
+      if(r.parsed.data && !EXB.dataLine && flushed === 1){ EXB.dataLine = r.parsed.data; const el = document.getElementById('exbData'); if(el) el.value = r.parsed.data; }
+      if(!EXB.title.trim() && r.data && r.data.title){ EXB.title = chemify(r.data.title); const el = document.getElementById('examTitle'); if(el) el.value = EXB.title; const u = document.getElementById('exbUsing'); if(u) u.innerHTML = exbUsingText(); }
       exbPaint();
     }
-    exbWorkStop(); exbStatus(`✓ Added ${added} question${added===1?'':'s'}. Review them below, set the timers, then post.`);
-  }catch(e){
-    console.error('Exam generation failed', e);
+  };
+  exbBusy(true); exbWorkStart();
+  exbWork(`Writing ${total} question${total===1?'':'s'}, ${Math.min(EXB_PAR, batches.length)} part${Math.min(EXB_PAR, batches.length)===1?'':'s'} at a time. This usually takes under a minute.`);
+  try{
+    await exbPool(batches.length, EXB_PAR, async (b)=>{
+      const mix = batches[b], cnt = Object.values(mix).reduce((x,y)=>x+y,0);
+      const marks = Object.keys(mix).reduce((m,k)=>m + mix[k]*EXAM_TYPE_MARKS[k], 0);
+      const note = (batches.length > 1 ? `This is part ${b+1} of ${batches.length} of one larger exam, written alongside the other parts. Cover a different sub-area of the topic from the other parts and vary the question styles. ` : '') + (stems ? `Do not repeat or closely resemble these existing questions: ${stems}.` : '');
+      const spec = { title:base.title, subject:base.subject, topics:base.topics, level:base.level, difficulty:base.difficulty, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt*1.5)), instructions:(base.userInstr + (base.userInstr && note ? '\n' : '') + note).slice(0,1490), dataSheet:base.dataSheet && b===0 && !EXB.dataLine, previous:'', refine:'' };
+      try{
+        const data = await exbDraftCall(spec, `Part ${b+1} of ${batches.length}.`);
+        const parsed = exbFromDraft(data);
+        if(!parsed.questions.length) throw new Error('unavailable');
+        ready[b] = { parsed, data };
+      }catch(e){
+        console.error('Exam generation part failed', b+1, e);
+        if(!firstErr) firstErr = e;
+        if(e && FATAL.includes(e.message)) fatal = true;
+        ready[b] = 'skip';
+      }
+      finished++; flush();
+      exbWork(`Writing questions… ${finished} of ${batches.length} parts done, ${added} question${added===1?'':'s'} added so far.`);
+    }, ()=>fatal);
+    // parts never started because of a fatal error
+    for(let i=0;i<batches.length;i++) if(!ready[i] && i>=flushed) ready[i] = 'skip';
+    flush();
     exbWorkStop();
+    if(added >= total) exbStatus(`✓ Added ${added} question${added===1?'':'s'}. Review them below, set the timers, then post.`);
+    else exbStatus((added ? `Added ${added} of ${total} questions. ` : 'Nothing was generated. ') + exbErrText(firstErr || new Error('unavailable')) + (added ? ' Press Generate again for the rest.' : ''));
+  }catch(e){
+    console.error('Exam generation failed', e); exbWorkStop();
     exbStatus((added ? `Added ${added} of ${total} questions. ` : 'Nothing was generated. ') + exbErrText(e) + (added ? ' Press Generate again for the rest.' : ''));
   }finally{ exbWorkStop(); exbBusy(false); exbUpdateTotal(); }
 }
@@ -8059,24 +8090,28 @@ async function exbRefine(kind){
   const ai = EXB.questions.filter(q=>q.ai);
   if(!ai.length) return exbStatus('Generate some questions first.');
   const base = exbAiSpec();
+  const chunks = []; for(let i=0; i<ai.length; i+=EXB_BATCH) chunks.push(ai.slice(i, i+EXB_BATCH));
   exbBusy(true); exbWorkStart();
-  let done = 0;
+  let done = 0, finished = 0, fatal = false, firstErr = null;
+  const FATAL = ['quota','offline','not_configured','rate_limited','forbidden','not_member'];
   try{
-    for(let i=0; i<ai.length; i+=EXB_BATCH){
-      if(i > 0) await exbSleep(2500);
-      const chunk = ai.slice(i, i+EXB_BATCH);
-      const label = `Adjusting questions ${i+1} to ${Math.min(i+EXB_BATCH, ai.length)} of ${ai.length}.`;
-      exbWork(label);
-      const mix = {}; chunk.forEach(q=>{ mix[q.type] = (mix[q.type]||0)+1; });
+    exbWork(`Adjusting ${ai.length} questions, ${Math.min(EXB_PAR, chunks.length)} part${Math.min(EXB_PAR, chunks.length)===1?'':'s'} at a time…`);
+    await exbPool(chunks.length, EXB_PAR, async (c)=>{
+      const chunk = chunks[c], mix = {}; chunk.forEach(q=>{ mix[q.type] = (mix[q.type]||0)+1; });
       const marks = chunk.reduce((m,q)=>m+q.marks,0);
       const spec = { title:base.title, subject:base.subject, topics:base.topics, level:base.level, difficulty:base.difficulty, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(chunk.length*1.5)), instructions:base.userInstr, dataSheet:false, previous:exbToDraftText(chunk), refine:kind };
-      const data = await exbDraftCall(spec, label);
-      const parsed = exbFromDraft(data).questions;
-      if(parsed.length !== chunk.length) continue;
-      chunk.forEach((q,k)=>{ const p = parsed[k]; Object.assign(q, { type:p.type, text:p.text, options:p.options, correct:p.correct, check:p.check, marks:p.marks, answer:p.answer, scheme:p.scheme }); done++; });
-      exbPaint();
-    }
-    exbWorkStop(); exbStatus(done ? `✓ Adjusted ${done} question${done===1?'':'s'}. Timers were left as you set them.` : 'The AI could not adjust them this time. Please try again.');
+      try{
+        const data = await exbDraftCall(spec, `Part ${c+1} of ${chunks.length}.`);
+        const parsed = exbFromDraft(data).questions;
+        if(parsed.length === chunk.length){
+          chunk.forEach((q,k)=>{ const p = parsed[k]; Object.assign(q, { type:p.type, text:p.text, options:p.options, correct:p.correct, check:p.check, marks:p.marks, answer:p.answer, scheme:p.scheme }); done++; });
+          exbPaint();
+        }
+      }catch(e){ console.error(e); if(!firstErr) firstErr = e; if(e && FATAL.includes(e.message)) fatal = true; }
+      finished++; exbWork(`Adjusting questions… ${finished} of ${chunks.length} parts done.`);
+    }, ()=>fatal);
+    exbWorkStop();
+    exbStatus(done ? `✓ Adjusted ${done} question${done===1?'':'s'}. Timers were left as you set them.` : (firstErr ? exbErrText(firstErr) : 'The AI could not adjust them this time. Please try again.'));
   }catch(e){ console.error(e); exbWorkStop(); exbStatus(exbErrText(e)); }
   finally{ exbWorkStop(); exbBusy(false); }
 }
