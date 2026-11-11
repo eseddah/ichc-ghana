@@ -3773,7 +3773,7 @@ function chemParse(body){
   if(depth || !n) return null;
   return { out, groups:n, hasParen, lastDigits };
 }
-function chemify(text){
+function chemifyCore(text){
   if(!text) return text;
   let t = String(text);
   // arrows and symbols
@@ -3806,6 +3806,45 @@ function chemify(text){
   });
   return t;
 }
+
+// ---- Cleaning layer: removes LaTeX, markdown and stray ! _ ^ { } so replies show only real chemistry symbols ----
+const CHEM_SYM = { rightarrow:'→', to:'→', longrightarrow:'→', xrightarrow:'→', Rightarrow:'⇒', leftarrow:'←', rightleftharpoons:'⇌', leftrightharpoons:'⇌', leftrightarrow:'↔', uparrow:'↑', downarrow:'↓', times:'×', cdot:'·', cdots:'…', ldots:'…', pm:'±', mp:'∓', approx:'≈', neq:'≠', leq:'≤', geq:'≥', le:'≤', ge:'≥', degree:'°', circ:'°', infty:'∞', ll:'≪', gg:'≫', propto:'∝', sim:'∼', alpha:'α', beta:'β', gamma:'γ', delta:'δ', Delta:'Δ', epsilon:'ε', varepsilon:'ε', theta:'θ', lambda:'λ', mu:'μ', nu:'ν', pi:'π', rho:'ρ', sigma:'σ', Sigma:'Σ', tau:'τ', phi:'φ', omega:'ω', Omega:'Ω', eta:'η', chi:'χ' };
+const CHEM_SUBL = { a:'ₐ', e:'ₑ', o:'ₒ', x:'ₓ', h:'ₕ', k:'ₖ', l:'ₗ', m:'ₘ', n:'ₙ', p:'ₚ', s:'ₛ', t:'ₜ', i:'ᵢ', j:'ⱼ', r:'ᵣ', u:'ᵤ', v:'ᵥ', '+':'₊', '-':'₋', '=':'₌', '(':'₍', ')':'₎' };
+const CHEM_SUPL = { n:'ⁿ', i:'ⁱ', x:'ˣ', '(':'⁽', ')':'⁾', '=':'⁼' };
+function chemSubStr(x){ let o = ''; for(const c of x){ if(/\d/.test(c)) o += CHEM_SUB[c]; else if(CHEM_SUBL[c]) o += CHEM_SUBL[c]; else return x; } return o; }
+function chemSupStr(x){ let o = ''; for(const c of x){ if(CHEM_SUP[c]) o += CHEM_SUP[c]; else if(CHEM_SUPL[c]) o += CHEM_SUPL[c]; else return x; } return o; }
+function chemPre(s){
+  let t = String(s);
+  // LaTeX wrappers: $...$, $$...$$, \( \), \[ \]
+  t = t.replace(/\\[\[\]()]/g, '').replace(/\$\$/g, '').replace(/\$([^$\n]+)\$/g, (m, g)=> /[\\^_{}]/.test(g) ? g : m);
+  t = t.replace(/\\ce\{((?:[^{}]|\{[^{}]*\})*)\}/g, '$1');
+  t = t.replace(/\\(?:text|textbf|textit|mathrm|mathbf|mathit|boldsymbol|operatorname|mbox)\{([^{}]*)\}/g, '$1');
+  t = t.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '$1/$2').replace(/\\sqrt\{([^{}]*)\}/g, '√($1)');
+  t = t.replace(/\\(?:left|right|big|Big|bigg|Bigg)(?![A-Za-z])\s*/g, '').replace(/\\!/g, '').replace(/\\[,;: ]|\\q?quad(?![A-Za-z])/g, ' ');
+  t = t.replace(/\\([A-Za-z]+)/g, (m, n)=> CHEM_SYM[n] || n);
+  t = t.replace(/\\([%&#{}$])/g, '$1');
+  // a stray ! stuck inside a formula, e.g. H!2O or SO!4
+  t = t.replace(/(?<=[A-Za-z0-9)\]])!(?=\d|_|\^|\{)/g, '');
+  // subscripts: H_2O, H_{2}O, K_{sp}, K_sp
+  t = t.replace(/_\{([^{}]*)\}/g, (m, g)=> chemSubStr(g.replace(/\s+/g, '')));
+  t = t.replace(/([A-Za-z0-9)\]])_(\d+)/g, (m, a, d)=> a + chemSub(d));
+  t = t.replace(/([A-Za-z])_([a-z]{1,3})(?![A-Za-z0-9_])/g, (m, a, w)=> a + chemSubStr(w));
+  // superscripts written with braces: Ca^{2+}, 10^{-3}, ^{n}
+  t = t.replace(/\^\{([^{}]*)\}/g, (m, g)=>{ g = g.replace(/\s+/g, '').replace(/−/g, '-'); return /^[+-]?\d*[+-]?$/.test(g) && g ? '^' + g : chemSupStr(g); });
+  t = t.replace(/\^([nix])(?![A-Za-z])/g, (m, c)=> CHEM_SUPL[c]).replace(/Δ[ \t](?=[HGSEUT](?![A-Za-z]))/g, 'Δ');
+  // markdown
+  t = t.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '$1 ($2)');
+  t = t.replace(/```+/g, '').replace(/`([^`\n]+)`/g, '$1');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/__([^_\n]+)__/g, '$1');
+  t = t.replace(/(^|[\s(])\*([^\s*][^*\n]*?)\*(?=[\s).,;:!?]|$)/g, '$1$2').replace(/(^|[\s(])_([^_\s][^_\n]*?)_(?=[\s).,;:!?]|$)/g, '$1$2');
+  t = t.replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '').replace(/^[ \t]*[-*+][ \t]+/gm, '• ').replace(/^[ \t]*>[ \t]?/gm, '').replace(/^[ \t]*(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '');
+  return t;
+}
+function chemPost(t){
+  // whatever the formatter could not turn into a symbol is dropped, so no raw ^ { } or joined_underscores remain
+  return String(t).replace(/\^\s*/g, '').replace(/[{}]/g, '').replace(/(?<=[A-Za-z0-9])_(?=[A-Za-z0-9])/g, '');
+}
+function chemify(text){ if(!text) return text; return chemPost(chemifyCore(chemPre(text))); }
 
 // ---- ChemPrep scientist: a chat helper that answers only from this page's own programme + IChC content ----
 const MC = {
@@ -3928,7 +3967,7 @@ function mcSvg(l, cls){
     aiTimedOut = false;
     if(typeof sbReady === 'undefined' || !sbReady) return null;
     try{
-      const last = { role:'user', text: (mcLang !== 'English' ? `[Please reply in ${mcLang==='Twi'?'Twi (Akan)':mcLang}.] ` : '') + q };
+      const last = { role:'user', text: (mcLang !== 'English' ? `[Please reply in ${mcLang==='Twi'?'Twi (Akan)':mcLang}.] ` : '') + q + ' [Formatting: write chemistry in plain text with real symbols, for example H₂O, SO₄²⁻, Ca²⁺, →, ⇌, Δ, 10⁻³. Never use LaTeX, underscores, carets, asterisks, hashes or markdown.]' };
       if(att) last.image = { mime:att.mime, data:att.data };
       const msgs = hist.concat([last]).slice(-8);
       const r = await Promise.race([ sb.functions.invoke('programme-chat', { body:{ messages: msgs } }), new Promise((_,rej)=>setTimeout(()=>{ aiTimedOut = true; rej(new Error('timeout')); }, 36000)) ]);
