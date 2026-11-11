@@ -1705,7 +1705,7 @@ const TAB_POLL_PROPS = {
   calls:['callsheets','attendance'], classes:['callsheets','students','coordinators'], materials:['materials'], practice:['practice'], feed:['materials','callsheets','practice','exams'],
   overview:['students','coordinators','applications','callsheets'], welcome:['callsheets','students'],
   hub:['callsheets','materials','practice','students'], lounge:['loungePosts','polls'], applications:['applications'],
-  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], personalemail:['students'], newsletter:['students','coordinators','applications'], load:['students','coordinators']
+  exams:['exams','examAttempts','examRetakes'], library:['library'], smslog:['smsLog'], personalsms:['students','smsLog'], whatsapp:['students','coordinators','applications'], personalemail:['students'], newsletter:['students','coordinators','applications'], load:['students','coordinators']
 };
 // Reads one shared record straight from the database. Returns null if the read failed
 // (without tripping the "couldn't load roster" banner that boot() uses).
@@ -2562,6 +2562,7 @@ async function notifyApplicantDecision({app, decision, reason, custom}){
     queueSmsSend(s.webhookUrl, { to:app.phone, name:app.name, from:ME.name, subject:d.title, message: accepted ? withPortalLink(d.sms) : d.sms,
       recipientId:app.id, recipientRole:'applicant', studentCoordinatorId:null });
   }
+  if(accepted && app.phone){ await waLoad(); waAuto('app_accepted', [{ id:app.id, name:app.name, phone:app.phone, consent:waOk(app,'applicant') }], {}, 'decision:'+(app.token||app.id)); }
 }
 
 // Emails a visitor whose Google sign-in doesn't match anyone on the roster at
@@ -3181,6 +3182,7 @@ const TAB_ICONS = {
   applicantmsg:'<path d="M3 11l18-8-8 18-2-8z"/>',
   load:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
   personalsms:'<path d="M4 5h16v11H11l-4 4v-4H4z"/><circle cx="9" cy="10.5" r=".7"/><circle cx="12" cy="10.5" r=".7"/><circle cx="15" cy="10.5" r=".7"/>',
+  whatsapp:'<path d="M12 3.5a8.5 8.5 0 0 0-7.3 12.8L3.5 20.5l4.3-1.1A8.5 8.5 0 1 0 12 3.5z"/><path d="M9 8.8c.3 2.6 2.6 4.9 5.2 5.2l1.2-1.2-1.8-1-.8.7c-.9-.3-1.7-1.1-2-2l.7-.8-1-1.8z"/>',
   smslog:'<rect x="6" y="3" width="12" height="18" rx="2.5"/><line x1="10.5" y1="18" x2="13.5" y2="18"/>',
   notifications:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
   settings:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
@@ -3200,7 +3202,7 @@ function tabIconSvg(k){
 }
 function buildTabsLegacy(){
   const tabsFor = {
-    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['newsletter','Newsletters'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
+    ambassador:[['overview','Overview'],['roadmap','Roadmap'],['applications','Applications'],['people','People'],['load','Coordinator load'],['classes','Schedule classes'],['feed','Activity feed'],['announce','Announcements'],['alerts','Alerts'],['lounge','Coordinator Lounge'],['library','Resource library'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['certificates','Certificates'],['onboarding','Onboarding setup'],['applicantmsg','Applicant updates'],['personalsms','Text a student'],['personalemail','Email a student'],['whatsapp','WhatsApp'],['newsletter','Newsletters'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications'],['settings','Settings']],
     coordinator:[['space','My space'],['roadmap','Roadmap'],['students','My students'],['calls','Call sheets'],['materials','Materials'],['practice','Practice question'],['alerts','Alerts'],['exams','Exams'],['mock','Mock & progress'],['chat','Community chat'],['lounge','Coordinator Lounge'],['messages','Messages'],['library','Resource library'],['certificates','My certificates'],['smslog','SMS Log'],['emaillog','Email Log'],['notifications','Notifications']],
     student:[['welcome','Welcome'],['roadmap','Roadmap'],['hub','My hub'],['learn','Daily practice'],['announce','Announcements'],['practice','Practice question'],['exams','Exams'],['mock','Mock competition'],['chat','Community chat'],['ask','Ask a question'],['library','Resource library'],['certificates','My certificates'],['notifications','Notifications']]
   };
@@ -3290,6 +3292,7 @@ function renderLegacy(tab){
   else if(tab==='onboarding' && canAdminApps()) html = onboardingSetupView();
   else if(tab==='applicantmsg' && canAdminApps()) html = applicantMsgView();
   else if(tab==='personalsms' && ME.role==='ambassador') html = personalSmsView();
+  else if(tab==='whatsapp' && ME.role==='ambassador') html = waView();
   else if(tab==='personalemail' && ME.role==='ambassador') html = personalEmailView();
   else if(tab==='newsletter' && ME.role==='ambassador') html = newsletterView();
   else if(tab==='classes' && ME.role==='ambassador') html = classesAdminView();
@@ -4656,6 +4659,275 @@ function personalSmsView(){ return bcView('sms'); }
 function wirePersonalSms(){ wireBc('sms'); }
 function personalEmailView(){ return bcView('email'); }
 async function wirePersonalEmail(){ wireBc('email'); }
+
+// ================= WhatsApp automations (Ambassador only) =================
+// Messages go out through the Supabase function "whatsapp-send" (WhatsApp Business API). Settings and the message log are private to the Ambassador.
+const WA = { st:null, stAt:0, status:null, log:[], optout:[], busy:false, bc:{ aud:'students', coord:'', text:'', sending:false, msg:null }, sess:{ title:'', date:'', time:'', link:'', audience:'attendees' }, testMsg:'' };
+const WA_EVENTS = [
+  ['app_received','Application received','Tells an applicant that their application arrived (checked every 10 minutes, for applications from the last 3 days).','ichc_application_received'],
+  ['interview_invite','Interview invitation','Sent to the applicant when you invite them to an interview in Applications.','ichc_interview_invite'],
+  ['app_accepted','Application accepted','Sent to the applicant when you accept them, with the portal sign-in link.','ichc_application_accepted'],
+  ['exam_posted','Exam posted','Sent to the students it is for when you post an exam.','ichc_exam_posted'],
+  ['exam_reminder','Exam reminder','Sent 24 hours and 1 hour before an exam opens.','ichc_exam_reminder'],
+  ['exam_results','Results released','Sent to students when you release the results of an exam.','ichc_exam_results'],
+  ['series_reminder','Chemistry Series reminder','Sent 24 hours and 1 hour before each Series session you add below.','ichc_series_reminder']
+];
+const WA_TPL = {
+  ichc_application_received:'Hello {{1}}, we have received your application to Chemistry Competition Prep. We review every application and will contact you if you are shortlisted for an interview.',
+  ichc_interview_invite:'Hello {{1}}, you are invited to an interview for Chemistry Competition Prep on {{2}}. Where: {{3}}. Please reply here if you cannot attend.',
+  ichc_application_accepted:'Congratulations {{1}}! You have been accepted into Chemistry Competition Prep. Sign in to the student portal with your Google account at {{2}} to start your onboarding.',
+  ichc_exam_posted:'Hello {{1}}, a new exam, {{2}}, has been posted. It opens on {{3}} and closes on {{4}}. Sign in to the portal to read the instructions.',
+  ichc_exam_reminder:'Reminder, {{1}}: the exam {{2}} {{3}}. Sign in to the portal at {{4}} to take it. Good luck!',
+  ichc_exam_results:'Hello {{1}}, your results for {{2}} are now available. Sign in to the portal at {{3}} to see your score and feedback.',
+  ichc_series_reminder:'Hello {{1}}, a reminder that the Chemistry Series session "{{2}}" starts {{3}}. Join here: {{4}} See you there!',
+  ichc_announcement:'Hello {{1}}, a message from the Programme Ambassador of Chemistry Competition Prep: {{2}} Reply STOP to opt out.'
+};
+function waNormalize(s){
+  s = s || {}; const auto = {};
+  WA_EVENTS.forEach(([k,,,t])=>{ const a = (s.auto && s.auto[k]) || {}; auto[k] = { on:!!a.on, tpl:a.tpl || t }; });
+  return { enabled:s.enabled===true, optIn:s.optIn==='all' ? 'all' : 'optedin', lang:s.lang || 'en', portalUrl:s.portalUrl || (portalUrl() || 'https://ichc-ghana.vercel.app/'), announceTpl:s.announceTpl || 'ichc_announcement', auto, sessions:Array.isArray(s.sessions) ? s.sessions : [] };
+}
+async function waLoad(force){
+  if(!sb) return waNormalize(null);
+  if(!force && WA.st && Date.now() - WA.stAt < 20000) return WA.st;
+  const { data, error } = await sb.from('wa_settings').select('settings').eq('id',1).maybeSingle();
+  if(error){ console.error('WhatsApp settings', error); return WA.st || waNormalize(null); }
+  WA.st = waNormalize(data && data.settings); WA.stAt = Date.now(); return WA.st;
+}
+async function waSave(){
+  const { error } = await sb.from('wa_settings').upsert({ id:1, settings:WA.st, updated_at:new Date().toISOString(), updated_by:ME.email });
+  if(error){ alert('Could not save the WhatsApp settings: ' + error.message); return false; }
+  WA.stAt = Date.now(); return true;
+}
+function waFmt(v){
+  const ms = typeof v==='number' ? v : (/^\d{10,}$/.test(String(v)) ? Number(v) : Date.parse(v));
+  if(!isFinite(ms)) return String(v || '');
+  const d = new Intl.DateTimeFormat('en-GB',{ timeZone:'Africa/Accra', weekday:'long', day:'numeric', month:'long' }).format(ms);
+  const t = new Intl.DateTimeFormat('en-GB',{ timeZone:'Africa/Accra', hour:'numeric', minute:'2-digit', hour12:true }).format(ms);
+  return `${d} at ${t} (GMT)`;
+}
+// does this person agree to WhatsApp messages? (rule chosen by the Ambassador in the WhatsApp tab)
+function waOk(rec, kind){
+  const all = WA.st && WA.st.optIn === 'all';
+  if(kind === 'applicant') return rec.notifyWa === true || (all && rec.notifySms !== false);
+  return all ? rec.notifyWa !== false : rec.notifyWa === true;
+}
+// Called by the portal when the Ambassador does something (accept, invite, post an exam, release results). Never blocks or breaks the action itself.
+async function waAuto(event, recipients, vars, ref){
+  try{
+    if(!ME || ME.role !== 'ambassador' || !sb) return null;
+    const st = await waLoad(); if(!st.enabled || !st.auto[event] || !st.auto[event].on) return null;
+    const list = (recipients || []).filter(r=>r && r.phone);
+    if(!list.length) return null;
+    const out = { sent:0, failed:0, skipped:0 };
+    for(let i=0; i<list.length; i+=40){
+      const { data, error } = await sb.functions.invoke('whatsapp-send', { body:{ action:'send', event, recipients:list.slice(i,i+40), vars:vars || {}, ref:ref || '' } });
+      if(error) throw error;
+      if(data){ out.sent += data.sent || 0; out.failed += data.failed || 0; out.skipped += data.skipped || 0; }
+    }
+    return out;
+  }catch(e){ console.error('WhatsApp automation failed', e); return null; }
+}
+const waPerson = (r, kind)=>({ id:r.id, name:r.name, phone:r.phone, consent:waOk(r, kind || 'roster') });
+
+function waView(){
+  return `
+  <div class="section-title"><div><h2>WhatsApp automations</h2><p>Automatic WhatsApp messages, switched on and off by you. Nothing is sent until the master switch is on, and every automation has its own switch.</p></div></div>
+  <div id="waBody"><p class="note">Loading…</p></div>`;
+}
+async function wireWa(){
+  const st = await waLoad(true);
+  const [stat, log, opt] = await Promise.all([
+    sb.functions.invoke('whatsapp-send', { body:{ action:'status' } }).then(r=>r.data || null).catch(()=>null),
+    sb.from('wa_log').select('ts,event,template,recipient_name,phone_tail,status,error').order('ts',{ ascending:false }).limit(40).then(r=>r.data || []).catch(()=>[]),
+    sb.from('wa_optout').select('phone,at,reason').order('at',{ ascending:false }).then(r=>r.data || []).catch(()=>[])
+  ]);
+  WA.status = stat; WA.log = log; WA.optout = opt; WA.st = st;
+  waRender(); waWireBody();
+}
+function waRender(){
+  const body = document.getElementById('waBody'); if(!body) return;
+  const st = WA.st, stat = WA.status || {}, y = window.scrollY;
+  const students = (DB.students || []).filter(s=>!ghostedStudent(s)), withPhone = students.filter(s=>(s.phone||'').trim()), coordsP = (DB.coordinators || []).filter(c=>(c.phone||'').trim());
+  const optedS = withPhone.filter(s=>s.notifyWa === true).length, optedC = coordsP.filter(c=>c.notifyWa === true).length;
+  const stepsOpen = stat.configured ? '' : 'open';
+  const tplRows = Object.keys(WA_TPL).map(n=>`<div class="item" style="padding:10px 12px;"><div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;"><div><b style="font-size:13px;">${n}</b><div style="font-size:12.5px; color:var(--muted); margin-top:4px; white-space:pre-wrap;">${escapeHtml(WA_TPL[n])}</div></div><button class="btn ghost small" type="button" data-wa-copy="${n}">Copy text</button></div></div>`).join('');
+  const autoRows = WA_EVENTS.map(([k,label,desc])=>{ const a = st.auto[k]; return `<div class="item" style="padding:12px;">
+      <label style="display:flex; gap:10px; align-items:flex-start; margin:0; text-transform:none; font-weight:600; font-size:14px; color:var(--ink);"><input type="checkbox" data-wa-auto="${k}" ${a.on?'checked':''} style="width:auto; margin-top:3px;"><span>${escapeHtml(label)}<span style="display:block; font-weight:400; font-size:12.5px; color:var(--muted); margin-top:2px;">${escapeHtml(desc)}</span></span></label>
+      <div style="margin:8px 0 0 28px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span style="font-size:12px; color:var(--muted);">Template name</span><input data-wa-tpl="${k}" value="${escapeHtml(a.tpl)}" style="max-width:260px;" aria-label="Template name for ${escapeHtml(label)}"></div></div>`; }).join('');
+  const sessions = (st.sessions || []).slice().sort((a,b)=>String(a.startAt).localeCompare(String(b.startAt)));
+  const audLabel = { attendees:'People who signed up to attend', signups:'Everyone who signed up for the Series', students:'All students', everyone:'Students and coordinators' };
+  const sessRows = sessions.length ? sessions.map(s=>`<div class="item" style="padding:10px 12px; display:flex; justify-content:space-between; gap:10px; align-items:center;"><div><b style="font-size:13.5px;">${escapeHtml(s.title)}</b><div style="font-size:12.5px; color:var(--muted);">${escapeHtml(waFmt(s.startAt))} · ${escapeHtml(audLabel[s.audience] || s.audience)}</div></div><button class="btn ghost small" type="button" data-wa-delsess="${escapeHtml(s.id)}">Remove</button></div>`).join('') : '<p class="note" style="margin:0;">No sessions yet. Add one and its reminders go out by themselves.</p>';
+  const coordOpts = (DB.coordinators || []).map(c=>`<option value="${escapeHtml(c.id)}" ${WA.bc.coord===c.id?'selected':''}>${escapeHtml(c.name||'Coordinator')}</option>`).join('');
+  const audOpts = [['students','All students'],['first','First set of students'],['second','Second set (newly accepted)'],['coordinators','All coordinators'],['bycoord','Students of one coordinator'],['signups','Chemistry Series sign-ups (who agreed to be contacted)']].map(([v,l])=>`<option value="${v}" ${WA.bc.aud===v?'selected':''}>${l}</option>`).join('');
+  const evLabel = Object.fromEntries(WA_EVENTS.map(e=>[e[0], e[1]])); evLabel.test = 'Test'; evLabel.announcement = 'Message to a group';
+  const stLabel = { queued:'Sending', sent:'Sent', delivered:'Delivered', read:'Read', failed:'Failed' };
+  const logRows = WA.log.length ? WA.log.map(r=>`<tr><td style="white-space:nowrap;">${escapeHtml(new Date(r.ts).toLocaleString([], { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }))}</td><td>${escapeHtml(evLabel[r.event] || r.event || '')}</td><td>${escapeHtml(r.recipient_name || '')} <span style="color:var(--muted);">…${escapeHtml(r.phone_tail || '')}</span></td><td><b style="color:${r.status==='failed'?'#B91C1C':(r.status==='read'||r.status==='delivered'?'#15803D':'inherit')}">${escapeHtml(stLabel[r.status] || r.status)}</b>${r.error?`<div style="font-size:11.5px; color:#B91C1C;">${escapeHtml(r.error)}</div>`:''}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--muted);">Nothing sent yet.</td></tr>';
+  body.innerHTML = `
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 6px; font-size:16px;">1. Connection</h3>
+    <p style="margin:0 0 10px;" class="${stat.configured ? '' : 'note'}">${stat.configured ? `<b style="color:#15803D;">Connected</b> to the WhatsApp Business API (phone number ID ending ${escapeHtml(stat.phoneTail)}).` : 'Not connected yet. Follow the steps below once; after that everything is automatic.'}</p>
+    <details ${stepsOpen}><summary style="cursor:pointer; font-weight:600;">Setup steps and message templates</summary>
+      <ol style="margin:10px 0 0 18px; padding:0; line-height:1.7; font-size:13.5px;">
+        <li>In <b>Meta for Developers</b> create an app with the <b>WhatsApp</b> product and add the phone number you want to send from (it cannot be one that is already on the normal WhatsApp app).</li>
+        <li>In <b>Supabase → Edge Functions → Secrets</b> add <code>WHATSAPP_TOKEN</code> (a permanent system-user token) and <code>WHATSAPP_PHONE_NUMBER_ID</code>. Optional but recommended: <code>WHATSAPP_VERIFY_TOKEN</code> (any word you choose) and <code>WHATSAPP_APP_SECRET</code>.</li>
+        <li>In Meta → WhatsApp → Configuration, set the webhook <b>Callback URL</b> to <code style="word-break:break-all;">${escapeHtml(stat.webhookUrl || 'https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/whatsapp-webhook')}</code>, use your verify token, and subscribe to <b>messages</b>. This shows Delivered/Read ticks here and honours STOP replies.</li>
+        <li>In WhatsApp Manager → Message templates, create each template below (category <b>Utility</b>, language <b>English</b>) using exactly these names and texts, and wait for approval. Until a template is approved its messages fail.</li>
+      </ol>
+      <div class="list" style="margin-top:12px;">${tplRows}</div>
+    </details>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; margin-top:14px;">
+      <div class="field" style="margin:0; flex:1; min-width:200px;"><label for="waTestNum">Send a test message to</label><input id="waTestNum" type="tel" placeholder="e.g. 0241234567" value="${escapeHtml((ME && ME.phone) || '')}"></div>
+      <button class="btn teal" type="button" id="waTestBtn" ${stat.configured?'':'disabled'}>Send test</button>
+    </div>
+    <p id="waTestMsg" style="margin:8px 0 0; font-size:13px;" role="status" aria-live="polite">${escapeHtml(WA.testMsg)}</p>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 10px; font-size:16px;">2. Master switch</h3>
+    <label style="display:flex; gap:10px; align-items:center; margin:0; text-transform:none; font-weight:700; font-size:15px; color:var(--ink);"><input type="checkbox" id="waMaster" ${st.enabled?'checked':''} style="width:auto;"> WhatsApp automations are ${st.enabled?'ON':'OFF'}</label>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:12px;">
+      <div class="field" style="margin:0; min-width:240px; flex:1;"><label for="waOptIn">Who may be messaged</label>
+        <select id="waOptIn"><option value="optedin" ${st.optIn==='optedin'?'selected':''}>Only people who opted in (recommended)</option><option value="all" ${st.optIn==='all'?'selected':''}>Everyone with a phone number, except those who opted out</option></select></div>
+      <div class="field" style="margin:0; width:140px;"><label for="waLang">Template language</label><input id="waLang" value="${escapeHtml(st.lang)}" maxlength="8"></div>
+    </div>
+    <p class="note" style="margin:10px 0 0;">WhatsApp expects people to have agreed to receive messages, and anyone can reply STOP to be left out. Opted in now: ${optedS} of ${withPhone.length} students and ${optedC} of ${coordsP.length} coordinators with a phone number. Applicants who ticked "text updates" on the application form count as opted in only under the second rule above.</p>
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;"><button class="btn ghost small" type="button" id="waOptAll">Mark everyone with a phone number as opted in</button><span style="font-size:12.5px; color:var(--muted);">Use this only if they have agreed to WhatsApp messages. You can also tick "WhatsApp updates" for one person in the People tab.</span></div>
+    ${WA.optout.length ? `<p style="margin:12px 0 0; font-size:13px;"><b>${WA.optout.length}</b> number${WA.optout.length===1?' has':'s have'} replied STOP and will never be messaged. <button class="btn ghost small" type="button" id="waOptList">${WA.optShow?'Hide':'Show'}</button></p>${WA.optShow ? '<div class="list" style="margin-top:6px;">' + WA.optout.map(o=>`<div class="item" style="padding:8px 12px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:13px;">+${escapeHtml(o.phone)}</span><button class="btn ghost small" type="button" data-wa-unstop="${escapeHtml(o.phone)}">Allow again</button></div>`).join('') + '</div>' : ''}` : ''}
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 6px; font-size:16px;">3. Automations</h3>
+    <p class="note" style="margin:0 0 10px;">Each one only runs while the master switch is on. These fire when <b>you</b> do the action here as the Ambassador.</p>
+    <div class="list">${autoRows}</div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 6px; font-size:16px;">4. Chemistry Series sessions</h3>
+    <p class="note" style="margin:0 0 10px;">Add each session once. Reminders go out 24 hours and 1 hour before it starts (times are Ghana time), if "Chemistry Series reminder" is switched on above. People who chose email-only reminders on the sign-up form are skipped.</p>
+    <div class="list" style="margin-bottom:12px;">${sessRows}</div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px;">
+      <div class="field" style="margin:0;"><label for="waSTitle">Session title</label><input id="waSTitle" maxlength="90" placeholder="e.g. Chemistry Series: Careers in chemistry" value="${escapeHtml(WA.sess.title)}"></div>
+      <div class="field" style="margin:0;"><label for="waSDate">Date</label><input id="waSDate" type="date" value="${escapeHtml(WA.sess.date)}"></div>
+      <div class="field" style="margin:0;"><label for="waSTime">Start time (Ghana)</label><input id="waSTime" type="time" value="${escapeHtml(WA.sess.time)}"></div>
+      <div class="field" style="margin:0;"><label for="waSLink">Join link</label><input id="waSLink" type="url" placeholder="https://meet.google.com/…" value="${escapeHtml(WA.sess.link)}"></div>
+      <div class="field" style="margin:0;"><label for="waSAud">Who gets reminders</label><select id="waSAud">${Object.keys(audLabel).map(k=>`<option value="${k}" ${WA.sess.audience===k?'selected':''}>${audLabel[k]}</option>`).join('')}</select></div>
+    </div>
+    <button class="btn teal" type="button" id="waSAdd" style="margin-top:12px;">Add session</button>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 style="margin:0 0 6px; font-size:16px;">5. Send a message to a group</h3>
+    <p class="note" style="margin:0 0 10px;">WhatsApp does not let a business post into a normal WhatsApp group, so this sends the same message to each person in the group you pick, one by one, using the "${escapeHtml(st.announceTpl)}" template.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="field" style="margin:0; flex:1; min-width:220px;"><label for="waBAud">Send to</label><select id="waBAud">${audOpts}</select></div>
+      <div class="field" id="waBCoordWrap" style="margin:0; flex:1; min-width:200px; ${WA.bc.aud==='bycoord'?'':'display:none;'}"><label for="waBCoord">Coordinator</label><select id="waBCoord"><option value="">Choose…</option>${coordOpts}</select></div>
+    </div>
+    <div class="field" style="margin-top:10px;"><label for="waBText">Message</label><textarea id="waBText" rows="4" maxlength="600" placeholder="Write one clear message. Line breaks are turned into spaces.">${escapeHtml(WA.bc.text)}</textarea></div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between;"><span id="waBCount" style="font-size:13px; color:var(--muted);"></span><button class="btn teal" type="button" id="waBSend" ${(stat.configured && st.enabled)?'':'disabled'}>Send message</button></div>
+    ${(stat.configured && st.enabled) ? '' : '<p class="note" style="margin:8px 0 0;">Connect WhatsApp and switch the master switch on to send.</p>'}
+    <p id="waBMsg" style="margin:8px 0 0; font-size:13px;" role="status" aria-live="polite">${WA.bc.msg ? escapeHtml(WA.bc.msg) : ''}</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 10px; font-size:16px;">Recent messages</h3>
+    <div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="text-align:left; color:var(--muted);"><th style="padding:6px 8px 6px 0;">When</th><th>What</th><th>Who</th><th>Status</th></tr></thead><tbody>${logRows}</tbody></table></div>
+    <button class="btn ghost small" type="button" id="waRefresh" style="margin-top:10px;">Refresh</button>
+  </div>`;
+  waBcCount();
+  window.scrollTo(0, y);
+}
+// the people a group message would reach, split into who will get it and who is skipped
+async function waAudience(){
+  const aud = WA.bc.aud, st = WA.st; let list = [], kind = 'roster';
+  const stu = (DB.students || []).filter(s=>!ghostedStudent(s));
+  if(aud === 'students') list = stu;
+  else if(aud === 'first') list = stu.filter(s=>!isNewFlow(s));
+  else if(aud === 'second') list = stu.filter(s=>isNewFlow(s));
+  else if(aud === 'coordinators') list = DB.coordinators || [];
+  else if(aud === 'bycoord') list = stu.filter(s=>WA.bc.coord && s.coordinatorId === WA.bc.coord);
+  else if(aud === 'signups'){
+    const { data } = await sb.from('series_signups').select('id,full_name,whatsapp,consent').eq('consent', true);
+    return (data || []).map(x=>({ id:'su:'+x.id, name:x.full_name, phone:x.whatsapp, consent:true }));
+  }
+  return list.map(r=>waPerson(r, kind));
+}
+async function waBcCount(){
+  const el = document.getElementById('waBCount'); if(!el) return;
+  try{
+    const list = await waAudience(), ok = list.filter(p=>p.phone && p.consent).length;
+    el.textContent = `${ok} will receive it · ${list.length - ok} skipped (no number, or not opted in)`;
+  }catch(e){ el.textContent = ''; }
+}
+function waWireBody(){
+  const q = id=>document.getElementById(id); if(!q('waBody')) return;
+  const again = async ()=>{ const ok = await waSave(); if(ok) waRender(); };
+  q('waMaster').addEventListener('change', async e=>{ if(e.target.checked && !confirm('Switch WhatsApp automations ON? Messages will start going out automatically for every automation you have switched on below.')){ e.target.checked = false; return; } WA.st.enabled = e.target.checked; await again(); });
+  q('waOptIn').addEventListener('change', async e=>{ WA.st.optIn = e.target.value === 'all' ? 'all' : 'optedin'; await again(); });
+  q('waLang').addEventListener('change', async e=>{ WA.st.lang = (e.target.value || 'en').trim() || 'en'; await again(); });
+  document.querySelectorAll('[data-wa-auto]').forEach(c=>c.addEventListener('change', async ()=>{ WA.st.auto[c.dataset.waAuto].on = c.checked; await again(); }));
+  document.querySelectorAll('[data-wa-tpl]').forEach(i=>i.addEventListener('change', async ()=>{ const v = i.value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'); WA.st.auto[i.dataset.waTpl].tpl = v || WA_EVENTS.find(e=>e[0]===i.dataset.waTpl)[3]; await again(); }));
+  document.querySelectorAll('[data-wa-copy]').forEach(b=>b.addEventListener('click', ()=>{ const t = WA_TPL[b.dataset.waCopy]; try{ navigator.clipboard.writeText(t); b.textContent = 'Copied'; setTimeout(()=>{ b.textContent = 'Copy text'; }, 1500); }catch(e){ prompt('Copy this text:', t); } }));
+  q('waTestBtn').addEventListener('click', async ()=>{
+    const msg = q('waTestMsg'), num = q('waTestNum').value.trim(); if(!num){ msg.textContent = 'Type a number first.'; return; }
+    q('waTestBtn').disabled = true; msg.textContent = 'Sending…';
+    const { data, error } = await sb.functions.invoke('whatsapp-send', { body:{ action:'test', phone:num } });
+    q('waTestBtn').disabled = false;
+    WA.testMsg = (error || !data || !data.ok) ? `The test did not go through${data && data.error ? ': ' + data.error : ''}. Check the secrets in Supabase and that the number can receive WhatsApp. With a test number from Meta, add this recipient in Meta first.` : 'Test sent. Check that WhatsApp on that phone received "Hello World".';
+    msg.textContent = WA.testMsg; setTimeout(wireWa, 1200);
+  });
+  q('waOptAll').addEventListener('click', async ()=>{
+    if(!confirm('Mark every student and coordinator who has a phone number as opted in to WhatsApp messages?\n\nOnly do this if they have agreed to receive messages from the programme on WhatsApp.')) return;
+    (DB.students || []).forEach(s=>{ if((s.phone||'').trim()) s.notifyWa = true; });
+    (DB.coordinators || []).forEach(c=>{ if((c.phone||'').trim()) c.notifyWa = true; });
+    await saveKey('students'); await saveKey('coordinators'); waRender();
+  });
+  if(q('waOptList')) q('waOptList').addEventListener('click', ()=>{ WA.optShow = !WA.optShow; waRender(); });
+  document.querySelectorAll('[data-wa-unstop]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Allow messages to this number again? Only do this if the person asked to start receiving them.')) return;
+    await sb.from('wa_optout').delete().eq('phone', b.dataset.waUnstop); WA.optout = WA.optout.filter(o=>o.phone !== b.dataset.waUnstop); waRender();
+  }));
+  ['waSTitle','waSDate','waSTime','waSLink'].forEach(id=>q(id).addEventListener('input', ()=>{ WA.sess = { title:q('waSTitle').value, date:q('waSDate').value, time:q('waSTime').value, link:q('waSLink').value, audience:q('waSAud').value }; }));
+  q('waSAud').addEventListener('change', e=>{ WA.sess.audience = e.target.value; });
+  q('waSAdd').addEventListener('click', async ()=>{
+    const s = { title:q('waSTitle').value.trim(), date:q('waSDate').value, time:q('waSTime').value, link:q('waSLink').value.trim(), audience:q('waSAud').value };
+    if(!s.title || !s.date || !s.time) return alert('Add a title, a date and a start time.');
+    const startAt = new Date(`${s.date}T${s.time}:00Z`);   // Ghana time is GMT
+    if(isNaN(startAt)) return alert('That date or time does not look right.');
+    if(startAt <= new Date()) return alert('That session is already in the past.');
+    WA.st.sessions = (WA.st.sessions || []).concat({ id:uid(), title:s.title, startAt:startAt.toISOString(), link:s.link, audience:s.audience });
+    WA.sess = { title:'', date:'', time:'', link:'', audience:s.audience };
+    await again();
+  });
+  document.querySelectorAll('[data-wa-delsess]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this session? Its reminders will not be sent.')) return;
+    WA.st.sessions = WA.st.sessions.filter(x=>x.id !== b.dataset.waDelsess); await again();
+  }));
+  q('waBAud').addEventListener('change', e=>{ WA.bc.aud = e.target.value; q('waBCoordWrap').style.display = WA.bc.aud === 'bycoord' ? '' : 'none'; waBcCount(); });
+  q('waBCoord').addEventListener('change', e=>{ WA.bc.coord = e.target.value; waBcCount(); });
+  q('waBText').addEventListener('input', e=>{ WA.bc.text = e.target.value; });
+  q('waBSend').addEventListener('click', async ()=>{
+    if(WA.bc.sending) return;
+    const text = WA.bc.text.trim(); if(text.length < 5) return alert('Write your message first.');
+    if(WA.bc.aud === 'bycoord' && !WA.bc.coord) return alert('Choose which coordinator\'s students to message.');
+    const list = (await waAudience()).filter(p=>p.phone && p.consent);
+    if(!list.length) return alert('Nobody in this group can be messaged right now (no number, or not opted in).');
+    if(!confirm(`Send this WhatsApp message to ${list.length} ${list.length===1?'person':'people'}? Each person gets their own message.`)) return;
+    WA.bc.sending = true; q('waBSend').disabled = true; const out = { sent:0, failed:0, skipped:0 }, errs = [];
+    for(let i=0; i<list.length; i+=30){
+      q('waBMsg').textContent = `Sending ${Math.min(i+30, list.length)} of ${list.length}…`;
+      const { data, error } = await sb.functions.invoke('whatsapp-send', { body:{ action:'broadcast', recipients:list.slice(i,i+30), text } });
+      if(error || !data){ out.failed += Math.min(30, list.length - i); errs.push('The connection was interrupted'); continue; }
+      out.sent += data.sent || 0; out.failed += data.failed || 0; out.skipped += data.skipped || 0; (data.errors || []).forEach(e=>{ if(!errs.includes(e)) errs.push(e); });
+    }
+    WA.bc.sending = false;
+    WA.bc.msg = `Sent to ${out.sent}. ${out.failed ? out.failed + ' failed (' + errs.slice(0,2).join('; ') + '). ' : ''}${out.skipped ? out.skipped + ' skipped. ' : ''}${out.failed ? '' : 'Delivery ticks appear in Recent messages.'}`;
+    if(!out.failed) WA.bc.text = '';
+    wireWa();
+  });
+  q('waRefresh').addEventListener('click', wireWa);
+}
+
 
 
 // ================= Newsletters: designed emails about research papers, competitions, scholarships and more =================
@@ -6249,6 +6521,9 @@ function ambassadorView(tab){
             <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
               <input type="checkbox" data-sms-for="${c.id}" data-sms-scope="coord" ${c.notifySms?'checked':''} style="width:auto;"> Text updates
             </label>
+            <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
+              <input type="checkbox" data-wa-for="${c.id}" data-wa-scope="coord" ${c.notifyWa?'checked':''} style="width:auto;"> WhatsApp updates
+            </label>
             <button class="btn teal small" data-save-coord="${c.id}">Save</button>
           </div>
           <div class="item-actions"><button class="btn ghost small" data-remove-coord="${c.id}">Remove</button></div>
@@ -6324,6 +6599,9 @@ function ambassadorView(tab){
             </label>
             <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
               <input type="checkbox" data-sms-for="${s.id}" data-sms-scope="student" ${s.notifySms?'checked':''} style="width:auto;"> Text updates
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;">
+              <input type="checkbox" data-wa-for="${s.id}" data-wa-scope="student" ${s.notifyWa?'checked':''} style="width:auto;"> WhatsApp updates
             </label>
             <button class="btn teal small" data-save-student-amb="${s.id}">Save</button>
           </div>
@@ -6996,6 +7274,7 @@ async function sendInterviewInvite(id, btn){
     const sms = `Hi ${first}, you are invited to your ${programName()} interview: ${intvWhen(when, false)} (${zone}), ${interview.mode}. ${interview.where}.${interview.panel ? ' Panel: ' + interview.panel + '.' : ''} Please reply to confirm.`;
     queueSmsSend(s.webhookUrl, { to:a.phone, name:a.name, from:ME.name, subject:'Interview invitation', message:sms, recipientId:a.id, recipientRole:'applicant', studentCoordinatorId:null });
   }
+  if(a.phone){ await waLoad(); waAuto('interview_invite', [{ id:a.id, name:a.name, phone:a.phone, consent:waOk(a,'applicant') }], { when:`${intvWhen(when, false)} (${zone})`, where:`${interview.mode}: ${interview.where}` }, a.id+':'+interview.at); }
   delete INTV.open[id]; delete INTV.draft[id];
   render('applications');
 }
@@ -8014,6 +8293,8 @@ async function exbPost(){
   DB.examKeysLoaded = false;
   const okExam = await appendShared('exams', exam);
   if(okExam === false){ return fail('Could not post the exam. Please check your connection and try again.'); }
+  if(ME.role==='ambassador'){ try{ await waLoad(); const aud = (DB.students||[]).filter(x=>!ghostedStudent(x) && (x.phone||'').trim() && (!coordinatorId || x.coordinatorId===coordinatorId)).map(x=>waPerson(x));
+    waAuto('exam_posted', aud, { title:exam.title, opens:waFmt(new Date(exam.startAt).toISOString()), closes:waFmt(new Date(exam.endAt).toISOString()) }, 'exam:'+examId); }catch(e){ console.error(e); } }
   EXB = null; render('exams');
   await notifyBroadcast({ title:`New exam scheduled: ${exam.title}`, body:`${exam.questions.length} questions, ${exam.attempts} attempt${exam.attempts===1?'':'s'}. Opens ${fmtDateTime(exam.startAt)} and closes ${fmtDateTime(exam.endAt)}.`, coordinatorId, author:ME.name, role:ME.role });
 }
@@ -8204,6 +8485,7 @@ async function examReleaseResults(id){
     students.filter(r=>r.phone && r.notifySms).forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(stuBody), recipientId:r.id, recipientRole:'student', studentCoordinatorId:r.coordinatorId }));
     coords.filter(r=>r.phone && r.notifySms).forEach(r=>queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:ME.name, subject:title, message:withPortalLink(coBody), recipientId:r.id, recipientRole:'coordinator', studentCoordinatorId:null }));
   }
+  if(students.length){ await waLoad(); waAuto('exam_results', students.filter(r=>r.phone).map(r=>waPerson(r)), { title:e.title }, 'results:'+id); }
   let pushNote = '';
   try{
     const a1 = await sb.rpc('ambassador_push', { p_external_ids:students.map(x=>String(x.id)), p_heading:'Your results are out', p_message:stuBody });
@@ -8774,6 +9056,7 @@ function wireHandlers(tab){
   if(tab==='onboarding') wireOnboardingSetup();
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
+  if(tab==='whatsapp') wireWa();
   if(tab==='personalemail') wirePersonalEmail();
   if(tab==='newsletter') wireNewsletter();
   if(tab==='people' || tab==='students') wireAccess(tab);
@@ -9047,6 +9330,17 @@ function wireHandlers(tab){
       s.notifySms = smsChk.checked;
     }
     await saveKey('students'); await syncPublicDirectory(); render('people');
+  }));
+  // WhatsApp updates checkbox: saves the moment it is ticked (this is the person's opt-in for WhatsApp messages)
+  document.querySelectorAll('[data-wa-for]').forEach(chk=>chk.addEventListener('change', async ()=>{
+    const id = chk.dataset.waFor, scope = chk.dataset.waScope;
+    const list = scope==='coord' ? DB.coordinators : DB.students;
+    const person = list.find(x=>x.id===id); if(!person) return;
+    const phoneInp = document.querySelector(scope==='coord' ? `[data-coord-id="${id}"][data-cfield="phone"]` : `[data-phone-for-amb="${id}"]`);
+    const phone = phoneInp ? phoneInp.value.trim() : (person.phone||'');
+    if(chk.checked && !phone){ alert('Add a phone number before enabling WhatsApp updates for this person.'); chk.checked = false; return; }
+    person.phone = phone; person.notifyWa = chk.checked;
+    await saveKey(scope==='coord' ? 'coordinators' : 'students');
   }));
   // Text updates checkbox saves the moment it's ticked/unticked (no Save button needed).
   document.querySelectorAll('[data-sms-for]').forEach(chk=>chk.addEventListener('change', async ()=>{
@@ -10509,7 +10803,7 @@ const NAV = {
     { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
-    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['newsletter','Newsletters']] },
+    { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
     { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
