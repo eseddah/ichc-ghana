@@ -537,7 +537,6 @@
   @media(max-width:640px){ .pg-nav{width:36px; height:36px; font-size:19px;} .pg-stage{aspect-ratio:1/1;} }
 
   /* ---------- New site features: dates, stories, contact form, newsletter, language, hand-off ---------- */
-  [hidden]{display:none !important;}
   .lang-sel{border:1.5px solid var(--line); background:#fff; color:var(--navy-deep); border-radius:999px; padding:7px 10px; font:inherit; font-size:13px; font-weight:700; cursor:pointer; margin-right:8px;}
   .ev-bar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px;}
   .ev-filters{display:flex; gap:8px; flex-wrap:wrap;}
@@ -4516,7 +4515,7 @@ function mcSvg(l, cls){
   }catch(e){}
   const TITLE_EN = document.title;
   let LANG = 'en'; try{ LANG = localStorage.getItem('ichc_lang') || 'en'; }catch(e){} if(!I18N[LANG]) LANG = 'en';
-  const T = (k, v)=>{ let s = (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || ''; if(v) Object.keys(v).forEach(x=>{ s = s.replace('{'+x+'}', v[x]); }); return s; };
+  const T = (k, v)=>{ let s = (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k; if(v) Object.keys(v).forEach(x=>{ s = s.replace('{'+x+'}', v[x]); }); return s; };
   function applyLang(){
     document.documentElement.lang = LANG;
     document.querySelectorAll('[data-i18n]').forEach(el=>{
@@ -4576,19 +4575,17 @@ function mcSvg(l, cls){
   const parseD = s=>{ const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); };
   const daysUntil = s=>Math.round((parseD(s) - parseD(todayStr())) / 864e5);
   const loc = ()=>LANG === 'fr' ? 'fr-FR' : 'en-GB';
-  const evType = e=>EV_TYPES.includes(e.type) ? e.type : (/deadline|clos|apply|application|sign.?up|regist/i.test(e.title||'') ? 'deadline' : 'other');
-  const evDesc = e=>e.desc || e.note || '';
   const upcoming = ()=>EV.filter(e=>e && e.date && e.date >= todayStr()).sort((a,b)=>(a.date + (a.time||'00:00')).localeCompare(b.date + (b.time||'00:00')));
   function calParts(e){
     const p = e.date.split('-').map(Number);
     if(e.time){ const h = e.time.split(':').map(Number), s = new Date(Date.UTC(p[0], p[1]-1, p[2], h[0], h[1])), f = new Date(s.getTime() + 3600000), fmt = x=>x.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); return { allDay:false, s:fmt(s), e:fmt(f) }; }   // Ghana time is GMT (UTC) all year
     const n = new Date(Date.UTC(p[0], p[1]-1, p[2] + 1)); return { allDay:true, s:e.date.replace(/-/g,''), e:n.getUTCFullYear() + pad(n.getUTCMonth()+1) + pad(n.getUTCDate()) };
   }
-  const gcalUrl = e=>{ const c = calParts(e); return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(e.title) + '&dates=' + c.s + '/' + c.e + '&details=' + encodeURIComponent((evDesc(e)) + (e.link ? '\n' + e.link : '')) + '&location=' + encodeURIComponent(e.place||''); };
+  const gcalUrl = e=>{ const c = calParts(e); return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(e.title) + '&dates=' + c.s + '/' + c.e + '&details=' + encodeURIComponent((e.desc||'') + (e.link ? '\n' + e.link : '')) + '&location=' + encodeURIComponent(e.place||''); };
   function downloadIcs(e){
     const c = calParts(e), ic = t=>String(t||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
     const txt = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chemistry Competition Prep//EN','BEGIN:VEVENT','UID:' + e.id + '@ichc-ghana.vercel.app','DTSTAMP:' + new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),
-      c.allDay ? 'DTSTART;VALUE=DATE:' + c.s : 'DTSTART:' + c.s, c.allDay ? 'DTEND;VALUE=DATE:' + c.e : 'DTEND:' + c.e, 'SUMMARY:' + ic(e.title), 'DESCRIPTION:' + ic(evDesc(e) + (e.link ? '\n' + e.link : '')), 'LOCATION:' + ic(e.place), 'END:VEVENT','END:VCALENDAR'].join('\r\n');
+      c.allDay ? 'DTSTART;VALUE=DATE:' + c.s : 'DTSTART:' + c.s, c.allDay ? 'DTEND;VALUE=DATE:' + c.e : 'DTEND:' + c.e, 'SUMMARY:' + ic(e.title), 'DESCRIPTION:' + ic((e.desc||'') + (e.link ? '\n' + e.link : '')), 'LOCATION:' + ic(e.place), 'END:VEVENT','END:VCALENDAR'].join('\r\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type:'text/calendar' })); a.download = (e.title||'event').replace(/[^\w]+/g,'-').slice(0,40) + '.ics'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function whenText(e){ const d = parseD(e.date); let s = d.toLocaleDateString(loc(), { weekday:'long', day:'numeric', month:'long', year:'numeric' }); if(e.time) s += ' · ' + e.time; return s; }
@@ -4596,16 +4593,16 @@ function mcSvg(l, cls){
     const sec = $('events'); if(!sec) return;
     const up = upcoming(), nav = document.querySelector('#siteMenu a[href="#events"]');
     const show = up.length > 0 || AMB; sec.style.display = show ? '' : 'none'; if(nav) nav.style.display = show ? '' : 'none';
-    const fl = $('evFilters'), types = EV_TYPES.filter(t=>up.some(e=>evType(e) === t));
+    const fl = $('evFilters'), types = EV_TYPES.filter(t=>up.some(e=>e.type === t));
     if(evFilter !== 'all' && !types.includes(evFilter)) evFilter = 'all';
     fl.innerHTML = types.length > 1 ? ['all'].concat(types).map(t=>`<button type="button" class="ev-chip" data-f="${t}" aria-pressed="${evFilter === t}">${esc(T('ev_' + t))}</button>`).join('') : '';
-    const list = up.filter(e=>evFilter === 'all' || evType(e) === evFilter), first = list[0], rest = list.slice(1);
+    const list = up.filter(e=>evFilter === 'all' || e.type === evFilter), first = list[0], rest = list.slice(1);
     const nx = $('evNext');
     if(first){ const n = daysUntil(first.date); nx.hidden = false;
-      nx.innerHTML = `<div class="cd">${n <= 0 ? '0' : n}<small>${esc(n <= 0 ? T('ev_today') : n === 1 ? T('ev_tomorrow') : T('ev_days'))}</small></div><div style="flex:1; min-width:200px;"><div class="ev-tag t-${esc(evType(first))}" style="margin-bottom:4px;">${esc(T('ev_next'))} · ${esc(T('ev_' + evType(first)))}</div><h3>${esc(first.title)}</h3><p>${esc(whenText(first))}${first.place ? ' · ' + esc(first.place) : ''}</p>${evDesc(first) ? `<p style="margin-top:6px;">${esc(evDesc(first))}</p>` : ''}</div><div class="ev-act" style="min-width:170px;"><button type="button" class="primary" data-cal="${esc(first.id)}">${esc(T('ev_cal'))}</button></div>`;
+      nx.innerHTML = `<div class="cd">${n <= 0 ? '0' : n}<small>${esc(n <= 0 ? T('ev_today') : n === 1 ? T('ev_tomorrow') : T('ev_days'))}</small></div><div style="flex:1; min-width:200px;"><div class="ev-tag t-${esc(first.type)}" style="margin-bottom:4px;">${esc(T('ev_next'))} · ${esc(T('ev_' + first.type))}</div><h3>${esc(first.title)}</h3><p>${esc(whenText(first))}${first.place ? ' · ' + esc(first.place) : ''}</p></div><div class="ev-act" style="min-width:170px;"><button type="button" class="primary" data-cal="${esc(first.id)}">${esc(T('ev_cal'))}</button></div>`;
     } else nx.hidden = true;
     $('evList').innerHTML = rest.map(e=>{ const d = parseD(e.date); return `<article class="ev-card"><div class="ev-date"><b>${d.getDate()}</b><span>${esc(d.toLocaleDateString(loc(), { month:'short' }))}</span></div>
-      <div class="ev-body"><span class="ev-tag t-${esc(evType(e))}">${esc(T('ev_' + evType(e)))}</span><h3>${esc(e.title)}</h3>${evDesc(e) ? `<p>${esc(evDesc(e))}</p>` : ''}<div class="ev-meta">${esc(whenText(e))}${e.place ? ' · ' + esc(e.place) : ''} · ${esc(daysUntil(e.date) === 1 ? T('ev_tomorrow') : T('ev_in', { n:daysUntil(e.date) }))}</div></div>
+      <div class="ev-body"><span class="ev-tag t-${esc(e.type)}">${esc(T('ev_' + e.type))}</span><h3>${esc(e.title)}</h3>${e.desc ? `<p>${esc(e.desc)}</p>` : ''}<div class="ev-meta">${esc(whenText(e))}${e.place ? ' · ' + esc(e.place) : ''} · ${esc(daysUntil(e.date) === 1 ? T('ev_tomorrow') : T('ev_in', { n:daysUntil(e.date) }))}</div></div>
       <div class="ev-act">${/^https:\/\//.test(e.link||'') ? `<a href="${esc(e.link)}" target="_blank" rel="noopener">${esc(T('ev_more'))}</a>` : ''}<button type="button" class="primary" data-cal="${esc(e.id)}">${esc(T('ev_cal'))}</button></div></article>`; }).join('');
     $('evEmpty').hidden = list.length > 0; $('evEmpty').textContent = T('ev_none');
   }
@@ -4634,20 +4631,19 @@ function mcSvg(l, cls){
   function mgOverlay(id){ let o = $(id); if(o) return o; o = document.createElement('div'); o.id = id; o.className = 'np-backdrop'; o.style.zIndex = '1200'; o.setAttribute('aria-hidden','true'); document.body.appendChild(o); o.addEventListener('click', e=>{ if(e.target === o){ o.classList.remove('open'); } }); return o; }
   const fld = (id, label, inner)=>`<div class="cf-field"><label for="${id}">${label}</label>${inner}</div>`;
   async function openEvManage(){
-    if(!AMB) return;
     const o = mgOverlay('evMg'); let list = []; try{ list = await kvGet('site:events'); }catch(e){ alert('Could not load events: ' + (e.message||e)); return; }
     let editing = null;
     const paint = ()=>{
       const sorted = list.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       const ed = editing ? list.find(x=>x.id === editing) || {} : {};
       o.innerHTML = `<div class="mg-card" role="dialog" aria-modal="true" aria-label="Manage events"><button type="button" class="tm-close" id="mgX" aria-label="Close">&times;</button><h3>Manage dates and deadlines</h3>
-        <div class="mg-list">${sorted.length ? sorted.map(e=>`<div class="mg-row"><span><b>${esc(e.date)}</b> · ${esc(e.title)} <i style="opacity:.7;">(${esc(evType(e))})</i></span><span style="flex:none;"><button type="button" data-ed="${esc(e.id)}">Edit</button> <button type="button" class="del" data-del="${esc(e.id)}">Delete</button></span></div>`).join('') : '<div class="cf-small">No events yet.</div>'}</div>
+        <div class="mg-list">${sorted.length ? sorted.map(e=>`<div class="mg-row"><span><b>${esc(e.date)}</b> · ${esc(e.title)}</span><span style="flex:none;"><button type="button" data-ed="${esc(e.id)}">Edit</button> <button type="button" class="del" data-del="${esc(e.id)}">Delete</button></span></div>`).join('') : '<div class="cf-small">No events yet.</div>'}</div>
         <h3 style="font-size:16px;">${editing ? 'Edit event' : 'Add an event'}</h3>
         ${fld('mgTitle','Title','<input class="cf-in" id="mgTitle" maxlength="120" value="' + esc(ed.title||'') + '">')}
-        <div class="cf-row">${fld('mgType','Type','<select class="cf-in" id="mgType">' + EV_TYPES.map(t=>'<option value="' + t + '"' + (((editing ? evType(ed) : 'competition')) === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('') + '</select>')}${fld('mgPlace','Place or "Online" (optional)','<input class="cf-in" id="mgPlace" maxlength="100" value="' + esc(ed.place||'') + '">')}</div>
+        <div class="cf-row">${fld('mgType','Type','<select class="cf-in" id="mgType">' + EV_TYPES.map(t=>'<option value="' + t + '"' + ((ed.type||'competition') === t ? ' selected' : '') + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>').join('') + '</select>')}${fld('mgPlace','Place or "Online" (optional)','<input class="cf-in" id="mgPlace" maxlength="100" value="' + esc(ed.place||'') + '">')}</div>
         <div class="cf-row">${fld('mgDate','Date','<input class="cf-in" id="mgDate" type="date" value="' + esc(ed.date||'') + '">')}${fld('mgTime','Time, Ghana time (optional)','<input class="cf-in" id="mgTime" type="time" value="' + esc(ed.time||'') + '">')}</div>
         ${fld('mgLink','Link for more information (optional, https)','<input class="cf-in" id="mgLink" type="url" maxlength="300" placeholder="https://" value="' + esc(ed.link||'') + '">')}
-        ${fld('mgDesc','Short description (optional)','<textarea class="cf-in" id="mgDesc" rows="3" maxlength="300">' + esc(evDesc(ed)) + '</textarea>')}
+        ${fld('mgDesc','Short description (optional)','<textarea class="cf-in" id="mgDesc" rows="3" maxlength="300">' + esc(ed.desc||'') + '</textarea>')}
         <div class="cf-msg" id="mgMsg" role="status"></div><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;"><button type="button" class="btn amber" id="mgSave">${editing ? 'Save changes' : 'Add event'}</button>${editing ? '<button type="button" class="btn outline dark" id="mgNew">Cancel editing</button>' : ''}</div></div>`;
       o.classList.add('open'); o.setAttribute('aria-hidden','false');
     };
@@ -4662,13 +4658,12 @@ function mcSvg(l, cls){
         const m = $('mgMsg'), v = id=>$(id).value.trim(), ev = { id: editing || rid(), title:v('mgTitle'), type:v('mgType'), place:v('mgPlace'), date:v('mgDate'), time:v('mgTime'), link:v('mgLink'), desc:v('mgDesc') };
         if(!ev.title || !ev.date){ m.className = 'cf-msg bad'; m.textContent = 'Add a title and a date.'; return; }
         if(ev.link && !/^https:\/\//.test(ev.link)){ m.className = 'cf-msg bad'; m.textContent = 'The link must start with https://'; return; }
-        try{ const cur = await kvGet('site:events'); list = editing ? cur.map(x=>{ if(x.id !== editing) return x; const m = Object.assign({}, x, ev); delete m.note; return m; }) : cur.concat([ev]); await kvSet('site:events', list); EV = list; renderEvents(); editing = null; paint(); $('mgMsg').className = 'cf-msg ok'; $('mgMsg').textContent = 'Saved.'; }
+        try{ const cur = await kvGet('site:events'); list = editing ? cur.map(x=>x.id === editing ? ev : x) : cur.concat([ev]); await kvSet('site:events', list); EV = list; renderEvents(); editing = null; paint(); $('mgMsg').className = 'cf-msg ok'; $('mgMsg').textContent = 'Saved.'; }
         catch(er){ m.className = 'cf-msg bad'; m.textContent = 'Could not save: ' + (er.message||er); }
       }
     };
   }
   async function openStManage(){
-    if(!AMB) return;
     const o = mgOverlay('stMg'); let list = []; try{ list = await kvGet('site:testimonials'); }catch(e){ alert('Could not load stories: ' + (e.message||e)); return; }
     const paint = ()=>{
       o.innerHTML = `<div class="mg-card" role="dialog" aria-modal="true" aria-label="Manage stories"><button type="button" class="tm-close" id="mgX" aria-label="Close">&times;</button><h3>Manage student stories</h3>
