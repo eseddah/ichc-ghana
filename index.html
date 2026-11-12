@@ -4885,5 +4885,87 @@ function mcSvg(l, cls){
   place();
 })();
 </script>
+<script>
+/* ===== Scan landing: opened by the QR code on a completion or coordinator card (?welcome=1) =====
+   Shows the latest dates and deadlines, how to join, and a button to apply (or to be told when applications open). English and French. */
+(function(){
+  var qs = new URLSearchParams(location.search);
+  if(!qs.get('welcome')) return;
+  var LANG = 'en'; try{ LANG = localStorage.getItem('ichc_lang')==='fr' ? 'fr' : 'en'; }catch(e){}
+  var S = {
+    en:{ hi:'Welcome to Chemistry Competition Prep', sub:'You scanned a student’s card. Here is what is happening right now.', open:'Applications are open', closes:'Closes {d}', closed:'Applications are closed right now', paused:'Applications are paused right now', closedSub:'Leave your name and email and we will tell you as soon as they open.', soon:'Coming up', none:'No dates have been posted yet. Check back soon.', how:'How to join', h1:'Apply', h1d:'Fill in the short form. It takes about five minutes.', h2:'Interview', h2d:'Shortlisted applicants have a short, friendly chat with the Ambassador and coordinators.', h3:'Start training', h3d:'Accepted students get their portal, a coordinator and a roadmap of ten topics.', story:'In their words', apply:'Apply to the programme', notify:'Tell me when applications open', explore:'Explore the website', close:'Close', more:'More info', types:{ competition:'Competition', scholarship:'Scholarship', deadline:'Deadline', 'class':'Programme', other:'Other' } },
+    fr:{ hi:'Bienvenue à Chemistry Competition Prep', sub:'Vous avez scanné la carte d’un élève. Voici ce qui se passe en ce moment.', open:'Les candidatures sont ouvertes', closes:'Fermeture le {d}', closed:'Les candidatures sont fermées pour le moment', paused:'Les candidatures sont suspendues pour le moment', closedSub:'Laissez votre nom et votre e-mail et nous vous préviendrons dès leur ouverture.', soon:'À venir', none:'Aucune date n’a encore été publiée. Revenez bientôt.', how:'Comment participer', h1:'Postulez', h1d:'Remplissez le court formulaire. Cela prend environ cinq minutes.', h2:'Entretien', h2d:'Les candidats présélectionnés ont un court échange convivial avec l’Ambassadeur et les coordinateurs.', h3:'Commencez à vous entraîner', h3d:'Les élèves acceptés reçoivent leur portail, un coordinateur et une feuille de route de dix thèmes.', story:'Dans leurs mots', apply:'Postuler au programme', notify:'Prévenez-moi à l’ouverture des candidatures', explore:'Découvrir le site', close:'Fermer', more:'Plus d’infos', types:{ competition:'Concours', scholarship:'Bourse', deadline:'Échéance', 'class':'Programme', other:'Autre' } }
+  };
+  var T = S[LANG], loc = LANG==='fr' ? 'fr-FR' : 'en-GB';
+  var esc = function(v){ return String(v==null?'':v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var ov = document.createElement('div'); ov.id = 'welcomeScan'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label', T.hi);
+  var st = document.createElement('style');
+  st.textContent = '#welcomeScan{position:fixed; inset:0; z-index:5000; background:linear-gradient(160deg,#0A1826,#14506A); overflow:auto; padding:18px 14px 110px; color:#1B2430; font-family:inherit;}'
+   + '#welcomeScan .ws-wrap{max-width:560px; margin:0 auto;} #welcomeScan .ws-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; color:#fff;}'
+   + '#welcomeScan .ws-top b{font-size:13px; letter-spacing:.14em; color:#E39A3B;} #welcomeScan .ws-x{background:rgba(255,255,255,.14); color:#fff; border:0; border-radius:999px; padding:8px 14px; font:600 13px/1 inherit; cursor:pointer;}'
+   + '#welcomeScan h1{color:#fff; font-size:27px; line-height:1.2; margin:6px 0 6px;} #welcomeScan .ws-sub{color:#D5E2EA; margin:0 0 18px; font-size:15px; line-height:1.5;}'
+   + '#welcomeScan .ws-card{background:#fff; border-radius:18px; padding:18px; margin-bottom:14px; box-shadow:0 10px 30px rgba(0,0,0,.25);} #welcomeScan h2{margin:0 0 10px; font-size:17px; color:#0A1826;}'
+   + '#welcomeScan .ws-state{display:flex; align-items:center; gap:12px;} #welcomeScan .ws-dot{width:14px; height:14px; border-radius:50%; flex:none;} #welcomeScan .ws-state b{display:block; font-size:17px;} #welcomeScan .ws-state span{font-size:14px; color:#5B6670; line-height:1.45;}'
+   + '#welcomeScan .ws-ev{display:flex; gap:12px; padding:11px 0; border-top:1px solid #E3E8EC;} #welcomeScan .ws-ev:first-of-type{border-top:0;} #welcomeScan .ws-date{flex:none; width:54px; text-align:center; background:#F1F5F8; border-radius:12px; padding:7px 0;} #welcomeScan .ws-date b{display:block; font-size:21px; line-height:1; color:#0A1826;} #welcomeScan .ws-date span{font-size:11.5px; text-transform:uppercase; color:#5B6670;}'
+   + '#welcomeScan .ws-ev h3{margin:0 0 2px; font-size:15.5px;} #welcomeScan .ws-ev small{color:#5B6670; font-size:12.5px;} #welcomeScan .ws-ev a{color:#14506A; font-weight:700; font-size:13px;} #welcomeScan .ws-tag{display:inline-block; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#8A5A12; background:#FCEFD6; border-radius:999px; padding:2px 8px; margin-bottom:4px;}'
+   + '#welcomeScan ol{list-style:none; margin:0; padding:0;} #welcomeScan li{display:flex; gap:12px; padding:9px 0;} #welcomeScan li i{flex:none; width:30px; height:30px; border-radius:50%; background:#0A1826; color:#E39A3B; font-style:normal; font-weight:800; display:flex; align-items:center; justify-content:center;} #welcomeScan li b{display:block; font-size:15px;} #welcomeScan li span{font-size:13.5px; color:#5B6670; line-height:1.45;}'
+   + '#welcomeScan q{display:block; font-size:15px; line-height:1.55; color:#1B2430; quotes:none;} #welcomeScan .ws-who{margin-top:8px; font-size:13px; color:#5B6670;}'
+   + '#welcomeScan .ws-bar{position:fixed; left:0; right:0; bottom:0; padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px)); background:rgba(10,24,38,.96); display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}'
+   + '#welcomeScan .ws-btn{border:0; border-radius:12px; padding:14px 22px; font:800 16px/1 inherit; cursor:pointer; text-decoration:none; text-align:center;} #welcomeScan .ws-go{background:#E39A3B; color:#0A1826; flex:1 1 240px; max-width:360px;} #welcomeScan .ws-alt{background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.5);}';
+  document.head.appendChild(st);
+  ov.innerHTML = '<div class="ws-wrap"><div class="ws-top"><b>CHEMISTRY COMPETITION PREP · GHANA</b><button type="button" class="ws-x" id="wsX">'+esc(T.close)+'</button></div>'
+    + '<h1>'+esc(T.hi)+'</h1><p class="ws-sub">'+esc(T.sub)+'</p>'
+    + '<div class="ws-card" id="wsState"><div class="ws-state"><span class="ws-dot" style="background:#CBD3DA"></span><div><b>…</b></div></div></div>'
+    + '<div class="ws-card"><h2>'+esc(T.soon)+'</h2><div id="wsEvents"><span style="color:#5B6670; font-size:14px;">…</span></div></div>'
+    + '<div class="ws-card"><h2>'+esc(T.how)+'</h2><ol><li><i>1</i><div><b>'+esc(T.h1)+'</b><span>'+esc(T.h1d)+'</span></div></li><li><i>2</i><div><b>'+esc(T.h2)+'</b><span>'+esc(T.h2d)+'</span></div></li><li><i>3</i><div><b>'+esc(T.h3)+'</b><span>'+esc(T.h3d)+'</span></div></li></ol></div>'
+    + '<div class="ws-card" id="wsStory" style="display:none;"><h2>'+esc(T.story)+'</h2><div id="wsStoryBody"></div></div></div>'
+    + '<div class="ws-bar"><a class="ws-btn ws-go" id="wsGo" href="apply.html">'+esc(T.apply)+'</a><button type="button" class="ws-btn ws-alt" id="wsExplore">'+esc(T.explore)+'</button></div>';
+  document.body.appendChild(ov); document.documentElement.style.overflow = 'hidden';
+  var closeIt = function(){ ov.remove(); st.remove(); document.documentElement.style.overflow = ''; try{ var u = new URL(location.href); u.searchParams.delete('welcome'); u.searchParams.delete('s'); history.replaceState(null,'',u.pathname + (u.search||'') + u.hash); }catch(e){} };
+  ov.querySelector('#wsX').addEventListener('click', closeIt); ov.querySelector('#wsExplore').addEventListener('click', closeIt);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && document.getElementById('welcomeScan')) closeIt(); });
+  var q = function(id){ return ov.querySelector('#'+id); };
+  var isOpen = null;
+  var go = q('wsGo');
+  go.addEventListener('click', function(e){
+    if(isOpen===false){ e.preventDefault(); closeIt(); var h = document.getElementById('heroInterestBtn'); if(h) h.click(); else window.scrollTo(0,0); }
+  });
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  var today = (function(){ var d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
+  (async function(){
+    try{ for(var n=0; n<40 && (typeof sbReady==='undefined' || !sbReady); n++) await new Promise(function(r){ setTimeout(r,150); }); }catch(e){}
+    var ready = (typeof sbReady!=='undefined' && sbReady);
+    try{ if(ready && window.siteTrack) window.siteTrack('card_scan', String(qs.get('s')||'card').slice(0,24)); }catch(e){}
+    var set = {}, evs = [], stories = [];
+    if(ready){
+      try{ var r1 = await sb.from('ichc_kv').select('value').eq('key','settings:notify').maybeSingle(); set = (r1.data && r1.data.value) || {}; }catch(e){}
+      try{ var r2 = await sb.from('ichc_kv').select('value').eq('key','site:events').maybeSingle(); evs = Array.isArray(r2.data && r2.data.value) ? r2.data.value : []; }catch(e){}
+      try{ var r3 = await sb.from('ichc_kv').select('value').eq('key','site:testimonials').maybeSingle(); stories = Array.isArray(r3.data && r3.data.value) ? r3.data.value : []; }catch(e){}
+    }
+    // application status
+    var dl = set.applicationDeadline ? new Date(set.applicationDeadline) : null, dlOk = dl && !isNaN(dl.getTime());
+    var closedNow = !!set.applicationsClosed || (dlOk && Date.now() > dl.getTime());
+    isOpen = !closedNow;
+    var stateHtml;
+    if(closedNow){
+      stateHtml = '<div class="ws-state"><span class="ws-dot" style="background:#C0392B"></span><div><b>'+esc(set.applicationsClosed ? T.paused : T.closed)+'</b><span>'+esc(T.closedSub)+'</span></div></div>';
+      go.textContent = T.notify;
+    } else {
+      stateHtml = '<div class="ws-state"><span class="ws-dot" style="background:#2ECC71"></span><div><b>'+esc(T.open)+'</b>'+(dlOk ? '<span>'+esc(T.closes.replace('{d}', dl.toLocaleDateString(loc,{ weekday:'long', day:'numeric', month:'long', year:'numeric' })))+'</span>' : '')+'</div></div>';
+    }
+    q('wsState').innerHTML = stateHtml;
+    // upcoming dates
+    var up = evs.filter(function(e){ return e && e.date && e.date >= today; }).sort(function(a,b){ return (a.date+(a.time||'00:00')).localeCompare(b.date+(b.time||'00:00')); }).slice(0,4);
+    q('wsEvents').innerHTML = up.length ? up.map(function(e){
+      var p = e.date.split('-').map(Number), d = new Date(p[0],p[1]-1,p[2]), ty = T.types[e.type] ? e.type : 'other';
+      return '<div class="ws-ev"><div class="ws-date"><b>'+d.getDate()+'</b><span>'+esc(d.toLocaleDateString(loc,{month:'short'}))+'</span></div><div><span class="ws-tag">'+esc(T.types[ty])+'</span><h3>'+esc(e.title)+'</h3><small>'+esc(d.toLocaleDateString(loc,{weekday:'long'}))+(e.time?' · '+esc(e.time):'')+(e.place?' · '+esc(e.place):'')+'</small>'+(/^https:\/\//.test(e.link||'') ? '<div><a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(T.more)+'</a></div>' : '')+'</div></div>';
+    }).join('') : '<span style="color:#5B6670; font-size:14px;">'+esc(T.none)+'</span>';
+    // one student story
+    var good = stories.filter(function(s){ return s && s.quote; });
+    if(good.length){ var s = good[Math.floor(Math.random()*good.length)]; q('wsStoryBody').innerHTML = '<q>“'+esc(s.quote)+'”</q><div class="ws-who">'+esc(s.name||'')+(s.role?' · '+esc(s.role):'')+'</div>'; q('wsStory').style.display = ''; }
+  })();
+})();
+</script>
+
 </body>
 </html>

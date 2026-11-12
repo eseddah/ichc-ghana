@@ -610,6 +610,11 @@
   .pa-fine{margin:12px 0 0; font-size:12px; color:var(--muted,#6B7280);}
   .push-panel{position:fixed; inset:0; z-index:1500; background:rgba(8,20,30,.55); display:flex; align-items:flex-end; justify-content:flex-start; padding:16px;}
   .push-card{background:#fff; border-radius:16px; padding:18px; width:min(360px,100%); margin-bottom:64px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
+  .push-rows{margin:0 0 12px; border:1px solid var(--line,#d8d4c8); border-radius:12px; overflow:hidden; font-size:13.5px;}
+  .push-rows div{display:flex; justify-content:space-between; gap:10px; padding:9px 12px; border-top:1px solid var(--line,#d8d4c8);} .push-rows div:first-child{border-top:0;}
+  .push-rows .ok{color:#146956; font-weight:700;} .push-rows .no{color:#B3261E; font-weight:700;}
+  .push-note{margin:10px 0 0; font-size:12.5px; line-height:1.5; color:var(--muted,#6B7280);} .push-note.bad{color:#B3261E;} .push-note.good{color:#146956;}
+  .push-toast{position:fixed; right:16px; top:16px; z-index:2600; max-width:min(360px,calc(100vw - 32px)); background:#10243A; color:#fff; padding:12px 14px; border-radius:14px; box-shadow:0 14px 34px rgba(0,0,0,.35); font-size:13.5px; line-height:1.45; cursor:pointer;} .push-toast b{display:block; margin-bottom:2px;}
 
   /* ---- Daily practice (streak, XP, level, weekly ranking) ---- */
   .lr-stats{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px;}
@@ -2779,6 +2784,7 @@ function showEmailNotFoundScreen(email){
 }
 
 async function signOutEverywhere(){
+  try{ pushUnlink(); }catch(e){}
   if(sbReady) await sb.auth.signOut();
   googleUser = null;
   sessionStorage.removeItem('ichc_pending_role');
@@ -2965,7 +2971,7 @@ function showApp(){
   startRealtimeSync();
   try{ initMascot(); }catch(e){ console.warn('Mascot failed', e); }
   // push notifications: link this device to the signed-in person and ask once for permission
-  try{ (window.OneSignalDeferred = window.OneSignalDeferred || []).push(async function(OS){ try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); } initPushUi(); }); }catch(e){}
+  try{ pushBoot(); }catch(e){ console.warn('push boot skipped', e); }
 }
 async function switchUser(ev, forceFull){
   const keepSession = !forceFull && ME && ME.email && pkFor(ME.email);
@@ -2973,6 +2979,7 @@ async function switchUser(ev, forceFull){
   stopRealtimeSync();
   ['mcPop','mcDock','mcEdit','pushAsk'].forEach(id=>{ const o=document.getElementById(id); if(o) o.remove(); });
   sessionStorage.removeItem('ichc_mascot_welcomed');
+  try{ pushUnlink(); }catch(e){}
   if(ME && ME.email && sbReady){
     delete DB.presence[ME.email.toLowerCase()];
     await sDelete(presenceKeyFor(ME.email), true);
@@ -4962,48 +4969,50 @@ function nlBuildEmail(d, rec){
   const blocks = (d.blocks||[]).filter(b=>String(b.title||'').trim() || String(b.body||'').trim());
   const prog = escapeHtml(programName()), me = (ME && ME.name) ? escapeHtml(ME.name) : '';
   const issue = new Date().toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+  // Roomy layout: wide side padding (which shrinks on phones through the .px class), generous gaps between items, 16px text at 1.75 line height.
   const btn = (b, bg, fg, outline)=>{ const u = nlUrl(b.link); if(!u) return ''; const label = E(b.btn || T.btn);
-    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;"><tr><td style="background:${outline?'#ffffff':bg}; border:2px solid ${bg}; border-radius:8px;"><a href="${escapeHtml(u)}" style="display:inline-block; padding:11px 22px; font:700 14px ${NL_SANS}; color:${fg}; text-decoration:none;">${label}</a></td></tr></table>`; };
+    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;"><tr><td style="background:${outline?'#ffffff':bg}; border:2px solid ${bg}; border-radius:10px;"><a href="${escapeHtml(u)}" style="display:inline-block; padding:14px 28px; font:700 15px ${NL_SANS}; color:${fg}; text-decoration:none;">${label}</a></td></tr></table>`; };
   const pre = d.preheader ? `<div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">${E(d.preheader)}</div>` : '';
-  const greet = (col)=>`<p style="margin:0 0 12px; font:600 16px ${NL_SANS}; color:${col};">Hi ${escapeHtml(first)},</p>`;
-  const closing = (col, mut)=> (d.closing ? `<p style="margin:0 0 14px; font:15px/1.6 ${NL_SANS}; color:${col};">${P(d.closing)}</p>` : '') + (d.sign && me ? `<p style="margin:0; font:600 15px ${NL_SANS}; color:${col};">${me}<br><span style="font-weight:400; color:${mut};">${prog}</span></p>` : '');
-  const foot = (col, bg)=>`<tr><td style="padding:20px 28px; background:${bg}; font:12px/1.6 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.${rec && rec.unsubToken ? '<br><a href="https://ichc-ghana.vercel.app/?unsubscribe='+encodeURIComponent(rec.unsubToken)+'" style="color:inherit; text-decoration:underline;">Unsubscribe</a>' : ''}</td></tr>`;
-  const shell = (outer, inner)=>`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(d.subject||'Newsletter')}</title></head><body style="margin:0; padding:0; background:${outer};">${pre}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${outer};"><tr><td align="center" style="padding:24px 10px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:620px;">${inner}</table></td></tr></table></body></html>`;
+  const greet = (col)=>`<p style="margin:0 0 20px; font:600 18px/1.5 ${NL_SANS}; color:${col};">Hi ${escapeHtml(first)},</p>`;
+  const intro = (col)=>`<p style="margin:0 0 36px; font:16px/1.8 ${NL_SANS}; color:${col};">${P(d.intro)}</p>`;
+  const closing = (col, mut)=> (d.closing ? `<p style="margin:0 0 24px; font:16px/1.8 ${NL_SANS}; color:${col};">${P(d.closing)}</p>` : '') + (d.sign && me ? `<p style="margin:0; font:600 16px/1.6 ${NL_SANS}; color:${col};">${me}<br><span style="font-weight:400; color:${mut};">${prog}</span></p>` : '');
+  const foot = (col, bg)=>`<tr><td class="px" style="padding:32px 44px; background:${bg}; font:13px/1.8 ${NL_SANS}; color:${col}; text-align:center;">You are receiving this newsletter because you are part of ${prog}.<br>Reply to this email if you would rather not receive newsletters.${rec && rec.unsubToken ? '<br><a href="https://ichc-ghana.vercel.app/?unsubscribe='+encodeURIComponent(rec.unsubToken)+'" style="color:inherit; text-decoration:underline;">Unsubscribe</a>' : ''}</td></tr>`;
+  const shell = (outer, inner)=>`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${E(d.subject||'Newsletter')}</title><style>@media only screen and (max-width:520px){.px{padding-left:22px !important; padding-right:22px !important;} .card-in{padding:22px 20px !important;} .badge-col{display:block !important; width:auto !important; padding:20px 20px 0 !important;} .body-col{display:block !important; padding:18px 20px 24px !important;} h1{font-size:26px !important;}}</style></head><body style="margin:0; padding:0; background:${outer};">${pre}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${outer};"><tr><td align="center" style="padding:36px 14px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;">${inner}</table></td></tr></table></body></html>`;
   let inner = '';
   if(d.type==='research'){
-    const items = blocks.map((b,i)=>`<tr><td style="padding:0 0 16px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-left:5px solid ${c}; border-radius:6px;"><tr><td style="padding:20px 22px;">
-      <div style="font:700 12px ${NL_SANS}; letter-spacing:.14em; color:${c};">PAPER ${String(i+1).padStart(2,'0')}</div>
-      <h2 style="margin:6px 0 4px; font:700 22px/1.25 ${NL_SERIF}; color:#0B2A3A;">${E(b.title)}</h2>
-      ${b.meta?`<div style="font:italic 14px ${NL_SERIF}; color:${c}; margin-bottom:10px;">${E(b.meta)}</div>`:''}
-      <div style="font:15px/1.65 ${NL_SANS}; color:#334155;">${P(b.body)}</div>${btn(b, c, '#ffffff', true)}</td></tr></table></td></tr>`).join('');
-    inner = `<tr><td style="background:#0B2A3A; border-radius:10px 10px 0 0; padding:30px 28px;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.2em; color:#5EEAD4;">RESEARCH BRIEF &middot; ${escapeHtml(issue.toUpperCase())}</div><h1 style="margin:10px 0 0; font:700 30px/1.2 ${NL_SERIF}; color:#ffffff;">${E(d.headline)}</h1></td></tr>
-      <tr><td style="background:#F3F6F8; padding:24px 22px 8px;">${greet('#0B2A3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#334155;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
-      <tr><td style="background:#ffffff; padding:22px 28px; border-radius:0 0 10px 10px;">${closing('#334155','#64748B')}</td></tr>${foot('#64748B','#F3F6F8')}`;
+    const items = blocks.map((b,i)=>`<tr><td style="padding:0 0 28px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-left:6px solid ${c}; border-radius:8px;"><tr><td class="card-in" style="padding:30px 32px 32px;">
+      <div style="font:700 12px ${NL_SANS}; letter-spacing:.16em; color:${c};">PAPER ${String(i+1).padStart(2,'0')}</div>
+      <h2 style="margin:12px 0 10px; font:700 23px/1.35 ${NL_SERIF}; color:#0B2A3A;">${E(b.title)}</h2>
+      ${b.meta?`<div style="font:italic 15px/1.5 ${NL_SERIF}; color:${c}; margin-bottom:18px;">${E(b.meta)}</div>`:''}
+      <div style="font:16px/1.8 ${NL_SANS}; color:#334155;">${P(b.body)}</div>${btn(b, c, '#ffffff', true)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td class="px" style="background:#0B2A3A; border-radius:12px 12px 0 0; padding:48px 44px 44px;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.22em; color:#5EEAD4;">RESEARCH BRIEF &middot; ${escapeHtml(issue.toUpperCase())}</div><h1 style="margin:16px 0 0; font:700 32px/1.25 ${NL_SERIF}; color:#ffffff;">${E(d.headline)}</h1></td></tr>
+      <tr><td class="px" style="background:#F3F6F8; padding:40px 36px 16px;">${greet('#0B2A3A')}${intro('#334155')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td class="px" style="background:#ffffff; padding:40px 44px 44px; border-radius:0 0 12px 12px;">${closing('#334155','#64748B')}</td></tr>${foot('#64748B','#F3F6F8')}`;
     return shell('#E2E8EE', inner);
   }
   if(d.type==='competition'){
-    const items = blocks.map(b=>`<tr><td style="padding:0 0 18px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:12px;"><tr>
-      <td width="104" valign="top" style="padding:16px 0 16px 16px;"><div style="background:#F5A524; color:#1D1B3A; border-radius:10px; padding:14px 8px; text-align:center; font:800 14px/1.3 ${NL_SANS};">${b.meta?E(b.meta):'DATE TBA'}</div></td>
-      <td valign="top" style="padding:16px 18px;"><h2 style="margin:0 0 6px; font:800 20px/1.25 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.6 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${btn(b, c, '#ffffff', false)}</td></tr></table></td></tr>`).join('');
-    inner = `<tr><td style="background:${c}; border-radius:14px 14px 0 0; padding:34px 28px; text-align:left;"><div style="display:inline-block; background:#F5A524; color:#1D1B3A; font:800 12px ${NL_SANS}; letter-spacing:.12em; padding:5px 12px; border-radius:999px;">COMPETITION ALERT</div><h1 style="margin:14px 0 6px; font:800 32px/1.15 ${NL_SANS}; color:#ffffff;">${E(d.headline)}</h1><div style="font:14px ${NL_SANS}; color:#E4DDFB;">${prog} &middot; ${escapeHtml(issue)}</div></td></tr>
-      <tr><td style="background:#EFEAFD; padding:24px 22px 6px;">${greet('#1D1B3A')}<p style="margin:0 0 20px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
-      <tr><td style="background:#1D1B3A; padding:24px 28px; border-radius:0 0 14px 14px;">${closing('#F2EFFF','#B9B2E0')}</td></tr>${foot('#B9B2E0','#1D1B3A')}`;
+    const items = blocks.map(b=>`<tr><td style="padding:0 0 28px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:14px;"><tr>
+      <td class="badge-col" width="132" valign="top" style="padding:28px 0 28px 28px;"><div style="background:#F5A524; color:#1D1B3A; border-radius:12px; padding:18px 10px; text-align:center; font:800 15px/1.4 ${NL_SANS};">${b.meta?E(b.meta):'DATE TBA'}</div></td>
+      <td class="body-col" valign="top" style="padding:28px 30px 30px 26px;"><h2 style="margin:0 0 12px; font:800 21px/1.35 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:16px/1.8 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${btn(b, c, '#ffffff', false)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td class="px" style="background:${c}; border-radius:16px 16px 0 0; padding:52px 44px 48px; text-align:left;"><div style="display:inline-block; background:#F5A524; color:#1D1B3A; font:800 12px ${NL_SANS}; letter-spacing:.14em; padding:7px 14px; border-radius:999px;">COMPETITION ALERT</div><h1 style="margin:20px 0 12px; font:800 33px/1.2 ${NL_SANS}; color:#ffffff;">${E(d.headline)}</h1><div style="font:15px ${NL_SANS}; color:#E4DDFB;">${prog} &middot; ${escapeHtml(issue)}</div></td></tr>
+      <tr><td class="px" style="background:#EFEAFD; padding:40px 36px 14px;">${greet('#1D1B3A')}${intro('#39424D')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td class="px" style="background:#1D1B3A; padding:40px 44px; border-radius:0 0 16px 16px;">${closing('#F2EFFF','#B9B2E0')}</td></tr>${foot('#B9B2E0','#1D1B3A')}`;
     return shell('#1D1B3A', inner);
   }
   if(d.type==='scholarship'){
-    const items = blocks.map(b=>`<tr><td style="padding:0 0 22px; border-bottom:2px dashed #CDE3D3;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:20px 0 0;">
-      ${b.meta?`<span style="display:inline-block; background:${c}; color:#ffffff; font:700 12px ${NL_SANS}; letter-spacing:.06em; padding:5px 12px; border-radius:999px;">${E(b.meta)}</span>`:''}
-      <h2 style="margin:12px 0 6px; font:700 21px/1.3 ${NL_SERIF}; color:#14532D;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(b.body)}</div>${btn(b, c, c, true)}</td></tr></table></td></tr>`).join('');
-    inner = `<tr><td style="background:${c}; height:10px; line-height:10px; font-size:0; border-radius:12px 12px 0 0;">&nbsp;</td></tr>
-      <tr><td style="background:#FBF7EE; padding:34px 28px 10px; text-align:center;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.22em; color:${c};">SCHOLARSHIP NEWS</div><h1 style="margin:10px 0 8px; font:700 31px/1.2 ${NL_SERIF}; color:#14532D;">${E(d.headline)}</h1><div style="width:60px; height:3px; background:#F5A524; margin:0 auto;"></div></td></tr>
-      <tr><td style="background:#FBF7EE; padding:18px 28px 8px;">${greet('#14532D')}<p style="margin:0 0 6px; font:15px/1.65 ${NL_SANS}; color:#3F4A3F;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
-      <tr><td style="background:#FBF7EE; padding:22px 28px 26px; border-radius:0 0 12px 12px;">${closing('#3F4A3F','#6B7A6B')}</td></tr>${foot('#6B7A6B','#F1EBDB')}`;
+    const items = blocks.map(b=>`<tr><td style="padding:0 0 40px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:34px 0 40px; border-top:2px dashed #CDE3D3;">
+      ${b.meta?`<span style="display:inline-block; background:${c}; color:#ffffff; font:700 12px ${NL_SANS}; letter-spacing:.06em; padding:7px 14px; border-radius:999px;">${E(b.meta)}</span>`:''}
+      <h2 style="margin:18px 0 12px; font:700 23px/1.35 ${NL_SERIF}; color:#14532D;">${E(b.title)}</h2><div style="font:16px/1.8 ${NL_SANS}; color:#3F4A3F;">${P(b.body)}</div>${btn(b, c, c, true)}</td></tr></table></td></tr>`).join('');
+    inner = `<tr><td style="background:${c}; height:12px; line-height:12px; font-size:0; border-radius:14px 14px 0 0;">&nbsp;</td></tr>
+      <tr><td class="px" style="background:#FBF7EE; padding:50px 44px 18px; text-align:center;"><div style="font:700 12px ${NL_SANS}; letter-spacing:.24em; color:${c};">SCHOLARSHIP NEWS</div><h1 style="margin:16px 0 16px; font:700 32px/1.25 ${NL_SERIF}; color:#14532D;">${E(d.headline)}</h1><div style="width:64px; height:3px; background:#F5A524; margin:0 auto;"></div></td></tr>
+      <tr><td class="px" style="background:#FBF7EE; padding:30px 44px 6px;">${greet('#14532D')}${intro('#3F4A3F')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+      <tr><td class="px" style="background:#FBF7EE; padding:8px 44px 48px; border-radius:0 0 14px 14px;">${closing('#3F4A3F','#6B7A6B')}</td></tr>${foot('#6B7A6B','#F1EBDB')}`;
     return shell('#EDE6D3', inner);
   }
-  const items = blocks.map(b=>`<tr><td style="padding:0 0 24px;">${b.meta?`<div style="font:700 11px ${NL_SANS}; letter-spacing:.14em; text-transform:uppercase; color:#7C5CF0;">${E(b.meta)}</div>`:''}<h2 style="margin:4px 0 6px; font:700 20px/1.3 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${nlUrl(b.link)?`<div style="margin-top:8px;"><a href="${escapeHtml(nlUrl(b.link))}" style="font:700 14px ${NL_SANS}; color:#7C5CF0; text-decoration:none;">${E(b.btn||T.btn)} &rarr;</a></div>`:''}</td></tr>`).join('');
-  inner = `<tr><td style="background:#ffffff; padding:34px 32px 8px; border-top:6px solid #1D1B3A;"><div style="font:600 13px ${NL_SANS}; color:#64748B;">${prog} &middot; ${escapeHtml(issue)}</div><h1 style="margin:10px 0 14px; font:800 30px/1.2 ${NL_SANS}; color:#1D1B3A;">${E(d.headline)}</h1><div style="height:1px; background:#E2E5EA;"></div></td></tr>
-    <tr><td style="background:#ffffff; padding:20px 32px 4px;">${greet('#1D1B3A')}<p style="margin:0 0 22px; font:15px/1.65 ${NL_SANS}; color:#39424D;">${P(d.intro)}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
-    <tr><td style="background:#ffffff; padding:8px 32px 30px;"><div style="height:1px; background:#E2E5EA; margin-bottom:20px;"></div>${closing('#39424D','#64748B')}</td></tr>${foot('#64748B','#F4F5F7')}`;
+  const items = blocks.map(b=>`<tr><td style="padding:0 0 40px;">${b.meta?`<div style="font:700 12px ${NL_SANS}; letter-spacing:.16em; text-transform:uppercase; color:#7C5CF0; margin-bottom:6px;">${E(b.meta)}</div>`:''}<h2 style="margin:6px 0 12px; font:700 22px/1.35 ${NL_SANS}; color:#1D1B3A;">${E(b.title)}</h2><div style="font:16px/1.8 ${NL_SANS}; color:#39424D;">${P(b.body)}</div>${nlUrl(b.link)?`<div style="margin-top:16px;"><a href="${escapeHtml(nlUrl(b.link))}" style="font:700 15px ${NL_SANS}; color:#7C5CF0; text-decoration:none;">${E(b.btn||T.btn)} &rarr;</a></div>`:''}</td></tr>`).join('');
+  inner = `<tr><td class="px" style="background:#ffffff; padding:50px 44px 14px; border-top:7px solid #1D1B3A;"><div style="font:600 14px ${NL_SANS}; color:#64748B;">${prog} &middot; ${escapeHtml(issue)}</div><h1 style="margin:16px 0 24px; font:800 32px/1.25 ${NL_SANS}; color:#1D1B3A;">${E(d.headline)}</h1><div style="height:1px; background:#E2E5EA;"></div></td></tr>
+    <tr><td class="px" style="background:#ffffff; padding:30px 44px 8px;">${greet('#1D1B3A')}${intro('#39424D')}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${items}</table></td></tr>
+    <tr><td class="px" style="background:#ffffff; padding:12px 44px 48px;"><div style="height:1px; background:#E2E5EA; margin-bottom:32px;"></div>${closing('#39424D','#64748B')}</td></tr>${foot('#64748B','#F4F5F7')}`;
   return shell('#F4F5F7', inner);
 }
 function nlBuildText(d, rec){
@@ -5087,7 +5096,7 @@ function newsletterView(){
     .nl-block{border:1.5px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; background:#fff;}
     .nl-block-h{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
     .nl-two{display:grid; grid-template-columns:1fr 1fr; gap:10px;} @media(max-width:560px){ .nl-two{grid-template-columns:1fr;} }
-    .nl-prev{width:100%; height:640px; border:1.5px solid var(--line); border-radius:12px; background:#fff;}
+    .nl-prev{width:100%; height:820px; border:1.5px solid var(--line); border-radius:12px; background:#fff;}
     .nl-aud{max-height:340px; overflow:auto;}
   </style>
   <div class="section-title"><div><h2>Newsletters</h2><p>Send a designed newsletter about research papers, competitions, scholarships or other news. You write and edit every line, choose which groups receive it, preview it, and send yourself a test first. Type {name} anywhere to insert each person's first name.</p></div></div>
@@ -5622,29 +5631,57 @@ function paintBell(){
   const st = pushState(); b.className = 'push-bell' + (st.on ? ' on' : ''); b.title = st.on ? 'App notifications are on' : 'Turn on app notifications';
   b.innerHTML = '&#128276;' + (st.on ? '<i></i>' : '<em>!</em>');
 }
+function pushInfo(){
+  const OS = window.__OS; let ext = '', sub = '';
+  try{ ext = String((OS && OS.User && OS.User.externalId) || ''); }catch(e){}
+  try{ sub = String((OS && OS.User && OS.User.PushSubscription && OS.User.PushSubscription.id) || ''); }catch(e){}
+  return { linked: !!ext && !!ME && ext===String(ME.id), hasSub: !!sub };
+}
+// Shows a real notification on this device through the service worker, so the person can see that the whole display path works.
+async function pushTest(){
+  const title = 'Notifications are working', opts = { body:'This is a test from ' + programName() + '. You will get class, exam and announcement alerts like this.', tag:'ichc-test', renotify:true };
+  try{ const reg = await navigator.serviceWorker.getRegistration(); if(reg && reg.showNotification){ await reg.showNotification(title, opts); return true; } }catch(e){ console.warn('SW test notification failed', e); }
+  try{ new Notification(title, opts); return true; }catch(e){ return false; }
+}
 function openPushPanel(){
   const old = document.getElementById('pushPanel'); if(old){ old.remove(); return; }
-  const st = pushState(), o = document.createElement('div'); o.id = 'pushPanel'; o.className = 'push-panel';
-  let msg, btn = '';
-  if(window.__OS_ERR || !st.supported){ msg = st.ios ? 'On an iPhone or iPad, tap the Share button, choose <b>Add to Home Screen</b>, then open the portal from your home screen and come back here to turn notifications on.' : 'Notifications are not available in this browser, or they could not start. Try Chrome, Edge, Firefox or Safari, and make sure you are using the official portal address.'; }
+  const st = pushState(), info = pushInfo(), o = document.createElement('div'); o.id = 'pushPanel'; o.className = 'push-panel';
+  let msg, btn = '', rows = '';
+  const row = (k, v, ok)=>`<div><span>${k}</span><span class="${ok?'ok':'no'}">${v}</span></div>`;
+  if(window.__OS_ERR || !st.supported){ msg = st.ios ? 'On an iPhone or iPad, tap the Share button, choose <b>Add to Home Screen</b>, then open the portal from your home screen and come back here to turn notifications on.' : 'Notifications are not available in this browser, or they could not start. Try Chrome, Edge, Firefox or Safari, switch off any ad blocker for this site, and make sure you are using the official portal address.'; }
   else if(st.perm === 'denied'){ msg = 'Notifications are <b>blocked</b> in your browser. Tap the lock icon next to the address bar, set <b>Notifications</b> to <b>Allow</b>, then refresh this page.'; }
-  else if(st.on){ msg = '&#10003; App notifications are <b>on</b>. You will get announcements and alerts on this device, even when the portal is closed.'; }
+  else if(st.on){
+    msg = '&#10003; App notifications are <b>on</b>. You will get announcements, alerts and reminders on this device, even when the portal is closed.';
+    rows = `<div class="push-rows">${row('Browser permission','Allowed',true)}${row('Notifications switched on','Yes',true)}${row('Linked to your account', info.linked?'Yes':'Not yet', info.linked)}</div>`;
+    btn = '<div style="display:flex; flex-wrap:wrap; gap:8px;"><button class="btn teal small" id="pushTest" type="button">Send a test notification</button>' + (info.linked ? '' : '<button class="btn ghost small" id="pushFix" type="button">Reconnect this device</button>') + '</div><p class="push-note" id="pushNote"></p>';
+  }
   else { msg = 'Get announcements, alerts and updates the moment they are posted, even when the portal is closed.'; btn = '<button class="btn teal" id="pushGo" type="button">Turn on notifications</button>'; }
-  o.innerHTML = `<div class="push-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="font-size:16px;">App notifications</b><button id="pushX" type="button" aria-label="Close" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button></div><p style="margin:0 0 12px; font-size:14px; line-height:1.5;">${msg}</p>${btn}</div>`;
+  o.innerHTML = `<div class="push-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="font-size:16px;">App notifications</b><button id="pushX" type="button" aria-label="Close" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button></div><p style="margin:0 0 12px; font-size:14px; line-height:1.5;">${msg}</p>${rows}${btn}</div>`;
   document.body.appendChild(o);
   o.querySelector('#pushX').addEventListener('click', ()=>o.remove());
   o.addEventListener('click', e=>{ if(e.target===o) o.remove(); });
+  const note = (t, cls)=>{ const n = o.querySelector('#pushNote'); if(n){ n.textContent = t; n.className = 'push-note ' + (cls||''); } };
   const go = o.querySelector('#pushGo');
   if(go) go.addEventListener('click', async ()=>{
     go.disabled = true; go.textContent = 'Asking your browser…';
-    try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
+    await pushAllow();
     o.remove(); paintBell(); openPushPanel();
   });
+  const t = o.querySelector('#pushTest');
+  if(t) t.addEventListener('click', async ()=>{ t.disabled = true; const ok = await pushTest(); t.disabled = false; note(ok ? 'Test sent. If you did not see it, check that Do Not Disturb or Focus mode is off on this device.' : 'This device could not show the test. Check your browser and system notification settings.', ok ? 'good' : 'bad'); });
+  const fx = o.querySelector('#pushFix');
+  if(fx) fx.addEventListener('click', async ()=>{ fx.disabled = true; try{ await window.__OS.login(String(ME.id)); }catch(e){} o.remove(); paintBell(); openPushPanel(); });
 }
 // Students who have neither allowed nor blocked notifications get a proper pop-up asking them to allow it.
 // The browser only shows its own permission dialog after a tap, so the pop-up carries the button that triggers it.
 async function pushAllow(){
-  try{ const OS = window.__OS; await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push permission failed', e); }
+  try{
+    const OS = window.__OS;
+    await OS.Notifications.requestPermission();
+    await OS.User.PushSubscription.optIn();
+    try{ if(ME && String(OS.User.externalId||'')!==String(ME.id)) await OS.login(String(ME.id)); }catch(e){}
+    pushTag();
+  }catch(e){ console.warn('push permission failed', e); }
   paintBell();
   return pushState();
 }
@@ -5662,7 +5699,7 @@ function openPushAsk(){
     ${needsInstall ? '' : '<p class="pa-fine">You can change this any time from the bell at the bottom of the screen.</p>'}</div>`;
   document.body.appendChild(o);
   const close = ()=>{ o.remove(); };
-  o.querySelector('#paNot').addEventListener('click', close);
+  o.querySelector('#paNot').addEventListener('click', ()=>{ if(!needsInstall) pushSnooze(3); close(); });
   const yes = o.querySelector('#paYes');
   if(yes) yes.addEventListener('click', async ()=>{
     yes.disabled = true; yes.textContent = 'Waiting for your browser…';
@@ -5673,14 +5710,73 @@ function openPushAsk(){
     if(r.perm==='denied'){ yes.remove(); o.querySelector('#paNot').textContent = 'Close'; }
   });
 }
+const PUSH_SNOOZE_KEY = 'ichc_push_snooze';
+function pushSnoozed(){ try{ return Date.now() < Number(localStorage.getItem(PUSH_SNOOZE_KEY)||0); }catch(e){ return false; } }
+function pushSnooze(days){ try{ localStorage.setItem(PUSH_SNOOZE_KEY, String(Date.now() + days*864e5)); }catch(e){} }
 function initPushUi(){
   paintBell();
   const st = pushState(), seenKey = 'ichc_push_prompted', isStu = !!ME && ME.role==='student';
-  if(isStu){
-    const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
-    if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
-  } else if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
+  if(!pushSnoozed()){
+    if(isStu){
+      const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
+      if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
+    } else if(!st.on && st.supported && st.perm !== 'denied' && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushPanel, 2500); }
+  }
   setTimeout(paintBell, 6000);
+}
+function pushGoTab(tab){ const t = document.querySelector('#tabs .tab[data-tab="'+String(tab).replace(/"/g,'')+'"]'); if(t) t.click(); }
+function pushTag(){
+  try{
+    const OS = window.__OS; if(!OS || !OS.User || !ME) return;
+    let coord = ''; try{ coord = ME.role==='student' ? String(myCoordinatorId()||'') : (ME.role==='coordinator' ? String(ME.id) : ''); }catch(e){}
+    OS.User.addTags({ role:String(ME.role||''), coordinator:coord });
+  }catch(e){}
+}
+function pushToast(title, body, tab){
+  try{
+    document.querySelectorAll('.push-toast').forEach(x=>x.remove());
+    const t = document.createElement('div'); t.className = 'push-toast'; t.setAttribute('role','status');
+    t.innerHTML = '<b></b><span></span>'; t.firstChild.textContent = title || 'New notification'; t.lastChild.textContent = body || '';
+    t.addEventListener('click', ()=>{ t.remove(); if(tab) pushGoTab(tab); });
+    document.body.appendChild(t); setTimeout(()=>t.remove(), 9000);
+  }catch(e){}
+}
+// Links this device to the signed-in person and keeps it linked. Every step is guarded, so one failing call never stops the others.
+function pushBoot(){
+  const run = async function(OS){
+    window.__OS = window.__OS || OS;
+    try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); }
+    pushTag();
+    // Permission was already given earlier but the subscription lapsed (cleared browser data, a new browser profile): switch it back on quietly.
+    try{ if('Notification' in window && Notification.permission==='granted' && OS.User.PushSubscription && !OS.User.PushSubscription.optedIn) await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push re-subscribe skipped', e); }
+    if(!window.__pushWired){
+      window.__pushWired = true;
+      try{ OS.User.PushSubscription.addEventListener('change', ()=>{ paintBell(); }); }catch(e){}
+      try{ OS.Notifications.addEventListener('permissionChange', ()=>{ paintBell(); pushTag(); }); }catch(e){}
+      // A notification arriving while the portal is open shows a small in-page banner as well.
+      try{ OS.Notifications.addEventListener('foregroundWillDisplay', ev=>{ try{ const n = ev.notification || {}; pushToast(n.title, n.body, n.additionalData && n.additionalData.tab); }catch(e){} }); }catch(e){}
+      // Tapping a notification opens the portal on the right section when the message names one.
+      try{ OS.Notifications.addEventListener('click', ev=>{ try{ const d = (ev.notification && ev.notification.additionalData) || {}; if(d.tab) setTimeout(()=>pushGoTab(d.tab), 600); }catch(e){} }); }catch(e){}
+    }
+    try{ const q = new URLSearchParams(location.search).get('tab'); if(q) setTimeout(()=>pushGoTab(q), 1400); }catch(e){}
+    initPushUi();
+    // Every five minutes: re-link if another sign-in on this device changed who the browser belongs to, and keep the bell honest.
+    if(window.__pushTimer) clearInterval(window.__pushTimer);
+    window.__pushTimer = setInterval(async ()=>{
+      try{ if(window.__OS && ME && String(window.__OS.User.externalId||'')!==String(ME.id)) { await window.__OS.login(String(ME.id)); pushTag(); } }catch(e){}
+      paintBell();
+    }, 300000);
+  };
+  (window.OneSignalDeferred = window.OneSignalDeferred || []).push(run);
+  // If the notification service never loads (an ad blocker, no connection), still show the bell with a clear explanation.
+  setTimeout(()=>{ if(!window.__OS){ window.__OS_ERR = window.__OS_ERR || 'The notification service could not load.'; try{ initPushUi(); }catch(e){} } }, 8000);
+}
+// On sign-out, stop this device receiving the previous person's notifications.
+function pushUnlink(){
+  if(window.__pushTimer){ clearInterval(window.__pushTimer); window.__pushTimer = null; }
+  try{ if(window.__OS && window.__OS.logout) window.__OS.logout(); }catch(e){}
+  const b = document.getElementById('pushBell'); if(b) b.remove();
+  ['pushPanel','pushAsk'].forEach(id=>{ const x = document.getElementById(id); if(x) x.remove(); });
 }
 
 
@@ -5954,7 +6050,8 @@ function certificatesView(){
   return `
   ${certOnlyUser() ? '<div class="card" style="margin-bottom:18px; text-align:center; background:var(--navy-deep); color:#F6F4EE; padding:26px 20px;"><div style="font-size:20px; font-weight:700; line-height:1.4;">Thank you for being part of this programme!</div><div style="margin-top:6px; font-size:16px; color:#E39A3B; font-weight:600;">Access your Certificate.</div></div>' : ''}
   <div class="section-title"><div><h2>My certificates</h2><p>Issued by your Ambassador to recognize your ${ME.role==='coordinator'?'service':'participation'} in the programme. Anyone can confirm these are genuine using the verification link.</p></div></div>
-  ${mine.length ? `<div class="list">${mine.map(certItemHtml).join('')}</div>` : `<div class="empty">No certificates issued to you yet. Your Ambassador issues these individually once eligible.</div>`}`;
+  ${mine.length ? `<div class="list">${mine.map(certItemHtml).join('')}</div>` : `<div class="empty">No certificates issued to you yet. Your Ambassador issues these individually once eligible.</div>`}
+  ${typeof ccTabHtml==='function' ? ccTabHtml() : ''}`;
 }
 function certItemHtml(c){
   const revoked = c.status==='revoked';
@@ -7886,7 +7983,23 @@ async function exbPool(n, par, fn, stop){
 }
 
 // ---------------------------------------------------------------- ambassador / coordinator screen
+// A coordinator looking at an exam the Ambassador posted: preview only (no edit, remove, marking or release).
+function examPreviewOnlyItem(e){
+  const st = examStatus(e);
+  const badge = st==='open' ? '<span class="badge coord">Open now</span>' : st==='upcoming' ? '<span class="badge stud">Scheduled</span>' : '<span class="badge amb">Closed</span>';
+  const v2 = examIsV2(e), qn = v2 ? e.questions.length : 0;
+  const bits = v2 ? `${qn} question${qn===1?'':'s'} · ${e.totalMarks} marks · ${e.attempts} attempt${e.attempts===1?'':'s'} allowed` : `${e.timeLimitMin} min · older single-block exam`;
+  const when = v2 && e.startAt ? `Opens ${escapeHtml(fmtDateTime(e.startAt))} · closes ${escapeHtml(fmtDateTime(e.endAt))}` : escapeHtml(fmtDate(e.date));
+  return `<div class="item" data-exam-item="${e.id}">
+    <div class="item-head"><span class="item-title">${escapeHtml(e.title)}</span>${badge}</div>
+    <div class="item-body">${escapeHtml(e.subject||'')}${e.subject?' · ':''}${bits} · posted by the Ambassador for the whole programme</div>
+    <div class="item-meta" style="margin-top:4px;">${when}</div>
+    <div class="item-actions"><button class="btn secondary small" ${v2 ? `data-preview-exam="${e.id}"` : `data-preview-legacy="${e.id}"`}>Preview as a student</button></div>
+    <p class="note" style="margin:8px 0 0;">You can preview this exam any time. Only the Ambassador can change it or release its results.</p>
+  </div>`;
+}
 function examManageItem(e){
+  if(ME.role==='coordinator' && e.coordinatorId!==ME.id) return examPreviewOnlyItem(e);
   const st = examStatus(e);
   const badge = st==='open' ? '<span class="badge coord">Open now</span>' : st==='upcoming' ? '<span class="badge stud">Scheduled</span>' : '<span class="badge amb">Closed</span>';
   const atts = DB.examAttempts.filter(a=>a.examId===e.id);
@@ -7998,7 +8111,8 @@ function exbApplyMode(){
 function examsManageView(){
   if(!EXB) EXB = exbFresh();
   const E = EXB;
-  const scoped = ME.role==='ambassador' ? DB.exams : DB.exams.filter(e=>e.coordinatorId===ME.id);
+  // The Ambassador's exams are programme-wide (coordinatorId null). Every coordinator can preview them, whether or not their own students took part.
+  const scoped = ME.role==='ambassador' ? DB.exams : DB.exams.filter(e=>e.coordinatorId===ME.id || e.coordinatorId===null);
   const sorted = [...scoped].sort((a,b)=>String(b.startAt||b.date).localeCompare(String(a.startAt||a.date)));
   const chips = EXAM_TOPICS.map(t=>`<label class="eb-chip"><input type="checkbox" data-eb-topic value="${escapeHtml(t)}"> ${escapeHtml(t)}</label>`).join('');
   const secIn = Object.keys(EXAM_TYPE_LABEL).map(k=>`<div class="field" style="margin:0;"><label>${EXAM_TYPE_LABEL[k]}</label><input type="number" min="10" max="3600" data-exb-sec="${k}" value="${E.sec[k]}"></div>`).join('');
@@ -11089,7 +11203,9 @@ function rmCurrentId(){
 }
 async function rmLoad(force){
   if(!force && RM.ov && Date.now()-RM.ovAt < 20000) return RM.ov;
-  RM.ov = await rmApi('overview'); RM.ovAt = Date.now(); return RM.ov;
+  RM.ov = await rmApi('overview'); RM.ovAt = Date.now();
+  try{ if(typeof ccCheck==='function') ccCheck(RM.ov); }catch(e){}
+  return RM.ov;
 }
 async function rmLoadBoard(){
   if(ME.role!=='student') return;
@@ -11280,6 +11396,7 @@ function rmSectionHtml(){
       <h2>${escapeHtml(s.title)}</h2>
       <p>${escapeHtml(s.focus.charAt(0).toUpperCase()+s.focus.slice(1))}.</p>
       ${chips ? `<div style="margin-top:10px;">${chips}</div>` : ''}
+      ${(!staff && s.complete) ? `<div style="margin-top:12px;"><button class="btn amber small" type="button" data-cc-open="${s.id}">Share my completion card</button></div>` : ''}
     </div>
     ${staff ? '' : rmRing(s.pct, 92, 'on-dark')}
   </div>
@@ -12529,5 +12646,290 @@ function seriesMgrMount(){
   SeriesAdmin.managerCard(r, sb, { coordinators: DB.coordinators || [], students: DB.students || [] });
 }
 </script>
+<script>
+/* ===== Course-completion cards, ready-made share messages and the scan-to-apply QR =====
+   Students get a shareable card when they finish a roadmap section (a course). Coordinators get a "proud coordinator" card.
+   The QR code opens the public site's welcome page (?welcome=1): the latest dates and deadlines, plus a button to apply. */
+(function(){
+  'use strict';
+  const esc = (t)=> escapeHtml(String(t==null?'':t));
+  const siteRoot = ()=>{
+    let u = (typeof DB!=='undefined' && DB.settings && DB.settings.siteUrl) ? String(DB.settings.siteUrl).trim() : '';
+    if(!/^https?:\/\//i.test(u)) u = 'https://ichc-ghana.vercel.app/';
+    return u.replace(/[?#].*$/,'').replace(/\/?$/,'/');
+  };
+  const scanUrl = (code)=> siteRoot() + '?welcome=1&s=' + encodeURIComponent(code||'card');
+  const hostOf = ()=>{ try{ return new URL(siteRoot()).host; }catch(e){ return 'ichc-ghana.vercel.app'; } };
+  const K = (k)=> 'ichc_cc_' + k + '_' + (ME ? ME.id : 'x');
+  const load = (k, d)=>{ try{ const v = JSON.parse(localStorage.getItem(K(k))||'null'); return v==null ? d : v; }catch(e){ return d; } };
+  const save = (k, v)=>{ try{ localStorage.setItem(K(k), JSON.stringify(v)); }catch(e){} };
+  const today = ()=> new Date().toISOString().slice(0,10);
+  const TAGS = '#Chemistry #IChC #Ghana #STEM #ChemPrep';
+  const PLATS = [['wa','WhatsApp'],['li','LinkedIn'],['x','X'],['fb','Facebook / Instagram']];
+  const TONES = {
+    student:[['proud','Proud'],['grateful','Grateful'],['challenge','Challenge a friend'],['short','Short and sweet']],
+    coordinator:[['proud','Proud to serve'],['invite','Invite students'],['thanks','Say thanks'],['short','Short and sweet']]
+  };
+
+  // ---------------- the data behind a card ----------------
+  function sectionData(id){
+    const ov = (typeof RM!=='undefined') && RM.ov; if(!ov || !Array.isArray(ov.sections)) return null;
+    const s = ov.sections.find(x=>x.id===id); if(!s) return null;
+    const idx = RM_TOPICS.findIndex(t=>t[0]===id);
+    const dates = load('dates', {}); if(!dates[id]){ dates[id] = today(); save('dates', dates); }
+    const acc = Number(s.accuracy), att = Number(s.attempts)||0;
+    return { role:'student', id, code:'cc'+(idx+1), name:(ME&&ME.name)||'', course:s.title, n:idx+1, total:RM_TOPICS.length,
+      done:ov.sections.filter(x=>x.complete).length, accuracy:(att>0 && Number.isFinite(acc)) ? Math.round(acc) : null, date:dates[id] };
+  }
+  function coordData(){
+    const mine = (DB.students||[]).filter(s=>s.coordinatorId===ME.id);
+    return { role:'coordinator', code:'co', name:ME.name||'', students:mine.length };
+  }
+
+  // ---------------- the card (a PNG drawn on a canvas, 1080 x 1350) ----------------
+  function rr(g,x,y,w,h,r){ g.beginPath(); if(g.roundRect){ g.roundRect(x,y,w,h,r); } else { g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); } }
+  function wrapLines(g, text, maxW){
+    const words = String(text).split(/\s+/).filter(Boolean), out = []; let cur = '';
+    words.forEach(w=>{ const t = cur ? cur+' '+w : w; if(g.measureText(t).width>maxW && cur){ out.push(cur); cur = w; } else cur = t; });
+    if(cur) out.push(cur); return out;
+  }
+  function fitFont(g, text, maxW, start, min, weight, fam, maxLines){
+    let size = start;
+    for(; size>=min; size-=2){ g.font = weight+' '+size+'px '+fam; if(wrapLines(g,text,maxW).length<=maxLines) break; }
+    return Math.max(size, min);
+  }
+  function cardCanvas(d, url, hasQr){
+    const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+    const serif = "Fraunces, Georgia, 'Times New Roman', serif", sans = "'Segoe UI', system-ui, Arial, sans-serif", NAVY = '#0A1826', TEAL = '#14506A', AMBER = '#E39A3B', MUTED = '#5B6670';
+    const bg = g.createLinearGradient(0,0,W,H); bg.addColorStop(0,NAVY); bg.addColorStop(1,TEAL); g.fillStyle = bg; g.fillRect(0,0,W,H);
+    g.globalAlpha = .08; g.fillStyle = '#fff'; [[110,150,230],[990,1190,310],[980,110,110]].forEach(a=>{ g.beginPath(); g.arc(a[0],a[1],a[2],0,Math.PI*2); g.fill(); }); g.globalAlpha = 1;
+    rr(g,56,56,W-112,H-112,40); g.fillStyle = '#FFFFFF'; g.fill();
+    g.save(); rr(g,56,56,W-112,H-112,40); g.clip();
+    const sx = 56, sw = (W-112)/3; ['#CE1126','#FCD116','#006B3F'].forEach((col,i)=>{ g.fillStyle = col; g.fillRect(sx+i*sw, 1272, sw+1, 22); }); g.restore();
+    g.strokeStyle = AMBER; g.lineWidth = 5; rr(g,92,92,W-184,1160,26); g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillStyle = AMBER; g.font = '700 27px '+sans; g.fillText('CHEMISTRY COMPETITION PREP  ·  GHANA', W/2, 168);
+    // badge
+    const label = d.role==='coordinator' ? 'VOLUNTEER COORDINATOR' : 'COURSE COMPLETED';
+    g.font = '800 27px '+sans; const bw = g.measureText(label).width + 110, bx = (W-bw)/2;
+    rr(g,bx,204,bw,62,31); g.fillStyle = '#0F766E'; g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 6; g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(bx+30,236); g.lineTo(bx+40,246); g.lineTo(bx+57,226); g.stroke();
+    g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(label, bx+72, 244); g.textAlign = 'center';
+    // name
+    const nm = d.name || 'Student';
+    const ns = fitFont(g, nm, 820, 80, 40, '700', serif, 1); g.font = '700 '+ns+'px '+serif; g.fillStyle = NAVY; g.fillText(nm, W/2, 392, 820);
+    g.fillStyle = MUTED; g.font = '400 32px '+sans;
+    if(d.role==='coordinator'){
+      g.fillText('is proud to mentor', W/2, 452);
+      const big = d.students>0 ? (d.students + (d.students===1 ? ' student' : ' students')) : 'Ghana’s next chemists';
+      const fs = fitFont(g, big, 820, 70, 40, '700', serif, 1); g.font = '700 '+fs+'px '+serif; g.fillStyle = TEAL; g.fillText(big, W/2, 540, 820);
+      g.fillStyle = '#39424D'; g.font = '400 32px '+sans; const ln = wrapLines(g, 'on the road to the International Chemistry Competition.', 800); ln.forEach((t,i)=>g.fillText(t, W/2, 600+i*44));
+    } else {
+      g.fillText('has successfully completed the course', W/2, 452);
+      const fs = fitFont(g, d.course, 840, 66, 40, '700', serif, 3); g.font = '700 '+fs+'px '+serif; g.fillStyle = TEAL;
+      wrapLines(g, d.course, 840).slice(0,3).forEach((t,i)=>g.fillText(t, W/2, 536+i*(fs*1.18)));
+    }
+    // three stat boxes
+    const stats = d.role==='coordinator'
+      ? [[d.students>0?String(d.students):'—','STUDENTS'],['Volunteer','ROLE'],['Ghana','CHAPTER']]
+      : [[d.n+' of '+d.total,'TOPIC'],[d.accuracy!=null ? d.accuracy+'%' : 'Done','ACCURACY'],[ (function(){ try{ return new Date(d.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return d.date; } })(),'COMPLETED']];
+    const bw3 = 270, gap = 24, x0 = (W - (bw3*3 + gap*2))/2;
+    stats.forEach((s,i)=>{ const x = x0 + i*(bw3+gap); rr(g,x,716,bw3,118,20); g.fillStyle = '#F1F5F8'; g.fill();
+      const vs = fitFont(g, s[0], bw3-30, 38, 22, '800', sans, 1); g.font = '800 '+vs+'px '+sans; g.fillStyle = NAVY; g.fillText(s[0], x+bw3/2, 776, bw3-30);
+      g.font = '700 20px '+sans; g.fillStyle = MUTED; g.fillText(s[1], x+bw3/2, 812); });
+    // progress dots (students) or a line (coordinators)
+    if(d.role==='coordinator'){
+      g.fillStyle = '#39424D'; g.font = '400 30px '+sans; g.fillText('Mentoring. Practice. Progress.', W/2, 920);
+    } else {
+      const dx = 44, start = W/2 - dx*(d.total-1)/2;
+      for(let i=0;i<d.total;i++){ g.beginPath(); g.arc(start+i*dx, 898, i===d.n-1 ? 15 : 11, 0, Math.PI*2); g.fillStyle = i<d.done ? '#0F766E' : '#D5DCE2'; g.fill(); if(i===d.n-1){ g.strokeStyle = AMBER; g.lineWidth = 4; g.stroke(); } }
+      g.fillStyle = MUTED; g.font = '500 24px '+sans; g.fillText(d.done+' of '+d.total+' topics complete', W/2, 950);
+    }
+    g.strokeStyle = '#E3E8EC'; g.lineWidth = 2; g.beginPath(); g.moveTo(150,988); g.lineTo(W-150,988); g.stroke();
+    // QR block
+    const qs = 200, qx = 150, qy = 1018;
+    rr(g,qx-14,qy-14,qs+28,qs+28,16); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = '#D5DCE2'; g.lineWidth = 2; g.stroke();
+    if(hasQr){ try{ const qr = window.qrcode(0,'M'); qr.addData(url); qr.make(); const n = qr.getModuleCount(), m = Math.floor(qs/n), off = Math.floor((qs-m*n)/2); g.fillStyle = NAVY; for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(qr.isDark(r,k)) g.fillRect(qx+off+k*m, qy+off+r*m, m, m); }catch(e){} }
+    g.textAlign = 'left'; const tx = qx + qs + 50;
+    g.fillStyle = NAVY; g.font = '800 36px '+sans; g.fillText('Scan for the latest updates', tx, qy+52);
+    g.fillStyle = '#39424D'; g.font = '400 29px '+sans; ['and apply to join the','programme.'].forEach((t,i)=>g.fillText(t, tx, qy+100+i*38));
+    g.fillStyle = TEAL; g.font = '700 26px '+sans; g.fillText(hostOf(), tx, qy+186);
+    return cv;
+  }
+
+  // ---------------- ready-made messages ----------------
+  function build(d, url, tone, plat){
+    const wa = plat==='wa', fb = plat==='fb', emoji = wa || fb;
+    let msg;
+    if(d.role==='coordinator'){
+      const n = d.students>0 ? d.students : 0, st = n ? (n+(n===1?' student':' students')) : 'students';
+      const heads = {
+        proud:`I'm proud to serve as a volunteer coordinator with Chemistry Competition Prep Ghana, mentoring ${st} toward the International Chemistry Competition.`,
+        invite:`Know a student in Ghana who loves chemistry? Chemistry Competition Prep trains students for the International Chemistry Competition, and I'm a coordinator helping them get there.`,
+        thanks:`Thank you to the Ambassador, my fellow coordinators and my students at Chemistry Competition Prep Ghana. Volunteering with you is a joy.`,
+        short:`Volunteer coordinator at Chemistry Competition Prep Ghana.`
+      };
+      const ctas = { proud:'Want to train with us? See the latest updates and apply:', invite:'See the latest updates and apply:', thanks:'If you love chemistry, see the latest updates and apply:', short:'Updates and applications:' };
+      const em = emoji ? { proud:'🧪 ', invite:'👋 ', thanks:'🙏 ', short:'🧪 ' }[tone] : '';
+      if(plat==='li') msg = `${heads[tone]}\n\nMentoring takes time and patience, and it is worth it: every student I coach is building real problem-solving skills. If you are a student in Ghana who loves chemistry, you can see the latest updates and apply here:\n${url}\n\n${TAGS}`;
+      else if(plat==='x') msg = `${em}${heads[tone]}\n${ctas[tone]} ${url}\n${TAGS}`;
+      else msg = `${em}${heads[tone]}${emoji?' 🇬🇭':''}\n\n${ctas[tone]}\n${url}${fb?'\n(or scan the QR code on the card)\n\n'+TAGS:''}`;
+    } else {
+      const c = d.course, b = wa ? '*'+c+'*' : c;
+      const stat = d.done>0 ? `That's ${d.done} of ${d.total} topics done${d.accuracy!=null ? `, with ${d.accuracy}% accuracy` : ''}, on my road to the International Chemistry Competition.` : '';
+      const heads = {
+        proud:`I have completed the ${b} course with Chemistry Competition Prep Ghana!`,
+        grateful:`Grateful to my coordinator and the whole Chemistry Competition Prep team: I have completed the ${b} course!`,
+        challenge:`I have completed the ${b} course. Think you can beat my score?`,
+        short:`Completed: ${b} course, Chemistry Competition Prep Ghana.`
+      };
+      const ctas = { proud:'Love chemistry? See the latest updates and apply to join:', grateful:'If you love chemistry, see the latest updates and apply:', challenge:'Take the challenge. Latest updates and applications:', short:'Updates and applications:' };
+      const em = emoji ? { proud:'🧪 ', grateful:'🙏 ', challenge:'⚗️ ', short:'✅ ' }[tone] : '';
+      if(plat==='li') msg = `${heads[tone]}\n\n${stat ? stat+'\n\n' : ''}The programme gave me guided practice, timed questions and personal feedback from a coordinator. If you are a student in Ghana who loves chemistry, you can see the latest updates and apply here:\n${url}\n\n${TAGS}`;
+      else if(plat==='x') msg = `${em}${heads[tone]}\n${ctas[tone]} ${url}\n${TAGS}`;
+      else msg = `${em}${heads[tone]}${emoji?' 🇬🇭':''}\n\n${tone==='short' || !stat ? '' : stat+' 🚀\n\n'}${ctas[tone]}\n${url}${fb?'\n(or scan the QR code on the card)\n\n'+TAGS:''}`;
+    }
+    if(plat==='x' && msg.length>280){ const keep = msg.slice(msg.indexOf('\n')+1); msg = (msg.split('\n')[0].slice(0, 280-keep.length-2).replace(/\s+\S*$/,'') + '…\n' + keep); }
+    return msg;
+  }
+
+  // ---------------- the pop-up ----------------
+  let CC = null;
+  function css(){
+    if(document.getElementById('ccCss')) return;
+    const s = document.createElement('style'); s.id = 'ccCss';
+    s.textContent = `
+    .cc-back{position:fixed; inset:0; z-index:1450; background:rgba(8,20,30,.72); display:flex; align-items:center; justify-content:center; padding:14px; overflow:auto;}
+    .cc-sheet{position:relative; background:#fff; color:#1B2430; border-radius:20px; width:min(940px,100%); max-height:calc(100vh - 28px); overflow:auto; padding:20px; box-shadow:0 24px 70px rgba(0,0,0,.45);}
+    .cc-x{position:absolute; right:12px; top:8px; background:none; border:0; font-size:28px; line-height:1; cursor:pointer; color:#39424D;}
+    .cc-head{padding:2px 36px 12px 2px;} .cc-head b{display:block; font-size:21px; line-height:1.3;} .cc-head span{display:block; margin-top:4px; font-size:14px; color:#5B6670;}
+    .cc-grid{display:grid; grid-template-columns:minmax(0,380px) minmax(0,1fr); gap:20px; align-items:start;} @media(max-width:760px){ .cc-grid{grid-template-columns:1fr;} }
+    .cc-prev canvas{width:100%; height:auto; border-radius:14px; box-shadow:0 10px 30px rgba(10,24,38,.25); display:block;}
+    .cc-lab{font-weight:700; font-size:14px; margin:0 0 6px;} .cc-lab small{font-weight:400; color:#5B6670;}
+    .cc-chips{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px;}
+    .cc-chip{border:1.5px solid #CBD3DA; background:#fff; border-radius:999px; padding:7px 13px; font:600 13px/1 inherit; cursor:pointer; color:#10243A;} .cc-chip.on{background:#10243A; border-color:#10243A; color:#fff;}
+    #ccMsg{width:100%; box-sizing:border-box; border:1.5px solid #CBD3DA; border-radius:12px; padding:12px; font:14.5px/1.55 inherit; resize:vertical; min-height:190px;}
+    .cc-count{font-size:12px; color:#5B6670; text-align:right; margin:4px 0 10px;} .cc-count.bad{color:#B3261E; font-weight:700;}
+    .cc-actions{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;} .cc-note{margin:12px 0 0; font-size:12.5px; line-height:1.5; color:#5B6670;} .cc-flash{margin:10px 0 0; font-size:13px; color:#146956; min-height:18px;}
+    .cc-fall{position:fixed; top:-20px; width:10px; height:14px; z-index:1460; pointer-events:none; animation:ccFall linear forwards;} @keyframes ccFall{ to{ transform:translateY(110vh) rotate(540deg); opacity:.9; } }
+    .cc-mini{display:flex; flex-wrap:wrap; gap:12px; align-items:center; border:1.5px solid var(--line,#d8d4c8); border-radius:14px; padding:12px 14px; margin-bottom:10px; background:#fff;}
+    .cc-mini .t{flex:1 1 220px; min-width:0;} .cc-mini .t b{display:block; font-size:15px;} .cc-mini .t span{font-size:12.5px; color:var(--muted,#6B7280);}`;
+    document.head.appendChild(s);
+  }
+  function confetti(){
+    try{ const cols = ['#E39A3B','#0F766E','#CE1126','#FCD116','#006B3F','#5B3DF5'];
+      for(let i=0;i<46;i++){ const c = document.createElement('i'); c.className = 'cc-fall'; c.style.cssText = `left:${Math.random()*100}vw; background:${cols[i%cols.length]}; animation-duration:${2.4+Math.random()*2.2}s; animation-delay:${Math.random()*.7}s;`; document.body.appendChild(c); setTimeout(()=>c.remove(), 5600); } }catch(e){}
+  }
+  const blob = ()=> new Promise(r=>CC.cv.toBlob(r,'image/png'));
+  const fname = ()=> (CC.d.role==='coordinator' ? 'coordinator-card' : 'completed-'+CC.d.id) + '.png';
+  function flash(t){ const f = document.getElementById('ccFlash'); if(f){ f.textContent = t; clearTimeout(flash._t); flash._t = setTimeout(()=>{ if(f) f.textContent = ''; }, 5000); } }
+  function setMsg(){ const ta = document.getElementById('ccMsg'); if(!ta) return; ta.value = build(CC.d, CC.url, CC.tone, CC.plat); count(); }
+  function count(){ const ta = document.getElementById('ccMsg'), c = document.getElementById('ccCount'); if(!ta||!c) return; const n = ta.value.length; if(CC.plat==='x'){ c.textContent = n+' / 280'; c.className = 'cc-count'+(n>280?' bad':''); } else { c.textContent = n+' characters'; c.className = 'cc-count'; } }
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); const ok = document.execCommand('copy'); a.remove(); return ok; }catch(e2){ return false; } } }
+  function chipsHtml(list, cur, attr){ return list.map(x=>`<button type="button" class="cc-chip${cur===x[0]?' on':''}" ${attr}="${x[0]}" aria-pressed="${cur===x[0]}">${esc(x[1])}</button>`).join(''); }
+
+  async function open(id, opts){
+    opts = opts || {};
+    if(!ME) return;
+    css();
+    let d;
+    if(id==='coord'){ if(ME.role!=='coordinator') return; d = coordData(); }
+    else {
+      if(!(typeof RM!=='undefined' && RM.ov)){ try{ await rmLoad(); }catch(e){} }
+      d = sectionData(id); if(!d) return;
+    }
+    const old = document.getElementById('ccModal'); if(old) old.remove();
+    const url = scanUrl(d.code), hasQr = await loadQr(), cv = cardCanvas(d, url, hasQr);
+    CC = { d, url, cv, plat:'wa', tone:'proud' };
+    const o = document.createElement('div'); o.id = 'ccModal'; o.className = 'cc-back'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-label','Share your card');
+    const head = d.role==='coordinator'
+      ? `<b>Your coordinator card</b><span>Share it to show your service and to invite students. People who scan the QR code see the latest updates and can apply.</span>`
+      : `<b>${opts.celebrate ? '🎉 You completed ' : 'Your card for '}${esc(d.course)}${opts.celebrate ? '!' : ''}</b><span>${opts.celebrate ? 'Well done! ' : ''}Share your card on WhatsApp, LinkedIn or any app. Anyone who scans the QR code sees the latest updates and can apply to the programme.</span>`;
+    o.innerHTML = `<div class="cc-sheet"><button type="button" class="cc-x" id="ccX" aria-label="Close">&times;</button>
+      <div class="cc-head">${head}</div>
+      <div class="cc-grid"><div class="cc-prev" id="ccPrev"></div>
+      <div><div class="cc-lab">Where will you post it?</div><div class="cc-chips" id="ccPlats">${chipsHtml(PLATS, CC.plat, 'data-cc-plat')}</div>
+        <div class="cc-lab">Tone</div><div class="cc-chips" id="ccTones">${chipsHtml(TONES[d.role], CC.tone, 'data-cc-tone')}</div>
+        <div class="cc-lab">Your message <small>(ready-made, edit it freely)</small></div>
+        <textarea id="ccMsg" rows="9" aria-label="Your message"></textarea><div class="cc-count" id="ccCount"></div>
+        <div class="cc-actions"><button type="button" class="btn amber" id="ccShare">Share card + message</button><button type="button" class="btn teal small" id="ccWa">WhatsApp</button><button type="button" class="btn teal small" id="ccLi">LinkedIn</button><button type="button" class="btn teal small" id="ccTw">X</button><button type="button" class="btn teal small" id="ccFb">Facebook</button><button type="button" class="btn ghost small" id="ccDl">Download card</button><button type="button" class="btn ghost small" id="ccCopy">Copy message</button></div>
+        <div class="cc-flash" id="ccFlash" role="status"></div>
+        <p class="cc-note">LinkedIn, Facebook and Instagram take the picture separately: download the card, then attach it to your post. Your message is copied for you when you tap LinkedIn.</p></div></div></div>`;
+    document.body.appendChild(o);
+    cv.style.cssText = 'width:100%; height:auto;'; o.querySelector('#ccPrev').appendChild(cv);
+    setMsg();
+    if(opts.celebrate) confetti();
+    const close = ()=>{ o.remove(); CC = null; };
+    o.querySelector('#ccX').addEventListener('click', close);
+    o.addEventListener('click', e=>{ if(e.target===o) close(); });
+    document.addEventListener('keydown', function esc1(e){ if(e.key==='Escape'){ document.removeEventListener('keydown', esc1); if(document.getElementById('ccModal')) close(); } });
+    o.addEventListener('click', async e=>{
+      const pl = e.target.closest('[data-cc-plat]'), tn = e.target.closest('[data-cc-tone]');
+      if(pl){ CC.plat = pl.dataset.ccPlat; o.querySelector('#ccPlats').innerHTML = chipsHtml(PLATS, CC.plat, 'data-cc-plat'); setMsg(); }
+      if(tn){ CC.tone = tn.dataset.ccTone; o.querySelector('#ccTones').innerHTML = chipsHtml(TONES[d.role], CC.tone, 'data-cc-tone'); setMsg(); }
+    });
+    const ta = o.querySelector('#ccMsg'); ta.addEventListener('input', count);
+    const text = ()=> ta.value.trim();
+    o.querySelector('#ccWa').addEventListener('click', ()=>{ window.open('https://wa.me/?text='+encodeURIComponent(text()), '_blank', 'noopener'); });
+    o.querySelector('#ccTw').addEventListener('click', ()=>{ window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(text()), '_blank', 'noopener'); });
+    o.querySelector('#ccFb').addEventListener('click', ()=>{ window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(CC.url)+'&quote='+encodeURIComponent(text()), '_blank', 'noopener'); });
+    o.querySelector('#ccLi').addEventListener('click', async ()=>{ const ok = await copyText(text()); window.open('https://www.linkedin.com/feed/?shareActive=true&text='+encodeURIComponent(text()), '_blank', 'noopener'); flash(ok ? 'Message copied. Paste it if LinkedIn does not fill it in, and attach your downloaded card.' : 'LinkedIn opened. Download your card and attach it to the post.'); });
+    o.querySelector('#ccCopy').addEventListener('click', async ()=>{ flash((await copyText(text())) ? 'Message copied.' : 'Could not copy. Select the text and copy it.'); });
+    o.querySelector('#ccDl').addEventListener('click', async ()=>{ const a = document.createElement('a'); a.href = URL.createObjectURL(await blob()); a.download = fname(); document.body.appendChild(a); a.click(); a.remove(); flash('Card saved to your device.'); });
+    o.querySelector('#ccShare').addEventListener('click', async ()=>{
+      try{
+        const f = new File([await blob()], fname(), { type:'image/png' });
+        if(navigator.canShare && navigator.canShare({ files:[f] })){ await navigator.share({ files:[f], text:text() }); }
+        else if(navigator.share){ await navigator.share({ text:text() }); flash('Your device shares the message only. Use Download card to attach the picture.'); }
+        else { const ok = await copyText(text()); flash(ok ? 'Sharing is not available here. Your message is copied: download the card and post both.' : 'Sharing is not available here. Use Download card and Copy message.'); }
+      }catch(err){ /* the person closed the share sheet */ }
+    });
+  }
+
+  // ---------------- notice a newly finished course ----------------
+  function check(ov){
+    try{
+      if(!ME || ME.role!=='student' || !ov || !Array.isArray(ov.sections)) return;
+      const done = ov.sections.filter(s=>s.complete), dates = load('dates', {}), seen = load('seen', []);
+      let changed = false; done.forEach(s=>{ if(!dates[s.id]){ dates[s.id] = today(); changed = true; } }); if(changed) save('dates', dates);
+      const fresh = done.filter(s=>!seen.includes(s.id)); if(!fresh.length) return;
+      save('seen', Array.from(new Set(seen.concat(done.map(s=>s.id)))));
+      if(document.getElementById('ccModal')) return;
+      // On a device that has not seen any cards yet, only the most recent finished course pops up; the rest stay available under My certificates.
+      const last = fresh[fresh.length-1];
+      setTimeout(()=>{ if(!document.getElementById('ccModal') && ME && ME.role==='student') open(last.id, { celebrate:true }); }, 1400);
+    }catch(e){ console.warn('Completion check skipped', e); }
+  }
+
+  // ---------------- lists inside My certificates ----------------
+  function boxInner(){
+    if(ME.role==='coordinator'){
+      const n = (DB.students||[]).filter(s=>s.coordinatorId===ME.id).length;
+      return `<div class="cc-mini"><div class="t"><b>Share my coordinator card</b><span>${n ? 'Show that you mentor '+n+(n===1?' student':' students')+'. ' : ''}Includes ready-made posts for WhatsApp, LinkedIn, X and Facebook, and a QR code that shows the latest updates with a button to apply.</span></div><button type="button" class="btn amber small" data-cc-coord="1">Create my card</button></div>`;
+    }
+    const ov = (typeof RM!=='undefined') && RM.ov;
+    if(!ov) return '<p class="note">Loading your courses…</p>';
+    const done = ov.sections.filter(s=>s.complete);
+    if(!done.length) return '<div class="empty">Finish a course on your roadmap and a shareable card appears here, ready to post.</div>';
+    return done.map(s=>`<div class="cc-mini"><div class="t"><b>${esc(s.title)}</b><span>Course completed${Number.isFinite(Number(s.accuracy)) && Number(s.attempts)>0 ? ' · '+Math.round(Number(s.accuracy))+'% accuracy' : ''}</span></div><button type="button" class="btn amber small" data-cc-open="${esc(s.id)}">Share my card</button></div>`).join('');
+  }
+  window.ccTabHtml = function(){
+    if(!ME || (ME.role!=='student' && ME.role!=='coordinator')) return '';
+    css();
+    setTimeout(async ()=>{
+      if(ME.role==='student' && !(typeof RM!=='undefined' && RM.ov)){ try{ await rmLoad(); }catch(e){} }
+      const b = document.getElementById('ccBox'); if(b) b.innerHTML = boxInner();
+    }, 0);
+    return `<div style="margin-top:24px;"><div class="section-title"><div><h2>${ME.role==='coordinator' ? 'Share kit' : 'Course completion cards'}</h2><p>${ME.role==='coordinator' ? 'A card and ready-made messages you can post to show your service and invite students.' : 'Each course you finish earns a card you can share. The QR code on it shows the latest programme updates and lets people apply.'}</p></div></div><div id="ccBox">${boxInner()}</div></div>`;
+  };
+  window.ccCheck = check;
+  window.ccOpen = open;
+  document.addEventListener('click', e=>{
+    const b = e.target.closest && e.target.closest('[data-cc-open]'); if(b){ e.preventDefault(); open(b.dataset.ccOpen); return; }
+    const k = e.target.closest && e.target.closest('[data-cc-coord]'); if(k){ e.preventDefault(); open('coord'); }
+  });
+})();
+</script>
+
 </body>
 </html>
