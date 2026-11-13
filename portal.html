@@ -3200,6 +3200,7 @@ const TAB_ICONS = {
   practice:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1.9-1.1 1.7"/><circle cx="12" cy="17" r=".6"/>',
   messages:'<rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3,7 12,13 21,7"/>',
   welcome:'<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.7 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/>',
+  arena:'<rect x="2.5" y="7" width="19" height="10" rx="5"/><path d="M7 10v4M5 12h4"/><circle cx="15.5" cy="11" r=".9"/><circle cx="18" cy="13" r=".9"/>',
   hub:'<circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/>',
   ask:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1.9-1.1 1.7"/><circle cx="12" cy="17" r=".6"/>'
 };
@@ -3313,6 +3314,7 @@ function renderLegacy(tab){
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
   else if(tab==='onbme' && ME.role==='student') html = onbMeView();
+  else if(tab==='arena') html = '<div id="arenaRoot"></div>';
   else if(tab==='lessons') html = lessonsView();
   else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
@@ -3330,6 +3332,7 @@ function renderLegacy(tab){
   renderUpdateToast();
   wireHandlers(tab);
   if(typeof wireDuty==='function') wireDuty(tab);
+  if(tab==='arena') arenaMount();
   if(tab==='aichats') aiChatsMount();
   if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
@@ -5724,7 +5727,40 @@ function initPushUi(){
   }
   setTimeout(paintBell, 6000);
 }
-function pushGoTab(tab){ const t = document.querySelector('#tabs .tab[data-tab="'+String(tab).replace(/"/g,'')+'"]'); if(t) t.click(); }
+// Opens a place in the portal from a notification link: ?go=<tab>[:<section>] (several tabs may be listed with commas; the first one this person has is used).
+// Examples: go=practice:acidbase (practice in that section), go=exams, go=announce, go=alerts,notifications, go=arena
+function portalGo(spec){
+  try{
+    if(!ME || !spec) return false;
+    const list = String(spec).split(',');
+    for(let i=0;i<list.length;i++){
+      const bits = list[i].trim().split(':'), key = bits[0], sec = bits[1];
+      if(!key) continue;
+      if(sec && RM_TOPICS.some(t=>t[0]===sec) && (key==='practice' || key==='roadmap' || key==='welcome')){
+        RM.view = 'section'; RM.topic = sec; RM.tab = ME.role==='student' ? 'practice' : 'questions';
+        render(ME.role==='student' ? 'welcome' : 'roadmap'); window.scrollTo({top:0}); return true;
+      }
+      if(navTop(key)){ render(key); window.scrollTo({top:0}); try{ renderNavBadges(); }catch(e){} return true; }
+    }
+  }catch(e){ console.warn('deep link skipped', e); }
+  return false;
+}
+function pushGoTab(tab){ return portalGo(tab); }
+// A notification tapped while signed out: remember where it should land and open it right after sign-in.
+(function(){ try{ const q = new URLSearchParams(location.search), g = q.get('go') || q.get('tab'); if(g) localStorage.setItem('ichc_deeplink', JSON.stringify({ g:String(g).slice(0,80), t:Date.now() })); }catch(e){} })();
+function consumeDeepLink(){
+  try{ const raw = localStorage.getItem('ichc_deeplink'); if(!raw) return; localStorage.removeItem('ichc_deeplink'); const v = JSON.parse(raw); if(!v || !v.g || Date.now() - v.t > 6*3600*1000) return; portalGo(v.g); }catch(e){}
+}
+// Tells the server which devices are switched on (used by the Ambassador's reach figures); runs quietly.
+async function pushRegister(){
+  try{
+    const OS = window.__OS; if(!OS || !ME || !sbReady || !sb) return;
+    let key = localStorage.getItem('ichc_push_dev');
+    if(!key){ key = ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))).slice(0,36); localStorage.setItem('ichc_push_dev', key); }
+    const on = !!(OS.User && OS.User.PushSubscription && OS.User.PushSubscription.optedIn);
+    await sb.rpc('push_register', { p_external_id:String(ME.id), p_device_key:key, p_platform:'web', p_subscribed:on });
+  }catch(e){ /* best effort */ }
+}
 function pushTag(){
   try{
     const OS = window.__OS; if(!OS || !OS.User || !ME) return;
@@ -5746,28 +5782,28 @@ function pushBoot(){
   const run = async function(OS){
     window.__OS = window.__OS || OS;
     try{ await OS.login(String(ME.id)); }catch(e){ console.warn('push login skipped', e); }
-    pushTag();
+    pushTag(); pushRegister();
     // Permission was already given earlier but the subscription lapsed (cleared browser data, a new browser profile): switch it back on quietly.
     try{ if('Notification' in window && Notification.permission==='granted' && OS.User.PushSubscription && !OS.User.PushSubscription.optedIn) await OS.User.PushSubscription.optIn(); }catch(e){ console.warn('push re-subscribe skipped', e); }
     if(!window.__pushWired){
       window.__pushWired = true;
-      try{ OS.User.PushSubscription.addEventListener('change', ()=>{ paintBell(); }); }catch(e){}
+      try{ OS.User.PushSubscription.addEventListener('change', ()=>{ paintBell(); pushRegister(); }); }catch(e){}
       try{ OS.Notifications.addEventListener('permissionChange', ()=>{ paintBell(); pushTag(); }); }catch(e){}
       // A notification arriving while the portal is open shows a small in-page banner as well.
       try{ OS.Notifications.addEventListener('foregroundWillDisplay', ev=>{ try{ const n = ev.notification || {}; pushToast(n.title, n.body, n.additionalData && n.additionalData.tab); }catch(e){} }); }catch(e){}
       // Tapping a notification opens the portal on the right section when the message names one.
       try{ OS.Notifications.addEventListener('click', ev=>{ try{ const d = (ev.notification && ev.notification.additionalData) || {}; if(d.tab) setTimeout(()=>pushGoTab(d.tab), 600); }catch(e){} }); }catch(e){}
     }
-    try{ const q = new URLSearchParams(location.search).get('tab'); if(q) setTimeout(()=>pushGoTab(q), 1400); }catch(e){}
     initPushUi();
     // Every five minutes: re-link if another sign-in on this device changed who the browser belongs to, and keep the bell honest.
     if(window.__pushTimer) clearInterval(window.__pushTimer);
     window.__pushTimer = setInterval(async ()=>{
       try{ if(window.__OS && ME && String(window.__OS.User.externalId||'')!==String(ME.id)) { await window.__OS.login(String(ME.id)); pushTag(); } }catch(e){}
-      paintBell();
+      pushRegister(); paintBell();
     }, 300000);
   };
   (window.OneSignalDeferred = window.OneSignalDeferred || []).push(run);
+  setTimeout(consumeDeepLink, 1200);   // a tapped notification opens its place even if the notification service is blocked
   // If the notification service never loads (an ad blocker, no connection), still show the bell with a clear explanation.
   setTimeout(()=>{ if(!window.__OS){ window.__OS_ERR = window.__OS_ERR || 'The notification service could not load.'; try{ initPushUi(); }catch(e){} } }, 8000);
 }
@@ -10899,6 +10935,7 @@ const NAV = {
   student:[
     { k:'welcome', l:'Home', ic:'home', host:true },
     { k:'lessons', l:'Lessons', ic:'lessons', subs:[['lessons','Lesson videos']] },
+    { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['ask','Ask your coordinator']] },
     { k:'inbox', l:'Inbox', ic:'notifications', subs:[['announce','Announcements'],['notifications','Notifications']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
@@ -10907,6 +10944,7 @@ const NAV = {
     { k:'space', l:'Home', ic:'home', subs:[['space','Overview'],['students','My students'],['calls','Sessions'],['profile','My profile']] },
     { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
     { k:'lessons', l:'Lessons', ic:'lessons', subs:[['lessons','Lesson videos']] },
+    { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['messages','Student messages']] },
     { k:'inbox', l:'Inbox', ic:'notifications', subs:[['alerts','Alerts'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] }
@@ -10919,6 +10957,7 @@ const NAV = {
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
     { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
+    { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
     { k:'settings', l:'Settings', ic:'settings', subs:[['settings','Settings'],['duties','Team & duties'],['series','Chemistry Series'],['updates','Updates & guide'],['profile','Public profile'],['notifications','Notifications'],['smslog','SMS log'],['emaillog','Email log']] }
@@ -12629,6 +12668,7 @@ function appsStatusCard(){
   return '<div class="card" style="margin-bottom:18px;border-left:5px solid ' + tone + ';"><b>Applications are ' + state.toLowerCase() + '</b><div class="note" style="margin-top:4px;">' + detail + ' Set under Open &amp; deadline.</div></div>';
 }
 </script>
+<script src="arena.js" defer></script>
 <script src="series-admin.js"></script>
 <script>
 // Chemistry Series: ambassador screens (tab "Chemistry Series" and the Series Manager card under Team & duties)
@@ -12931,5 +12971,17 @@ function seriesMgrMount(){
 })();
 </script>
 
+<script>
+/* Chem Arena inside the portal: students, coordinators and the Ambassador all get it from the Arena tab. */
+function arenaMount(){
+  const el = document.getElementById('arenaRoot'); if(!el || !ME) return;
+  if(!window.ChemArena){
+    el.innerHTML = '<div class="empty">The Arena is loading… If this stays on screen, refresh the page.</div>';
+    setTimeout(()=>{ if(window.ChemArena && document.getElementById('arenaRoot')) arenaMount(); }, 1500);
+    return;
+  }
+  ChemArena.mount(el, { ctx:'portal', role:ME.role, name:ME.name, userKey:String(ME.id), siteUrl:(DB.settings && DB.settings.siteUrl) || '', getSb:()=>sb, ready:()=>sbReady, onLive:()=>{ render('mock'); } });
+}
+</script>
 </body>
 </html>
