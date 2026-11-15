@@ -3311,7 +3311,6 @@ function renderLegacy(tab){
   else if(tab==='reactivate' && canReactivate()) html = reactivateView();
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
   else if(tab==='series' && ME.role==='ambassador') html = '<div id="seriesRoot"></div>';
-  else if(tab==='vexam' && ME.role==='ambassador') html = '<div id="vexRoot"></div>';
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
   else if(tab==='onbme' && ME.role==='student') html = onbMeView();
@@ -3337,7 +3336,6 @@ function renderLegacy(tab){
   if(tab==='aichats') aiChatsMount();
   if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
-  if(tab==='vexam' && typeof vexMount==='function') vexMount();
   if(tab==='duties' && typeof seriesMgrMount==='function') seriesMgrMount();
 }
 
@@ -8149,6 +8147,7 @@ function exbApplyMode(){
 function examsManageView(){
   if(!EXB) EXB = exbFresh();
   const E = EXB;
+  if(!E.topic && RM.view==='section' && RM.topic) E.topic = RM.topic;   // the select shows the open section, so the draft must carry it too
   // The Ambassador's exams are programme-wide (coordinatorId null). Every coordinator can preview them, whether or not their own students took part.
   const scoped = ME.role==='ambassador' ? DB.exams : DB.exams.filter(e=>e.coordinatorId===ME.id || e.coordinatorId===null);
   const sorted = [...scoped].sort((a,b)=>String(b.startAt||b.date).localeCompare(String(a.startAt||a.date)));
@@ -8166,7 +8165,7 @@ function examsManageView(){
     <div class="exb-grid">
       <div class="field" style="margin:0;"><label>Title</label><input id="examTitle" value="${escapeHtml(E.title)}" placeholder="e.g. Week 6 timed mock: Kinetics"></div>
       <div class="field" style="margin:0;"><label>Subject / topic focus</label><input id="examSubject" value="${escapeHtml(E.subject)}" placeholder="e.g. Reaction kinetics"></div>
-      <div class="field" style="margin:0;"><label>Roadmap section</label>${rmTopicSelect('examTopic', E.topic)}</div>
+      <div class="field" style="margin:0;"><label>Roadmap section</label>${rmTopicSelect('examTopic', E.topic, '', true)}</div>
     </div>
     <div class="field" style="margin:12px 0 0;"><label>Instructions students read before they start</label><textarea id="examInstr" rows="4">${escapeHtml(E.instructions)}</textarea></div>
     <div class="field" style="margin:12px 0 0;"><label>Data sheet (optional): constants shown on every question screen</label><input id="exbData" value="${escapeHtml(E.dataLine)}" placeholder="e.g. R = 8.314 J/(mol K), F = 96485 C/mol, Ar: H 1.0, C 12.0, O 16.0"></div>
@@ -8419,6 +8418,8 @@ async function exbPost(){
   const E = EXB, msg = document.getElementById('exbPostMsg');
   const fail = (m)=>{ if(msg) msg.textContent = m; alert(m); };
   if(!E.title.trim()) return fail('Add a title for the exam.');
+  if(!E.topic && RM.view==='section' && RM.topic) E.topic = RM.topic;
+  if(!E.topic) return fail('Choose the roadmap section this exam belongs to, so students find it in the right place.');
   if(!E.questions.length) return fail('Add at least one question.');
   for(let i=0;i<E.questions.length;i++){
     const q = E.questions[i];
@@ -10958,7 +10959,7 @@ const NAV = {
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
-    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials'],['vexam','Visitor exams']] },
+    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
     { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
@@ -11213,10 +11214,18 @@ const RM_TOPICS = [
 ];
 const RM_HUES = ['#5B3DF5','#E5484D','#0A8460','#B45309','#0369A1','#C2185B','#6D28D9','#0F766E','#C2410C','#4338CA'];
 const rmTopicOf = (it)=> (it && it.topic && RM_TOPICS.some(t=>t[0]===it.topic)) ? it.topic : '';
-const rmEffTopic = (it, kind)=> rmTopicOf(it) || (kind==='library' ? '' : 'quant'); // older untagged posts belong to the first section
-function rmTopicSelect(id, value, attrs){
+const RM_WORDS = { quant:/\bstoichiometr|\bmoles?\b|quantitative/i, bonding:/\bbonding|\bstructure\b/i, thermo:/thermo|enthalp|entropy/i, equil:/equilibri/i, acidbase:/\bacids?\b|\bbases?\b|\bph\b|solubil|buffer/i, kinetics:/kinetic|\brates?\b|research paper/i, electro:/electro|\bredox\b/i, organic:/\borganic\b|mechanism|nucleophil/i, stereo:/stereo|chiral|aromatic/i, spectro:/spectro|\bnmr\b|\bir\b|coordination/i };
+// "Section 4" means the 4th roadmap section; otherwise a topic word in the title or subject decides.
+function rmGuessTopic(it){
+  const txt = [it && it.title, it && it.subject].join(' ');
+  const m = /\bsection\s*(\d{1,2})\b/i.exec(txt); if(m && RM_TOPICS[+m[1]-1]) return RM_TOPICS[+m[1]-1][0];
+  for(const k of Object.keys(RM_WORDS)) if(RM_WORDS[k].test(txt)) return k;
+  return '';
+}
+const rmEffTopic = (it, kind)=> rmTopicOf(it) || (kind==='exam' ? rmGuessTopic(it) : '') || (kind==='library' ? '' : 'quant'); // untagged posts: guess from the title, else the first section
+function rmTopicSelect(id, value, attrs, required){
   const v = value || ((id && RM.view==='section' && RM.topic) ? RM.topic : '');
-  return `<select ${id?`id="${id}"`:''} ${attrs||''}><option value="">Not tagged (general)</option>${RM_TOPICS.map(([k,t])=>`<option value="${k}"${v===k?' selected':''}>${escapeHtml(t)}</option>`).join('')}</select>`;
+  return `<select ${id?`id="${id}"`:''} ${attrs||''}><option value="">${required ? 'Choose a section…' : 'Not tagged (general)'}</option>${RM_TOPICS.map(([k,t])=>`<option value="${k}"${v===k?' selected':''}>${escapeHtml(t)}</option>`).join('')}</select>`;
 }
 const RM = { view:'home', topic:null, tab:'practice', sub:'quizzes', ov:null, ovAt:0, board:null, note:'', busy:false, sess:null, err:'', mq:{ list:null, filter:'all', total:0, flagged:0, msg:'', busy:false, mode:'manual', drafts:null, genMeta:null }, prog:null, schedOpen:false };
 const rmStaff = ()=> !!ME && ME.role !== 'student';
@@ -12672,14 +12681,6 @@ function appsStatusCard(){
 </script>
 <script src="arena.js" defer></script>
 <script src="series-admin.js"></script>
-<script src="vexam-admin.js"></script>
-<script>
-function vexMount(){
-  const r = document.getElementById('vexRoot'); if(!r) return;
-  if(!window.VexamAdmin){ r.innerHTML = '<div class="empty">vexam-admin.js is missing. Upload it next to portal.html.</div>'; return; }
-  VexamAdmin.mount(r, sb);
-}
-</script>
 <script>
 // Chemistry Series: ambassador screens (tab "Chemistry Series" and the Series Manager card under Team & duties)
 function seriesMount(){
