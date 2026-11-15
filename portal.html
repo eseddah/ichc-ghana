@@ -3311,6 +3311,7 @@ function renderLegacy(tab){
   else if(tab==='reactivate' && canReactivate()) html = reactivateView();
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
   else if(tab==='series' && ME.role==='ambassador') html = '<div id="seriesRoot"></div>';
+  else if(tab==='vexam' && ME.role==='ambassador') html = '<div id="vexRoot"></div>';
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
   else if(tab==='coordsummary' && ME.role==='ambassador') html = coordSummaryView();
   else if(tab==='onbme' && ME.role==='student') html = onbMeView();
@@ -3336,6 +3337,7 @@ function renderLegacy(tab){
   if(tab==='aichats') aiChatsMount();
   if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
+  if(tab==='vexam' && typeof vexMount==='function') vexMount();
   if(tab==='duties' && typeof seriesMgrMount==='function') seriesMgrMount();
 }
 
@@ -10956,7 +10958,7 @@ const NAV = {
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
-    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
+    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials'],['vexam','Visitor exams']] },
     { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
@@ -12670,6 +12672,14 @@ function appsStatusCard(){
 </script>
 <script src="arena.js" defer></script>
 <script src="series-admin.js"></script>
+<script src="vexam-admin.js"></script>
+<script>
+function vexMount(){
+  const r = document.getElementById('vexRoot'); if(!r) return;
+  if(!window.VexamAdmin){ r.innerHTML = '<div class="empty">vexam-admin.js is missing. Upload it next to portal.html.</div>'; return; }
+  VexamAdmin.mount(r, sb);
+}
+</script>
 <script>
 // Chemistry Series: ambassador screens (tab "Chemistry Series" and the Series Manager card under Team & duties)
 function seriesMount(){
