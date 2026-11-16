@@ -1008,6 +1008,10 @@
   .watch-ic{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:3px 10px 3px 6px; border-radius:999px; background:rgba(31,138,112,.14); color:var(--teal-deep); vertical-align:middle;}
   .watch-ic svg{width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round;}
   .onb-alert{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin:0 0 18px; padding:14px 16px; border-radius:14px; border:1.5px solid var(--amber-deep); background:rgba(227,154,59,.14);}
+  .onb-alert{flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:0;}
+  .onb-alert-top{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;}
+  .onb-alert .ob-bar{margin-top:10px; background:rgba(201,127,34,.2);} .onb-alert .ob-bar div{background:var(--amber-deep);}
+  .onb-alert-count{font-size:12px; color:var(--muted); margin-top:5px;}
   .onb-alert b{display:block; font-size:15px;} .onb-alert span{display:block; font-size:13px; color:var(--muted); margin-top:2px;}
   .join-card{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px;}
   .join-kicker{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
@@ -5357,11 +5361,13 @@ function obState(s, d, videos){
   d = d || {}; const req = (videos||[]).filter(v=>v.required!==false), hasCoord = !!(s && s.coordinatorId);
   const steps = [
     { id:'confirm', label:'Confirm your place', done:!!d.confirmed },
-    { id:'videos', label:'Watch the orientation video' + (req.length>1 ? 's' : ''), done: !!req.length && req.every(v=>d.videos && d.videos[v.id]) },
+    { id:'videos', label:'Watch the orientation video' + (req.length>1 ? 's' : ''), skip: !req.length, done: !req.length || req.every(v=>d.videos && d.videos[v.id]) },
   ];
-  const done = steps.filter(x=>x.done).length, all = done === steps.length || !!d.completedAt;
+  // With no required video posted, the video step is skipped and onboarding finishes once the place is confirmed.
+  const active = steps.filter(x=>!x.skip);
+  const done = active.filter(x=>x.done).length, all = done === active.length || !!d.completedAt;
   const stage = !s || !s.stage ? null : all ? 'Completed' : d.confirmed ? 'Onboarding' : 'Pending confirmation';
-  return { steps, done, total:steps.length, all, stage, pct:Math.round(100*done/steps.length) };
+  return { steps, done, total:active.length, all, stage, pct:Math.round(100*done/active.length) };
 }
 const ONB = { loaded:false, forId:null, data:{ confirmed:false, videos:{}, steps:{}, reached:{} }, videos:[] };
 function onbStudent(){ return ME && ME.role==='student' ? (DB.students||[]).find(x=>x.id===ME.id) : null; }
@@ -5419,7 +5425,7 @@ async function onbSave(){ ONB.data.updated = Date.now(); const st = obState(onbS
 function studentCoordinatorCard(){ return studentCoordinatorCardPlain(); }
 function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbHomeRoot"></div>' : ''; }
 function onbMeView(){
-  return `<div class="section-title"><div><h2>Onboarding</h2><p>These steps are compulsory. Confirm your place, then watch the orientation video to the end and press the confirm button. Your coordinator and the Ambassador can see your progress.</p></div></div>
+  return `<div class="section-title"><div><h2>Onboarding</h2><p>These steps are compulsory. Confirm your place, and watch the orientation video to the end if one is posted. Your coordinator and the Ambassador can see your progress.</p></div></div>
   <div id="onbRoot" class="card" style="margin-bottom:16px;"><p class="note">Loading your onboarding…</p></div>`;
 }
 // Home: join the WhatsApp group straight away (the coordinator card with the text button sits right under it).
@@ -5442,8 +5448,13 @@ function onbAlertBar(){
   const sc = document.getElementById('screen'); if(!sc) return;
   const old = sc.querySelector('.onb-alert'), need = onbPending() && currentTab !== 'onbme';
   if(!need){ if(old) old.remove(); return; }
-  if(old) return;
-  sc.insertAdjacentHTML('afterbegin', '<div class="onb-alert" role="alert"><div><b>Action needed: finish your onboarding</b><span>It is compulsory. Confirm your place and watch the orientation video to the end.</span></div><button type="button" class="btn amber small" data-go-tab="onbme">Open onboarding</button></div>');
+  const st = obState(onbStudent(), ONB.data, ONB.videos);
+  const hasVid = st.steps.some(x=>x.id==='videos' && !x.skip);
+  const html = '<div class="onb-alert-top"><div><b>Complete onboarding now</b><span>' + (hasVid ? 'Confirm your place and watch the orientation video to the end.' : 'Confirm your place to finish. It only takes a moment.') + '</span></div><button type="button" class="btn amber small" data-go-tab="onbme">Complete onboarding</button></div>'
+    + '<div class="ob-bar"><div style="width:' + st.pct + '%;"></div></div><div class="onb-alert-count">' + st.done + ' of ' + st.total + ' step' + (st.total===1?'':'s') + ' done</div>';
+  if(old){ if(old.__h !== html){ old.__h = html; old.innerHTML = html; } return; }
+  const el = document.createElement('div'); el.className = 'onb-alert'; el.setAttribute('role','alert'); el.__h = html; el.innerHTML = html;
+  sc.insertBefore(el, sc.firstChild);
 }
 async function wireOnboarding(){
   const st = onbStudent(); if(!isNewFlow(st)) return;
@@ -5491,7 +5502,8 @@ function paintOnboarding(){
       ${d.confirmed ? '<p class="note" style="margin:4px 0 0;">Confirmed. Welcome to the programme!</p>' : `<p class="note" style="margin:4px 0 8px;">You've been accepted. By confirming, you promise to ${(s.commitments ? 'attend the sessions, stay in touch with your coordinator and complete the activities' : 'take part fully')}.</p><button class="btn teal small" id="obConfirm">Yes, I confirm my place</button>`}</div>`);
   // step 2: the video elements live in #obVids and are only recreated if the list of videos itself changes
   put(q('obT2'), tick(videosDone));
-  put(q('obS2msg'), !req.length ? '<p class="note" style="margin:4px 0 0;">Your orientation video is being prepared. Please check back soon.</p>' : '');
+  put(q('obS2msg'), '');
+  const s2 = q('obS2'); if(s2) s2.style.display = (!req.length && !extra.length) ? 'none' : '';
   const vids = [...req, ...extra], box = q('obVids'), sig = JSON.stringify(vids.map(v=>[v.id, v.url, v.required!==false]));
   if(box.__sig !== sig){
     box.__sig = sig;
@@ -5510,7 +5522,7 @@ function paintOnboarding(){
     }
     put(blk.querySelector('.ob-vstatus'), status);
   });
-  put(q('obS2done'), videosDone ? '<p class="note" style="margin:10px 0 0; color:var(--teal-deep); font-weight:700;">&#10003; Thank you. Your compulsory onboarding is complete.</p>' : '');
+  put(q('obS2done'), (videosDone && req.length) ? '<p class="note" style="margin:10px 0 0; color:var(--teal-deep); font-weight:700;">&#10003; Thank you. Your compulsory onboarding is complete.</p>' : '');
   put(coordRoot, st.all ? studentCoordinatorCardPlain() : '');
   onbAlertBar(); renderNavBadges();
   if(!root.__wired){
@@ -5540,7 +5552,7 @@ async function paintStages(){
   }catch(e){ console.warn('stage load failed', e); }
   list.forEach(s=>{
     const st = obState(s, map[s.id], videos), c = DB.coordinators.find(x=>x.id===s.coordinatorId);
-    const watched = st.steps.find(x=>x.id==='videos').done ? ' <span class="watch-ic" title="Has watched the onboarding video"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>Watched</span>' : '';
+    const vs = st.steps.find(x=>x.id==='videos'), watched = (vs.done && !vs.skip) ? ' <span class="watch-ic" title="Has watched the onboarding video"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>Watched</span>' : '';
     document.querySelectorAll(`[data-stage-for="${s.id}"]`).forEach(el=>{
       el.innerHTML = `${stageChip(st.stage)}${watched} <span class="ob-mini"><i style="width:${st.pct}%"></i></span> <span style="font-size:12px; color:var(--muted);">${st.done}/${st.total} onboarding steps · ${c ? 'Coordinator: ' + escapeHtml(c.name) : '<b style="color:#C0392B;">No coordinator assigned yet</b>'}</span>`;
     });
