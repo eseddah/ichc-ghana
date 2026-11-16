@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Exams | Chemistry Competition Prep</title>
+<title>International Chemistry Competition · Exam Training</title>
 <meta name="description" content="Take the Chemistry Competition Prep exams online, see your results and message the Ambassador.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,6 +40,16 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.015em;margin:0}h1{font-size
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tab{padding:9px 18px;border-radius:999px;border:1px solid var(--line);background:var(--surf);font-weight:600;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 var(--hi),0 2px 0 var(--line)}.tab[aria-selected=true]{background:var(--brand);color:var(--on);border-color:var(--brand2);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 var(--brand2)}.tab i{font-style:normal;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--amber);color:#1D1B3A;font-size:12px}
 .list{border:1px solid var(--line);border-radius:var(--r);background:var(--surf);overflow:hidden}.item{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px}.item+.item{border-top:1px solid var(--line)}.item .t{font-weight:600}.item .s{color:var(--mute);font-size:13.5px}
 .modal-bg{position:fixed;inset:0;z-index:60;background:rgba(18,17,42,.55);display:grid;place-items:center;padding:16px;overflow:auto}.modal{width:min(560px,100%);background:var(--surf);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35);max-height:calc(100vh - 32px);overflow:auto}.modal h2{margin-bottom:8px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--surf2);border:1px solid var(--line);margin:12px 0 0}.seg button{flex:1;border:0;background:transparent;color:var(--mute);padding:10px 12px;border-radius:999px;font:600 14px/1 inherit;cursor:pointer}.seg button.on{background:var(--ink);color:var(--surf)}
+.otp{display:flex;gap:8px;justify-content:center;margin:20px 0 6px}.otp input{width:46px;height:56px;text-align:center;font:700 24px var(--mono);border-radius:12px;border:1.5px solid var(--line);background:var(--surf2);color:var(--ink);padding:0}.otp input:focus{outline:none;border-color:#E39A3B;box-shadow:0 0 0 3px rgba(227,154,59,.28)}
+.fine{font-size:12.5px;color:var(--mute);margin:14px 0 0;line-height:1.5}
+@media(max-width:420px){.otp{gap:6px}.otp input{width:40px;height:52px}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:4px 0 16px}.stat{border:1px solid var(--line);border-radius:var(--r);background:var(--surf);padding:14px 16px}.stat b{display:block;font:800 28px var(--display)}.stat span{font-size:13px;color:var(--mute)}
+.chart{width:100%;height:auto;margin-top:8px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:14px;padding:12px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--surf);color:var(--ink);font:600 15px var(--body);cursor:pointer}.gbtn:hover{background:var(--bg2)}
+.or{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:13px;margin:14px 0 0}.or::before,.or::after{content:'';flex:1;height:1px;background:var(--line)}
+#printRoot{display:none}
+@media print{body.printing>*:not(#printRoot){display:none!important}body.printing #printRoot{display:block!important}html,body{background:#fff!important}@page{margin:16mm}#printRoot{color:#000;font:13px/1.5 Arial,Helvetica,sans-serif}#printRoot .ph{border-bottom:3px solid #000;padding-bottom:8px;margin-bottom:14px}#printRoot .pk{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:12px}#printRoot h1{font-size:24px;margin:4px 0}#printRoot .pk2{font-size:12px;color:#444}#printRoot table{width:100%;border-collapse:collapse;margin:0 0 14px}#printRoot th,#printRoot td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}#printRoot th{background:#eee;width:1%;white-space:nowrap}#printRoot .pg th{width:auto}#printRoot .pf{margin-top:18px;font-size:11px;color:#444}#printRoot .pavg{margin:6px 0}}
 label.f{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}input.in,textarea.in,select.in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surf2);color:var(--ink)}textarea.in{min-height:120px;resize:vertical}
 .rules{margin:12px 0;padding:12px 16px 12px 34px;border-radius:12px;background:var(--bg2);font-size:14px}.rules li{margin:3px 0}.chk{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-size:14px}.chk input{margin-top:4px;width:18px;height:18px;accent-color:var(--brand)}
 .err{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--bad-bg);color:var(--bad);font-size:14px}.okmsg{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--ok-bg);color:var(--ok);font-size:14px}
@@ -69,8 +79,8 @@ label.f{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}input.in,
 <body>
 <header class="top">
   <a class="back" href="index.html" id="backLink"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back to website</span></a>
-  <div class="brand">Chemistry Competition Prep<small>Exams</small></div>
-  <div class="top-r"><span class="who" id="whoName"></span><button class="pill sm" id="loginBtn" type="button">Log in</button><button class="pill ghost sm" id="logoutBtn" type="button" hidden>Log out</button><button class="pill icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark mode" title="Light or dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button></div>
+  <div class="brand">International Chemistry Competition<small>Exam training</small></div>
+  <div class="top-r"><span class="who" id="whoName"></span><button class="pill sm" id="loginBtn" type="button">Sign in</button><button class="pill ghost sm" id="logoutBtn" type="button" hidden>Sign out</button><button class="pill icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark mode" title="Light or dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button></div>
 </header>
 <main id="app" aria-live="polite"><div class="empty">Loading exams…</div></main>
 <div id="modalRoot"></div><div id="toastRoot"></div>
@@ -170,11 +180,12 @@ function chemify(text){
 (function(){
 'use strict';
 const FN = 'https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/visitor-exam';
+const FN_R = 'https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/visitor-exam-remind';
 const ANON = 'sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn';
 const $ = s=> document.querySelector(s);
 const esc = s=> String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const chem = t=> { try{ return esc(chemify(t)); }catch(e){ return esc(t); } };
-const S = { session:'', visitor:null, offset:0, exams:[], attempts:[], unread:0, tab:'exams', msgs:null, thread:null };
+const S = { session:'', visitor:null, offset:0, exams:[], attempts:[], unread:0, remind:new Set(), tab:'overview', msgs:null, thread:null };
 const LS = { get(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }, set(k,v){ try{ localStorage.setItem(k, v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
 S.session = LS.get('vx:session');
 const nowMs = ()=> Date.now() + S.offset;
@@ -186,7 +197,7 @@ const pad = n=> String(n).padStart(2, '0');
 function toast(msg, ms){ const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; $('#toastRoot').appendChild(t); setTimeout(()=> t.remove(), ms || 3200); }
 
 async function api(action, body){
-  let r; try{ r = await fetch(FN, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(Object.assign({ action }, body || {})) }); }
+  let r; try{ r = await fetch(/^remind_/.test(action) ? FN_R : FN, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(Object.assign({ action }, body || {})) }); }
   catch(e){ throw { message:'No connection. Check your internet and try again.', code:'network' }; }
   let j = {}; try{ j = await r.json(); }catch(e){}
   if(j && j.now){ const t = Date.parse(j.now); if(isFinite(t)) S.offset = t - Date.now(); }
@@ -225,7 +236,7 @@ function examCard(e, dash){
   if((run || open) && st !== 'closed') act = `<button class="pill amber" data-act="resume" data-id="${esc(e.id)}">Resume exam</button>`;
   else if(st === 'open' && dash && left <= 0) act = '<button class="pill" disabled>No attempts left</button>';
   else if(st === 'open') act = `<button class="pill primary" data-act="start" data-id="${esc(e.id)}">Start exam</button>`;
-  else if(st === 'upcoming') act = `<button class="pill" data-act="ics" data-id="${esc(e.id)}">Add to calendar</button>`;
+  else if(st === 'upcoming') act = `<button class="pill ${S.remind.has(e.id) ? 'primary' : ''}" data-act="remind" data-id="${esc(e.id)}">${S.remind.has(e.id) ? 'Reminder on ✓' : 'Remind me'}</button><button class="pill" data-act="ics" data-id="${esc(e.id)}">Add to calendar</button>`;
   return `<article class="card"><div class="row sp"><h3>${esc(e.title)}</h3>${chip}</div>${e.subject ? `<div class="sub">${esc(e.subject)}</div>` : ''}
   <div class="meta"><span><b>Opens</b> ${esc(fmtWhen(e.startAt))}</span><span><b>Closes</b> ${esc(fmtWhen(e.endAt))}</span><span>${esc(tz())}</span></div>
   <div class="meta"><span><b>${e.questionCount}</b> questions</span><span><b>${e.totalMarks}</b> marks</span><span><b>${esc(fmtDur(e.totalSec))}</b> in total</span><span><b>${e.attempts}</b> attempt${e.attempts > 1 ? 's' : ''}${dash ? ' (' + left + ' left)' : ''}</span></div>
@@ -247,22 +258,30 @@ async function route(){
   try{ const j = await api('exams'); S.exams = j.exams; }catch(e){ app().innerHTML = `<div class="err">${esc(e.message)} <button class="pill sm" data-act="reload">Try again</button></div>`; return; }
   paintHome();
 }
-async function loadMe(){ const j = await api('me', { session:S.session }); S.visitor = j.visitor; S.exams = j.exams; S.attempts = j.attempts; S.unread = j.unread; paintAccount(); }
+async function loadMe(){ const j = await api('me', { session:S.session }); S.visitor = j.visitor; S.exams = j.exams; S.attempts = j.attempts; S.unread = j.unread; try{ const r = await api('remind_list', { session:S.session }); S.remind = new Set(r.ids || []); }catch(e){} paintAccount(); }
+async function remindToggle(id){
+  if(!S.session) return openAuth({ mode:'signin', notice:'Sign in or create an account to get email reminders.', after:()=> remindToggle(id) });
+  const on = !S.remind.has(id);
+  try{ await api('remind_set', { session:S.session, examId:id, on }); }catch(e){ return toast(e.message); }
+  if(on) S.remind.add(id); else S.remind.delete(id);
+  toast(on ? 'Reminders on. We will email you 24 hours and 1 hour before it opens.' : 'Reminders off.');
+  if(S.session && $('#tabBody')) paintTab(); else route();
+}
 function sortExams(l){ const o = { open:0, upcoming:1, closed:2 }; return l.slice().sort((a,b)=> (o[stateOf(a)] - o[stateOf(b)]) || (Date.parse(a.startAt) - Date.parse(b.startAt))); }
 function paintHome(){
   const list = sortExams(S.exams), live = list.filter(e=> stateOf(e) !== 'closed'), run = list.find(e=> runningFor(e) && stateOf(e) !== 'closed');
-  app().innerHTML = `<section class="hero"><p class="kick">Online exams</p><h1>Test yourself like it is competition day</h1>
-  <p class="lead">No account needed. Your full name and a valid email address are enough to sit an exam. Multiple choice answers are marked straight away, with the right answers and explanations. Written and picture answers are reviewed by the Ambassador and released later.</p></section>
+  app().innerHTML = `<section class="hero"><p class="kick">Exam training</p><h1>International Chemistry Competition</h1>
+  <p class="lead">Practice exams for the competition. Enter your full name and email to start. No account needed.</p></section>
   ${run ? `<div class="banner"><span><b>You have an exam in progress:</b> ${esc(run.title)}</span><button class="pill amber" data-act="resume" data-id="${esc(run.id)}">Resume exam</button></div>` : ''}
-  <section class="sect" style="margin-top:6px"><h2>${live.length ? 'Open and upcoming exams' : 'Exams'}</h2>${live.length ? `<div class="cards">${live.map(e=> examCard(e, false)).join('')}</div>` : '<div class="empty">No exams are scheduled right now. Check back soon, or log in to see your past results.</div>'}</section>
+  <section class="sect" style="margin-top:6px"><h2>${live.length ? 'Open and upcoming exams' : 'Exams'}</h2>${live.length ? `<div class="cards">${live.map(e=> examCard(e, false)).join('')}</div>` : '<div class="empty">No exams are scheduled right now. Check back soon, or sign in to see your past results.</div>'}</section>
   ${list.length > live.length ? `<section class="sect"><h2>Closed</h2><div class="cards">${list.filter(e=> stateOf(e) === 'closed').map(e=> examCard(e, false)).join('')}</div></section>` : ''}
-  <section class="sect"><div class="card"><h3>Already took an exam?</h3><div class="sub">Log in with the email address you used. We send you a short code, so there is no password to remember. You can see scheduled exams and their times, your past exams and reviews, and message the Ambassador about a result.</div><div class="row"><button class="pill primary" data-act="login">Log in with email</button></div></div></section>
-  <p class="foot">Exams run in full screen, one question at a time, and each question has its own timer. Leaving the exam is recorded and shown to the Ambassador. Your attempt gets a reference code and a confirmation email so you always have a record.</p>`;
+  <section class="sect"><div class="card"><h3>Your exam space</h3><div class="sub">Sign in to see your results, scores and messages.</div><div class="row"><button class="pill primary" data-act="login">Sign in</button><button class="pill" data-act="signup">Create account</button></div></div></section>
+  <p class="foot">Exams run in full screen with a timer for each question.</p>`;
 }
 function paintDash(){
   const v = S.visitor, list = sortExams(S.exams), pend = S.attempts.filter(a=> a.pending).length, run = list.find(e=> (e.openAttemptId || runningFor(e)) && stateOf(e) !== 'closed');
-  const tabs = [['exams', 'Exams'], ['results', 'My exams and results'], ['messages', 'Messages']];
-  const head = `<section class="hero"><p class="kick">Welcome back</p><h1>${esc((v.name || '').split(' ')[0] || 'Hello')}, here is your exam space</h1><p class="lead">${esc(v.email)}${pend ? ` · ${pend} attempt${pend > 1 ? 's' : ''} waiting for review` : ''}</p></section>
+  const tabs = [['overview', 'Overview'], ['exams', 'Exams'], ['results', 'Results'], ['messages', 'Messages'], ['profile', 'Profile']];
+  const head = `<section class="hero"><p class="kick">International Chemistry Competition</p><h1>Hi, ${esc((v.name || '').split(' ')[0] || 'there')}</h1><p class="lead">${esc(v.email)}${v.school ? ' · ' + esc(v.school) : ''}${pend ? ` · ${pend} attempt${pend > 1 ? 's' : ''} waiting for review` : ''}</p></section>
   ${run ? `<div class="banner"><span><b>Exam in progress:</b> ${esc(run.title)}</span><button class="pill amber" data-act="resume" data-id="${esc(run.id)}">Resume exam</button></div>` : ''}
   <div class="tabs" role="tablist">${tabs.map(t=> `<button class="tab" role="tab" aria-selected="${S.tab === t[0]}" data-act="tab" data-id="${t[0]}">${t[1]}${t[0] === 'messages' && S.unread ? `<i>${S.unread}</i>` : ''}</button>`).join('')}</div><div id="tabBody"></div>`;
   app().innerHTML = head; paintTab();
@@ -274,11 +293,13 @@ function statusChip(a){
 function paintTab(){
   const el = $('#tabBody'); if(!el) return;
   document.querySelectorAll('.tab').forEach(b=> b.setAttribute('aria-selected', b.dataset.id === S.tab));
+  if(S.tab === 'overview') return paintOverview(el);
+  if(S.tab === 'profile') return paintProfile(el);
   if(S.tab === 'exams'){
     const list = sortExams(S.exams); el.innerHTML = list.length ? `<div class="cards">${list.map(e=> examCard(e, true)).join('')}</div>` : '<div class="empty">No exams are scheduled right now.</div>'; return;
   }
   if(S.tab === 'results'){
-    el.innerHTML = S.attempts.length ? `<div class="list">${S.attempts.map(a=> `<div class="item"><div><div class="t">${esc(a.title)} <span class="s">· attempt ${a.attemptNo}</span></div><div class="s">${esc(fmtWhen(a.startedAt))} · ${esc(a.ref)}${a.mcq && a.mcq.total ? ` · multiple choice ${a.mcq.score}/${a.mcq.total}` : ''}${a.total ? ` · <b>total ${a.total.score}/${a.total.total}</b>` : ''}</div></div><div class="row">${statusChip(a)}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="review" data-id="${esc(a.id)}">Review</button>` : ''}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="argue" data-id="${esc(a.id)}">Message the Ambassador${a.unread ? ' (' + a.unread + ' new)' : ''}</button>` : ''}</div></div>`).join('')}</div>` : '<div class="empty">You have not taken an exam yet. Start one from the Exams tab.</div>'; return;
+    el.innerHTML = S.attempts.length ? `<div class="row" style="margin-bottom:12px"><button class="pill sm" data-act="printall">Print all results</button></div><div class="list">${S.attempts.map(a=> `<div class="item"><div><div class="t">${esc(a.title)} <span class="s">· attempt ${a.attemptNo}</span></div><div class="s">${esc(fmtWhen(a.startedAt))} · ${esc(a.ref)}${a.mcq && a.mcq.total ? ` · multiple choice ${a.mcq.score}/${a.mcq.total}` : ''}${a.total ? ` · <b>total ${a.total.score}/${a.total.total}</b>` : ''}</div></div><div class="row">${statusChip(a)}${a.status === 'released' ? `<button class="pill sm" data-act="printone" data-id="${esc(a.id)}">Print</button>` : ''}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="review" data-id="${esc(a.id)}">Review</button>` : ''}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="argue" data-id="${esc(a.id)}">Message the Ambassador${a.unread ? ' (' + a.unread + ' new)' : ''}</button>` : ''}</div></div>`).join('')}</div>` : '<div class="empty">You have not taken an exam yet. Start one from the Exams tab.</div>'; return;
   }
   loadMessages();
 }
@@ -291,26 +312,140 @@ async function loadMessages(){
   el.innerHTML = keys.length ? `<div class="list">${keys.map(k=>{ const a = S.attempts.find(x=> x.id === k), last = by[k][by[k].length - 1]; return `<div class="item"><div><div class="t">${esc(a ? a.title : 'Exam')} <span class="s">· ${esc(a ? a.ref : '')}</span></div><div class="s">${last.from === 'ambassador' ? 'Ambassador: ' : 'You: '}${esc(String(last.body).slice(0, 110))}</div></div><button class="pill sm" data-act="argue" data-id="${esc(k)}">Open conversation</button></div>`; }).join('')}</div>` : '<div class="empty">No messages yet. If you disagree with a result, open it under “My exams and results” and message the Ambassador.</div>';
 }
 
-// ---------------------------------------------------------------- login (email code)
-function openLogin(prefill){
-  modal(`<h2>Log in</h2><p class="sub" style="color:var(--mute);margin:0">Use the email address you gave for the exam. We will send a 6-digit code to it.</p><label class="f" for="lgEmail">Email address</label><input class="in" id="lgEmail" type="email" autocomplete="email" inputmode="email" value="${esc(prefill || LS.get('vx:email'))}" placeholder="you@example.com"><div id="lgMsg"></div><div class="row" style="margin-top:16px"><button class="pill primary" id="lgSend">Send me a code</button><button class="pill ghost" data-act="closeModal">Cancel</button></div>`);
-  const send = async ()=>{
-    const em = $('#lgEmail').value.trim(), m = $('#lgMsg'); if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(em)){ m.innerHTML = '<div class="err">Enter a valid email address.</div>'; return; }
-    $('#lgSend').disabled = true; try{ await api('otp_request', { email:em }); }catch(e){ m.innerHTML = `<div class="err">${esc(e.message)}</div>`; $('#lgSend').disabled = false; return; }
-    LS.set('vx:email', em); codeStep(em);
-  };
-  $('#lgSend').addEventListener('click', send); $('#lgEmail').addEventListener('keydown', e=>{ if(e.key === 'Enter') send(); });
+// ---------------------------------------------------------------- dashboard: overview, profile, printable results, Google
+const GRADES = ['JHS 1', 'JHS 2', 'JHS 3', 'SHS 1', 'SHS 2', 'SHS 3', 'University', 'Other'];
+const pctOf = a=> a.total && a.total.total ? Math.round(100 * a.total.score / a.total.total) : null;
+const shortDate = s=>{ try{ return new Date(s).toLocaleDateString(undefined, { day:'numeric', month:'short' }); }catch(e){ return ''; } };
+function chartSvg(items){
+  const W = 600, H = 220, pl = 36, pr = 10, pt = 18, pb = 34, n = items.length, gap = (W - pl - pr) / n, bw = Math.min(56, gap * 0.62), ih = H - pt - pb;
+  const grid = [0, 25, 50, 75, 100].map(g=>{ const y = pt + ih * (1 - g / 100); return `<line x1="${pl}" x2="${W - pr}" y1="${y}" y2="${y}" style="stroke:var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y + 4}" text-anchor="end" font-size="11" style="fill:var(--mute)">${g}</text>`; }).join('');
+  const bars = items.map((it, i)=>{ const x = pl + gap * i + (gap - bw) / 2, h = Math.max(2, ih * it.p / 100), y = pt + ih - h; return `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="6" style="fill:var(--brand)"><title>${esc(it.title)}: ${it.p}%</title></rect><text x="${x + bw / 2}" y="${y - 5}" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--ink)">${it.p}%</text><text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle" font-size="11" style="fill:var(--mute)">${esc(it.label)}</text>`; }).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Your scores over time">${grid}${bars}</svg>`;
 }
-function codeStep(em){
-  modal(`<h2>Enter your code</h2><p style="color:var(--mute);margin:0">If <b>${esc(em)}</b> has been used for an exam, a code is on its way. It works for 10 minutes. Check your spam folder too.</p><label class="f" for="lgCode">6-digit code</label><input class="in" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="font:600 22px var(--mono);letter-spacing:.3em;text-align:center"><div id="lgMsg"></div><div class="row" style="margin-top:16px"><button class="pill primary" id="lgGo">Log in</button><button class="pill ghost" id="lgResend" disabled>Send a new code</button></div>`);
-  let wait = 30; const rb = $('#lgResend'), iv = setInterval(()=>{ if(!$('#lgResend')){ clearInterval(iv); return; } wait--; rb.textContent = wait > 0 ? `Send a new code (${wait}s)` : 'Send a new code'; rb.disabled = wait > 0; if(wait <= 0) clearInterval(iv); }, 1000); rb.textContent = 'Send a new code (30s)';
-  const go = async ()=>{
-    const code = $('#lgCode').value.replace(/\D/g, ''), m = $('#lgMsg'); if(code.length !== 6){ m.innerHTML = '<div class="err">The code has 6 digits.</div>'; return; }
-    $('#lgGo').disabled = true; try{ const j = await api('otp_verify', { email:em, code }); S.session = j.session; S.visitor = j.visitor; LS.set('vx:session', j.session); }catch(e){ m.innerHTML = `<div class="err">${esc(e.message)}</div>`; $('#lgGo').disabled = false; return; }
-    closeModal(); clearInterval(iv); toast('Welcome, ' + (S.visitor.name || '').split(' ')[0] + '.'); S.tab = S.tab || 'exams'; route();
+function paintOverview(el){
+  const done = S.attempts.filter(a=> a.submittedAt && a.status !== 'void'), rel = done.filter(a=> pctOf(a) !== null), ps = rel.map(pctOf);
+  const avg = ps.length ? Math.round(ps.reduce((s, x)=> s + x, 0) / ps.length) : null, best = ps.length ? Math.max.apply(null, ps) : null;
+  const next = sortExams(S.exams).filter(e=> stateOf(e) !== 'closed').slice(0, 2), pend = done.filter(a=> a.pending).length;
+  const items = rel.slice(0, 12).reverse().map(a=> ({ p:pctOf(a), label:shortDate(a.startedAt), title:a.title }));
+  el.innerHTML = `<div class="stats"><div class="stat"><b>${done.length}</b><span>Exams taken</span></div><div class="stat"><b>${avg === null ? '–' : avg + '%'}</b><span>Average score</span></div><div class="stat"><b>${best === null ? '–' : best + '%'}</b><span>Best score</span></div><div class="stat"><b>${pend}</b><span>Awaiting review</span></div></div>
+  <section class="card sect"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Score history</h3>${rel.length ? '<button class="pill sm" data-act="printall">Print results</button>' : ''}</div>${items.length ? chartSvg(items) : '<div class="empty" style="margin-top:10px">Your scores will appear here after your first marked exam.</div>'}</section>
+  <section class="sect"><h2>Next exams</h2>${next.length ? `<div class="cards">${next.map(e=> examCard(e, true)).join('')}</div>` : '<div class="empty">No exams are scheduled right now.</div>'}</section>`;
+}
+function paintProfile(el){
+  const v = S.visitor || {};
+  el.innerHTML = `<section class="card"><h3>Your profile</h3>
+  <label class="f" for="pfName">Full name</label><input class="in" id="pfName" autocomplete="name" value="${esc(v.name || '')}">
+  <label class="f" for="pfEmail">Email address</label><input class="in" id="pfEmail" value="${esc(v.email || '')}" disabled>
+  <label class="f" for="pfSchool">School</label><input class="in" id="pfSchool" autocomplete="organization" placeholder="Your school or institution" value="${esc(v.school || '')}">
+  <label class="f" for="pfGrade">Grade</label><select class="in" id="pfGrade"><option value="">Choose</option>${GRADES.map(g=> `<option ${v.grade === g ? 'selected' : ''}>${g}</option>`).join('')}</select>
+  <div id="pfMsg"></div><div class="row" style="margin-top:14px"><button class="pill primary" data-act="saveprofile">Save profile</button></div></section>`;
+}
+async function saveProfile(){
+  const m = $('#pfMsg'), name = $('#pfName').value.trim().replace(/\s+/g, ' ');
+  try{ const j = await api('update_profile', { session:S.session, name, school:$('#pfSchool').value.trim(), grade:$('#pfGrade').value }); S.visitor = j.visitor; paintAccount(); toast('Profile saved.'); if(m) m.innerHTML = ''; }
+  catch(e){ if(m) m.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+// printable results (not a certificate): the page prints only #printRoot
+function printOut(html){
+  let r = $('#printRoot'); if(!r){ r = document.createElement('div'); r.id = 'printRoot'; document.body.appendChild(r); }
+  r.innerHTML = html; document.body.classList.add('printing');
+  const done = ()=>{ document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); setTimeout(()=> window.print(), 120);
+}
+const pHead = (title, v)=> `<div class="ph"><div class="pk">International Chemistry Competition</div><h1>${esc(title)}</h1><div class="pk2">Exam training</div></div>
+  <table class="pt"><tr><th>Name</th><td>${esc(v.name || '')}</td><th>Email</th><td>${esc(v.email || '')}</td></tr>${v.school || v.grade ? `<tr><th>School</th><td>${esc(v.school || '')}</td><th>Grade</th><td>${esc(v.grade || '')}</td></tr>` : ''}</table>`;
+const pFoot = ()=> `<div class="pf">Printed on ${esc(new Date().toLocaleString())}. This is a record of exam results, not a certificate. Results marked pending are not final.</div>`;
+function printSlip(res){
+  const v = S.visitor || { name:res.name, email:res.email }, m = res.mcq, rel = res.status === 'released';
+  const rows = [].concat(m.review.map(r=> ({ n:r.n, t:'Multiple choice', got:r.got, max:r.marks })), res.written.map(w=> ({ n:w.n, t:'Written', got:rel ? w.got : null, max:w.marks }))).sort((a, b)=> a.n - b.n);
+  const tot = rel && res.total ? `${res.total.score} / ${res.total.total} (${res.total.total ? Math.round(100 * res.total.score / res.total.total) : 0}%)` : (m.total ? `${m.score} / ${m.total} on multiple choice. Written answers pending review.` : 'Pending review');
+  printOut(`${pHead('Result slip', v)}<table class="pt"><tr><th>Exam</th><td colspan="3">${esc(res.exam.title)}</td></tr><tr><th>Reference</th><td>${esc(res.ref)}</td><th>Attempt</th><td>${res.attemptNo}</td></tr><tr><th>Submitted</th><td>${esc(fmtWhen(res.submittedAt))}</td><th>Status</th><td>${rel ? 'Final' : 'Pending'}</td></tr><tr><th>Total</th><td colspan="3"><b>${esc(tot)}</b></td></tr></table>
+  <table class="pg"><thead><tr><th>Question</th><th>Type</th><th>Marks</th></tr></thead><tbody>${rows.map(r=> `<tr><td>${r.n}</td><td>${r.t}</td><td>${r.got === null || r.got === undefined ? 'Pending' : r.got} / ${r.max}</td></tr>`).join('')}</tbody></table>${pFoot()}`);
+}
+function printAll(){
+  const v = S.visitor || {}, list = S.attempts.filter(a=> a.submittedAt && a.status !== 'void').slice().reverse(), ps = list.map(pctOf).filter(x=> x !== null);
+  const avg = ps.length ? Math.round(ps.reduce((s, x)=> s + x, 0) / ps.length) : null;
+  printOut(`${pHead('Results summary', v)}<table class="pg"><thead><tr><th>Date</th><th>Exam</th><th>Attempt</th><th>Reference</th><th>Score</th><th>%</th><th>Status</th></tr></thead><tbody>${list.map(a=> `<tr><td>${esc(shortDate(a.submittedAt))}</td><td>${esc(a.title)}</td><td>${a.attemptNo}</td><td>${esc(a.ref)}</td><td>${a.total ? a.total.score + ' / ' + a.total.total : (a.mcq && a.mcq.total ? a.mcq.score + ' / ' + a.mcq.total + ' (MCQ)' : '–')}</td><td>${pctOf(a) === null ? '–' : pctOf(a) + '%'}</td><td>${a.status === 'released' ? 'Final' : 'Pending'}</td></tr>`).join('')}</tbody></table>${avg === null ? '' : `<p class="pavg">Average of final results: <b>${avg}%</b> over ${ps.length} exam${ps.length > 1 ? 's' : ''}.</p>`}${pFoot()}`);
+}
+async function printOne(id){ try{ const j = await api('review', { attemptId:id, session:S.session }); if(j.void) return toast('This attempt was voided.'); printSlip(j.result); }catch(e){ toast(e.message); } }
+// Google sign-in: Supabase Auth does the Google step, the exam server confirms the token and opens a visitor session
+function googleStart(){
+  try{ LS.set('vx:gpending', String(Date.now())); }catch(e){}
+  const back = location.origin + location.pathname;
+  location.href = 'https://ggbfzfzbquywzuxkoufp.supabase.co/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(back) + '&prompt=select_account';
+}
+async function googleReturn(){
+  const h = location.hash || ''; if(h.indexOf('access_token=') < 0 && h.indexOf('error_description=') < 0) return;
+  const p = new URLSearchParams(h.replace(/^#/, '')); history.replaceState(null, '', location.pathname + location.search); LS.del('vx:gpending');
+  if(p.get('error_description')){ toast('Google sign-in was cancelled or failed.'); return; }
+  const tok = p.get('access_token'); if(!tok) return;
+  app().innerHTML = '<div class="empty">Signing you in with Google…</div>';
+  try{ const j = await api('google_signin', { token:tok }); S.session = j.session; S.visitor = j.visitor; LS.set('vx:session', j.session); S.tab = j.needsProfile ? 'profile' : 'overview'; if(j.needsProfile) toast('Welcome! Add your school and grade.'); }
+  catch(e){ toast(e.message); }
+}
+const G_LOGO = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
+
+// ---------------------------------------------------------------- sign in / create account (email code, no password)
+function openLogin(prefill){ openAuth({ mode:'signin', email:prefill }); }
+function openAuth(o){
+  o = o || {}; let mode = o.mode === 'signup' ? 'signup' : 'signin'; const okEmail = s=> /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(s);
+  const paint = ()=>{
+    const em = o.email || LS.get('vx:email') || '';
+    modal(`<h2>${mode === 'signin' ? 'Welcome back' : 'Create your exam account'}</h2>
+    <button type="button" class="gbtn" data-act="google">${G_LOGO}<span>Continue with Google</span></button><div class="or">or use your email</div>
+    <div class="seg" role="tablist"><button type="button" role="tab" class="${mode === 'signin' ? 'on' : ''}" data-m="signin">Sign in</button><button type="button" role="tab" class="${mode === 'signup' ? 'on' : ''}" data-m="signup">Create account</button></div>
+    ${o.notice ? `<div class="banner" style="margin:12px 0 0"><span>${esc(o.notice)}</span></div>` : ''}
+    <p class="sub" style="color:var(--mute);margin:12px 0 0">${mode === 'signin' ? 'We will email you a 6-digit code. No password needed.' : 'We will email you a 6-digit code to confirm your email.'}</p>
+    ${mode === 'signup' ? `<label class="f" for="auName">Full name</label><input class="in" id="auName" autocomplete="name" placeholder="First and last name" value="${esc(o.name || '')}"><label class="f" for="auSchool">School (optional)</label><input class="in" id="auSchool" autocomplete="organization" value="${esc(o.school || '')}"><label class="f" for="auGrade">Grade (optional)</label><select class="in" id="auGrade"><option value="">Choose</option>${GRADES.map(g=> `<option ${o.grade === g ? 'selected' : ''}>${g}</option>`).join('')}</select>` : ''}
+    <label class="f" for="auEmail">Email address</label><input class="in" id="auEmail" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" value="${esc(em)}">
+    <div id="auMsg"></div>
+    <div class="row" style="margin-top:16px"><button class="pill primary" id="auGo">Continue</button><button class="pill ghost" data-act="closeModal">Cancel</button></div>
+    `);
+    document.querySelectorAll('.seg button').forEach(b=> b.addEventListener('click', ()=>{ o.email = ($('#auEmail') || {}).value || o.email; o.name = ($('#auName') || {}).value || o.name; o.school = ($('#auSchool') || {}).value || o.school; o.grade = ($('#auGrade') || {}).value || o.grade; o.notice = ''; mode = b.dataset.m; paint(); }));
+    const go = async ()=>{
+      const email = $('#auEmail').value.trim(), name = mode === 'signup' ? $('#auName').value.trim().replace(/\s+/g, ' ') : '', m = $('#auMsg');
+      if(mode === 'signup' && (name.split(' ').filter(Boolean).length < 2 || name.length < 5)){ m.innerHTML = '<div class="err">Please enter your full name (first and last name).</div>'; return; }
+      if(!okEmail(email)){ m.innerHTML = '<div class="err">Enter a valid email address.</div>'; return; }
+      $('#auGo').disabled = true; $('#auGo').textContent = 'Sending…'; m.innerHTML = '';
+      try{ const j = await api('otp_request', { email, name:name || undefined, mode, school:mode === 'signup' ? $('#auSchool').value.trim() : undefined, grade:mode === 'signup' ? $('#auGrade').value : undefined }); LS.set('vx:email', email); codeStep(email, { after:o.after, note:j.isNew ? 'Your account has been created. Enter the code to finish.' : (j.existing ? 'You already have an account with this email, so we sent a sign-in code.' : '') }); }
+      catch(e){
+        if(e.code === 'no_account'){ o.email = email; o.name = ''; o.notice = 'We could not find an account with that email. Create one below, it only takes a few seconds.'; mode = 'signup'; paint(); return; }
+        m.innerHTML = `<div class="err">${esc(e.message)}</div>`; $('#auGo').disabled = false; $('#auGo').textContent = 'Continue';
+      }
+    };
+    $('#auGo').addEventListener('click', go);
+    ['auEmail', 'auName'].forEach(id=>{ const x = $('#' + id); if(x) x.addEventListener('keydown', ev=>{ if(ev.key === 'Enter') go(); }); });
+    setTimeout(()=>{ const f = (mode === 'signup' && !(o.name || '')) ? $('#auName') : $('#auEmail'); if(f) f.focus(); }, 50);
   };
-  $('#lgGo').addEventListener('click', go); $('#lgCode').addEventListener('keydown', e=>{ if(e.key === 'Enter') go(); });
-  rb.addEventListener('click', async ()=>{ rb.disabled = true; try{ await api('otp_request', { email:em }); toast('A new code was sent.'); wait = 30; }catch(e){ $('#lgMsg').innerHTML = `<div class="err">${esc(e.message)}</div>`; } });
+  paint();
+}
+function codeStep(em, o){
+  o = o || {};
+  modal(`<h2>Check your email</h2><p style="color:var(--mute);margin:0">We sent a 6-digit code to <b>${esc(em)}</b>. It works for 10 minutes. If you do not see it, look in spam or promotions.</p>
+  ${o.note ? `<div class="banner" style="margin:12px 0 0"><span>${esc(o.note)}</span></div>` : ''}
+  <div class="otp" id="otp">${[0, 1, 2, 3, 4, 5].map(i=> `<input inputmode="numeric" autocomplete="${i === 0 ? 'one-time-code' : 'off'}" maxlength="1" aria-label="Digit ${i + 1} of 6">`).join('')}</div>
+  <div id="auMsg"></div>
+  <div class="row" style="margin-top:14px"><button class="pill primary" id="auVerify">Verify and continue</button></div>
+  <div class="row" style="margin-top:10px"><button class="pill ghost sm" id="auResend" disabled>Send a new code (30s)</button><button class="pill ghost sm" id="auBack">Use a different email</button></div>`);
+  const boxes = [...document.querySelectorAll('#otp input')], val = ()=> boxes.map(b=> b.value).join('');
+  let wait = 30; const rb = $('#auResend'), iv = setInterval(()=>{ if(!$('#auResend')){ clearInterval(iv); return; } wait--; rb.textContent = wait > 0 ? `Send a new code (${wait}s)` : 'Send a new code'; rb.disabled = wait > 0; if(wait <= 0) clearInterval(iv); }, 1000);
+  let busy = false;
+  const verify = async ()=>{
+    const code = val(), m = $('#auMsg'); if(busy) return; if(code.length !== 6){ m.innerHTML = '<div class="err">The code has 6 digits.</div>'; return; }
+    busy = true; $('#auVerify').disabled = true; $('#auVerify').textContent = 'Checking…'; m.innerHTML = '';
+    try{ const j = await api('otp_verify', { email:em, code }); S.session = j.session; S.visitor = j.visitor; LS.set('vx:session', j.session); }
+    catch(e){ m.innerHTML = `<div class="err">${esc(e.message)}</div>`; boxes.forEach(b=>{ b.value = ''; }); boxes[0].focus(); busy = false; $('#auVerify').disabled = false; $('#auVerify').textContent = 'Verify and continue'; return; }
+    closeModal(); clearInterval(iv); toast('Welcome, ' + (S.visitor.name || '').split(' ')[0] + '.'); S.tab = S.tab || 'overview'; route(); if(o.after) setTimeout(o.after, 400);
+  };
+  boxes.forEach((b, i)=>{
+    b.addEventListener('input', ()=>{ b.value = b.value.replace(/\D/g, '').slice(-1); if(b.value && i < 5) boxes[i + 1].focus(); if(val().length === 6) verify(); });
+    b.addEventListener('keydown', ev=>{ if(ev.key === 'Backspace' && !b.value && i > 0){ boxes[i - 1].focus(); boxes[i - 1].value = ''; } else if(ev.key === 'ArrowLeft' && i > 0) boxes[i - 1].focus(); else if(ev.key === 'ArrowRight' && i < 5) boxes[i + 1].focus(); else if(ev.key === 'Enter') verify(); });
+    b.addEventListener('paste', ev=>{ const t = ((ev.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g, '').slice(0, 6); if(!t) return; ev.preventDefault(); t.split('').forEach((c, k)=>{ if(boxes[k]) boxes[k].value = c; }); (boxes[Math.min(t.length, 5)]).focus(); if(t.length === 6) verify(); });
+  });
+  boxes[0].focus();
+  $('#auVerify').addEventListener('click', verify);
+  $('#auBack').addEventListener('click', ()=>{ clearInterval(iv); openAuth({ mode:'signin', email:em, after:o.after }); });
+  rb.addEventListener('click', async ()=>{ rb.disabled = true; try{ await api('otp_request', { email:em, mode:'signin' }); toast('A new code was sent.'); wait = 30; const t2 = setInterval(()=>{ if(!$('#auResend')){ clearInterval(t2); return; } wait--; rb.textContent = wait > 0 ? `Send a new code (${wait}s)` : 'Send a new code'; rb.disabled = wait > 0; if(wait <= 0) clearInterval(t2); }, 1000); }catch(e){ $('#auMsg').innerHTML = `<div class="err">${esc(e.message)}</div>`; rb.disabled = false; } });
 }
 
 // ---------------------------------------------------------------- start / resume
@@ -321,7 +456,7 @@ function openStart(id){
   modal(`<h2>${esc(e.title)}</h2><div class="meta" style="margin-bottom:8px"><span><b>${e.questionCount}</b> questions</span><span><b>${e.totalMarks}</b> marks</span><span><b>${esc(fmtDur(e.totalSec))}</b></span><span>Closes ${esc(fmtWhen(e.endAt))}</span></div>
   ${e.instructions ? `<div class="rules" style="list-style:none;padding-left:16px;white-space:pre-wrap">${chem(e.instructions)}</div>` : ''}
   ${logged ? `<p style="margin:12px 0 0">Taking this exam as <b>${esc(S.visitor.name)}</b> (${esc(S.visitor.email)}).</p>` : `<label class="f" for="stName">Full name</label><input class="in" id="stName" autocomplete="name" value="${esc(who.name || '')}" placeholder="First and last name"><label class="f" for="stEmail">Email address</label><input class="in" id="stEmail" type="email" autocomplete="email" inputmode="email" value="${esc(who.email || '')}" placeholder="you@example.com"><div style="font-size:13px;color:var(--mute);margin-top:6px">Your results and confirmation are sent to this address, so make sure it is correct.</div>`}
-  <ul class="rules"><li>${fs ? 'The exam runs in full screen. Leaving full screen or switching tabs is recorded.' : 'Switching tabs is recorded.'}${e.settings.leaveLimit ? ` Leaving more than ${e.settings.leaveLimit} time${e.settings.leaveLimit > 1 ? 's' : ''} submits your exam automatically.` : ''}</li><li>One question at a time, each with its own timer. You cannot go back.</li><li>${e.mcqCount ? 'Multiple choice answers are marked and shown right after you submit.' : ''} ${e.written ? 'Written and picture answers are reviewed later. You will need to log in with your email to see them.' : ''}</li><li>Copying, pasting and right-click are switched off.</li></ul>
+  <ul class="rules"><li>${fs ? 'The exam runs in full screen. Leaving full screen or switching tabs is recorded.' : 'Switching tabs is recorded.'}${e.settings.leaveLimit ? ` Leaving more than ${e.settings.leaveLimit} time${e.settings.leaveLimit > 1 ? 's' : ''} submits your exam automatically.` : ''}</li><li>One question at a time, each with its own timer. You cannot go back.</li><li>${e.mcqCount ? 'Multiple choice answers are marked and shown right after you submit.' : ''} ${e.written ? 'Written and picture answers are reviewed later. You will need to sign in with your email to see them.' : ''}</li><li>Copying, pasting and right-click are switched off.</li></ul>
   <label class="chk"><input type="checkbox" id="stOk"><span>I understand and agree. The timer starts as soon as I press Start.</span></label><div id="stMsg"></div>
   <div class="row" style="margin-top:12px"><button class="pill primary lg" id="stGo" data-id="${esc(e.id)}">Start exam</button><button class="pill ghost" data-act="closeModal">Not now</button></div>`, { noFocus:!!who.name });
   $('#stGo').addEventListener('click', ()=> doStart(e, logged));
@@ -335,13 +470,13 @@ function doStart(e, logged){
   $('#stGo').disabled = true; if(!logged) LS.set('vx:who', JSON.stringify({ name, email }));
   const fsP = e.settings.fullscreen !== false ? enterFS() : Promise.resolve(false); // must run inside this click
   const prev = (()=>{ try{ return JSON.parse(LS.get('vx:att') || 'null'); }catch(x){ return null; } })();
-  api('start', { examId:e.id, name, email, session:S.session, attemptId:prev && prev.examId === e.id ? prev.id : undefined, secret:prev && prev.examId === e.id ? prev.secret : undefined }).then(async j=>{ await fsP; closeModal(); XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); $('#stGo').disabled = false; m.innerHTML = `<div class="err">${esc(err.message)}</div>${err.code === 'in_progress' ? '<div class="row" style="margin-top:10px"><button class="pill sm" data-act="login">Log in with an email code</button></div>' : ''}`; if(err.code === 'ended' && err.data && err.data.attemptId){ closeModal(); showResultFor(err.data.attemptId, prev && prev.secret); } });
+  api('start', { examId:e.id, name, email, session:S.session, attemptId:prev && prev.examId === e.id ? prev.id : undefined, secret:prev && prev.examId === e.id ? prev.secret : undefined }).then(async j=>{ await fsP; closeModal(); XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); $('#stGo').disabled = false; if(err.code === 'verify'){ closeModal(); openAuth({ mode:'signup', name, email, notice:'This exam asks you to confirm your email address first.', after:()=> openStart(e.id) }); return; } m.innerHTML = `<div class="err">${esc(err.message)}</div>${err.code === 'in_progress' ? '<div class="row" style="margin-top:10px"><button class="pill sm" data-act="login">Sign in with an email code</button></div>' : ''}`; if(err.code === 'ended' && err.data && err.data.attemptId){ closeModal(); showResultFor(err.data.attemptId, prev && prev.secret); } });
 }
 function resume(id){
   const e = examById(id); if(!e) return; const prev = (()=>{ try{ return JSON.parse(LS.get('vx:att') || 'null'); }catch(x){ return null; } })(), who = (()=>{ try{ return JSON.parse(LS.get('vx:who') || '{}'); }catch(x){ return {}; } })();
   const fsP = e.settings.fullscreen !== false ? enterFS() : Promise.resolve(false);
   api('start', { examId:e.id, name:who.name || (S.visitor && S.visitor.name) || '', email:who.email || (S.visitor && S.visitor.email) || '', session:S.session, attemptId:(prev && prev.examId === id ? prev.id : undefined), secret:(prev && prev.examId === id ? prev.secret : undefined) })
-    .then(async j=>{ await fsP; XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); if(err.code === 'ended' && err.data && err.data.attemptId){ LS.del('vx:att'); showResultFor(err.data.attemptId, prev && prev.secret); return; } if(err.code === 'in_progress'){ openLogin(who.email); toast('Log in to continue the exam you started on another device.', 5000); return; } toast(err.message, 5000); });
+    .then(async j=>{ await fsP; XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); if(err.code === 'ended' && err.data && err.data.attemptId){ LS.del('vx:att'); showResultFor(err.data.attemptId, prev && prev.secret); return; } if(err.code === 'in_progress'){ openLogin(who.email); toast('Sign in to continue the exam you started on another device.', 5000); return; } toast(err.message, 5000); });
 }
 function enterFS(){
   const el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen; if(!f) return Promise.resolve(false);
@@ -515,10 +650,11 @@ function writtenCard(w){
   return `<div class="rev"><div class="qn">Question ${w.n} · ${TL[w.type] || 'Written'} <span class="tag chip ${w.got != null ? 'open' : 'pend'}">${w.got != null ? w.got + ' / ' + w.marks : 'Awaiting review'}</span></div><div class="qtext" style="user-select:text;-webkit-user-select:text;font-size:17px">${chem(w.text)}</div>${w.answer ? `<div class="ans">${chem(w.answer)}</div>` : '<div class="sub" style="margin-top:8px"><i>No typed answer</i></div>'}${imgs}${w.comment ? `<div class="cmt"><b>Ambassador:</b> ${esc(w.comment)}</div>` : ''}${w.modelAnswer || w.scheme ? `<div class="why">${w.modelAnswer ? `<b>Model answer</b><br>${chem(w.modelAnswer)}` : ''}${w.scheme ? `${w.modelAnswer ? '<br><br>' : ''}<b>Marking scheme</b><br>${chem(w.scheme)}` : ''}</div>` : ''}</div>`;
 }
 function resultHtml(res, mode, secret){
+  S.lastRes = res;
   const m = res.mcq, left = (res.integrity.tabSwitches || 0) + (res.integrity.fsExits || 0), released = res.status === 'released';
   const auto = res.autoReason === 'time' || res.autoReason === 'window' ? '<span class="chip soon">Submitted when time ran out</span>' : res.autoReason === 'violations' ? '<span class="chip bad">Submitted automatically after leaving the exam</span>' : '';
   const score = res.total ? `<div class="card"><div class="scorebig">${res.total.score}<small>of ${res.total.total} marks in total</small></div>${m.total ? `<div class="sub">Multiple choice: ${m.score} of ${m.total}</div>` : ''}</div>` : (m.total ? `<div class="card"><div class="scorebig">${m.score}<small>of ${m.total} marks on multiple choice</small></div>${res.pending ? '<div class="sub">Your overall total will appear once your written answers are reviewed.</div>' : ''}</div>` : '');
-  const pend = res.pending ? `<div class="banner" style="margin-top:14px"><span><b>Your written and picture answers are being reviewed.</b> The Ambassador will release the results later and we will email you. ${S.session ? 'Come back to “My exams and results” to see them.' : 'To see them, log in with the same email address (we send you a code).'}</span>${S.session ? '' : `<button class="pill amber" data-act="login">Log in</button>`}</div>` : '';
+  const pend = res.pending ? `<div class="banner" style="margin-top:14px"><span><b>Your written and picture answers are being reviewed.</b> The Ambassador will release the results later and we will email you. ${S.session ? 'Come back to “My exams and results” to see them.' : 'To see them, sign in with the same email address (we send you a code).'}</span>${S.session ? '' : `<button class="pill amber" data-act="login">Log in</button>`}</div>` : '';
   const canTalk = !!S.session || (secret && released), q = [].concat(m.review.map(r=> ({ n:r.n })), res.written.map(w=> ({ n:w.n }))).sort((a, b)=> a.n - b.n);
   const disp = canTalk ? `<section class="card sect" id="disp"><h3>Think a mark is wrong?</h3><div class="sub">Tell the Ambassador which question and why. The reply appears here and is also sent to your email.</div><label class="f" for="dQ">About</label><select class="in" id="dQ"><option value="">The whole exam</option>${q.map(x=> `<option value="${x.n}">Question ${x.n}</option>`).join('')}</select><label class="f" for="dMsg">Your message</label><textarea class="in" id="dMsg" maxlength="1500" placeholder="Explain what you think is wrong and what you believe the correct mark should be."></textarea><div class="row" style="margin-top:12px"><button class="pill primary" data-act="sendmsg" data-id="${esc(res.id)}">Send to the Ambassador</button></div><div id="dOut"></div><div class="thread" id="dThread"></div></section>` : '';
   return `<section class="hero"><p class="kick">${mode === 'after' ? 'Exam submitted' : 'Review'}</p><h1>${esc(res.exam.title)}</h1><div class="row" style="margin-top:12px"><span class="refbox" title="Quote this reference if you contact us">${esc(res.ref)}<button class="pill sm" data-act="copyref" data-ref="${esc(res.ref)}">Copy</button></span><span class="meta"><span>Attempt ${res.attemptNo}</span><span>${esc(fmtWhen(res.submittedAt))}</span></span>${auto}</div></section>
@@ -526,7 +662,7 @@ function resultHtml(res, mode, secret){
   ${m.review.length ? `<section class="sect"><h2>Multiple choice review</h2>${m.review.map(mcqCard).join('')}</section>` : ''}
   ${res.written.length ? `<section class="sect"><h2>Written and picture answers</h2>${res.written.map(writtenCard).join('')}</section>` : ''}
   ${disp}
-  <div class="row sect"><button class="pill primary" data-act="home">${S.session ? 'Back to my exam space' : 'Back to exams'}</button><a class="pill" href="index.html">Back to website</a></div>`;
+  <div class="row sect"><button class="pill primary" data-act="home">${S.session ? 'Back to my exam space' : 'Back to exams'}</button><button class="pill" data-act="printres">Print results</button><a class="pill" href="index.html">Back to website</a></div>`;
 }
 function paintResult(res, mode, secret){
   S.view = { id:res.id, secret:secret || '' }; app().innerHTML = resultHtml(res, mode, secret); window.scrollTo(0, 0); paintAccount(); if(S.session) loadThread(res.id);
@@ -557,13 +693,20 @@ document.addEventListener('click', e=>{
   switch(a){
     case 'reload': return route();
     case 'login': return openLogin();
+    case 'signup': return openAuth({ mode:'signup' });
     case 'closeModal': return closeModal();
-    case 'home': S.tab = 'exams'; return route();
+    case 'home': S.tab = 'overview'; return route();
     case 'start': return openStart(id);
     case 'resume': return resume(id);
     case 'ics': { const x = examById(id); if(x) icsFor(x); return; }
     case 'tab': S.tab = id; paintTab(); if(id !== 'messages' && S.session) loadMe().then(()=>{ if(S.tab === id && $('#tabBody')) paintTab(); }).catch(()=>{}); return;
     case 'review': return openReview(id);
+    case 'remind': return remindToggle(id);
+    case 'saveprofile': return saveProfile();
+    case 'printall': return printAll();
+    case 'printone': return printOne(id);
+    case 'printres': return S.lastRes ? printSlip(S.lastRes) : null;
+    case 'google': return googleStart();
     case 'argue': return openReview(id, true);
     case 'copyref': try{ navigator.clipboard.writeText(b.dataset.ref); toast('Reference copied.'); }catch(x){ toast(b.dataset.ref); } return;
     case 'sendmsg': return sendMsg(id);
@@ -573,7 +716,7 @@ document.addEventListener('click', e=>{
     case 'xdel': { const q = XP.qs[XP.qi]; if(q){ XP.files[q.id] = (XP.files[q.id] || []).filter(p=> p !== b.dataset.p); xpThumbs(); xpQueueSave(true); } return; }
   }
 });
-route();
+googleReturn().then(()=> route());
 if(/[?&]login=1/.test(location.search) && !S.session) setTimeout(()=> openLogin(), 300);
 })();
 </script>

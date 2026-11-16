@@ -66,7 +66,7 @@ function mount(el, sb){
     const b = body(`<div class="row" style="margin-bottom:12px"><button class="btn p" id="vxNew">New exam</button></div>${j.exams.length ? j.exams.map(e=> `<div class="card"><div class="row sp"><div><h3>${esc(e.title)} ${chip(e)}</h3><div class="sub">${esc(e.subject || '')}${e.subject ? ' · ' : ''}Opens ${esc(when(e.startAt))} · Closes ${esc(when(e.endAt))}</div></div><div class="sub">${e.questionCount} questions · ${e.totalMarks} marks · ${e.attempts} attempt${e.attempts > 1 ? 's' : ''}</div></div>
     <div class="row" style="margin:10px 0"><span class="chip">${e.stats.total} attempt${e.stats.total === 1 ? '' : 's'}</span>${e.stats.running ? `<span class="chip w">${e.stats.running} in progress</span>` : ''}${e.stats.pending ? `<span class="chip w">${e.stats.pending} awaiting review</span>` : ''}${e.stats.released ? `<span class="chip ok">${e.stats.released} released</span>` : ''}</div>
     <div class="row"><button class="btn sm" data-a="edit" data-id="${e.id}">Edit</button>${e.status === 'published' ? `<button class="btn sm" data-a="unpub" data-id="${e.id}">Unpublish</button>` : e.status === 'draft' ? `<button class="btn sm a" data-a="pub" data-id="${e.id}">Publish</button>` : `<button class="btn sm" data-a="unpub" data-id="${e.id}">Restore as draft</button>`}<button class="btn sm" data-a="subs" data-id="${e.id}">Submissions</button><button class="btn sm" data-a="dup" data-id="${e.id}">Duplicate</button><button class="btn sm d" data-a="del" data-id="${e.id}">${e.stats.total ? 'Archive' : 'Delete'}</button></div></div>`).join('') : '<div class="empty">No visitor exams yet. Create the first one.</div>'}`);
-    b.querySelector('#vxNew').addEventListener('click', ()=>{ st.ed = { title:'', subject:'', instructions:'', dataLine:'', startAt:new Date(Date.now() + 86400000).toISOString(), endAt:new Date(Date.now() + 3 * 86400000).toISOString(), attempts:1, settings:{ fullscreen:true, leaveLimit:0, mcqReview:true }, questions:[DEFQ('mcq')], status:'draft' }; go(); });
+    b.querySelector('#vxNew').addEventListener('click', ()=>{ st.ed = { title:'', subject:'', instructions:'', dataLine:'', startAt:new Date(Date.now() + 86400000).toISOString(), endAt:new Date(Date.now() + 3 * 86400000).toISOString(), attempts:1, settings:{ fullscreen:true, leaveLimit:0, mcqReview:true, verifyEmail:false, allowDisputes:true }, questions:[DEFQ('mcq')], status:'draft' }; go(); });
     b.querySelectorAll('[data-a]').forEach(x=> x.addEventListener('click', async ()=>{
       const id = x.dataset.id, a = x.dataset.a;
       try{
@@ -80,35 +80,178 @@ function mount(el, sb){
   }
 
   // ------------------------------------------------------------ editor
+  // ------------------------------------------------------------ AI question builder (same exam-ai function the portal uses; up to 50 questions, written in parallel)
+  const MAXQ = 50, AI_BATCH = 7;
+  const AI_TOPICS = ['Stoichiometry', 'Atomic structure & periodic table', 'Bonding & structure', 'Acids, bases & equilibrium', 'Thermodynamics & kinetics', 'Electrochemistry', 'Organic chemistry', 'Inorganic chemistry', 'Analytical & lab skills'];
+  const AI_TYPE = { mcq:{ m:1, s:60 }, short:{ m:2, s:90 }, structured:{ m:5, s:240 }, calc:{ m:4, s:180 }, theory:{ m:4, s:240 } };
+  const AI_LAB = { 'multiple choice':'mcq', 'short answer':'short', 'structured':'structured', 'calculation':'calc', 'theory':'theory' };
+  const AI_PRE = { quick:{ mcq:20, short:0, structured:0, calc:0, theory:0 }, standard:{ mcq:20, short:10, structured:5, calc:5, theory:0 }, full:{ mcq:25, short:10, structured:5, calc:5, theory:5 } };
+  const AI_FIELDS = [['mcq', 'Multiple choice'], ['short', 'Short answer'], ['structured', 'Structured (a, b, c)'], ['calc', 'Calculation'], ['theory', 'Theory']];
+  st.ai = { topics:[], level:'Youth', diff:'Intermediate', guide:'', data:false, msg:'', busy:false, mcq:20, short:10, structured:5, calc:5, theory:0 };
+  const cf = t=> (typeof window.chemify === 'function' ? window.chemify(t) : t);
+  const sleep = ms=> new Promise(r=> setTimeout(r, ms));
+  function aiParseText(raw){
+    const lines = String(raw || '').replace(/\r/g, '').split('\n');
+    const STRICT = /^\s*Question\s+(\d{1,3})\s+\[\s*(\d+)\s*marks?\s*\]\s*$/i, out = []; let cur = null, data = '';
+    for(const ln of lines){
+      const m = ln.match(STRICT);
+      if(m){ cur = { marks:+m[2], buf:[] }; out.push(cur); continue; }
+      if(!cur){ const d = ln.match(/^Data:\s*(.+)$/i); if(d) data = d[1].trim(); continue; }
+      cur.buf.push(ln);
+    }
+    const qs = out.map(c=>{
+      const buf = c.buf.slice(); while(buf.length && !buf[buf.length - 1].trim()) buf.pop();
+      let i = buf.length; while(i > 0 && /^\s*\(?[A-D][.)]\s*/.test(buf[i - 1])) i--;
+      const opt = buf.slice(i), letters = opt.map(l=> (l.match(/^\s*\(?([A-D])[.)]/) || [])[1]).join('');
+      if(opt.length === 4 && letters === 'ABCD') return { marks:c.marks, text:buf.slice(0, i).join('\n').trim(), options:opt.map(l=> l.replace(/^\s*\(?[A-D][.)]\s*/, '').trim()) };
+      return { marks:c.marks, text:buf.join('\n').trim(), options:null };
+    }).filter(q=> q.text);
+    return { questions:qs, data };
+  }
+  function aiParseNotes(notes){
+    const map = {};
+    String(notes || '').split(/\n\s*\n(?=Question \d+ \()/).forEach(b=>{
+      const h = b.match(/^Question (\d+) \(([^,]*),\s*(.*),\s*(\d+)m\)/); if(!h) return;
+      const a = b.match(/Answer:\s*([\s\S]*?)\nMarking:\s*([\s\S]*)$/);
+      map[+h[1]] = { label:h[2].trim(), answer:a ? a[1].trim() : '', scheme:a ? a[2].trim() : '' };
+    });
+    return map;
+  }
+  function aiFromDraft(d){
+    const p = aiParseText(d.content), notes = aiParseNotes(d.notes);
+    const qs = p.questions.map((x, i)=>{
+      const n = notes[i + 1] || {};
+      let type = x.options ? 'mcq' : (AI_LAB[String(n.label || '').toLowerCase()] || 'short'); if(type === 'mcq' && !x.options) type = 'short';
+      const t = AI_TYPE[type], q = { id:uid(), type, text:cf(x.text), marks:x.marks || t.m, timeSec:t.s, options:['', '', '', ''], correct:0, scheme:'', answer:'', ai:true };
+      if(type === 'mcq'){
+        q.options = x.options.map(o=> cf(o));
+        const L = (String(n.answer || '').match(/^\s*\(?([ABCD])\b/i) || [])[1];
+        if(L) q.correct = 'ABCD'.indexOf(L.toUpperCase());
+        else { const k = q.options.findIndex(o=> o && String(n.answer || '').toLowerCase().includes(o.toLowerCase())); if(k >= 0) q.correct = k; else q.check = true; }
+        q.scheme = cf(n.scheme || '');
+      } else { q.answer = cf(n.answer || ''); q.scheme = cf(n.scheme || ''); }
+      return q;
+    });
+    return { questions:qs, data:p.data };
+  }
+  async function aiCall(spec){
+    const run = async ()=>{
+      const r = await Promise.race([sb.functions.invoke('exam-ai', { body:{ action:'draft', spec } }), new Promise(res=> setTimeout(()=> res({ error:{ timeout:true } }), 110000))]);
+      if(r.error){ let m = ''; try{ const j = await r.error.context.json(); m = j.error || ''; }catch(x){} throw new Error(m || 'unavailable'); }
+      return r.data;
+    };
+    const waits = [2000, 5000];
+    for(let k = 0; ; k++){
+      try{ return await run(); }
+      catch(e){ if(!e || e.message !== 'unavailable' || k >= waits.length) throw e; await sleep(waits[k]); }
+    }
+  }
+  const aiErr = e=>{
+    const m = e && e.message;
+    if(m === 'quota') return 'The Gemini limit for your key has been reached for now (free keys have a daily cap). Try again later or write questions yourself.';
+    if(m === 'rate_limited') return 'Too many AI drafts this hour (the limit is 20, shared with the portal exam builder). Please try again later.';
+    if(m === 'not_configured') return 'The Gemini key is not set on the server.';
+    if(m === 'forbidden' || m === 'not_member') return 'Your account is not allowed to generate questions. Sign out and in again, then retry.';
+    return 'The AI service is busy or did not answer. Wait a minute and try again, or write the questions yourself.';
+  };
+  const aiStems = (qs, room)=>{ const parts = []; let used = 0; for(const q of qs){ const s = String(q.text || '').replace(/\s+/g, ' ').slice(0, 38); if(!s) continue; if(used + s.length + 3 > room) break; parts.push(s); used += s.length + 3; } return parts.join(' | '); };
+  function aiReadForm(B){
+    const A = st.ai, g = id=> B.querySelector(id);
+    A.topics = [...B.querySelectorAll('[data-aitopic]:checked')].map(x=> x.value);
+    A.level = g('#aiLevel').value; A.diff = g('#aiDiff').value; A.guide = g('#aiGuide').value; A.data = g('#aiData').checked;
+    AI_FIELDS.forEach(f=>{ A[f[0]] = Math.max(0, Math.min(MAXQ, parseInt(g('#ai_' + f[0]).value, 10) || 0)); });
+  }
+  const aiTotal = ()=> AI_FIELDS.reduce((n, f)=> n + (st.ai[f[0]] || 0), 0);
+  async function aiGenerate(B, safe){
+    const A = st.ai, e = st.ed; if(A.busy) return; if(!safe()) return; aiReadForm(B);
+    const stat = t=>{ const x = B.querySelector('#aiStat'); if(x) x.textContent = t; };
+    // an untouched empty question (the default first one) is dropped so it does not block the list
+    e.questions = e.questions.filter(q=> String(q.text || '').trim() || q.ai); const qs = e.questions;
+    const total = aiTotal(), room = MAXQ - qs.length;
+    if(total < 1) return stat('Choose at least one question.');
+    if(total > room) return stat(room <= 0 ? `The exam already has ${MAXQ} questions.` : `You can add ${room} more question${room === 1 ? '' : 's'} (limit ${MAXQ}). Lower the numbers.`);
+    if(!e.title.trim() && !e.subject.trim() && !A.topics.length) return stat('Add a title or subject above, or tick a topic, so the AI knows what to write about.');
+    const flat = []; AI_FIELDS.forEach(f=>{ for(let i = 0; i < A[f[0]]; i++) flat.push(f[0]); });
+    const nb = Math.ceil(total / AI_BATCH), batches = []; let pos = 0;
+    for(let b = 0; b < nb; b++){ const size = Math.floor(total / nb) + (b < total % nb ? 1 : 0), mix = {}; flat.slice(pos, pos + size).forEach(t=>{ mix[t] = (mix[t] || 0) + 1; }); pos += size; batches.push(mix); }
+    const stems = aiStems(qs, Math.max(0, 1380 - A.guide.length - 220)), ready = new Array(nb).fill(null), FATAL = ['quota', 'rate_limited', 'not_configured', 'forbidden', 'not_member'];
+    let flushed = 0, finished = 0, added = 0, firstErr = null, fatal = false;
+    const flush = ()=>{
+      while(flushed < nb && ready[flushed]){
+        const r = ready[flushed]; ready[flushed] = null; flushed++; if(r === 'skip') continue;
+        r.parsed.questions.slice(0, MAXQ - qs.length).forEach(q=>{ qs.push(q); added++; });
+        if(r.parsed.data && !e.dataLine && flushed === 1) e.dataLine = r.parsed.data;
+      }
+    };
+    A.busy = true; B.querySelectorAll('#vxAi button, #vxAi input, #vxAi select, #vxAi textarea').forEach(x=>{ x.disabled = true; });
+    const t0 = Date.now(), tick = setInterval(()=> stat(`Writing ${total} questions, ${nb} part${nb === 1 ? '' : 's'} at once… ${finished} of ${nb} done (${Math.round((Date.now() - t0) / 1000)}s)`), 1000);
+    stat(`Writing ${total} questions, ${nb} part${nb === 1 ? '' : 's'} at once…`);
+    try{
+      await Promise.all(batches.map(async (mix, b)=>{
+        await sleep(450 * b); if(fatal) { ready[b] = 'skip'; finished++; return; }
+        const cnt = Object.keys(mix).reduce((n, k)=> n + mix[k], 0), marks = Object.keys(mix).reduce((m, k)=> m + mix[k] * AI_TYPE[k].m, 0);
+        const note = (nb > 1 ? `This is part ${b + 1} of ${nb} of one larger exam, written alongside the other parts. Cover a different sub-area of the topic from the other parts and vary the question styles. ` : '') + (stems ? `Do not repeat or closely resemble these existing questions: ${stems}.` : '');
+        const spec = { title:e.title.trim(), subject:e.subject.trim(), topics:A.topics, level:A.level, difficulty:A.diff, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt * 1.5)), instructions:(A.guide.trim() + (A.guide.trim() && note ? '\n' : '') + note).slice(0, 1490), dataSheet:A.data && b === 0 && !e.dataLine, previous:'', refine:'' };
+        try{ const data = await aiCall(spec), parsed = aiFromDraft(data); if(!parsed.questions.length) throw new Error('unavailable'); ready[b] = { parsed }; }
+        catch(x){ console.error('AI part failed', b + 1, x); if(!firstErr) firstErr = x; if(x && FATAL.includes(x.message)) fatal = true; ready[b] = 'skip'; }
+        finished++; flush();
+      }));
+      for(let i = 0; i < nb; i++) if(!ready[i] && i >= flushed) ready[i] = 'skip'; flush();
+    }catch(x){ console.error(x); if(!firstErr) firstErr = x; }
+    clearInterval(tick); A.busy = false;
+    A.msg = added >= total ? `Added ${added} question${added === 1 ? '' : 's'}. Check them below, then save.` : (added ? `Added ${added} of ${total} questions. ` : 'Nothing was generated. ') + aiErr(firstErr || new Error('unavailable')) + (added ? ' Press Generate again for the rest.' : '');
+    if(st.ed === e){ safe(); paintEditor(); }
+  }
+  const aiCardHtml = e=>{
+    const A = st.ai, room = MAXQ - e.questions.filter(q=> String(q.text || '').trim() || q.ai).length;
+    return `<div class="card" id="vxAi"><div class="row sp"><h3>✦ AI question builder</h3><span class="row"><span class="sub">Presets:</span><button class="btn sm" data-aipre="quick">20 MCQ</button><button class="btn sm" data-aipre="standard">Standard 40</button><button class="btn sm" data-aipre="full">Full 50</button></span></div>
+    <div class="sub" style="margin-bottom:8px">Writes up to ${MAXQ} questions with answers and marking notes, several parts at a time. Uses the title, subject and topics below. You can edit everything afterwards.</div>
+    <label>Topics to cover (optional)</label><div class="row" style="gap:6px 14px">${AI_TOPICS.map(t=> `<label class="chk"><input type="checkbox" data-aitopic value="${esc(t)}" ${A.topics.includes(t) ? 'checked' : ''}> ${esc(t)}</label>`).join('')}</div>
+    <div class="g2" style="margin-top:8px"><div><label>Visitor level</label><select id="aiLevel">${[['Junior', 'Junior (10th grade and below)'], ['Youth', 'Youth (11th to 13th grade)'], ['Senior', 'Senior (university)'], ['Mixed', 'Mixed']].map(o=> `<option value="${o[0]}" ${A.level === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></div><div><label>Difficulty</label><select id="aiDiff">${[['Foundation', 'Foundation'], ['Intermediate', 'Intermediate'], ['Olympiad', 'Olympiad'], ['Progressive', 'Progressive (easy to hard)']].map(o=> `<option value="${o[0]}" ${A.diff === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select></div></div>
+    <label style="margin-top:8px">How many of each type <span class="sub" id="aiTot">· ${aiTotal()} to add (${MAXQ - room} already in the list, limit ${MAXQ})</span></label>
+    <div class="row" style="gap:10px">${AI_FIELDS.map(f=> `<div style="flex:1;min-width:110px"><label>${f[1]}</label><input type="number" min="0" max="${MAXQ}" id="ai_${f[0]}" value="${A[f[0]]}"></div>`).join('')}</div>
+    <label style="margin-top:8px">Extra guidance for the AI (optional, visitors never see it)</label><textarea id="aiGuide" style="min-height:50px" placeholder="e.g. No organic chemistry. Use SI units. Make question 1 an easy warm-up.">${esc(A.guide)}</textarea>
+    <label class="chk" style="margin-top:6px"><input type="checkbox" id="aiData" ${A.data ? 'checked' : ''}> Also suggest constants for the data line (only if it is empty)</label>
+    <div class="row" style="margin-top:10px"><button class="btn p" id="aiGo">✦ Generate and add to the list</button>${e.questions.some(q=> q.ai) ? '<button class="btn sm d" id="aiClear">Remove all AI questions</button>' : ''}</div>
+    <div class="sub" id="aiStat" style="margin-top:8px" role="status">${esc(A.msg)}</div></div>`;
+  };
+
   function paintEditor(){
     shell(); const e = st.ed, qs = e.questions;
     const totalM = qs.reduce((n, q)=> n + (+q.marks || 0), 0), totalT = qs.reduce((n, q)=> n + (+q.timeSec || 0), 0);
     const qHtml = qs.map((q, i)=> `<div class="q" data-i="${i}"><div class="hd"><b>Question ${i + 1} · ${TLAB[q.type]}</b><span class="row"><button class="btn sm g" data-q="up">Up</button><button class="btn sm g" data-q="down">Down</button><button class="btn sm g" data-q="dup">Duplicate</button><button class="btn sm d" data-q="del">Remove</button></span></div>
       <label>Question</label><textarea data-f="text" placeholder="Write the question. Chemical formulas like H2O and arrows like -> are formatted for visitors automatically.">${esc(q.text)}</textarea>
       <div class="g2"><div><label>Marks</label><input type="number" min="0.5" max="50" step="0.5" data-f="marks" value="${esc(q.marks)}"></div><div><label>Time for this question (seconds)</label><input type="number" min="10" max="3600" step="10" data-f="timeSec" value="${esc(q.timeSec)}"></div></div>
-      ${q.type === 'mcq' ? `<label>Options (tick the correct one)</label>${[0, 1, 2, 3].map(k=> `<div class="opt"><input type="radio" name="c${i}" data-f="correct" value="${k}" ${+q.correct === k ? 'checked' : ''}><input data-f="opt${k}" value="${esc((q.options || [])[k] || '')}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<label>Explanation shown after submitting (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>` : `<label>Model answer (shown to the visitor after you release results)</label><textarea data-f="answer">${esc(q.answer || '')}</textarea><label>Marking scheme (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>`}</div>`).join('');
+      ${q.type === 'mcq' ? `${q.check ? '<div class="err">The AI did not make the correct option clear. Please tick the right one.</div>' : ''}<label>Options (tick the correct one)</label>${[0, 1, 2, 3].map(k=> `<div class="opt"><input type="radio" name="c${i}" data-f="correct" value="${k}" ${+q.correct === k ? 'checked' : ''}><input data-f="opt${k}" value="${esc((q.options || [])[k] || '')}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<label>Explanation shown after submitting (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>` : `<label>Model answer (shown to the visitor after you release results)</label><textarea data-f="answer">${esc(q.answer || '')}</textarea><label>Marking scheme (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>`}</div>`).join('');
     body(`<div class="card"><div class="row sp"><h3>${e.id ? 'Edit exam' : 'New exam'}</h3><button class="btn sm g" id="edBack">Back to list</button></div>
     <div class="g2"><div><label>Title</label><input id="edTitle" value="${esc(e.title)}" maxlength="140"></div><div><label>Subject or topic</label><input id="edSub" value="${esc(e.subject)}" maxlength="100"></div></div>
     <label>Instructions shown before the exam starts</label><textarea id="edIns">${esc(e.instructions)}</textarea>
     <label>Data line (optional: constants shown with every written question, such as Ar values)</label><textarea id="edData" style="min-height:50px">${esc(e.dataLine)}</textarea>
     <div class="g2"><div><label>Opens (your local time)</label><input type="datetime-local" id="edStart" value="${toLocal(e.startAt)}"></div><div><label>Closes (your local time)</label><input type="datetime-local" id="edEnd" value="${toLocal(e.endAt)}"></div><div><label>Attempts per visitor</label><input type="number" id="edAtt" min="1" max="10" value="${e.attempts}"></div><div><label>Leaving the exam: auto-submit after more than (0 = never)</label><input type="number" id="edLim" min="0" max="50" value="${e.settings.leaveLimit || 0}"></div></div>
-    <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="edFs" ${e.settings.fullscreen !== false ? 'checked' : ''}> Require full screen</label><label class="chk"><input type="checkbox" id="edRev" ${e.settings.mcqReview !== false ? 'checked' : ''}> Show right answers after multiple choice submit</label></div></div>
-    <div class="row sp" style="margin:8px 0"><h3>Questions (${qs.length}) · ${totalM} marks · about ${Math.round(totalT / 60)} min</h3></div>${qHtml}
+    <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="edFs" ${e.settings.fullscreen !== false ? 'checked' : ''}> Require full screen</label><label class="chk"><input type="checkbox" id="edRev" ${e.settings.mcqReview !== false ? 'checked' : ''}> Show right answers after multiple choice submit</label><label class="chk"><input type="checkbox" id="edVer" ${e.settings.verifyEmail ? 'checked' : ''}> Visitors must confirm their email with a code before starting</label><label class="chk"><input type="checkbox" id="edDis" ${e.settings.allowDisputes !== false ? 'checked' : ''}> Visitors can argue their results by message</label></div></div>
+    ${aiCardHtml(e)}
+    <div class="row sp" style="margin:8px 0"><h3>Questions (${qs.length}) of ${MAXQ} max · ${totalM} marks · about ${Math.round(totalT / 60)} min</h3></div>${qHtml}
     <div class="row" style="margin-bottom:14px"><span class="sub">Add:</span>${Object.keys(TLAB).map(t=> `<button class="btn sm" data-add="${t}">${TLAB[t]}</button>`).join('')}</div>
     <div class="row"><button class="btn p" id="edSave">Save</button>${e.status !== 'published' ? '<button class="btn a" id="edPub">Save and publish</button>' : ''}<button class="btn g" id="edCancel">Cancel</button></div>`);
     const B = R.querySelector('#vxBody'), pull = ()=>{
       e.title = B.querySelector('#edTitle').value; e.subject = B.querySelector('#edSub').value; e.instructions = B.querySelector('#edIns').value; e.dataLine = B.querySelector('#edData').value;
       e.startAt = new Date(B.querySelector('#edStart').value).toISOString(); e.endAt = new Date(B.querySelector('#edEnd').value).toISOString(); e.attempts = +B.querySelector('#edAtt').value || 1;
-      e.settings = { fullscreen:B.querySelector('#edFs').checked, leaveLimit:+B.querySelector('#edLim').value || 0, mcqReview:B.querySelector('#edRev').checked };
+      e.settings = { fullscreen:B.querySelector('#edFs').checked, leaveLimit:+B.querySelector('#edLim').value || 0, mcqReview:B.querySelector('#edRev').checked, verifyEmail:B.querySelector('#edVer').checked, allowDisputes:B.querySelector('#edDis').checked };
       B.querySelectorAll('.q').forEach(n=>{ const q = qs[+n.dataset.i]; n.querySelectorAll('[data-f]').forEach(f=>{ const k = f.dataset.f; if(k === 'correct'){ if(f.checked) q.correct = +f.value; } else if(/^opt\d$/.test(k)){ q.options = q.options || ['', '', '', '']; q.options[+k.slice(3)] = f.value; } else q[k] = f.value; }); q.marks = +q.marks; q.timeSec = +q.timeSec; });
     };
     const safe = ()=>{ try{ pull(); return true; }catch(x){ say('Choose valid opening and closing times first.', true); return false; } };
     B.querySelector('#edBack').addEventListener('click', ()=>{ st.ed = null; go(); }); B.querySelector('#edCancel').addEventListener('click', ()=>{ st.ed = null; go(); });
-    B.querySelectorAll('[data-add]').forEach(x=> x.addEventListener('click', ()=>{ if(safe()){ qs.push(DEFQ(x.dataset.add)); paintEditor(); } }));
-    B.querySelectorAll('[data-q]').forEach(x=> x.addEventListener('click', ()=>{ if(!safe()) return; const i = +x.closest('.q').dataset.i, a = x.dataset.q; if(a === 'del'){ if(qs.length > 1 || confirm('An exam needs at least one question.')) qs.splice(i, 1); } else if(a === 'dup') qs.splice(i + 1, 0, Object.assign(JSON.parse(JSON.stringify(qs[i])), { id:uid() })); else if(a === 'up' && i > 0) qs.splice(i - 1, 0, qs.splice(i, 1)[0]); else if(a === 'down' && i < qs.length - 1) qs.splice(i + 1, 0, qs.splice(i, 1)[0]); paintEditor(); }));
+    B.querySelectorAll('[data-add]').forEach(x=> x.addEventListener('click', ()=>{ if(safe()){ if(qs.length >= MAXQ) return say(`An exam can have at most ${MAXQ} questions.`, true); qs.push(DEFQ(x.dataset.add)); paintEditor(); } }));
+    const ai = B.querySelector('#vxAi');
+    ai.addEventListener('input', ()=>{ aiReadForm(B); const t = B.querySelector('#aiTot'); if(t) t.textContent = `· ${aiTotal()} to add (${qs.filter(q=> String(q.text || '').trim() || q.ai).length} already in the list, limit ${MAXQ})`; });
+    ai.querySelectorAll('[data-aipre]').forEach(x=> x.addEventListener('click', ()=>{ Object.assign(st.ai, AI_PRE[x.dataset.aipre]); AI_FIELDS.forEach(f=>{ ai.querySelector('#ai_' + f[0]).value = st.ai[f[0]]; }); ai.dispatchEvent(new Event('input')); }));
+    ai.querySelector('#aiGo').addEventListener('click', ()=> aiGenerate(B, safe));
+    const clr = ai.querySelector('#aiClear'); if(clr) clr.addEventListener('click', ()=>{ if(!safe()) return; if(!confirm('Remove every question the AI wrote? Questions you wrote yourself stay.')) return; e.questions = e.questions.filter(q=> !q.ai); if(!e.questions.length) e.questions.push(DEFQ('mcq')); st.ai.msg = ''; paintEditor(); });
+    B.querySelectorAll('[data-f="correct"]').forEach(x=> x.addEventListener('change', ()=>{ const n = x.closest('.q'); qs[+n.dataset.i].check = false; const er = n.querySelector('.err'); if(er) er.remove(); }));
+    B.querySelectorAll('[data-q]').forEach(x=> x.addEventListener('click', ()=>{ if(!safe()) return; const i = +x.closest('.q').dataset.i, a = x.dataset.q; if(a === 'del'){ if(qs.length > 1 || confirm('An exam needs at least one question.')) qs.splice(i, 1); } else if(a === 'dup'){ if(qs.length >= MAXQ){ say(`An exam can have at most ${MAXQ} questions.`, true); return; } qs.splice(i + 1, 0, Object.assign(JSON.parse(JSON.stringify(qs[i])), { id:uid() })); } else if(a === 'up' && i > 0) qs.splice(i - 1, 0, qs.splice(i, 1)[0]); else if(a === 'down' && i < qs.length - 1) qs.splice(i + 1, 0, qs.splice(i, 1)[0]); paintEditor(); }));
     const save = async (publish, force)=>{
       if(!safe()) return; try{
-        const r = await call('save_exam', { exam:e, force:!!force }); e.id = r.id; if(publish){ await call('set_status', { id:r.id, status:'published' }); }
+        const r = await call('save_exam', { exam:Object.assign({}, e, { questions:e.questions.map(q=>{ const c = Object.assign({}, q); delete c.ai; delete c.check; return c; }) }), force:!!force }); e.id = r.id; if(publish){ await call('set_status', { id:r.id, status:'published' }); }
         st.ed = null; await go(); say(publish ? 'Saved and published. Visitors can see it on the Exams page.' : 'Saved.');
       }catch(x){ if(x.code === 'locked' && confirm(x.message + '\n\nSave the change anyway?')) return save(publish, true); say(x.message, true); }
     };
