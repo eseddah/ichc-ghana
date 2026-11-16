@@ -10959,7 +10959,7 @@ const NAV = {
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
-    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials']] },
+    { k:'website', l:'Website', ic:'website', subs:[['webmsgs','Messages'],['webstats','Visitors'],['websubs','Subscribers'],['webcontent','Events & testimonials'],['webexams','Visitor exams']] },
     { k:'arena', l:'Arena', ic:'arena', subs:[['arena','Arena']] },
     { k:'community', l:'Community', ic:'chat', subs:[['chat','Community chat'],['lounge','Coordinator lounge'],['aichats','Scientist chats']] },
     { k:'certificates', l:'Certificates', ic:'certificates', subs:[['certificates','Certificates']] },
@@ -10974,7 +10974,7 @@ Object.assign(TAB_ICONS, {
   roadmap:'<circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h5"/>'
 });
 // ================= Website: messages, visitors, subscribers, events & testimonials (ambassador) =================
-const WEB_TABS = ['webmsgs','websubs','webstats','webcontent'];
+const WEB_TABS = ['webmsgs','websubs','webstats','webcontent','webexams'];
 const WEBST = { filter:'all', days:30 };
 function webToast(msg, bad){
   const t = document.createElement('div'); t.textContent = msg; t.setAttribute('role','status');
@@ -11006,7 +11006,8 @@ function webHead(tab){
   const t = { webmsgs:['Website messages','Messages sent through the contact form, problem reports and the chat hand-off.'],
     webstats:['Website visitors','Anonymous visit counts. No names or emails are linked to these numbers.'],
     websubs:['Newsletter subscribers','People who signed up for updates on the public website.'],
-    webcontent:['Events and testimonials','What appears in the Events and Testimonials sections of the public website.'] }[tab];
+    webcontent:['Events and testimonials','What appears in the Events and Testimonials sections of the public website.'],
+    webexams:['Visitor exams','Exams for visitors of the public website (separate from the portal exams).'] }[tab];
   return WEB_CSS+'<div class="section-title"><div><h2>'+t[0]+'</h2><p>'+t[1]+'</p></div></div>';
 }
 async function webMount(tab){
@@ -11017,6 +11018,7 @@ async function webMount(tab){
     else if(tab==='webstats') await webStats();
     else if(tab==='websubs') await webSubs();
     else if(tab==='webcontent') await webContent();
+    else if(tab==='webexams'){ const b=document.getElementById('webBody'); if(window.VexamAdmin){ b.style.padding='0'; b.style.border='none'; b.style.boxShadow='none'; b.style.background='transparent'; window.VexamAdmin.mount(b, sb); } else b.textContent='The visitor exam tools did not load. Check that vexam-admin.js is uploaded next to portal.html, then refresh.'; }
   }catch(e){ console.error(e); const b=document.getElementById('webBody'); if(b) b.innerHTML = 'Could not load this. '+escapeHtml((e&&e.message)||'Please try again.'); }
 }
 async function webMsgs(){
@@ -12681,6 +12683,7 @@ function appsStatusCard(){
 </script>
 <script src="arena.js" defer></script>
 <script src="series-admin.js"></script>
+<script src="vexam-admin.js"></script>
 <script>
 // Chemistry Series: ambassador screens (tab "Chemistry Series" and the Series Manager card under Team & duties)
 function seriesMount(){

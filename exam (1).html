@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exams | Chemistry Competition Prep</title>
+<meta name="description" content="Take the Chemistry Competition Prep exams online, see your results and message the Ambassador.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>(function(){try{var t=localStorage.getItem('ichc_theme');if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();</script>
+<style>
+:root{--bg:#FBFAFF;--bg2:#F1EDFF;--surf:#FFFFFF;--surf2:#F8F6FF;--line:#E3DFF5;--ink:#1D1B3A;--mute:#5E6478;--brand:#5B3FD8;--brand2:#4527B8;--on:#FFFFFF;--amber:#FFB52E;--amber-edge:#C98300;--amber-ink:#7A4D00;--amber-bg:#FFF3D6;--ok:#16784F;--ok-bg:#E2F5EC;--bad:#B8323F;--bad-bg:#FCE8EA;--hi:rgba(255,255,255,.8);--sh:rgba(29,27,58,.10);--r:16px;--display:'Bricolage Grotesque','DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace}
+html[data-theme="dark"]{--bg:#12112A;--bg2:#171638;--surf:#1B1A36;--surf2:#22214A;--line:#3A3666;--ink:#ECEAFF;--mute:#A9B0C4;--brand:#9B87FF;--brand2:#6F58E0;--on:#12112A;--amber:#FFC15A;--amber-ink:#FFD58A;--amber-bg:#3A2E14;--ok:#3DD6A0;--ok-bg:#12332A;--bad:#FF7A85;--bad-bg:#3A1A22;--hi:rgba(255,255,255,.12);--sh:rgba(0,0,0,.4)}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--body);min-height:100vh}
+button,input,textarea,select{font:inherit;color:inherit}a{color:var(--brand)}[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--bg);border-bottom:1px solid var(--line)}
+.back{display:inline-flex;align-items:center;gap:8px;padding:9px 16px 9px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font-weight:600;font-size:14px;text-decoration:none;box-shadow:inset 0 1px 0 var(--hi),0 2px 0 var(--line);white-space:nowrap}.back:active{transform:translateY(2px);box-shadow:none}
+.brand{flex:1;text-align:center;font:700 15px/1.2 var(--display);letter-spacing:-.01em;min-width:0}.brand small{display:block;font:500 12px var(--body);color:var(--mute)}
+.top-r{display:flex;align-items:center;gap:8px}.who{font-size:13.5px;color:var(--mute);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:999px;border:1px solid var(--line);background:var(--surf);color:var(--ink);font:600 14px/1 var(--body);cursor:pointer;text-decoration:none;box-shadow:inset 0 1px 0 var(--hi),0 2px 0 var(--line),0 6px 14px var(--sh);transition:transform .08s,box-shadow .08s}
+.pill:hover{background:var(--surf2)}.pill:active{transform:translateY(2px);box-shadow:inset 0 1px 0 var(--hi),0 0 0 var(--line)}.pill:disabled{opacity:.5;cursor:default;transform:none}
+.pill.primary{background:var(--brand);background:linear-gradient(180deg,color-mix(in srgb,var(--brand) 86%,#fff),var(--brand));color:var(--on);border-color:var(--brand2);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 3px 0 var(--brand2),0 8px 16px var(--sh)}
+.pill.amber{background:var(--amber);color:#1D1B3A;border-color:var(--amber-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 3px 0 var(--amber-edge),0 8px 16px var(--sh)}
+.pill.ghost{background:transparent;border-color:transparent;box-shadow:none;color:var(--mute)}.pill.ghost:hover{background:var(--surf);color:var(--ink)}.pill.sm{padding:8px 14px;font-size:13px}.pill.lg{padding:15px 30px;font-size:16px}
+.icon-btn{width:40px;height:40px;padding:0}
+main{max-width:980px;margin:0 auto;padding:26px 18px 70px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.015em;margin:0}h1{font-size:clamp(28px,5vw,42px);line-height:1.1;font-weight:800}h2{font-size:22px;font-weight:700}h3{font-size:17px;font-weight:700}
+.lead{font-size:17px;color:var(--mute);max-width:60ch;margin:10px 0 0}.kick{font:700 14px var(--display);color:var(--brand);margin:0 0 6px}
+.hero{padding:10px 0 22px}.sect{margin-top:30px}.sect>h2{margin-bottom:12px}
+.cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 22px var(--sh)}
+.card .sub{color:var(--mute);font-size:14px}.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--mute);font-size:13.5px}.meta b{color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font:600 12.5px var(--body);background:var(--bg2);color:var(--ink)}
+.chip.open{background:var(--ok-bg);color:var(--ok)}.chip.soon{background:var(--amber-bg);color:var(--amber-ink)}.chip.closed{background:var(--bg2);color:var(--mute)}.chip.bad{background:var(--bad-bg);color:var(--bad)}.chip.pend{background:var(--amber-bg);color:var(--amber-ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row.sp{justify-content:space-between}
+.empty{padding:30px;text-align:center;border:1px dashed var(--line);border-radius:var(--r);color:var(--mute)}
+.banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 18px;border-radius:var(--r);background:var(--amber-bg);color:var(--amber-ink);border:1px solid var(--amber);margin-bottom:16px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}.tab{padding:9px 18px;border-radius:999px;border:1px solid var(--line);background:var(--surf);font-weight:600;font-size:14px;cursor:pointer;box-shadow:inset 0 1px 0 var(--hi),0 2px 0 var(--line)}.tab[aria-selected=true]{background:var(--brand);color:var(--on);border-color:var(--brand2);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 var(--brand2)}.tab i{font-style:normal;margin-left:6px;padding:1px 8px;border-radius:99px;background:var(--amber);color:#1D1B3A;font-size:12px}
+.list{border:1px solid var(--line);border-radius:var(--r);background:var(--surf);overflow:hidden}.item{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px}.item+.item{border-top:1px solid var(--line)}.item .t{font-weight:600}.item .s{color:var(--mute);font-size:13.5px}
+.modal-bg{position:fixed;inset:0;z-index:60;background:rgba(18,17,42,.55);display:grid;place-items:center;padding:16px;overflow:auto}.modal{width:min(560px,100%);background:var(--surf);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35);max-height:calc(100vh - 32px);overflow:auto}.modal h2{margin-bottom:8px}
+label.f{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}input.in,textarea.in,select.in{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surf2);color:var(--ink)}textarea.in{min-height:120px;resize:vertical}
+.rules{margin:12px 0;padding:12px 16px 12px 34px;border-radius:12px;background:var(--bg2);font-size:14px}.rules li{margin:3px 0}.chk{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-size:14px}.chk input{margin-top:4px;width:18px;height:18px;accent-color:var(--brand)}
+.err{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--bad-bg);color:var(--bad);font-size:14px}.okmsg{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--ok-bg);color:var(--ok);font-size:14px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:90;padding:10px 20px;border-radius:99px;background:var(--ink);color:var(--bg);font-weight:600;font-size:14px;box-shadow:0 10px 28px var(--sh);max-width:92vw}
+/* exam player */
+#xp{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;display:flex;flex-direction:column}
+.xp-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;padding:10px 18px;background:var(--bg);border-bottom:1px solid var(--line)}.xp-title{flex:1;min-width:0;font:700 15px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xp-title small{display:block;font:500 12px var(--body);color:var(--mute)}
+.xp-time{font:700 22px var(--mono);min-width:76px;text-align:center;padding:6px 14px;border-radius:12px;background:var(--bg2)}.xp-time.low{background:var(--bad-bg);color:var(--bad)}
+.xp-bar{height:5px;background:var(--line)}.xp-bar i{display:block;height:100%;width:100%;background:var(--brand);transition:width .25s linear}.xp-bar.low i{background:var(--bad)}
+.xp-body{width:min(820px,100%);margin:0 auto;padding:22px 18px 40px;flex:1}.dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}.dots i{width:22px;height:6px;border-radius:9px;background:var(--line)}.dots i.done{background:var(--brand)}.dots i.cur{background:var(--amber)}
+.qcard{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:0 10px 26px var(--sh)}.qmeta{display:flex;gap:10px;flex-wrap:wrap;color:var(--mute);font-size:13.5px;margin-bottom:8px}.qtext{font:600 19px/1.5 var(--display);white-space:pre-wrap;margin:6px 0 14px;user-select:none;-webkit-user-select:none}.qdata{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:var(--bg2);font:500 13.5px/1.5 var(--mono);white-space:pre-wrap;color:var(--mute);user-select:none;-webkit-user-select:none}
+.opts{display:grid;gap:9px}.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surf2);cursor:pointer;user-select:none;-webkit-user-select:none}.opt:hover{border-color:var(--brand)}.opt kbd{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--bg2);color:var(--brand);font:700 13px var(--body)}.opt.sel{border-color:var(--brand);background:var(--bg2);box-shadow:inset 0 0 0 1px var(--brand)}.opt.sel kbd{background:var(--brand);color:var(--on)}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)}.opt.ok kbd{background:var(--ok);color:var(--on)}.opt.bad{border-color:var(--bad);background:var(--bad-bg)}.opt.bad kbd{background:var(--bad);color:var(--on)}.opt{cursor:default}.xp-body .opt{cursor:pointer}
+.photos{margin-top:14px}.drop{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.thumb{position:relative;width:96px;height:96px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--bg2)}.thumb img{width:100%;height:100%;object-fit:cover}.thumb button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;cursor:pointer}.thumb.up::after{content:'Uploading';position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.5);color:#fff;font-size:12px}
+.xp-foot{position:sticky;bottom:0;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:12px 18px;background:var(--bg);border-top:1px solid var(--line)}.xp-status{font-size:13px;color:var(--mute)}.xp-status.warn{color:var(--bad);font-weight:600}
+.gate{position:fixed;inset:0;z-index:70;background:var(--bg);display:grid;place-items:center;padding:20px;text-align:center}.gate>div{max-width:480px}.gate h2{margin-bottom:8px}
+.scorebig{display:flex;align-items:baseline;gap:8px;font:800 44px var(--display)}.scorebig small{font:500 16px var(--body);color:var(--mute)}
+.rev{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surf);padding:16px}.rev .qn{font-weight:700;color:var(--brand);font-size:13.5px}.rev .why{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--bg2);font-size:14.5px}.rev .ans{margin-top:8px;padding:10px 14px;border-radius:12px;border:1px solid var(--line);white-space:pre-wrap;font-size:14.5px}.rev .cmt{margin-top:8px;padding:10px 14px;border-radius:12px;background:var(--amber-bg);color:var(--amber-ink);font-size:14.5px}.rev .tag{float:right}
+.imgs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}.imgs a img{width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.refbox{display:inline-flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border-radius:999px;background:var(--bg2);font:600 15px var(--mono)}
+.thread{display:flex;flex-direction:column;gap:10px;margin:12px 0}.msg{max-width:86%;padding:10px 14px;border-radius:16px;border:1px solid var(--line);background:var(--surf);white-space:pre-wrap}.msg.you{align-self:flex-end;background:var(--brand);color:var(--on);border-color:var(--brand2)}.msg small{display:block;opacity:.7;font-size:11.5px;margin-top:4px}
+.foot{margin-top:40px;color:var(--mute);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+@media(max-width:640px){.who{display:none}.brand small{display:none}.xp-time{font-size:18px;min-width:64px}.qtext{font-size:17px}.back span{display:none}.back{padding:9px 12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="index.html" id="backLink"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back to website</span></a>
+  <div class="brand">Chemistry Competition Prep<small>Exams</small></div>
+  <div class="top-r"><span class="who" id="whoName"></span><button class="pill sm" id="loginBtn" type="button">Log in</button><button class="pill ghost sm" id="logoutBtn" type="button" hidden>Log out</button><button class="pill icon-btn" id="themeBtn" type="button" aria-label="Switch between light and dark mode" title="Light or dark mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button></div>
+</header>
+<main id="app" aria-live="polite"><div class="empty">Loading exams…</div></main>
+<div id="modalRoot"></div><div id="toastRoot"></div>
+<script>
+const CHEM_EL = new Set('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' '));
+const CHEM_SUB = '₀₁₂₃₄₅₆₇₈₉', CHEM_SUP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻' };
+const chemSub = d=>String(d).replace(/\d/g, c=>CHEM_SUB[c]);
+const chemSup = d=>String(d).replace(/[\d+-]/g, c=>CHEM_SUP[c]);
+function chemParse(body){
+  // returns { out, groups, simple } or null when body is not a chemical formula
+  let i = 0, out = '', n = 0, depth = 0, lastDigits = '', hasParen = false;
+  while(i < body.length){
+    const ch = body[i];
+    if(ch === '('){ depth++; hasParen = true; out += '('; i++; lastDigits = ''; continue; }
+    if(ch === ')'){ if(!depth) return null; depth--; out += ')'; i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++]; if(d) out += chemSub(d); lastDigits = d; continue; }
+    if(/[A-Z]/.test(ch)){
+      let sym = ch;
+      if(/[a-z]/.test(body[i+1]||'')){ if(CHEM_EL.has(ch + body[i+1])){ sym = ch + body[i+1]; i++; } else return null; }
+      else if(!CHEM_EL.has(ch)) return null;
+      i++; let d = ''; while(/\d/.test(body[i]||'')) d += body[i++];
+      out += sym; n++; if(d) out += chemSub(d); lastDigits = d; continue;
+    }
+    return null;
+  }
+  if(depth || !n) return null;
+  return { out, groups:n, hasParen, lastDigits };
+}
+// Chemistry wording -> real symbols (Greek letters, degrees, units, maths signs). Safe to run twice on the same text.
+const CHEM_GREEK = { alpha:'α', beta:'β', gamma:'γ', delta:'δ', sigma:'σ', pi:'π', lambda:'λ', theta:'θ', epsilon:'ε', rho:'ρ', omega:'ω', phi:'φ', tau:'τ', mu:'μ' };
+function chemSymbols(t){
+  // delta as a change: "delta H", "Delta G°", "delta-H", "delta Hf", "delta T", "delta t", "delta pH", "delta[A]" -> ΔH, ΔG°, ΔHf, ΔT, Δt, ΔpH, Δ[A]
+  t = t.replace(/\b(?:[Dd]elta|DELTA)(?:-|[ \t])?(?=(?:[HGSEUTPVAQ][°º⁰]?(?:f|c|b|m|r|rxn|vap|fus|sub|sol|soln|lat|hyd|ion|comb|cell|mix|atom|diss|neut|app)?|[tnxpvmc]|pH|pOH|pKa|pKb)(?![A-Za-z])|\[)/g, 'Δ');
+  // partial charges: "delta+", "delta-", "delta(+)", "delta positive" -> δ⁺ / δ⁻
+  t = t.replace(/\b[Dd]elta(?:\(([+-])\)|([+-]))(?![A-Za-z0-9])/g, (m, a, b)=> 'δ' + ((a||b)==='+' ? '⁺' : '⁻'));
+  t = t.replace(/\b[Dd]elta[ \t]+(positive|negative)\b/g, (m, w)=> 'δ' + (w==='positive' ? '⁺' : '⁻'));
+  // standard-state sign after a thermodynamic delta: ΔG0, ΔH^o, ΔSº -> ΔG°, ΔH°, ΔS°
+  t = t.replace(/Δ([HGSEU])(?:\^\{?[0o]\}?|[0oº⁰])(?![A-Za-z0-9])/g, 'Δ$1°');
+  // alpha / beta / gamma: decay, particles, rays, helix and names such as beta-carotene, alpha-D-glucose
+  t = t.replace(/\b(alpha|beta|gamma)\b(?=[ \t]+(?:particles?|decay|decays|emission|emitters?|radiation|rays?|helix|helices|sheets?|plus|minus)\b)/gi, (m, w)=> CHEM_GREEK[w.toLowerCase()]);
+  t = t.replace(/\b(alpha|beta|gamma)([+-])(?=[ \t]+(?:decay|decays|particles?|emission|emitters?|radiation)\b)/gi, (m, w, s)=> CHEM_GREEK[w.toLowerCase()] + (s==='+' ? '⁺' : '⁻'));
+  t = t.replace(/\b(alpha|beta|gamma)-(?=[A-Za-z(\d])/g, (m, w)=> CHEM_GREEK[w] + '-');
+  // sigma and pi bonds / orbitals
+  t = t.replace(/\b(sigma|pi)(?=(?:[ \t]|-)+(?:bonds?|bonding|electrons?|orbitals?|systems?|backbonding)\b|\*)/gi, (m, w)=> CHEM_GREEK[w.toLowerCase()]);
+  // Greek names that are unambiguous in chemistry (wavelength, angle, density, resistance ...)
+  t = t.replace(/\b(lambda|theta|epsilon|rho|omega|phi)\b/g, (m, w)=> CHEM_GREEK[w]);
+  t = t.replace(/\bOmega\b/g, 'Ω');
+  // degrees and temperature: 25 degrees Celsius, 25oC, 25 deg C, 104.5 degrees, 109.5^o
+  t = t.replace(/(\d)\s*(?:°\s*)?(?:degrees?|deg)\s*(C|F|K)(?:elsius|ahrenheit)?\b/gi, (m, d, u)=> d + ' °' + u.toUpperCase());
+  t = t.replace(/(\d)\s?o([CF])\b/g, '$1 °$2');
+  t = t.replace(/(\d)\s?\^\{?o\}?(?![A-Za-z0-9])/g, '$1°');
+  // angstrom, micro units
+  t = t.replace(/(\d)\s*[Aa]ngstroms?\b/g, '$1 Å');
+  t = t.replace(/(\d)\s?[uμ](?=(?:mol|g|L|l|m|M)(?![A-Za-z]))/g, '$1 µ');
+  // volume and unit powers: 25 cm3, mol dm-3, J K-1 mol-1, m2
+  t = t.replace(/(?<![A-Za-z0-9])(dm|cm|mm|km)([23])(?![A-Za-z0-9])/g, (m, u, p)=> u + chemSup(p));
+  t = t.replace(/(\d\s?)(m)([23])(?![A-Za-z0-9])/g, (m, n, u, p)=> n + u + chemSup(p));
+  t = t.replace(/(?<![A-Za-z0-9])(dm|cm|mm|m|L|s|g|kg|mol|K|J|kJ)-([1-3])(?![0-9A-Za-z-])/g, (m, u, p)=> u + chemSup('-' + p));
+  // maths signs written with keys
+  t = t.replace(/(?<=\s)<=(?=\s)/g, '≤').replace(/(?<=\s)>=(?=\s)/g, '≥').replace(/(?<=\s)!=(?=\s)/g, '≠').replace(/(?<=\s)~=(?=\s)/g, '≈');
+  t = t.replace(/(?<=[\s(\d])(?:\+\/-|\+-)(?=[\s\d.)])/g, '±');
+  t = t.replace(/\bsqrt\(/g, '√(');
+  return t;
+}
+function chemify(text){
+  if(!text) return text;
+  let t = String(text);
+  // arrows and symbols
+  t = t.replace(/<-{1,2}>|<=+>|⇄/g, '⇌').replace(/(^|\s)(?:-{1,2}>|=>)(?=\s|$)/g, '$1→').replace(/(^|\s)<-(?=\s)/g, '$1←');
+  t = chemSymbols(t);
+  // scientific notation and powers: 2.5 x 10^-3, mol L^-1, m^2, and charges written with ^
+  t = t.replace(/(\d(?:\.\d+)?)\s*[xX*]\s*10(?=\^)/g, '$1 × 10');
+  t = t.replace(/\^\{?([+-]?\d*[+-]?)\}?/g, (m, g)=> g ? chemSup(g) : m);
+  t = t.replace(/(^|[\s(=])-(?=\d)/g, '$1−').replace(/\be-(?![A-Za-z0-9])/g, 'e⁻');
+  // hydrates first: CuSO4.5H2O -> CuSO4·5H2O
+  t = t.replace(/(?<=[A-Za-z)]\d*)\.(?=\d+[A-Z(])/g, '·');
+  // formulas: subscripts and ion charges (an optional leading coefficient such as 2H2O is kept as is)
+  t = t.replace(/(?<![A-Za-z0-9_.])(\d*)([A-Z(][A-Za-z0-9()]*)([+-]?)(?![A-Za-z0-9])/g, (m, coef, body, sign)=>{
+    let suf = ''; const sm = body.match(/\((?:s|l|g|aq)\)$/);
+    if(sm){ suf = sm[0]; body = body.slice(0, body.length - suf.length); }
+    if(!body) return m;
+    let charge = sign, core = body;
+    if(sign){
+      const mm = body.match(/(\d+)$/), digits = mm ? mm[1] : '';
+      if(digits){
+        const stem = body.replace(/\d+$/, ''), p0 = chemParse(stem);
+        if(p0 && p0.groups === 1 && !p0.hasParen && /^[A-Z][a-z]?$/.test(stem)){ charge = digits + sign; core = stem; }
+        else if(digits.length >= 2){ charge = digits.slice(-1) + sign; core = body.slice(0, body.length - 1); }
+      }
+    }
+    const p = chemParse(core);
+    if(!p) return m;
+    if(p.out === core && !charge) return m;
+    return coef + p.out + (charge ? chemSup(charge) : '') + suf;
+  });
+  return t;
+}
+(function(){
+'use strict';
+const FN = 'https://ggbfzfzbquywzuxkoufp.supabase.co/functions/v1/visitor-exam';
+const ANON = 'sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn';
+const $ = s=> document.querySelector(s);
+const esc = s=> String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const chem = t=> { try{ return esc(chemify(t)); }catch(e){ return esc(t); } };
+const S = { session:'', visitor:null, offset:0, exams:[], attempts:[], unread:0, tab:'exams', msgs:null, thread:null };
+const LS = { get(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }, set(k,v){ try{ localStorage.setItem(k, v); }catch(e){} }, del(k){ try{ localStorage.removeItem(k); }catch(e){} } };
+S.session = LS.get('vx:session');
+const nowMs = ()=> Date.now() + S.offset;
+const fmtWhen = iso=> new Date(iso).toLocaleString(undefined, { weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit' });
+const tz = ()=> { try{ return new Intl.DateTimeFormat(undefined, { timeZoneName:'short' }).formatToParts(new Date()).find(p=> p.type === 'timeZoneName').value; }catch(e){ return ''; } };
+const fmtDur = sec=> { const m = Math.max(1, Math.round(sec / 60)); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : ''); };
+const cdText = ms=> { if(ms <= 0) return 'now'; const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return d ? `${d}d ${h}h ${m}m` : h ? `${h}h ${m}m ${x}s` : `${m}m ${x}s`; };
+const pad = n=> String(n).padStart(2, '0');
+function toast(msg, ms){ const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg; $('#toastRoot').appendChild(t); setTimeout(()=> t.remove(), ms || 3200); }
+
+async function api(action, body){
+  let r; try{ r = await fetch(FN, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(Object.assign({ action }, body || {})) }); }
+  catch(e){ throw { message:'No connection. Check your internet and try again.', code:'network' }; }
+  let j = {}; try{ j = await r.json(); }catch(e){}
+  if(j && j.now){ const t = Date.parse(j.now); if(isFinite(t)) S.offset = t - Date.now(); }
+  if(!r.ok || (j && j.error)){
+    const err = { message:(j && j.message) || 'Something went wrong. Please try again.', code:(j && j.error) || ('http' + r.status), status:r.status, data:j };
+    if(r.status === 401 && j.error === 'session'){ dropSession(); }
+    throw err;
+  }
+  return j;
+}
+function dropSession(){ S.session = ''; S.visitor = null; LS.del('vx:session'); paintAccount(); }
+
+// ---------------------------------------------------------------- shell
+function paintAccount(){
+  $('#whoName').textContent = S.visitor ? S.visitor.name : ''; $('#loginBtn').hidden = !!S.session; $('#logoutBtn').hidden = !S.session;
+}
+function setTheme(t){ document.documentElement.setAttribute('data-theme', t); LS.set('ichc_theme', t); }
+$('#themeBtn').addEventListener('click', ()=> setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+$('#loginBtn').addEventListener('click', ()=> openLogin());
+$('#logoutBtn').addEventListener('click', async ()=>{ const t = S.session; dropSession(); S.tab = 'exams'; try{ await api('logout', { session:t }); }catch(e){} toast('Logged out.'); route(); });
+function modal(html, opts){
+  closeModal(); const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modalBg'; bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  if(!(opts && opts.locked)) bg.addEventListener('mousedown', e=>{ if(e.target === bg) closeModal(); });
+  $('#modalRoot').appendChild(bg); const f = bg.querySelector('input,textarea,select'); if(f && !(opts && opts.noFocus)) setTimeout(()=> f.focus(), 30); return bg;
+}
+function closeModal(){ const b = $('#modalBg'); if(b) b.remove(); }
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && $('#modalBg') && !XP.on) closeModal(); });
+
+// ---------------------------------------------------------------- exam cards
+function stateOf(e){ const n = nowMs(), s = Date.parse(e.startAt), en = Date.parse(e.endAt); return n < s ? 'upcoming' : n >= en ? 'closed' : 'open'; }
+function runningFor(e){ try{ const a = JSON.parse(LS.get('vx:att') || 'null'); return a && a.examId === e.id ? a : null; }catch(x){ return null; } }
+function examCard(e, dash){
+  const st = stateOf(e), run = runningFor(e), open = dash && e.openAttemptId, left = dash ? Math.max(0, e.allowance - e.used) : null;
+  const chip = st === 'open' ? '<span class="chip open">Open now</span>' : st === 'upcoming' ? `<span class="chip soon">Opens in <span data-cd="${esc(e.startAt)}">${cdText(Date.parse(e.startAt) - nowMs())}</span></span>` : '<span class="chip closed">Closed</span>';
+  let act = '';
+  if((run || open) && st !== 'closed') act = `<button class="pill amber" data-act="resume" data-id="${esc(e.id)}">Resume exam</button>`;
+  else if(st === 'open' && dash && left <= 0) act = '<button class="pill" disabled>No attempts left</button>';
+  else if(st === 'open') act = `<button class="pill primary" data-act="start" data-id="${esc(e.id)}">Start exam</button>`;
+  else if(st === 'upcoming') act = `<button class="pill" data-act="ics" data-id="${esc(e.id)}">Add to calendar</button>`;
+  return `<article class="card"><div class="row sp"><h3>${esc(e.title)}</h3>${chip}</div>${e.subject ? `<div class="sub">${esc(e.subject)}</div>` : ''}
+  <div class="meta"><span><b>Opens</b> ${esc(fmtWhen(e.startAt))}</span><span><b>Closes</b> ${esc(fmtWhen(e.endAt))}</span><span>${esc(tz())}</span></div>
+  <div class="meta"><span><b>${e.questionCount}</b> questions</span><span><b>${e.totalMarks}</b> marks</span><span><b>${esc(fmtDur(e.totalSec))}</b> in total</span><span><b>${e.attempts}</b> attempt${e.attempts > 1 ? 's' : ''}${dash ? ' (' + left + ' left)' : ''}</span></div>
+  <div class="meta">${e.mcqCount ? `<span>${e.mcqCount} multiple choice: marked and shown right after you submit</span>` : ''}${e.written ? '<span>Written or picture answers: reviewed and released later</span>' : ''}</div>
+  <div class="row">${act}</div></article>`;
+}
+function tickCountdowns(){ document.querySelectorAll('[data-cd]').forEach(el=>{ const ms = Date.parse(el.getAttribute('data-cd')) - nowMs(); if(ms <= 0){ el.textContent = 'now'; if(!tickCountdowns.r){ tickCountdowns.r = 1; setTimeout(()=>{ tickCountdowns.r = 0; if(!XP.on && !$('#modalBg')) route(); }, 1200); } } else el.textContent = cdText(ms); }); }
+setInterval(tickCountdowns, 1000);
+function icsFor(e){
+  const f = iso=> new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d+/, ''), t = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Chemistry Competition Prep//Exams//EN\r\nBEGIN:VEVENT\r\nUID:${e.id}@chemprep\r\nDTSTAMP:${f(new Date().toISOString())}\r\nDTSTART:${f(e.startAt)}\r\nDTEND:${f(e.endAt)}\r\nSUMMARY:${String(e.title).replace(/[\r\n,;]/g, ' ')} (exam window)\r\nDESCRIPTION:Opens on the Exams page of the Chemistry Competition Prep website. Use a laptop or tablet and a quiet room.\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type:'text/calendar' })); a.download = 'exam.ics'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ---------------------------------------------------------------- views
+const app = ()=> $('#app');
+async function route(){
+  if(XP.on) return; paintAccount();
+  if(S.session){ try{ await loadMe(); return paintDash(); }catch(e){ if(e.code !== 'session'){ app().innerHTML = `<div class="err">${esc(e.message)}</div>`; return; } } }
+  try{ const j = await api('exams'); S.exams = j.exams; }catch(e){ app().innerHTML = `<div class="err">${esc(e.message)} <button class="pill sm" data-act="reload">Try again</button></div>`; return; }
+  paintHome();
+}
+async function loadMe(){ const j = await api('me', { session:S.session }); S.visitor = j.visitor; S.exams = j.exams; S.attempts = j.attempts; S.unread = j.unread; paintAccount(); }
+function sortExams(l){ const o = { open:0, upcoming:1, closed:2 }; return l.slice().sort((a,b)=> (o[stateOf(a)] - o[stateOf(b)]) || (Date.parse(a.startAt) - Date.parse(b.startAt))); }
+function paintHome(){
+  const list = sortExams(S.exams), live = list.filter(e=> stateOf(e) !== 'closed'), run = list.find(e=> runningFor(e) && stateOf(e) !== 'closed');
+  app().innerHTML = `<section class="hero"><p class="kick">Online exams</p><h1>Test yourself like it is competition day</h1>
+  <p class="lead">No account needed. Your full name and a valid email address are enough to sit an exam. Multiple choice answers are marked straight away, with the right answers and explanations. Written and picture answers are reviewed by the Ambassador and released later.</p></section>
+  ${run ? `<div class="banner"><span><b>You have an exam in progress:</b> ${esc(run.title)}</span><button class="pill amber" data-act="resume" data-id="${esc(run.id)}">Resume exam</button></div>` : ''}
+  <section class="sect" style="margin-top:6px"><h2>${live.length ? 'Open and upcoming exams' : 'Exams'}</h2>${live.length ? `<div class="cards">${live.map(e=> examCard(e, false)).join('')}</div>` : '<div class="empty">No exams are scheduled right now. Check back soon, or log in to see your past results.</div>'}</section>
+  ${list.length > live.length ? `<section class="sect"><h2>Closed</h2><div class="cards">${list.filter(e=> stateOf(e) === 'closed').map(e=> examCard(e, false)).join('')}</div></section>` : ''}
+  <section class="sect"><div class="card"><h3>Already took an exam?</h3><div class="sub">Log in with the email address you used. We send you a short code, so there is no password to remember. You can see scheduled exams and their times, your past exams and reviews, and message the Ambassador about a result.</div><div class="row"><button class="pill primary" data-act="login">Log in with email</button></div></div></section>
+  <p class="foot">Exams run in full screen, one question at a time, and each question has its own timer. Leaving the exam is recorded and shown to the Ambassador. Your attempt gets a reference code and a confirmation email so you always have a record.</p>`;
+}
+function paintDash(){
+  const v = S.visitor, list = sortExams(S.exams), pend = S.attempts.filter(a=> a.pending).length, run = list.find(e=> (e.openAttemptId || runningFor(e)) && stateOf(e) !== 'closed');
+  const tabs = [['exams', 'Exams'], ['results', 'My exams and results'], ['messages', 'Messages']];
+  const head = `<section class="hero"><p class="kick">Welcome back</p><h1>${esc((v.name || '').split(' ')[0] || 'Hello')}, here is your exam space</h1><p class="lead">${esc(v.email)}${pend ? ` · ${pend} attempt${pend > 1 ? 's' : ''} waiting for review` : ''}</p></section>
+  ${run ? `<div class="banner"><span><b>Exam in progress:</b> ${esc(run.title)}</span><button class="pill amber" data-act="resume" data-id="${esc(run.id)}">Resume exam</button></div>` : ''}
+  <div class="tabs" role="tablist">${tabs.map(t=> `<button class="tab" role="tab" aria-selected="${S.tab === t[0]}" data-act="tab" data-id="${t[0]}">${t[1]}${t[0] === 'messages' && S.unread ? `<i>${S.unread}</i>` : ''}</button>`).join('')}</div><div id="tabBody"></div>`;
+  app().innerHTML = head; paintTab();
+}
+function statusChip(a){
+  if(a.status === 'void') return '<span class="chip bad">Voided</span>'; if(!a.submittedAt) return '<span class="chip soon">In progress</span>';
+  if(a.status === 'released') return '<span class="chip open">Results released</span>'; return '<span class="chip pend">Awaiting review</span>';
+}
+function paintTab(){
+  const el = $('#tabBody'); if(!el) return;
+  document.querySelectorAll('.tab').forEach(b=> b.setAttribute('aria-selected', b.dataset.id === S.tab));
+  if(S.tab === 'exams'){
+    const list = sortExams(S.exams); el.innerHTML = list.length ? `<div class="cards">${list.map(e=> examCard(e, true)).join('')}</div>` : '<div class="empty">No exams are scheduled right now.</div>'; return;
+  }
+  if(S.tab === 'results'){
+    el.innerHTML = S.attempts.length ? `<div class="list">${S.attempts.map(a=> `<div class="item"><div><div class="t">${esc(a.title)} <span class="s">· attempt ${a.attemptNo}</span></div><div class="s">${esc(fmtWhen(a.startedAt))} · ${esc(a.ref)}${a.mcq && a.mcq.total ? ` · multiple choice ${a.mcq.score}/${a.mcq.total}` : ''}${a.total ? ` · <b>total ${a.total.score}/${a.total.total}</b>` : ''}</div></div><div class="row">${statusChip(a)}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="review" data-id="${esc(a.id)}">Review</button>` : ''}${a.submittedAt && a.status !== 'void' ? `<button class="pill sm" data-act="argue" data-id="${esc(a.id)}">Message the Ambassador${a.unread ? ' (' + a.unread + ' new)' : ''}</button>` : ''}</div></div>`).join('')}</div>` : '<div class="empty">You have not taken an exam yet. Start one from the Exams tab.</div>'; return;
+  }
+  loadMessages();
+}
+async function loadMessages(){
+  const el = $('#tabBody'); el.innerHTML = '<div class="empty">Loading messages…</div>';
+  try{ const j = await api('messages', { session:S.session }); S.msgs = j.messages; S.unread = 0; }catch(e){ el.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const by = {}; for(const m of S.msgs) (by[m.attemptId || ''] = by[m.attemptId || ''] || []).push(m);
+  const keys = Object.keys(by).sort((a,b)=> Date.parse(by[b][by[b].length - 1].at) - Date.parse(by[a][by[a].length - 1].at));
+  document.querySelectorAll('.tab i').forEach(i=> i.remove());
+  el.innerHTML = keys.length ? `<div class="list">${keys.map(k=>{ const a = S.attempts.find(x=> x.id === k), last = by[k][by[k].length - 1]; return `<div class="item"><div><div class="t">${esc(a ? a.title : 'Exam')} <span class="s">· ${esc(a ? a.ref : '')}</span></div><div class="s">${last.from === 'ambassador' ? 'Ambassador: ' : 'You: '}${esc(String(last.body).slice(0, 110))}</div></div><button class="pill sm" data-act="argue" data-id="${esc(k)}">Open conversation</button></div>`; }).join('')}</div>` : '<div class="empty">No messages yet. If you disagree with a result, open it under “My exams and results” and message the Ambassador.</div>';
+}
+
+// ---------------------------------------------------------------- login (email code)
+function openLogin(prefill){
+  modal(`<h2>Log in</h2><p class="sub" style="color:var(--mute);margin:0">Use the email address you gave for the exam. We will send a 6-digit code to it.</p><label class="f" for="lgEmail">Email address</label><input class="in" id="lgEmail" type="email" autocomplete="email" inputmode="email" value="${esc(prefill || LS.get('vx:email'))}" placeholder="you@example.com"><div id="lgMsg"></div><div class="row" style="margin-top:16px"><button class="pill primary" id="lgSend">Send me a code</button><button class="pill ghost" data-act="closeModal">Cancel</button></div>`);
+  const send = async ()=>{
+    const em = $('#lgEmail').value.trim(), m = $('#lgMsg'); if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(em)){ m.innerHTML = '<div class="err">Enter a valid email address.</div>'; return; }
+    $('#lgSend').disabled = true; try{ await api('otp_request', { email:em }); }catch(e){ m.innerHTML = `<div class="err">${esc(e.message)}</div>`; $('#lgSend').disabled = false; return; }
+    LS.set('vx:email', em); codeStep(em);
+  };
+  $('#lgSend').addEventListener('click', send); $('#lgEmail').addEventListener('keydown', e=>{ if(e.key === 'Enter') send(); });
+}
+function codeStep(em){
+  modal(`<h2>Enter your code</h2><p style="color:var(--mute);margin:0">If <b>${esc(em)}</b> has been used for an exam, a code is on its way. It works for 10 minutes. Check your spam folder too.</p><label class="f" for="lgCode">6-digit code</label><input class="in" id="lgCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="font:600 22px var(--mono);letter-spacing:.3em;text-align:center"><div id="lgMsg"></div><div class="row" style="margin-top:16px"><button class="pill primary" id="lgGo">Log in</button><button class="pill ghost" id="lgResend" disabled>Send a new code</button></div>`);
+  let wait = 30; const rb = $('#lgResend'), iv = setInterval(()=>{ if(!$('#lgResend')){ clearInterval(iv); return; } wait--; rb.textContent = wait > 0 ? `Send a new code (${wait}s)` : 'Send a new code'; rb.disabled = wait > 0; if(wait <= 0) clearInterval(iv); }, 1000); rb.textContent = 'Send a new code (30s)';
+  const go = async ()=>{
+    const code = $('#lgCode').value.replace(/\D/g, ''), m = $('#lgMsg'); if(code.length !== 6){ m.innerHTML = '<div class="err">The code has 6 digits.</div>'; return; }
+    $('#lgGo').disabled = true; try{ const j = await api('otp_verify', { email:em, code }); S.session = j.session; S.visitor = j.visitor; LS.set('vx:session', j.session); }catch(e){ m.innerHTML = `<div class="err">${esc(e.message)}</div>`; $('#lgGo').disabled = false; return; }
+    closeModal(); clearInterval(iv); toast('Welcome, ' + (S.visitor.name || '').split(' ')[0] + '.'); S.tab = S.tab || 'exams'; route();
+  };
+  $('#lgGo').addEventListener('click', go); $('#lgCode').addEventListener('keydown', e=>{ if(e.key === 'Enter') go(); });
+  rb.addEventListener('click', async ()=>{ rb.disabled = true; try{ await api('otp_request', { email:em }); toast('A new code was sent.'); wait = 30; }catch(e){ $('#lgMsg').innerHTML = `<div class="err">${esc(e.message)}</div>`; } });
+}
+
+// ---------------------------------------------------------------- start / resume
+function examById(id){ return S.exams.find(e=> e.id === id); }
+function openStart(id){
+  const e = examById(id); if(!e) return; const who = (()=>{ try{ return JSON.parse(LS.get('vx:who') || '{}'); }catch(x){ return {}; } })(), logged = !!S.visitor;
+  const fs = e.settings.fullscreen !== false;
+  modal(`<h2>${esc(e.title)}</h2><div class="meta" style="margin-bottom:8px"><span><b>${e.questionCount}</b> questions</span><span><b>${e.totalMarks}</b> marks</span><span><b>${esc(fmtDur(e.totalSec))}</b></span><span>Closes ${esc(fmtWhen(e.endAt))}</span></div>
+  ${e.instructions ? `<div class="rules" style="list-style:none;padding-left:16px;white-space:pre-wrap">${chem(e.instructions)}</div>` : ''}
+  ${logged ? `<p style="margin:12px 0 0">Taking this exam as <b>${esc(S.visitor.name)}</b> (${esc(S.visitor.email)}).</p>` : `<label class="f" for="stName">Full name</label><input class="in" id="stName" autocomplete="name" value="${esc(who.name || '')}" placeholder="First and last name"><label class="f" for="stEmail">Email address</label><input class="in" id="stEmail" type="email" autocomplete="email" inputmode="email" value="${esc(who.email || '')}" placeholder="you@example.com"><div style="font-size:13px;color:var(--mute);margin-top:6px">Your results and confirmation are sent to this address, so make sure it is correct.</div>`}
+  <ul class="rules"><li>${fs ? 'The exam runs in full screen. Leaving full screen or switching tabs is recorded.' : 'Switching tabs is recorded.'}${e.settings.leaveLimit ? ` Leaving more than ${e.settings.leaveLimit} time${e.settings.leaveLimit > 1 ? 's' : ''} submits your exam automatically.` : ''}</li><li>One question at a time, each with its own timer. You cannot go back.</li><li>${e.mcqCount ? 'Multiple choice answers are marked and shown right after you submit.' : ''} ${e.written ? 'Written and picture answers are reviewed later. You will need to log in with your email to see them.' : ''}</li><li>Copying, pasting and right-click are switched off.</li></ul>
+  <label class="chk"><input type="checkbox" id="stOk"><span>I understand and agree. The timer starts as soon as I press Start.</span></label><div id="stMsg"></div>
+  <div class="row" style="margin-top:12px"><button class="pill primary lg" id="stGo" data-id="${esc(e.id)}">Start exam</button><button class="pill ghost" data-act="closeModal">Not now</button></div>`, { noFocus:!!who.name });
+  $('#stGo').addEventListener('click', ()=> doStart(e, logged));
+}
+function doStart(e, logged){
+  const m = $('#stMsg'); let name = '', email = '';
+  if(!logged){ name = $('#stName').value.trim().replace(/\s+/g, ' '); email = $('#stEmail').value.trim();
+    if(name.split(' ').filter(Boolean).length < 2 || name.length < 5){ m.innerHTML = '<div class="err">Please enter your full name (first and last name).</div>'; return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)){ m.innerHTML = '<div class="err">Please enter a valid email address.</div>'; return; } }
+  if(!$('#stOk').checked){ m.innerHTML = '<div class="err">Please tick the box to confirm you understand the rules.</div>'; return; }
+  $('#stGo').disabled = true; if(!logged) LS.set('vx:who', JSON.stringify({ name, email }));
+  const fsP = e.settings.fullscreen !== false ? enterFS() : Promise.resolve(false); // must run inside this click
+  const prev = (()=>{ try{ return JSON.parse(LS.get('vx:att') || 'null'); }catch(x){ return null; } })();
+  api('start', { examId:e.id, name, email, session:S.session, attemptId:prev && prev.examId === e.id ? prev.id : undefined, secret:prev && prev.examId === e.id ? prev.secret : undefined }).then(async j=>{ await fsP; closeModal(); XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); $('#stGo').disabled = false; m.innerHTML = `<div class="err">${esc(err.message)}</div>${err.code === 'in_progress' ? '<div class="row" style="margin-top:10px"><button class="pill sm" data-act="login">Log in with an email code</button></div>' : ''}`; if(err.code === 'ended' && err.data && err.data.attemptId){ closeModal(); showResultFor(err.data.attemptId, prev && prev.secret); } });
+}
+function resume(id){
+  const e = examById(id); if(!e) return; const prev = (()=>{ try{ return JSON.parse(LS.get('vx:att') || 'null'); }catch(x){ return null; } })(), who = (()=>{ try{ return JSON.parse(LS.get('vx:who') || '{}'); }catch(x){ return {}; } })();
+  const fsP = e.settings.fullscreen !== false ? enterFS() : Promise.resolve(false);
+  api('start', { examId:e.id, name:who.name || (S.visitor && S.visitor.name) || '', email:who.email || (S.visitor && S.visitor.email) || '', session:S.session, attemptId:(prev && prev.examId === id ? prev.id : undefined), secret:(prev && prev.examId === id ? prev.secret : undefined) })
+    .then(async j=>{ await fsP; XP.begin(j); }).catch(async err=>{ await fsP; exitFS(); if(err.code === 'ended' && err.data && err.data.attemptId){ LS.del('vx:att'); showResultFor(err.data.attemptId, prev && prev.secret); return; } if(err.code === 'in_progress'){ openLogin(who.email); toast('Log in to continue the exam you started on another device.', 5000); return; } toast(err.message, 5000); });
+}
+function enterFS(){
+  const el = document.documentElement, f = el.requestFullscreen || el.webkitRequestFullscreen; if(!f) return Promise.resolve(false);
+  try{ const p = f.call(el, { navigationUI:'hide' }); try{ if(navigator.keyboard && navigator.keyboard.lock) navigator.keyboard.lock(['Escape']).catch(()=>{}); }catch(x){} return Promise.resolve(p).then(()=> true).catch(()=> false); }catch(e){ return Promise.resolve(false); }
+}
+function exitFS(){ try{ if(navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock(); }catch(e){} try{ const d = document; if(d.fullscreenElement || d.webkitFullscreenElement){ (d.exitFullscreen || d.webkitExitFullscreen).call(d); } }catch(e){} }
+const inFS = ()=> !!(document.fullscreenElement || document.webkitFullscreenElement);
+const fsSupported = ()=> !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+
+// ---------------------------------------------------------------- the exam player (same rules as the portal exam)
+const XP = { on:false };
+XP.begin = xpBegin;
+const MAXP = 4;
+function xpAtt(){ return { attemptId:XP.at.id, secret:XP.at.secret }; }
+function xpBegin(j){
+  const ex = j.exam, at = j.attempt;
+  Object.assign(XP, { on:true, ex, qs:ex.questions, at, qi:at.qIndex, qStart:Date.parse(at.qStartedAt), ans:Object.assign({}, at.answers || {}), files:JSON.parse(JSON.stringify(at.files || {})), prev:{}, tabs:at.tabSwitches || 0, fsx:at.fsExits || 0, events:[], queue:[], flushing:false, ending:false, pickUntil:0, lastLeave:0, advancing:false, fsReq:ex.settings.fullscreen !== false && fsSupported(), banner:'', saveT:0, uploading:0 });
+  LS.set('vx:att', JSON.stringify({ id:at.id, secret:at.secret, examId:ex.id }));
+  document.body.style.overflow = 'hidden'; const root = document.createElement('div'); root.id = 'xp'; document.body.appendChild(root);
+  XP.h = { vis:()=>{ if(document.visibilityState === 'hidden') xpLeft('tab'); }, blur:()=>{ if(document.visibilityState === 'visible') xpLeft('blur'); }, fs:xpFsChange, block:xpBlock, key:xpKey, unload:e=>{ if(XP.on && !XP.ending){ e.preventDefault(); e.returnValue = ''; } }, off:()=>{ XP.banner = 'You are offline. Your answers are kept on this device and will be sent when you are back online.'; xpStatus(); }, on:()=>{ XP.banner = ''; xpStatus(); xpFlush(); } };
+  document.addEventListener('visibilitychange', XP.h.vis); window.addEventListener('blur', XP.h.blur); document.addEventListener('fullscreenchange', XP.h.fs); document.addEventListener('webkitfullscreenchange', XP.h.fs);
+  ['copy', 'cut', 'paste', 'contextmenu', 'dragstart'].forEach(t=> document.addEventListener(t, XP.h.block, true)); document.addEventListener('keydown', XP.h.key, true);
+  window.addEventListener('beforeunload', XP.h.unload); window.addEventListener('offline', XP.h.off); window.addEventListener('online', XP.h.on);
+  XP.tick = setInterval(xpTick, 250); XP.sync = setInterval(xpFlush, 4000);
+  xpPaint(); xpGate(); if(j.resumed) toast('Exam resumed. The timer kept running while you were away.', 4500);
+}
+function xpEnd(){
+  XP.on = false; clearInterval(XP.tick); clearInterval(XP.sync); clearTimeout(XP.saveT);
+  document.removeEventListener('visibilitychange', XP.h.vis); window.removeEventListener('blur', XP.h.blur); document.removeEventListener('fullscreenchange', XP.h.fs); document.removeEventListener('webkitfullscreenchange', XP.h.fs);
+  ['copy', 'cut', 'paste', 'contextmenu', 'dragstart'].forEach(t=> document.removeEventListener(t, XP.h.block, true)); document.removeEventListener('keydown', XP.h.key, true);
+  window.removeEventListener('beforeunload', XP.h.unload); window.removeEventListener('offline', XP.h.off); window.removeEventListener('online', XP.h.on);
+  const r = $('#xp'); if(r) r.remove(); const g = $('#gate'); if(g) g.remove(); document.body.style.overflow = ''; exitFS(); closeModal();
+}
+const evt = k=> { if(XP.events.length < 30) XP.events.push({ k, t:new Date().toISOString(), q:XP.qi }); };
+function xpLeft(kind){
+  if(!XP.on || XP.ending || Date.now() < XP.pickUntil || Date.now() - XP.lastLeave < 1000) return; XP.lastLeave = Date.now(); XP.tabs++; evt(kind); xpStatus(true); xpQueueSave();
+}
+function xpFsChange(){
+  if(!XP.on || XP.ending || !XP.fsReq) return;
+  if(!inFS()){ if(Date.now() < XP.pickUntil) return; XP.fsx++; evt('fs_exit'); xpGate(); xpStatus(true); xpQueueSave(); } else xpGate();
+}
+function xpGate(){
+  const need = XP.on && XP.fsReq && !inFS(), g = $('#gate');
+  if(!need){ if(g) g.remove(); return; } if(g) return;
+  const d = document.createElement('div'); d.className = 'gate'; d.id = 'gate'; d.innerHTML = `<div><h2>Return to full screen</h2><p style="color:var(--mute)">The exam must stay in full screen. Your timer is still running. This exit has been recorded${XP.ex.settings.leaveLimit ? ` (${XP.tabs + XP.fsx} of ${XP.ex.settings.leaveLimit} allowed)` : ''}.</p><button class="pill primary lg" id="gateBtn">Continue in full screen</button></div>`;
+  document.body.appendChild(d); $('#gateBtn').addEventListener('click', ()=>{ enterFS(); });
+}
+function xpBlock(e){
+  if(!XP.on || XP.ending) return; const inField = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if(e.type === 'contextmenu' || e.type === 'dragstart'){ e.preventDefault(); return; }
+  e.preventDefault(); if(e.type === 'paste' || e.type === 'copy' || e.type === 'cut'){ if(!xpBlock.s || Date.now() - xpBlock.s > 4000){ xpBlock.s = Date.now(); evt(e.type); toast('Copying and pasting are switched off during the exam.'); } }
+}
+function xpKey(e){
+  if(!XP.on || XP.ending) return; const q = XP.qs[XP.qi], typing = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if((e.ctrlKey || e.metaKey) && /^[psuaf]$/i.test(e.key) && !(typing && /^[a]$/i.test(e.key))){ e.preventDefault(); return; } if(e.key === 'F12'){ e.preventDefault(); return; }
+  if(q && q.type === 'mcq' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey){ const i = 'abcd'.indexOf(e.key.toLowerCase()); if(i >= 0){ e.preventDefault(); xpPick(i); } }
+}
+function xpTick(){
+  if(!XP.on || XP.ending) return; const q = XP.qs[XP.qi]; if(!q) return;
+  const left = XP.qStart + q.timeSec * 1000 - nowMs(), t = $('#xpTime'), bar = $('#xpBar'); if(!t) return; const s = Math.max(0, Math.ceil(left / 1000));
+  t.textContent = pad(Math.floor(s / 60)) + ':' + pad(s % 60); const low = left <= Math.max(15000, q.timeSec * 200); t.classList.toggle('low', low); bar.classList.toggle('low', low); bar.firstElementChild.style.width = clamp(left / (q.timeSec * 1000) * 100, 0, 100) + '%';
+  if(left <= 0 && !XP.advancing) xpNext(true);
+}
+const clamp = (v, a, b)=> Math.max(a, Math.min(b, v));
+function xpPaint(){
+  const root = $('#xp'); if(!root) return; if(XP.qi >= XP.qs.length){ xpSubmit(true, 'time'); return; }
+  const q = XP.qs[XP.qi], last = XP.qi === XP.qs.length - 1, a = XP.ans[q.id], photo = q.type === 'structured' || q.type === 'calc' || q.type === 'theory' || q.type === 'photo';
+  const typeLabel = { mcq:'Multiple choice', short:'Short answer', structured:'Structured', calc:'Calculation', theory:'Theory', photo:'Picture answer' }[q.type];
+  let ans = '';
+  if(q.type === 'mcq') ans = `<div class="opts" role="radiogroup">${q.options.map((o, i)=> `<button type="button" class="opt ${a === i ? 'sel' : ''}" role="radio" aria-checked="${a === i}" data-act="xopt" data-i="${i}"><kbd>${'ABCD'[i]}</kbd><span>${chem(o)}</span></button>`).join('')}</div>`;
+  else if(q.type === 'short') ans = `<input class="in" id="xpAns" maxlength="300" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer" value="${esc(a || '')}">`;
+  else ans = `<textarea class="in" id="xpAns" rows="${q.type === 'photo' ? 3 : 8}" maxlength="8000" spellcheck="false" placeholder="${q.type === 'photo' ? 'Optional note (your working goes in the photos)' : 'Write your answer here. You can also add photos of your working below.'}">${esc(a || '')}</textarea>`;
+  if(photo) ans += `<div class="photos"><div class="drop"><button type="button" class="pill sm" data-act="xpick">Add a photo</button><input type="file" id="xpFile" accept="image/*" multiple hidden><span class="xp-status" id="xpPhN"></span></div><div class="thumbs" id="xpThumbs"></div></div>`;
+  root.innerHTML = `<div class="xp-top"><div class="xp-title">${esc(XP.ex.title)}<small>Question ${XP.qi + 1} of ${XP.qs.length} · ${q.marks} mark${q.marks === 1 ? '' : 's'}</small></div><div class="xp-time" id="xpTime">--:--</div></div><div class="xp-bar" id="xpBar"><i></i></div>
+  <div class="xp-body"><div class="dots" aria-hidden="true">${XP.qs.map((x, i)=> `<i class="${i < XP.qi ? 'done' : i === XP.qi ? 'cur' : ''}"></i>`).join('')}</div>
+  <div class="qcard"><div class="qmeta"><span>${typeLabel}</span><span>${fmtDur(q.timeSec)} for this question</span></div><div class="qtext">${chem(q.text)}</div>${XP.ex.dataLine && q.type !== 'mcq' ? `<div class="qdata">${chem(XP.ex.dataLine)}</div>` : ''}${ans}</div></div>
+  <div class="xp-foot"><div class="xp-status" id="xpStat"></div><button class="pill primary lg" id="xpNext" data-act="xnext">${last ? 'Finish exam' : 'Next question'}</button></div>`;
+  const inp = $('#xpAns'); if(inp){ inp.addEventListener('input', ()=>{ XP.ans[q.id] = inp.value; LS.set('vx:draft:' + XP.at.id, JSON.stringify({ q:q.id, v:inp.value })); xpQueueSave(); }); }
+  const fi = $('#xpFile'); if(fi) fi.addEventListener('change', ()=>{ XP.pickUntil = Date.now() + 5000; xpAddPhotos(Array.from(fi.files)); fi.value = ''; });
+  xpThumbs(); xpStatus(); xpTick();
+}
+function xpPick(i){ const q = XP.qs[XP.qi]; if(!q || q.type !== 'mcq') return; XP.ans[q.id] = i; document.querySelectorAll('.opt').forEach((b, k)=>{ b.classList.toggle('sel', k === i); b.setAttribute('aria-checked', k === i); }); xpQueueSave(); }
+function xpStatus(flash){
+  const el = $('#xpStat'); if(!el) return; const lim = XP.ex.settings.leaveLimit, n = XP.tabs + XP.fsx;
+  let t = XP.banner || (n ? `You have left the exam ${n} time${n > 1 ? 's' : ''}. This is recorded${lim ? ` (limit ${lim})` : ''}.` : (XP.fsReq ? 'Full screen on. Answers save automatically.' : 'Answers save automatically.'));
+  el.textContent = t; el.classList.toggle('warn', !!XP.banner || n > 0); if(flash && n) toast(lim && n >= lim ? 'Warning: one more exit will submit your exam.' : 'Leaving the exam was recorded.');
+}
+function xpGather(){ const q = XP.qs[XP.qi], inp = $('#xpAns'); if(q && inp) XP.ans[q.id] = inp.value; }
+function xpPayload(extra){
+  const q = XP.qs[XP.qi], p = { fromIndex:XP.qi, tabSwitches:XP.tabs, fsExits:XP.fsx, events:XP.events.splice(0, 30) };
+  if(q){ if(XP.ans[q.id] !== undefined) p.answers = { [q.id]:XP.ans[q.id] }; if(XP.files[q.id]) p.files = { [q.id]:XP.files[q.id] }; }
+  return Object.assign(p, extra || {});
+}
+function xpQueueSave(now){ clearTimeout(XP.saveT); XP.saveT = setTimeout(()=>{ if(!XP.on || XP.ending) return; xpGather(); XP.queue.push(xpPayload()); xpFlush(); }, now ? 0 : 1400); }
+async function xpFlush(){
+  if(!XP.on || XP.flushing || !XP.queue.length) return; XP.flushing = true;
+  try{
+    while(XP.queue.length && XP.on){
+      const p = XP.queue[0]; let r; try{ r = await api('save', Object.assign(xpAtt(), p)); }catch(e){ if(e.code === 'network'){ XP.banner = 'Connection problem. Your answers are safe on this device and will be sent again.'; xpStatus(); break; } XP.queue.shift(); if(e.code === 'not_found'){ toast('This attempt could not be found on the server.'); } continue; }
+      XP.queue.shift(); if(XP.banner){ XP.banner = ''; xpStatus(); }
+      if(r.submitted){ XP.queue = []; xpServerEnded(r.reason); break; }
+      if(!XP.queue.length && r.qIndex !== undefined){ const moved = r.qIndex !== XP.qi; XP.qStart = Date.parse(r.qStartedAt); if(moved){ XP.qi = r.qIndex; xpPaint(); toast('Your timer moved you on to the next question.'); } }
+    }
+  } finally { XP.flushing = false; }
+}
+function xpConfirm(msg, yes, label){
+  const bg = modal(`<h2>${esc(label || 'Are you sure?')}</h2><p style="margin:0;color:var(--mute)">${esc(msg)}</p><div class="row" style="margin-top:16px"><button class="pill primary" id="cfY">Yes, continue</button><button class="pill" id="cfN">Go back</button></div>`, { locked:true, noFocus:true });
+  $('#cfY').addEventListener('click', ()=>{ closeModal(); yes(); }); $('#cfN').addEventListener('click', ()=>{ closeModal(); XP.advancing = false; });
+}
+function xpNext(auto){
+  if(XP.advancing || !XP.on || XP.ending) return; XP.advancing = true; xpGather(); const q = XP.qs[XP.qi], last = XP.qi === XP.qs.length - 1;
+  const empty = q.type === 'mcq' ? XP.ans[q.id] === undefined : !(String(XP.ans[q.id] || '').trim() || (XP.files[q.id] || []).length);
+  const go = ()=>{ if(last){ XP.advancing = false; xpSubmit(!!auto, auto ? 'time' : ''); return; }
+    clearTimeout(XP.saveT); XP.queue.push(xpPayload({ advance:true })); XP.qi++; XP.qStart = nowMs(); XP.advancing = false; xpPaint(); xpFlush(); };
+  if(auto){ go(); return; }
+  if(last) return xpConfirm(empty ? 'This question is unanswered. Finishing now submits the whole exam and you cannot change anything afterwards.' : 'Finishing submits the whole exam. You cannot change anything afterwards.', go, 'Finish the exam?');
+  if(empty) return xpConfirm('You have not answered this question. You cannot come back to it.', go, 'Move on without answering?'); go();
+}
+async function xpSubmit(auto, reason){
+  if(XP.ending) return; XP.ending = true; clearTimeout(XP.saveT); xpGather(); const q = XP.qs[XP.qi];
+  const body = Object.assign(xpAtt(), { tabSwitches:XP.tabs, fsExits:XP.fsx, auto:!!auto, reason:reason || '' }); if(q){ if(XP.ans[q.id] !== undefined) body.answers = { [q.id]:XP.ans[q.id] }; if(XP.files[q.id]) body.files = { [q.id]:XP.files[q.id] }; }
+  const bar = $('#xp'); if(bar) bar.insertAdjacentHTML('beforeend', '<div class="gate" id="subg"><div><h2>Submitting your exam…</h2><p style="color:var(--mute)">Please keep this page open.</p></div></div>');
+  while(XP.queue.length){ try{ await api('save', Object.assign(xpAtt(), XP.queue[0])); XP.queue.shift(); }catch(e){ if(e.code === 'network') break; XP.queue.shift(); } }
+  for(let i = 0; i < 4; i++){
+    try{ const j = await api('submit', body); return xpDone(j.result, auto, reason); }
+    catch(e){ if(e.code !== 'network'){ const sg = $('#subg'); if(sg) sg.remove(); XP.ending = false; toast(e.message, 5000); return; } await new Promise(r=> setTimeout(r, 1500 * (i + 1))); }
+  }
+  const sg = $('#subg'); if(sg) sg.innerHTML = `<div><h2>No connection</h2><p style="color:var(--mute)">Your answers are saved on this device. Reconnect and press the button to submit.</p><button class="pill primary lg" id="subRetry">Try again</button></div>`;
+  const rb = $('#subRetry'); if(rb) rb.addEventListener('click', ()=>{ XP.ending = false; xpSubmit(auto, reason); });
+}
+function xpDone(res, auto, reason){
+  const att = XP.at; xpEnd(); LS.del('vx:att'); LS.del('vx:draft:' + att.id); S.lastSecret = att.secret; paintResult(res, 'after', att.secret);
+  if(auto) toast(reason === 'violations' ? 'Your exam was submitted because you left it too many times.' : 'Time is up, so your exam was submitted.', 6000);
+}
+async function xpServerEnded(reason){
+  const att = XP.at; XP.ending = true; try{ const j = await api('review', { attemptId:att.id, secret:att.secret }); xpEnd(); LS.del('vx:att'); paintResult(j.result, 'after', att.secret); toast(reason === 'violations' ? 'Your exam was submitted because you left it too many times.' : 'Time is up, so your exam was submitted.', 6000); }catch(e){ xpEnd(); LS.del('vx:att'); route(); }
+}
+// pictures: shrink on the device, upload straight to private storage with a one-time link
+function compress(file){
+  return new Promise((res, rej)=>{ const img = new Image(), u = URL.createObjectURL(file); img.onload = ()=>{ const m = 1600, k = Math.min(1, m / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); c.toBlob(b=> b ? res(b) : rej(new Error('compress')), 'image/jpeg', .82); }; img.onerror = ()=> rej(new Error('image')); img.src = u; });
+}
+async function xpAddPhotos(list){
+  const q = XP.qs[XP.qi]; if(!q) return;
+  for(const f of list){
+    const have = (XP.files[q.id] || []).length + XP.uploading; if(have >= MAXP){ toast(`You can add up to ${MAXP} photos for this question.`); break; }
+    if(!/^image\//.test(f.type)){ toast('Only pictures can be added.'); continue; }
+    XP.uploading++; const tmp = 'tmp' + Math.random().toString(36).slice(2), blob = await compress(f).catch(()=> null); if(!blob){ XP.uploading--; toast('That picture could not be read. Try another.'); continue; }
+    XP.prev[tmp] = URL.createObjectURL(blob); xpThumbs(tmp);
+    try{
+      const u = await api('upload_url', Object.assign(xpAtt(), { qid:q.id })), fd = new FormData(); fd.append('cacheControl', '3600'); fd.append('', blob);
+      const r = await fetch(u.uploadUrl, { method:'PUT', headers:{ apikey:ANON, 'x-upsert':'false' }, body:fd }); if(!r.ok) throw { message:'The picture could not be uploaded. Check your connection and try again.' };
+      (XP.files[q.id] = XP.files[q.id] || []).push(u.path); XP.prev[u.path] = XP.prev[tmp]; xpQueueSave(true);
+    }catch(e){ toast(e.message || 'The picture could not be uploaded.', 5000); }
+    delete XP.prev[tmp]; XP.uploading--; if(XP.qs[XP.qi] === q) xpThumbs();
+  }
+}
+function xpThumbs(tmp){
+  const q = XP.qs[XP.qi], el = $('#xpThumbs'); if(!el || !q) return; const paths = XP.files[q.id] || [];
+  el.innerHTML = paths.map(p=> `<div class="thumb">${XP.prev[p] ? `<img src="${esc(XP.prev[p])}" alt="Your photo">` : '<span style="display:grid;place-items:center;height:100%;font-size:12px;color:var(--mute)">Saved</span>'}<button type="button" data-act="xdel" data-p="${esc(p)}" aria-label="Remove this photo">×</button></div>`).join('') + (tmp ? `<div class="thumb up"><img src="${esc(XP.prev[tmp] || '')}" alt=""></div>` : '');
+  const n = $('#xpPhN'); if(n) n.textContent = `${paths.length} of ${MAXP} photos`;
+}
+
+// ---------------------------------------------------------------- results, reviews and messages
+const TL = { short:'Short answer', structured:'Structured', calc:'Calculation', theory:'Theory', photo:'Picture answer' };
+function mcqCard(r){
+  const tag = r.ok === true ? 'open' : r.ok === false ? 'bad' : '', lab = r.ok === true ? 'Correct' : r.ok === false ? (r.chosen == null ? 'Not answered' : 'Wrong') : (r.chosen == null ? 'Not answered' : 'Answered');
+  return `<div class="rev"><div class="qn">Question ${r.n} <span class="tag chip ${tag}">${lab}${r.ok !== null ? ' · ' + r.got + '/' + r.marks : ''}</span></div><div class="qtext" style="user-select:text;-webkit-user-select:text;font-size:17px">${chem(r.text)}</div><div class="opts">${r.options.map((o, i)=> `<div class="opt ${r.correct === i ? 'ok' : (r.chosen === i && r.correct !== i && r.correct !== null ? 'bad' : '')}" style="cursor:default"><kbd>${'ABCD'[i]}</kbd><span>${chem(o)}${r.chosen === i ? ' <b>(your answer)</b>' : ''}${r.correct === i && r.chosen !== i ? ' <b>(correct answer)</b>' : ''}</span></div>`).join('')}</div>${r.explanation ? `<div class="why"><b>Why:</b> ${chem(r.explanation)}</div>` : ''}</div>`;
+}
+function writtenCard(w){
+  const imgs = w.urls && w.urls.length ? `<div class="imgs">${w.urls.map(u=> `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="Your submitted photo" loading="lazy"></a>`).join('')}</div>` : (w.photos ? `<div class="sub" style="margin-top:8px">${w.photos} photo${w.photos > 1 ? 's' : ''} submitted</div>` : '');
+  return `<div class="rev"><div class="qn">Question ${w.n} · ${TL[w.type] || 'Written'} <span class="tag chip ${w.got != null ? 'open' : 'pend'}">${w.got != null ? w.got + ' / ' + w.marks : 'Awaiting review'}</span></div><div class="qtext" style="user-select:text;-webkit-user-select:text;font-size:17px">${chem(w.text)}</div>${w.answer ? `<div class="ans">${chem(w.answer)}</div>` : '<div class="sub" style="margin-top:8px"><i>No typed answer</i></div>'}${imgs}${w.comment ? `<div class="cmt"><b>Ambassador:</b> ${esc(w.comment)}</div>` : ''}${w.modelAnswer || w.scheme ? `<div class="why">${w.modelAnswer ? `<b>Model answer</b><br>${chem(w.modelAnswer)}` : ''}${w.scheme ? `${w.modelAnswer ? '<br><br>' : ''}<b>Marking scheme</b><br>${chem(w.scheme)}` : ''}</div>` : ''}</div>`;
+}
+function resultHtml(res, mode, secret){
+  const m = res.mcq, left = (res.integrity.tabSwitches || 0) + (res.integrity.fsExits || 0), released = res.status === 'released';
+  const auto = res.autoReason === 'time' || res.autoReason === 'window' ? '<span class="chip soon">Submitted when time ran out</span>' : res.autoReason === 'violations' ? '<span class="chip bad">Submitted automatically after leaving the exam</span>' : '';
+  const score = res.total ? `<div class="card"><div class="scorebig">${res.total.score}<small>of ${res.total.total} marks in total</small></div>${m.total ? `<div class="sub">Multiple choice: ${m.score} of ${m.total}</div>` : ''}</div>` : (m.total ? `<div class="card"><div class="scorebig">${m.score}<small>of ${m.total} marks on multiple choice</small></div>${res.pending ? '<div class="sub">Your overall total will appear once your written answers are reviewed.</div>' : ''}</div>` : '');
+  const pend = res.pending ? `<div class="banner" style="margin-top:14px"><span><b>Your written and picture answers are being reviewed.</b> The Ambassador will release the results later and we will email you. ${S.session ? 'Come back to “My exams and results” to see them.' : 'To see them, log in with the same email address (we send you a code).'}</span>${S.session ? '' : `<button class="pill amber" data-act="login">Log in</button>`}</div>` : '';
+  const canTalk = !!S.session || (secret && released), q = [].concat(m.review.map(r=> ({ n:r.n })), res.written.map(w=> ({ n:w.n }))).sort((a, b)=> a.n - b.n);
+  const disp = canTalk ? `<section class="card sect" id="disp"><h3>Think a mark is wrong?</h3><div class="sub">Tell the Ambassador which question and why. The reply appears here and is also sent to your email.</div><label class="f" for="dQ">About</label><select class="in" id="dQ"><option value="">The whole exam</option>${q.map(x=> `<option value="${x.n}">Question ${x.n}</option>`).join('')}</select><label class="f" for="dMsg">Your message</label><textarea class="in" id="dMsg" maxlength="1500" placeholder="Explain what you think is wrong and what you believe the correct mark should be."></textarea><div class="row" style="margin-top:12px"><button class="pill primary" data-act="sendmsg" data-id="${esc(res.id)}">Send to the Ambassador</button></div><div id="dOut"></div><div class="thread" id="dThread"></div></section>` : '';
+  return `<section class="hero"><p class="kick">${mode === 'after' ? 'Exam submitted' : 'Review'}</p><h1>${esc(res.exam.title)}</h1><div class="row" style="margin-top:12px"><span class="refbox" title="Quote this reference if you contact us">${esc(res.ref)}<button class="pill sm" data-act="copyref" data-ref="${esc(res.ref)}">Copy</button></span><span class="meta"><span>Attempt ${res.attemptNo}</span><span>${esc(fmtWhen(res.submittedAt))}</span></span>${auto}</div></section>
+  ${score}${pend}${mode === 'after' ? '<p class="sub" style="color:var(--mute);margin:14px 0 0">A confirmation email with this reference is on its way to you.</p>' : ''}${left ? `<p class="sub" style="color:var(--mute);margin:10px 0 0">You left the exam ${left} time${left > 1 ? 's' : ''}. The Ambassador can see this.</p>` : ''}
+  ${m.review.length ? `<section class="sect"><h2>Multiple choice review</h2>${m.review.map(mcqCard).join('')}</section>` : ''}
+  ${res.written.length ? `<section class="sect"><h2>Written and picture answers</h2>${res.written.map(writtenCard).join('')}</section>` : ''}
+  ${disp}
+  <div class="row sect"><button class="pill primary" data-act="home">${S.session ? 'Back to my exam space' : 'Back to exams'}</button><a class="pill" href="index.html">Back to website</a></div>`;
+}
+function paintResult(res, mode, secret){
+  S.view = { id:res.id, secret:secret || '' }; app().innerHTML = resultHtml(res, mode, secret); window.scrollTo(0, 0); paintAccount(); if(S.session) loadThread(res.id);
+}
+async function showResultFor(id, secret){
+  try{ const j = await api('review', { attemptId:id, secret:secret || undefined, session:S.session }); if(j.void){ app().innerHTML = '<div class="empty">This attempt was voided by the Ambassador. If you think this is a mistake, please contact the programme team.</div>'; return; } paintResult(j.result, 'after', secret); }
+  catch(e){ toast(e.message, 5000); route(); }
+}
+async function openReview(id, toMsg){
+  app().innerHTML = '<div class="empty">Loading…</div>';
+  try{ const j = await api('review', { attemptId:id, session:S.session }); if(j.void){ app().innerHTML = '<div class="empty">This attempt was voided by the Ambassador.</div><div class="row sect"><button class="pill" data-act="home">Back</button></div>'; return; } paintResult(j.result, 'review'); if(toMsg){ const d = $('#disp'); if(d) d.scrollIntoView({ behavior:'smooth', block:'start' }); } }
+  catch(e){ toast(e.message, 5000); route(); }
+}
+async function loadThread(id){
+  const el = $('#dThread'); if(!el || !S.session) return;
+  try{ const j = await api('messages', { session:S.session, attemptId:id }); el.innerHTML = j.messages.map(m=> `<div class="msg ${m.from === 'visitor' ? 'you' : ''}">${esc(m.body)}<small>${m.from === 'visitor' ? 'You' : 'Ambassador'} · ${esc(fmtWhen(m.at))}</small></div>`).join(''); }catch(e){}
+}
+async function sendMsg(id){
+  const t = $('#dMsg'), out = $('#dOut'), qn = $('#dQ').value; let body = t.value.trim();
+  if(body.length < 10){ out.innerHTML = '<div class="err">Please write a little more so the Ambassador can understand your concern.</div>'; return; } if(qn) body = `[Question ${qn}] ` + body;
+  out.innerHTML = ''; try{ await api('send_message', { attemptId:id, session:S.session, secret:(S.view && S.view.secret) || undefined, body }); }catch(e){ out.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  t.value = ''; out.innerHTML = '<div class="okmsg">Sent. The Ambassador will reply here and by email.</div>'; if(S.session) loadThread(id);
+}
+
+// ---------------------------------------------------------------- clicks
+document.addEventListener('click', e=>{
+  const b = e.target.closest ? e.target.closest('[data-act]') : null; if(!b) return; const a = b.dataset.act, id = b.dataset.id;
+  switch(a){
+    case 'reload': return route();
+    case 'login': return openLogin();
+    case 'closeModal': return closeModal();
+    case 'home': S.tab = 'exams'; return route();
+    case 'start': return openStart(id);
+    case 'resume': return resume(id);
+    case 'ics': { const x = examById(id); if(x) icsFor(x); return; }
+    case 'tab': S.tab = id; paintTab(); if(id !== 'messages' && S.session) loadMe().then(()=>{ if(S.tab === id && $('#tabBody')) paintTab(); }).catch(()=>{}); return;
+    case 'review': return openReview(id);
+    case 'argue': return openReview(id, true);
+    case 'copyref': try{ navigator.clipboard.writeText(b.dataset.ref); toast('Reference copied.'); }catch(x){ toast(b.dataset.ref); } return;
+    case 'sendmsg': return sendMsg(id);
+    case 'xopt': return xpPick(+b.dataset.i);
+    case 'xnext': return xpNext(false);
+    case 'xpick': { const f = $('#xpFile'); if(f){ XP.pickUntil = Date.now() + 60000; f.click(); } return; }
+    case 'xdel': { const q = XP.qs[XP.qi]; if(q){ XP.files[q.id] = (XP.files[q.id] || []).filter(p=> p !== b.dataset.p); xpThumbs(); xpQueueSave(true); } return; }
+  }
+});
+route();
+if(/[?&]login=1/.test(location.search) && !S.session) setTimeout(()=> openLogin(), 300);
+})();
+</script>
+</body>
+</html>
