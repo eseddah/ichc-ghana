@@ -5669,7 +5669,7 @@ function openPushPanel(){
   else if(st.on){
     msg = '&#10003; App notifications are <b>on</b>. You will get announcements, alerts and reminders on this device, even when the portal is closed.';
     rows = `<div class="push-rows">${row('Browser permission','Allowed',true)}${row('Notifications switched on','Yes',true)}${row('Linked to your account', info.linked?'Yes':'Not yet', info.linked)}</div>`;
-    btn = '<div style="display:flex; flex-wrap:wrap; gap:8px;"><button class="btn teal small" id="pushTest" type="button">Send a test notification</button>' + (info.linked ? '' : '<button class="btn ghost small" id="pushFix" type="button">Reconnect this device</button>') + '</div><p class="push-note" id="pushNote"></p>';
+    btn = '<div style="display:flex; flex-wrap:wrap; gap:8px;"><button class="btn teal small" id="pushTest" type="button">Send a test notification</button>' + (ME && ME.role==='ambassador' ? '<button class="btn amber small" id="pushLive" type="button">Send a live test from the server</button>' : '') + (info.linked ? '' : '<button class="btn ghost small" id="pushFix" type="button">Reconnect this device</button>') + '</div><p class="push-note" id="pushNote"></p>';
   }
   else { msg = 'Get announcements, alerts and updates the moment they are posted, even when the portal is closed.'; btn = '<button class="btn teal" id="pushGo" type="button">Turn on notifications</button>'; }
   o.innerHTML = `<div class="push-card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><b style="font-size:16px;">App notifications</b><button id="pushX" type="button" aria-label="Close" style="background:none; border:none; font-size:22px; cursor:pointer;">&times;</button></div><p style="margin:0 0 12px; font-size:14px; line-height:1.5;">${msg}</p>${rows}${btn}</div>`;
@@ -5685,6 +5685,16 @@ function openPushPanel(){
   });
   const t = o.querySelector('#pushTest');
   if(t) t.addEventListener('click', async ()=>{ t.disabled = true; const ok = await pushTest(); t.disabled = false; note(ok ? 'Test sent. If you did not see it, check that Do Not Disturb or Focus mode is off on this device.' : 'This device could not show the test. Check your browser and system notification settings.', ok ? 'good' : 'bad'); });
+  const lv = o.querySelector('#pushLive');
+  if(lv) lv.addEventListener('click', async ()=>{
+    lv.disabled = true; note('Sending through the server…', '');
+    try{
+      const { data, error } = await sb.rpc('ambassador_push_send', { p_external_ids:[String(ME.id)], p_heading:'Live test', p_message:'This came through the server. Tap it to open the Activity feed.', p_url:'https://ichc-ghana.vercel.app/portal.html?src=push&go=feed' });
+      if(error) throw error;
+      note(data && data.sent ? 'Sent. It should appear on this device within a few seconds. If it does not, this device is not reachable and the Reconnect button will fix it.' : 'The server did not send it (' + ((data && data.reason) || 'unknown') + ').', data && data.sent ? 'good' : 'bad');
+    }catch(e){ note('The server test failed. Check your connection and try again.', 'bad'); }
+    lv.disabled = false;
+  });
   const fx = o.querySelector('#pushFix');
   if(fx) fx.addEventListener('click', async ()=>{ fx.disabled = true; try{ await window.__OS.login(String(ME.id)); }catch(e){} o.remove(); paintBell(); openPushPanel(); });
 }
@@ -5805,15 +5815,18 @@ function pushBoot(){
       // A notification arriving while the portal is open shows a small in-page banner as well.
       try{ OS.Notifications.addEventListener('foregroundWillDisplay', ev=>{ try{ const n = ev.notification || {}; pushToast(n.title, n.body, n.additionalData && n.additionalData.tab); }catch(e){} }); }catch(e){}
       // Tapping a notification opens the portal on the right section when the message names one.
-      try{ OS.Notifications.addEventListener('click', ev=>{ try{ const d = (ev.notification && ev.notification.additionalData) || {}; if(d.tab) setTimeout(()=>pushGoTab(d.tab), 600); }catch(e){} }); }catch(e){}
+      try{ OS.Notifications.addEventListener('click', ev=>{ try{ const d = (ev.notification && ev.notification.additionalData) || {}; if(d.tab){ if(ME) setTimeout(()=>pushGoTab(d.tab), 600); else { try{ localStorage.setItem('ichc_deeplink', JSON.stringify({ g:String(d.tab).slice(0,80), t:Date.now() })); }catch(e){} } } }catch(e){} }); }catch(e){}
     }
     initPushUi();
     // Every five minutes: re-link if another sign-in on this device changed who the browser belongs to, and keep the bell honest.
     if(window.__pushTimer) clearInterval(window.__pushTimer);
-    window.__pushTimer = setInterval(async ()=>{
+    const keepLinked = async ()=>{
       try{ if(window.__OS && ME && String(window.__OS.User.externalId||'')!==String(ME.id)) { await window.__OS.login(String(ME.id)); pushTag(); } }catch(e){}
+      try{ if('Notification' in window && Notification.permission==='granted' && window.__OS && window.__OS.User.PushSubscription && !window.__OS.User.PushSubscription.optedIn) await window.__OS.User.PushSubscription.optIn(); }catch(e){}
       pushRegister(); paintBell();
-    }, 300000);
+    };
+    window.__pushTimer = setInterval(keepLinked, 60000);
+    if(!window.__pushVis){ window.__pushVis = true; document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && ME) keepLinked(); }); window.addEventListener('online', ()=>{ if(ME) keepLinked(); }); }
   };
   (window.OneSignalDeferred = window.OneSignalDeferred || []).push(run);
   setTimeout(consumeDeepLink, 1200);   // a tapped notification opens its place even if the notification service is blocked
@@ -8735,8 +8748,7 @@ async function examRequestRetake(examId){
   const req = { id:uid(), examId, examTitle:e.title, studentId:ME.id, studentName:ME.name, coordinatorId:e.coordinatorId||null, reason:String(reason).trim().slice(0,300), requestedAt:new Date().toISOString(), status:'pending' };
   const ok = await appendShared('examRetakes', req);
   if(ok === false) return alert('We could not send your request. Check your connection and try again.');
-  const pushed = await examPushAmbassador({ kind:'retake_request', examTitle:e.title, studentName:ME.name, reason:req.reason });
-  alert(pushed ? 'Your ambassador has been notified.' : 'Your request was sent. Your ambassador will see it in the portal.');
+  alert('Your request was sent. Your ambassador and coordinator have been notified.');
   render('exams');
 }
 async function examDecideRetake(id, status){
