@@ -135,8 +135,8 @@
 
 <div class="wrap hidden" id="closedScreen">
   <div class="card done"><div class="tick" style="background:rgba(201,127,34,.14); color:var(--amber-deep);">&#9201;</div>
-    <h2 id="closedTitle" style="font-size:24px; margin:0 0 10px;">Applications are paused</h2>
-    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">We aren't taking applications right now. Please check back soon.</p></div>
+    <h2 id="closedTitle" style="font-size:24px; margin:0 0 10px;">Sorry, applications are closed</h2>
+    <p style="color:var(--muted); font-size:15px; line-height:1.6; max-width:420px; margin:0 auto;">We aren't taking applications right now. Please check back soon for the next intake.</p></div>
   <p class="foot-link"><a href="index.html">← Back to the programme page</a></p>
 </div>
 
@@ -236,7 +236,7 @@ function applyDeadlineState(){
     document.getElementById('formCard').closest('.wrap').classList.add('hidden');
     const c = document.getElementById('closedScreen'); if(c) c.classList.remove('hidden');
     const t = document.getElementById('closedTitle');
-    if(t && isFinite(PORTAL_DEADLINE) && Date.now() > PORTAL_DEADLINE){ t.textContent = 'Applications have closed'; const p = t.nextElementSibling; if(p) p.textContent = 'The application deadline has passed. Follow our page for the next intake.'; }
+    if(t && isFinite(PORTAL_DEADLINE) && Date.now() > PORTAL_DEADLINE){ t.textContent = 'Sorry, applications have closed'; const p = t.nextElementSibling; if(p) p.textContent = 'The application deadline has passed. Follow our page for the next intake.'; }
   }
 }
 applyDeadlineState();

@@ -674,7 +674,7 @@
   .dl-box .dl-clock{display:flex; gap:8px;}
   .dl-box .dl-u{background:rgba(29,27,58,.55); border:1px solid rgba(255,255,255,.25); border-radius:6px; padding:6px 10px; min-width:58px; text-align:center; font-variant-numeric:tabular-nums;}
   .dl-box .dl-u b{display:block; color:var(--amber); font-size:24px; line-height:1.1;} .dl-box .dl-u small{font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.85;}
-  .dl-box.closed{border-color:rgba(255,255,255,.25); opacity:.9;} .dl-box.closed .dl-label{margin:0; letter-spacing:.04em; text-transform:none; font-size:14px;}
+  .btn.is-closed{opacity:.72; filter:saturate(.6); cursor:not-allowed;} .dl-box.closed{border-color:rgba(255,255,255,.25); opacity:.9;} .dl-box.closed .dl-label{margin:0; letter-spacing:.04em; text-transform:none; font-size:14px;}
 
   /* ===================== New look: violet indicator palette ===================== */
   :root{--spectrum:linear-gradient(90deg,#E5383B,#F9A03F,#F7D038,#4CB944,#2FA7A0,#4361EE,#7B3FD8); --tint:#F5F2FF; --radius:18px;}
@@ -1474,26 +1474,6 @@ html[data-theme="dark"] .mp-lab{color:#b9b6d6;}
     <a class="btn amber" id="spGo" href="series.html">Proceed</a>
   </div>
 </div>
-<div id="notifyPop" class="np-backdrop" aria-hidden="true">
-  <div class="np-card" role="dialog" aria-modal="true" aria-labelledby="npTitle">
-    <button class="tm-close" id="npClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></button>
-    <div class="np-bell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></div>
-    <h3 id="npTitle">Applications will be open soon</h3>
-    <div id="npFormBox">
-      <p>Add your name and email and we'll send you more details as soon as they're ready.</p>
-      <div class="np-field"><input id="npName" type="text" placeholder="Your full name" autocomplete="name" aria-label="Your name"></div>
-      <div class="np-field"><input id="npEmail" type="email" placeholder="Your email address" autocomplete="email" aria-label="Your email"></div>
-      <p class="np-err" id="npErr" role="alert"></p>
-      <button type="button" class="btn amber" id="npSend" style="width:100%; justify-content:center;">Send me the details</button>
-      <small>Already open? <a href="apply.html" style="color:var(--teal-deep); font-weight:700;">Start your application</a></small>
-    </div>
-    <div id="npDone" class="hidden" style="display:none;">
-      <p style="color:var(--navy-deep); font-weight:700; margin:0 0 6px;">Thank you, <span id="npDoneName"></span>!</p>
-      <p>We'll email you at <b id="npDoneEmail"></b> with more details.</p>
-      <a class="btn amber" href="apply.html" style="width:100%; justify-content:center; text-decoration:none;">Start your application</a>
-    </div>
-  </div>
-</div>
 <div id="menuScrim"></div>
 <nav class="navlinks" id="siteMenu" aria-label="Site sections"><div class="menu-head"><span data-i18n="menu_sections">Sections</span><button type="button" id="menuClose" aria-label="Close menu">&times;</button></div><a href="#ambassador" data-i18n="n_amb">From the Ambassador</a><a href="#about" data-i18n="n_about">About</a><a href="#how" data-i18n="n_prog">Programme</a><a href="#tools" data-i18n="n_explore">Explore</a><a href="#play">Play</a><a href="#activities" data-i18n="n_gallery">Gallery</a><a href="#events" data-i18n="n_events">Dates</a><a href="#stories" data-i18n="n_stories">Stories</a><a href="#team" data-i18n="n_team">Team</a><a href="#faq" data-i18n="n_faq">FAQ</a><a href="#contact" data-i18n="n_contact">Contact</a></nav>
 
@@ -1505,7 +1485,7 @@ html[data-theme="dark"] .mp-lab{color:#b9b6d6;}
         <h1 id="edit-heroTitle" data-edit="heroTitle">Your chemistry talent deserves a stage this big.</h1>
         <p class="lead" id="edit-heroLead" data-edit="heroLead">Real competition practice, a personal mentor and a community of Ghanaian students, all working towards the International Chemistry Competition.</p>
         <div class="ctas">
-          <button type="button" class="btn amber" id="heroInterestBtn" aria-haspopup="dialog" aria-controls="notifyPop">Join the programme now</button>
+          <button type="button" class="btn amber" id="heroInterestBtn">Join the programme now</button>
           <button type="button" class="btn outline dark" id="seriesBtn" aria-haspopup="dialog" aria-controls="seriesPop">Sign up to Chemistry Series</button>
         </div>
         <div id="dlBox" class="dl-box" style="display:none;" role="status" aria-live="polite"><div id="dlLabel" class="dl-label"></div><div id="dlClock" class="dl-clock"></div></div>
@@ -3672,32 +3652,22 @@ loadDeadlineFromPortal();
   showSpec('H');
 })();
 </script>
-<script>
-(function(){
-  var pop=document.getElementById('notifyPop'), heroBtn=document.getElementById('heroInterestBtn');
-  if(!pop||!heroBtn) return;
-  function set(o){ pop.classList.toggle('open',o); pop.setAttribute('aria-hidden',o?'false':'true'); document.body.classList.toggle('tm-open',o); if(o) document.getElementById('npClose').focus(); else heroBtn.focus(); }
-  heroBtn.addEventListener('click',function(){ set(true); });
-  document.getElementById('npClose').addEventListener('click',function(){ set(false); });
-  pop.addEventListener('click',function(e){ if(e.target===pop) set(false); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && pop.classList.contains('open')) set(false); });
-})();
-</script>
 
 <script>
 // Live countdown to the application deadline, shown under the JOIN PROGRAMME NOW button. While applications are open the button goes
-// straight to the application form; the name-and-email pop-up only appears when applications are closed.
+// straight to the application form; when applications are closed the button reads "Applications closed" and does nothing.
 var APPS_OPEN = null;
 (function(){
-  var box=document.getElementById('dlBox'), label=document.getElementById('dlLabel'), clock=document.getElementById('dlClock'), timer=null;
+  var box=document.getElementById('dlBox'), label=document.getElementById('dlLabel'), clock=document.getElementById('dlClock'), timer=null, hb=document.getElementById('heroInterestBtn'), hbOpenText=hb?hb.textContent:'';
+  function heroBtn(isClosed){ if(!hb) return; hb.classList.toggle('is-closed',isClosed); hb.disabled=isClosed; hb.setAttribute('aria-disabled',isClosed?'true':'false'); hb.textContent=isClosed?'Applications closed':hbOpenText; }
   function pad(n){ return String(n).padStart(2,'0'); }
-  function closed(msg){ box.style.display='inline-block'; box.classList.add('closed'); label.textContent=msg; clock.innerHTML=''; }
+  function closed(msg){ heroBtn(true); box.style.display='inline-block'; box.classList.add('closed'); label.textContent=msg; clock.innerHTML=''; }
   function run(deadline){
     box.style.display='inline-block';
     function tick(){
       var ms=deadline-Date.now();
       if(ms<=0){ APPS_OPEN=false; closed('Applications are now closed'); clearInterval(timer); return; }
-      box.classList.remove('closed'); label.textContent='Applications close in';
+      heroBtn(false); box.classList.remove('closed'); label.textContent='Applications close in';
       var d=Math.floor(ms/864e5), h=Math.floor(ms%864e5/36e5), m=Math.floor(ms%36e5/6e4), sec=Math.floor(ms%6e4/1e3);
       clock.innerHTML='<span class="dl-u"><b>'+d+'</b><small>days</small></span><span class="dl-u"><b>'+pad(h)+'</b><small>hours</small></span><span class="dl-u"><b>'+pad(m)+'</b><small>mins</small></span><span class="dl-u"><b>'+pad(sec)+'</b><small>secs</small></span>';
     }
@@ -3720,11 +3690,10 @@ var APPS_OPEN = null;
 document.addEventListener('click', async function(e){
   var b=e.target.closest && e.target.closest('#heroInterestBtn');
   if(!b) return;
-  if(APPS_OPEN===true){ e.preventDefault(); e.stopImmediatePropagation(); window.location.href='apply.html'; return; }
-  if(APPS_OPEN===false) return;               // known to be closed: let the "open soon" pop-up show
-  // Not known yet (the page is still loading, or the first check failed): ask the live settings now instead of
-  // assuming "closed", so a visitor is never shown "Applications will be open soon" while applications are open.
   e.preventDefault(); e.stopImmediatePropagation();
+  if(APPS_OPEN===true){ window.location.href='apply.html'; return; }
+  if(APPS_OPEN===false) return;               // closed: the button just reads "Applications closed", no form
+  // Not known yet (page still loading, or the first check failed): ask the live settings now.
   var open=true;
   try{
     for(var n=0;n<40 && (typeof sbReady==='undefined' || !sbReady);n++) await new Promise(function(r){ setTimeout(r,150); });
@@ -3735,29 +3704,8 @@ document.addEventListener('click', async function(e){
     }
   }catch(err){ open=true; }                   // if we cannot tell, the application form itself enforces the pause and deadline
   APPS_OPEN=open;
-  if(open) window.location.href='apply.html'; else b.click();
+  if(open) window.location.href='apply.html';
 }, true);
-</script>
-<script>
-(function(){
-  var send=document.getElementById('npSend'); if(!send) return;
-  var valid=function(e){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); };
-  send.addEventListener('click', async function(){
-    var name=document.getElementById('npName').value.trim(), email=document.getElementById('npEmail').value.trim().toLowerCase(), err=document.getElementById('npErr');
-    err.textContent='';
-    if(name.length<2){ err.textContent='Please enter your name.'; return; }
-    if(!valid(email)){ err.textContent='Please enter a valid email address.'; return; }
-    send.disabled=true; send.textContent='Sending…';
-    try{
-      if(typeof sb==='undefined' || !sb || !sbReady) throw new Error('offline');
-      var item={ id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()), status:'interested', name:name, email:email, phone:'', date:new Date().toISOString().slice(0,10), submittedAt:new Date().toISOString(), source:'main-site' };
-      var r=await sb.rpc('append_kv_item',{ p_key:'applications:list', p_item:item });
-      if(r.error) throw r.error;
-    }catch(e){ console.error('Interest save failed',e); send.disabled=false; send.textContent='Send me the details'; err.textContent='Something went wrong. Please try again in a moment.'; return; }
-    document.getElementById('npDoneName').textContent=name.split(/\s+/)[0]; document.getElementById('npDoneEmail').textContent=email;
-    document.getElementById('npFormBox').style.display='none'; var d=document.getElementById('npDone'); d.classList.remove('hidden'); d.style.display='block';
-  });
-})();
 </script>
 
 <button type="button" id="mcDock" class="mc-dock on" aria-label="Chat with the Chemistry Competition Prep scientist" aria-expanded="false"></button>
@@ -4969,7 +4917,7 @@ function mcSvg(l, cls){
   var isOpen = null;
   var go = q('wsGo');
   go.addEventListener('click', function(e){
-    if(isOpen===false){ e.preventDefault(); closeIt(); var h = document.getElementById('heroInterestBtn'); if(h) h.click(); else window.scrollTo(0,0); }
+    if(isOpen===false){ e.preventDefault(); closeIt(); window.scrollTo(0,0); }
   });
   var pad = function(n){ return String(n).padStart(2,'0'); };
   var today = (function(){ var d = new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
