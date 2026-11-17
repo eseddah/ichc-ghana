@@ -93,7 +93,7 @@ QB.forEach((q,i)=> q.id = i);
 // ----------------------------------------------------------------------------------- NOVA-9's mind: word banks, templates and a per-player memory
 // Templates mix three devices: [bank] pulls a word from the stock word bank, {a|b|c} picks a variant, {slot} fills in the player's own numbers.
 const WB = {
-  wow:['Well, well','Hm','Huh','Oh','Ah','Right','Fine','Noted','Interesting','Look at that','Okay','Bold move','Curious'],
+  wow:['Ei','Eii','Hmm','Ah','Oh ho','Haba','Chale','Kai','Ooh','Eh','Hmm okay','Look at that','Ah ah','Aha'],
   praise:['sharp','crisp','clean','slick','tidy','neat','quick','solid','elegant','precise','polished','tight'],
   flop:['shaky','soggy','flat','half-baked','unstable','diluted','fizzled','hollow','lopsided','volatile','sloppy','murky'],
   hit:['landed','connected','struck','clipped','tagged','scorched','rattled','dented','jolted'],
@@ -101,50 +101,50 @@ const WB = {
   thing:['a stray proton','a spilled titrant','an unbuffered acid','a cracked burette','a reluctant catalyst','a lazy electron','a lost isotope','a cloudy precipitate','a leaking condenser'],
   noble:['a sleepy noble gas','argon on a Monday','a bored helium atom','a very inert neon sign'],
   foe:['challenger','contender','apprentice','rookie','beaker-bearer','competitor'],
-  gasp:['Impossible','No way','Hold on','Excuse me','That cannot be','Recalculating'],
+  gasp:['Eii','Ah ah','No way','Hold on','Wait, what','Ei, impossible','Chale','Recalculating'],
   again:['Rematch','Run it back','One more round','Go on then','Again'],
   late:['past bedtime','the middle of the night','way too late','after midnight']
 };
 const TP = {
-  openNew:['{A new challenger|Fresh blood|Someone new}. {Try to keep your electrons to yourself|Do try not to dissolve|Welcome to the Arena}, {name}.','{name}, is it? I have memorised the periodic table, {twice|backwards|with footnotes}. Ready?','{Step in|Welcome}, {name}. The beakers are clean, my circuits are cool and the timer is ticking.','Another [foe]? I was just warming up. {Literally. I overheat|My fan is spinning up now}.'],
-  openBack:['{Back again|You again}, {name}. {I checked our record|I kept notes}: {plays} duels, {wins} of them yours.','{name}. I {reviewed our last match|ran a few simulations overnight|updated my processor}. {Ready when you are|Try me}.','[wow]. {A returning rival|The regular}. {Pick your battlefield|Let us see what you learned}.'],
-  openStrong:['{name}. {I have been dreading this|I upgraded my processor|I checked the scoreboard}. You are winning {wins} of {plays}, and I {do not enjoy it|am not amused}.','A {worthy|dangerous|irritating} rival returns. {I will not go easy|No more mercy|I have patched my weak spots}.'],
-  openStruggle:['{name}, {welcome back|good to see you}. {I am only mostly insufferable|Take your time}. Let us {try a topic you like|warm up gently}.','Back for more? {Admirable|Brave|Stubborn in a good way}. {Even my first duel was messy|Everyone loses to me at first}.'],
-  openStreak:['{dstreak} days in a row, {name}? You are becoming a {fixed point|constant|reliable variable} in my schedule.','A {dstreak}-day streak. {Consistency is the real catalyst|I respect the habit}, {name}.'],
-  openLate:['It is [late], {name}. Even my cooling fan is yawning, but I will duel you anyway.','{Burning the midnight oil|Studying in the dark}? {Fine|Good}. Chemistry never sleeps and neither do I.'],
+  openNew:['Ei, {name}! A new face. {Come, let’s see what you’ve got|Don’t be shy, step in}.','Hmm, {name}, is it? Okay, okay. I’m ready when you are.','{A new challenger|Fresh blood|Someone new}. {Try to keep your electrons to yourself|Do try not to dissolve|Welcome to the Arena}, {name}.','{name}, is it? I’ve memorised the periodic table, {twice|backwards|with footnotes}. Ready?','{Step in|Welcome}, {name}. The beakers are clean, my circuits are cool and the timer is ticking.','Another [foe]? I was just warming up. {Literally. I overheat|My fan is spinning up now}.'],
+  openBack:['Ah, {name}! You’re back. {I was just getting bored|I missed the competition}.','Eii, {name}, you again? {Chale, you like punishment|Okay, let’s go}.','{Back again|You again}, {name}. {I checked our record|I kept notes}: {plays} duels, {wins} of them yours.','{name}. I {reviewed our last match|ran a few simulations overnight|updated my processor}. {Ready when you are|Try me}.','[wow]. {A returning rival|The regular}. {Pick your battlefield|Let’s see what you learned}.'],
+  openStrong:['{name}. {I’ve been dreading this|I upgraded my processor|I checked the scoreboard}. You’re winning {wins} of {plays}, and I {don’t enjoy it|am not amused}.','A {worthy|dangerous|irritating} rival returns. {I won’t go easy|No more mercy|I’ve patched my weak spots}.'],
+  openStruggle:['{name}, {welcome back|good to see you}. {I’m only mostly insufferable|Take your time}. Let’s {try a topic you like|warm up gently}.','Back for more? {Admirable|Brave|Stubborn in a good way}. {Even my first duel was messy|Everyone loses to me at first}.'],
+  openStreak:['{dstreak} days in a row, {name}? You’re becoming a {fixed point|constant|reliable variable} in my schedule.','A {dstreak}-day streak. {Consistency is the real catalyst|I respect the habit}, {name}.'],
+  openLate:['It’s [late], {name}. Even my cooling fan is yawning, but I’ll duel you anyway.','{Burning the midnight oil|Studying in the dark}? {Fine|Good}. Chemistry never sleeps and neither do I.'],
   openMorning:['{Good morning|Morning}, {name}. I run on {coffee-grade voltage|fresh electrons}. {Shall we|Ready}?','Early start, {name}. {Your neurons|Your brain} {are|is} still {warming up|loading}. Perfect for me.'],
-  openCoach:['{Welcome|Greetings}, {name}. Your students keep losing to me, so I assumed you came to {complain|negotiate|take notes}.','{name}, the {teacher|mentor} arrives. {Show me what you teach|Let us see if it works}.'],
-  start:['{Eight|Eight rounds}. {No notes|No calculators|No mercy}. {Begin|Go}.','{Round one is coming|The first question is loading}. {Breathe|Do not blink}, {name}.','{Topic|Battlefield}: {topic}. {Good choice|Brave choice|My favourite, as it happens}.'],
-  c1:['[wow]. First blood goes to {you|the human}. {Enjoy it|Do not get used to it}.','{Hm|Ouch}. {An early point|Opening blood}. {Lucky|Respectable} start, {name}.'],
-  cfast:['{Whoa|Hey}, {that was|how} fast. {Did you add a catalyst|Did you pre-read my mind}?','{Speedy|Brisk|Near-instant}! {My circuits had not finished loading|I was still blinking}.','{{secs}|Barely {secs}} seconds. {Show-off|Are you psychic}?'],
+  openCoach:['{Welcome|Greetings}, {name}. Your students keep losing to me, so I assumed you came to {complain|negotiate|take notes}.','{name}, the {teacher|mentor} arrives. {Show me what you teach|Let’s see if it works}.'],
+  start:['{Eight|Eight rounds}. {No notes|No calculators|No mercy}. {Begin|Go}.','{Round one is coming|The first question is loading}. {Breathe|Don’t blink}, {name}.','{Topic|Battlefield}: {topic}. {Good choice|Brave choice|My favourite, as it happens}.'],
+  c1:['Ei! First point goes to you. {Hmm, lucky|Don’t get used to it}.','[wow]. First blood goes to {you|the human}. {Enjoy it|Don’t get used to it}.','{Hm|Ouch}. {An early point|Opening blood}. {Lucky|Respectable} start, {name}.'],
+  cfast:['Ei! That was quick. {Did you pre-read my mind|Hmm, suspicious}?','{Whoa|Hey}, {that was|how} fast. {Did you add a catalyst|Did you pre-read my mind}?','{Speedy|Brisk|Near-instant}! {My circuits had not finished loading|I was still blinking}.','{{secs}|Barely {secs}} seconds. {Show-off|Are you psychic}?'],
   cslow:['A [praise] answer at the last moment. {Clutch|Nerves of platinum}, {name}.','{Just|Barely} in time. [wow], {you cut that close|that was a slow burn}.'],
-  c2:['Two in a row. {Do not get cocky|Warming up, are we|The reaction is catching}.','A {streak|chain} of {streak}. {I am watching you|Noted}, {name}.'],
-  c3:['{streak} in a row?! {Who gave you the cheat sheet|Where did you learn that}?','Stop! {My visor is overheating|That is a chain reaction I did not plan for}!','[gasp]. A {streak}-streak. {I am adjusting my strategy|This is getting personal}.'],
-  c5:['{streak} straight. {This is no longer luck|I am taking this personally|I need a new processor}.','[gasp]. {A perfect run|You are unstoppable}. {Somebody fetch me a fire extinguisher|My warranty does not cover this}.'],
-  cclutch:['{Down to {hp} HP and you still deliver|Back from the edge}. [wow], {name}.','{Comeback energy|That is how it is done under pressure}. I {hate|respect} it.'],
-  cnorm:['[wow]. {Correct|Right|Accurate}. That [hit] and it [ouch].','{Hmph|Tch|Ugh}. A [praise] answer. {Savour it|Enjoy it|Do not let it go to your head}, {name}.','That one [hit]. {Not bad|Credit where it is due|Fine work} for a [foe].','{Okay|Fine}, {you can read a periodic table|you know your chemistry}. {Cute|Annoying|Noted}.','{Correct|Right}? I {allow|permit} it. {This time|For now}.'],
-  w1:['{Wrong|Incorrect|Off the mark}! Even [noble] {would have reacted better|has more reactivity}.','That answer was [flop]. {Try again, brave soul|Better luck next round}.','Bzzt! {Not even close|So close, yet so wrong}, but I {admire|respect} the confidence.','{Ha|Ha ha}! That one [flop]. {It lost all its valence|It never stood a chance}.'],
-  wto:['{Time|Time is up}! Even {slow reactions|glacial reactions} have a half-life.','{Out of time|Clock expired}. {Hesitation|Doubt} is a poor catalyst, {name}.'],
-  w2:['Two misses {in a row|back to back}. {Regroup|Breathe|Check your units}, {name}.','{That is two|A second miss}. {Slow down|Read the whole question}. {I am not that scary|I am only slightly scary}.'],
-  w3:['{Three misses|A third miss} {running|in a row}. {Take a breath, {name}|The reaction is stalling}.','{Three down|That is three}. {Recover|Rebuild}: {read the question twice|think about the topic before the answer}.'],
-  wweak:['{{weak} again|You keep flinching at {weak}}. {That is a weak spot|I have noticed}.','{Is {weak} your kryptonite|Hm, {weak} bites you every time}? {Worth revising|Train it}.'],
-  bothWrong:['{We both missed that one|Neither of us got it}. {We shall never speak of it|Let us pretend it did not happen|A rare mutual failure}.','[wow]. {A draw of ignorance|Double fizzle}. {Moving on|Next}.'],
-  rWin:['{Point to NOVA-9|One for the robot}. {Precision is my middle name|Calculated}.','{Easy|Child’s play}. I run on {pure electrons and ego|electrons and spite}.','{That is how a rival answers|Correct, unlike you}. {Next|Again}?'],
-  novaLow:['I am NOT {losing to a human|beaten}. {My battery is just low|It is a cooling issue}.','{Critical damage|Hull breach}? {Impossible|Absurd}. I have a warranty!','[gasp]. My {HP|health bar} is {{rhp}|at {rhp}}. {Lucky streak|This changes nothing}.'],
-  playerLow:['{{hp} HP|Only {hp} HP left}, {name}. {Surrender|Last chance|Careful now}.','Your health is {low|critical}. {Answer well|Slow down and think}. {Or do not|I will take the win}.'],
+  c2:['Two in a row. {Don’t get cocky|Warming up, are we|The reaction is catching}.','A {streak|chain} of {streak}. {I’m watching you|Noted}, {name}.'],
+  c3:['Eii! {streak} in a row?! {Ah ah, who taught you|Chale, you’re on fire}!','{streak} in a row?! {Who gave you the cheat sheet|Where did you learn that}?','Stop! {My visor is overheating|That’s a chain reaction I didn’t plan for}!','[gasp]. A {streak}-streak. {I’m adjusting my strategy|This is getting personal}.'],
+  c5:['Ei, ei, ei! {streak} straight. {Hmm, I don’t like this|My circuits are sweating}.','{streak} straight. {This is no longer luck|I’m taking this personally|I need a new processor}.','[gasp]. {A perfect run|You’re unstoppable}. {Somebody fetch me a fire extinguisher|My warranty doesn’t cover this}.'],
+  cclutch:['{Down to {hp} HP and you still deliver|Back from the edge}. [wow], {name}.','{Comeback energy|That’s how it’s done under pressure}. I {hate|respect} it.'],
+  cnorm:['Hmm, okay, that one was correct. {Not bad|I’ll allow it}, {name}.','Eh, {correct|right}! Okay, {you’re not sleeping|I see you}.','[wow]. {Correct|Right|Accurate}. That [hit] and it [ouch].','{Hmph|Tch|Ugh}. A [praise] answer. {Savour it|Enjoy it|Don’t let it go to your head}, {name}.','That one [hit]. {Not bad|Credit where it’s due|Fine work} for a [foe].','{Okay|Fine}, {you can read a periodic table|you know your chemistry}. {Cute|Annoying|Noted}.','{Correct|Right}? I {allow|permit} it. {This time|For now}.'],
+  w1:['Ei, {name}! That one was [flop]. {Haba|Chale}, {what happened|you can do better}?','Hmm, no. {Not that one|Not quite}, {name}. Even [noble] would’ve done better.','Ah ah! {Wrong|Incorrect}. {Don’t worry|Sit up}, the next one is coming.','{Wrong|Incorrect|Off the mark}! Even [noble] {would have reacted better|has more reactivity}.','That answer was [flop]. {Try again, brave soul|Better luck next round}.','Eh eh! {Not even close|So close, yet so wrong}, but I {admire|respect} the confidence.','{Ha|Ha ha}! That one [flop]. {It lost all its valence|It never stood a chance}.'],
+  wto:['Ei, time’s up! {Hmm, you were thinking too long|Don’t sleep on the clock}.','{Time|Time is up}! Even {slow reactions|glacial reactions} have a half-life.','{Out of time|Clock expired}. {Hesitation|Doubt} is a poor catalyst, {name}.'],
+  w2:['Ei, two misses already. {Calm down|Take a breath}, {name}.','Two misses {in a row|back to back}. {Regroup|Breathe|Check your units}, {name}.','{That’s two|A second miss}. {Slow down|Read the whole question}. {I’m not that scary|I’m only slightly scary}.'],
+  w3:['Hmm, that’s three. {Breathe|Slow down}, {name}. {Read the question twice|You’ve got this}.','{Three misses|A third miss} {running|in a row}. {Take a breath, {name}|The reaction is stalling}.','{Three down|That’s three}. {Recover|Rebuild}: {read the question twice|think about the topic before the answer}.'],
+  wweak:['{{weak} again|You keep flinching at {weak}}. {That’s a weak spot|I haven’ticed}.','{Is {weak} your kryptonite|Hm, {weak} bites you every time}? {Worth revising|Train it}.'],
+  bothWrong:['{We both missed that one|Neither of us got it}. {We shall never speak of it|Let’s pretend it didn’t happen|A rare mutual failure}.','[wow]. {A draw of ignorance|Double fizzle}. {Moving on|Next}.'],
+  rWin:['Ha! Point to me. {Hmm, easy|Come on, {name}, try harder}.','{Point to NOVA-9|One for the robot}. {Precision is my middle name|Calculated}.','{Easy|Child’s play}. I run on {pure electrons and ego|electrons and spite}.','{That’s how a rival answers|Correct, unlike you}. {Next|Again}?'],
+  novaLow:['I’m NOT {losing to a human|beaten}. {My battery is just low|It’s a cooling issue}.','{Critical damage|Hull breach}? {Impossible|Absurd}. I’ve a warranty!','[gasp]. My {HP|health bar} is {{rhp}|at {rhp}}. {Lucky streak|This changes nothing}.'],
+  playerLow:['{{hp} HP|Only {hp} HP left}, {name}. {Surrender|Last chance|Careful now}.','Your health is {low|critical}. {Answer well|Slow down and think}. {Or don’t|I’ll take the win}.'],
   lastRound:['{Final round|Last one}. {Everything|All of it} comes down to {this|one answer}.','{This is it|One question left}. {Make it count|No pressure}, {name}.'],
-  win:['[gasp]! {I demand a recount|I demand a better processor}.','{You win this round of the universe|Fine}. I will be back, {as reactive as ever|recharged}.','{Defeated|Beaten}. {By a human|By {name}}. {I need a moment|Please do not tell the other robots}.'],
-  winCrush:['{Not even close|A rout}. {I will be rewriting my code tonight|I am deleting that match from memory}.','{{hp} HP left|You barely scratched}? {I am retiring|That was embarrassing, mostly for me}.'],
+  win:['Eii! You won? {Hmm, I need a moment|Ah ah, I demand a recount}.','[gasp]! {I demand a recount|I demand a better processor}.','{You win this round of the universe|Fine}. I’ll be back, {as reactive as ever|recharged}.','{Defeated|Beaten}. {By a human|By {name}}. {I need a moment|Please don’t tell the other robots}.'],
+  winCrush:['{Not even close|A rout}. {I’ll be rewriting my code tonight|I’m deleting that match from memory}.','{{hp} HP left|You barely scratched}? {I’m retiring|That was embarrassing, mostly for me}.'],
   winNarrow:['{By a hair|By a single electron}. {I want a rematch|I blame the latency}.','{That was tight|Ugh, so close}. {Next time|Do it again if you dare}.'],
-  winFlawless:['[gasp]. {Perfect|Flawless}. {Eight for eight|No errors}. {I am speechless, which is rare|Who ARE you}, {name}?'],
-  lose:['{Victory is mine|Chemistry is my element}. [again]?','{Better luck next time|Do not be sad}. I would go easy on you, but I {do not know how|have no setting for that}.','{As predicted|Calculated}. {Review your misses|Check the review below}, then {try me again|come back stronger}.'],
-  loseNarrow:['{So close|That was nearly yours}. {One question|A single answer} separated us, {name}. [again]?','{A narrow win for me|I won by a whisker}. {Do not take it hard|You are improving}.'],
-  loseKind:['{You are improving|I can see the progress}, {name}. {Honestly|Between us}. Review the misses and [again].','{Do not be discouraged|Keep going}. {Every chemist|Even Mendeleev} {fails|failed} {before succeeding|many times}.'],
-  draw:['A draw? That is like an unbalanced equation. {Unacceptable|Intolerable}. [again]!','{Perfectly equal|Stalemate}. {I hate it|Annoying}. [again]?']
+  winFlawless:['[gasp]. {Perfect|Flawless}. {Eight for eight|No errors}. {I’m speechless, which is rare|Who ARE you}, {name}?'],
+  lose:['Hahaha! {Victory is mine|I told you}. {Ah, don’t be sad|Come, let’s go again}.','{Victory is mine|Chemistry is my element}. [again]?','{Better luck next time|Don’t be sad}. I’d go easy on you, but I {don’t know how|have no setting for that}.','{As predicted|Calculated}. {Review your misses|Check the review below}, then {try me again|come back stronger}.'],
+  loseNarrow:['{So close|That was nearly yours}. {One question|A single answer} separated us, {name}. [again]?','{A narrow win for me|I won by a whisker}. {Don’t take it hard|You’re improving}.'],
+  loseKind:['Ah, don’t worry, {name}. {Hmm, you’re getting better|Chale, you were close}. Check the misses and try again.','{You’re improving|I can see the progress}, {name}. {Honestly|Between us}. Review the misses and [again].','{Don’t be discouraged|Keep going}. {Every chemist|Even Mendeleev} {fails|failed} {before succeeding|many times}.'],
+  draw:['Ei! A draw? {Hmm, that’s annoying|Ah ah, unacceptable}. Again!','A draw? That’s like an unbalanced equation. {Unacceptable|Intolerable}. [again]!','{Perfectly equal|Stalemate}. {I hate it|Annoying}. [again]?']
 };
 const TQ = {
   quant:{ ok:['{Impressive|Fine|Neat} mole handling{. Avogadro would nod|, I suppose}.','Stoichiometry done {cleanly|properly}. {Annoying|Irritating}.'], bad:['Your mole count {drifted|collapsed|wandered off}. Check {the units|your Mr|the ratio}.','That ratio {leaked|fell apart}. Balance first, then count.'] },
-  bonding:{ ok:['You {read|saw through} that bond {like a pro|without blinking}.','Electrons {approve|are impressed}. I am {less thrilled|not thrilled}.'], bad:['Wrong bond, different outcome. {Electronegativity|VSEPR} had a word for you.','That structure {would never survive|would collapse in} a real lattice.'] },
+  bonding:{ ok:['You {read|saw through} that bond {like a pro|without blinking}.','Electrons {approve|are impressed}. I’m {less thrilled|not thrilled}.'], bad:['Wrong bond, different outcome. {Electronegativity|VSEPR} had a word for you.','That structure {would never survive|would collapse in} a real lattice.'] },
   thermo:{ ok:['{Hess|Gibbs} {would be proud|nods from the great beyond}.','You balanced that enthalpy {neatly|like a bookkeeper}.'], bad:['That one {lost|leaked} {heat|energy}. Mind the sign of ΔH.','ΔG disagrees. {Strongly|Loudly}.'] },
   equil:{ ok:['Le Chatelier {would lean|leans} your way.','{Balanced|Stable} thinking. For once.'], bad:['You pushed the equilibrium the {wrong|opposite} way. It pushed back.','The system {shifted|ran} away from that answer.'] },
   acidbase:{ ok:['{Neutral|Spot-on}. The pH {approves|agrees}.','Buffer-grade reasoning. {Steady|Stable}.'], bad:['That answer had {the pH of lemon juice|more acid than a bad mood}.','The protons went the other way.'] },
@@ -205,27 +205,27 @@ function nline(ev, x){
     default: pool = 'openNew';
   }
   let t = extra && Math.random() < .7 ? spin(fresh(extra, 'tq' + c.topicId + ev), c) : render(pool, pool, c);
-  if(ev === 'wrong' && c.vibe === 'struggling' && Math.random() < .35) t += ' ' + spin(pick(['Chin up, {name}.','You are closer than you think.','Read it slowly next time.']), c);
-  if(ev === 'correct' && c.vibe === 'strong' && Math.random() < .3) t += ' ' + spin(pick(['I am starting to dislike you.','Do not get comfortable.','I have seen you do this before.']), c);
+  if(ev === 'wrong' && c.vibe === 'struggling' && Math.random() < .35) t += ' ' + spin(pick(['Chin up, {name}.','You’re closer than you think.','Read it slowly next time.']), c);
+  if(ev === 'correct' && c.vibe === 'strong' && Math.random() < .3) t += ' ' + spin(pick(['I’m starting to dislike you.','Don’t get comfortable.','I’ve seen you do this before.']), c);
   return { t, m };
 }
 
 // ----------------------------------------------------------------------------------- Mo's local mind (works with or without the network)
-// Each group: [what a good explanation mentions, what Mo asks if it is missing, what Mo says once it is covered]
+// Each group: [what a good explanation mentions, what Mo asks if it’s missing, what Mo says once it’s covered]
 const G = (re, ask, got)=> ({ re:new RegExp(re, 'i'), ask, got });
 const MOKB = {
-  quant:[G('\\bmoles?\\b|\\bmol\\b|avogadro|10\\^?23|10²³|6\\.0?2','Wait, what actually is a “mole”? Please tell me it is not the animal.','So a mole is a counting unit, like a dozen but much bigger?'),G('molar mass|\\bmr\\b|g\\/mol|grams? per mole|relative (formula|molecular) mass','How do I turn grams into moles, though?','Moles equal mass divided by molar mass. I wrote it on my paw.'),G('ratio|coefficient|balanced|stoichiomet','And how do I know how much of the other chemical I need?','The balanced equation gives the ratio. That is the key.'),G('limiting|excess|runs? out','What if one chemical runs out before the other?','The limiting reagent decides how much product I get. Got it.')],
+  quant:[G('\\bmoles?\\b|\\bmol\\b|avogadro|10\\^?23|10²³|6\\.0?2','Wait, what actually is a “mole”? Please tell me it isn’t the animal.','So a mole is a counting unit, like a dozen but much bigger?'),G('molar mass|\\bmr\\b|g\\/mol|grams? per mole|relative (formula|molecular) mass','How do I turn grams into moles, though?','Moles equal mass divided by molar mass. I wrote it on my paw.'),G('ratio|coefficient|balanced|stoichiomet','And how do I know how much of the other chemical I need?','The balanced equation gives the ratio. That’s the key.'),G('limiting|excess|runs? out','What if one chemical runs out before the other?','The limiting reagent decides how much product I get. Got it.')],
   bonding:[G('ionic|transfer|electrostatic|lattice','What makes an ionic bond different from the other types?','Ionic means electrons transfer and opposite charges attract. Nice.'),G('covalent|shar(e|ing)','And when atoms share electrons, what is that called?','Sharing electrons is covalent bonding. I follow.'),G('electronegativ|polar|dipole','Why do some molecules end up polar?','Electronegativity differences create dipoles. Ohh.'),G('vsepr|shape|lone pair|repel|tetrahedral|angle','How do I predict the shape of a molecule?','Electron pairs repel and set the shape. Brilliant.')],
-  thermo:[G('exotherm|endotherm|heat|releas|absorb','What is the difference between exothermic and endothermic?','Exothermic releases heat, endothermic absorbs it. Clear!'),G('enthalpy|Δ ?h|delta h|kj','What does ΔH actually tell me?','ΔH is the heat change at constant pressure. Okay.'),G('hess|route|state function|path','Why does the route not matter in Hess’s law?','Because enthalpy is a state function. That makes sense.'),G('entropy|disorder|gibbs|spontan|Δ ?g','What decides whether a reaction happens by itself?','Gibbs energy combines enthalpy and entropy. Wow.')],
-  equil:[G('dynamic|both directions|forward and reverse|reversible|same rate','Does everything just stop at equilibrium?','Both reactions keep going at equal rates. Dynamic!'),G('le chatelier|oppose|shift','What happens if I disturb the system?','The system shifts to oppose the change. Le Chatelier!'),G('\\bk\\b|constant|expression|products over reactants','What is this “K” everyone talks about?','K compares products to reactants at equilibrium. Neat.'),G('temperature|catalyst|pressure|concentration','Which changes actually move the position, and which do not?','Temperature changes K, a catalyst only speeds things up. Perfect.')],
-  acidbase:[G('proton|h\\+|h⁺|donor|bronsted|brønsted','What really makes something an acid?','Acids donate protons and bases accept them. Okay!'),G('\\bph\\b|log|10','How is pH calculated?','pH is the negative log of the H⁺ concentration. Cool.'),G('strong|weak|ionis|dissociat','Why are some acids strong and others weak?','Strong acids ionise fully, weak ones only partly. Got it.'),G('buffer|conjugate|resist','What is a buffer, and why is it useful?','A buffer resists pH change using a weak acid and its conjugate base. Great.')],
-  kinetics:[G('collision|collide|particles','What has to happen for a reaction to start?','Particles must collide with enough energy. Makes sense.'),G('activation|barrier|\\bea\\b|energy hill','What is activation energy?','It is the energy barrier reactants must climb. I see.'),G('catalyst|lower','How does a catalyst help?','A catalyst gives a lower-energy route and is not used up. Handy!'),G('rate|order|half-life|concentration|temperature','What changes how fast a reaction goes?','Concentration, temperature and surface area all change the rate. Ahh.')],
-  electro:[G('oxidation|oxidis|lose electrons|loss of electrons','What is oxidation exactly?','Oxidation is losing electrons. Okay.'),G('reduction|reduc|gain electrons','And reduction?','Reduction is gaining electrons. They come as a pair.'),G('anode|cathode','Which electrode does what?','Oxidation at the anode, reduction at the cathode. An Ox, Red Cat!'),G('potential|voltage|e°|emf|salt bridge|galvanic|electrolysis','What makes a cell produce voltage?','The difference in electrode potentials drives the electrons. Shocking!')],
-  organic:[G('functional group|hydroxyl|carbonyl|alkene|alcohol|carboxyl','How do I recognise different kinds of organic molecules?','Functional groups decide how a molecule behaves. Nice.'),G('nucleophile|electrophile|electron pair|attack','What is a nucleophile, and what does it attack?','Nucleophiles donate electron pairs to electron-poor centres. Okay.'),G('curly|arrow|mechanism','What do the curly arrows mean?','Each arrow shows an electron pair moving. Beautiful.'),G('sn1|sn2|addition|substitution|elimination|markovnikov','What are the main types of reaction?','Substitution, addition and elimination. Got a map now.')],
+  thermo:[G('exotherm|endotherm|heat|releas|absorb','What’s the difference between exothermic and endothermic?','Exothermic releases heat, endothermic absorbs it. Clear!'),G('enthalpy|Δ ?h|delta h|kj','What does ΔH actually tell me?','ΔH is the heat change at constant pressure. Okay.'),G('hess|route|state function|path','Why does the route not matter in Hess’s law?','Because enthalpy is a state function. That makes sense.'),G('entropy|disorder|gibbs|spontan|Δ ?g','What decides whether a reaction happens by itself?','Gibbs energy combines enthalpy and entropy. Wow.')],
+  equil:[G('dynamic|both directions|forward and reverse|reversible|same rate','Does everything just stop at equilibrium?','Both reactions keep going at equal rates. Dynamic!'),G('le chatelier|oppose|shift','What happens if I disturb the system?','The system shifts to oppose the change. Le Chatelier!'),G('\\bk\\b|constant|expression|products over reactants','What’s this “K” everyone talks about?','K compares products to reactants at equilibrium. Neat.'),G('temperature|catalyst|pressure|concentration','Which changes actually move the position, and which don’t?','Temperature changes K, a catalyst only speeds things up. Perfect.')],
+  acidbase:[G('proton|h\\+|h⁺|donor|bronsted|brønsted','What really makes something an acid?','Acids donate protons and bases accept them. Okay!'),G('\\bph\\b|log|10','How is pH calculated?','pH is the negative log of the H⁺ concentration. Cool.'),G('strong|weak|ionis|dissociat','Why are some acids strong and others weak?','Strong acids ionise fully, weak ones only partly. Got it.'),G('buffer|conjugate|resist','What’s a buffer, and why is it useful?','A buffer resists pH change using a weak acid and its conjugate base. Great.')],
+  kinetics:[G('collision|collide|particles','What has to happen for a reaction to start?','Particles must collide with enough energy. Makes sense.'),G('activation|barrier|\\bea\\b|energy hill','What’s activation energy?','It’s the energy barrier reactants must climb. I see.'),G('catalyst|lower','How does a catalyst help?','A catalyst gives a lower-energy route and isn’t used up. Handy!'),G('rate|order|half-life|concentration|temperature','What changes how fast a reaction goes?','Concentration, temperature and surface area all change the rate. Ahh.')],
+  electro:[G('oxidation|oxidis|lose electrons|loss of electrons','What’s oxidation exactly?','Oxidation is losing electrons. Okay.'),G('reduction|reduc|gain electrons','And reduction?','Reduction is gaining electrons. They come as a pair.'),G('anode|cathode','Which electrode does what?','Oxidation at the anode, reduction at the cathode. An Ox, Red Cat!'),G('potential|voltage|e°|emf|salt bridge|galvanic|electrolysis','What makes a cell produce voltage?','The difference in electrode potentials drives the electrons. Shocking!')],
+  organic:[G('functional group|hydroxyl|carbonyl|alkene|alcohol|carboxyl','How do I recognise different kinds of organic molecules?','Functional groups decide how a molecule behaves. Nice.'),G('nucleophile|electrophile|electron pair|attack','What’s a nucleophile, and what does it attack?','Nucleophiles donate electron pairs to electron-poor centres. Okay.'),G('curly|arrow|mechanism','What do the curly arrows mean?','Each arrow shows an electron pair moving. Beautiful.'),G('sn1|sn2|addition|substitution|elimination|markovnikov','What are the main types of reaction?','Substitution, addition and elimination. Got a map now.')],
   stereo:[G('chiral|stereocent|four different','What makes a carbon chiral?','Four different groups on one carbon. I see it now.'),G('enantiomer|mirror|non-superimpos','What are enantiomers?','Non-superimposable mirror images, like hands. Ooh.'),G('optical|rotate|polari','How can I tell enantiomers apart?','They rotate polarised light in opposite directions. Neat.'),G('aromatic|benzene|huckel|hückel|4n|6 ?π|delocal','Why is benzene so special?','Delocalised π electrons give it extra stability. Wow.')],
   spectro:[G('\\bir\\b|infrared|wavenumber|cm','What does infrared tell us?','IR shows which bonds and functional groups are present. Cool.'),G('nmr|environment|chemical shift|signal','What does NMR show?','Each signal is a different hydrogen environment. Lovely.'),G('mass spec|m\\/z|molecular ion|fragment','And mass spectrometry?','The molecular ion gives the molar mass. Nice.'),G('ligand|coordination|d orbital|colour|complex','Why are some metal complexes coloured?','Split d orbitals absorb visible light. Colourful!')]
 };
-const MO_NUDGE = ['That is a bit short for my tiny brain. Can you say more?','Hmm, I need more detail. Could you give me an example?','I am still lost. Try explaining it step by step?'];
+const MO_NUDGE = ['Hmm, that’s a bit short for my tiny brain. Can you say more?','Ei, I need more detail please. Could you give me an example?','Ah, I’m still lost. Try explaining it step by step?'];
 const MO_QUAL = /\b(like|imagine|for example|for instance|think of|analogy|as if)\b/i;
 function moLocal(T, text){
   const kb = MOKB[T.id] || [], cov = T.cov = T.cov || {};
@@ -241,9 +241,9 @@ function moLocal(T, text){
   const c = brainCtx(), nm = c.first ? c.first + ', ' : '';
   let reply;
   if(short) reply = pick(MO_NUDGE);
-  else if(done) reply = spin(pick(['{Oh!|Ahh!|Wait!} It finally clicks, {name}! You made ' + (MO_LABEL[T.id] || 'it') + ' make sense. I could pass that test now.','{Yes!|Aha!} I get it! Thanks to you I am not afraid of ' + (MO_LABEL[T.id] || 'chemistry') + ' any more.']), c);
+  else if(done) reply = spin(pick(['{Ohh!|Ahh!|Eii!|Wait!} It finally clicks, {name}! You made ' + (MO_LABEL[T.id] || 'it') + ' make sense. I could pass that test now.','{Yes!|Aha!|Ei, yes!} I get it! Thanks to you I am not afraid of ' + (MO_LABEL[T.id] || 'chemistry') + ' any more.']), c);
   else {
-    const lead = fresh1.length ? fresh1[0].got : pick(['Okay, I think I am following.','Hm, that helps a bit.','Interesting. Keep going.']);
+    const lead = fresh1.length ? fresh1[0].got : pick(['Hmm, okay, I think I’m following.','Ahh, that helps a bit.','Ooh, interesting. Keep going, I’m listening.','Okay okay, I’m with you so far.']);
     const nxt = missing.length ? missing[0].ask : 'Can you give me one example I can remember?';
     const useNm = Math.random() < .35 && nm; reply = (useNm ? nm + lead.charAt(0).toLowerCase() + lead.slice(1) : lead) + ' ' + nxt;
   }
@@ -420,7 +420,7 @@ let AIBUSY = 0;
 async function ai(body, ms){
   const sb = sbOf(); if(!sb || !sb.functions || !sbReady() || AIBUSY > 1) return null;
   const c = brainCtx();
-  body = Object.assign({ persona:{ name:c.first, level:level(S.prof.xp), plays:c.plays, wins:c.wins, vibe:c.vibe, weak:c.weak, role:S.opts.role || 'visitor', hour:c.hour, recent:SAID.slice(-4) } }, body);
+  body = Object.assign({ persona:{ name:c.first, level:level(S.prof.xp), plays:c.plays, wins:c.wins, vibe:c.vibe, weak:c.weak, role:S.opts.role || 'visitor', hour:c.hour, recent:SAID.slice(-4), style:'Speak like a warm, quick-witted Ghanaian student: contractions, short sentences, natural interjections (Ei, Hmm, Chale, Ah ah, Haba). Never stiff or robotic.' } }, body);
   AIBUSY++;
   try{
     const r = await Promise.race([ sb.functions.invoke('game-ai', { body }), new Promise((_,rej)=> setTimeout(()=> rej(new Error('timeout')), ms || 2500)) ]);
@@ -456,39 +456,61 @@ const SND = {
   }
 };
 const VOX = {
-  on:false, voices:[], cache:{},
+  on:false, voices:[], cache:{}, tok:0,
   load(){ try{ const sy = window.speechSynthesis; if(!sy) return; const get = ()=>{ VOX.voices = sy.getVoices() || []; VOX.cache = {}; }; get(); if(sy.addEventListener) sy.addEventListener('voiceschanged', get); }catch(e){} },
   ok(){ return !!(window.speechSynthesis && window.SpeechSynthesisUtterance); },
   pick(who){
     if(this.cache[who]) return this.cache[who];
     const en = this.voices.filter(v=> /^en/i.test(v.lang)); if(!en.length) return null;
-    const want = who === 'nova' ? ['Google UK English Male','Microsoft Ryan','Microsoft Guy','Microsoft George','Daniel','Arthur','Oliver','Aaron','Fred','Alex','Male','David'] : ['Google UK English Female','Microsoft Sonia','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Samantha','Serena','Tessa','Karen','Moira','Fiona','Female','Zira'];
+    const want = who === 'nova' ? ['Abeo','Google UK English Male','Microsoft Ryan','Microsoft Guy','Microsoft George','Daniel','Arthur','Oliver','Aaron','Fred','Alex','Male','David'] : ['Ezinne','Google UK English Female','Microsoft Sonia','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Samantha','Serena','Tessa','Karen','Moira','Fiona','Female','Zira'];
     let best = null, bs = -1;
-    en.forEach(v=>{ let s = 0; want.forEach((w,i)=>{ if(v.name.indexOf(w) >= 0) s = Math.max(s, 40 - i); }); if(/en-GB/i.test(v.lang)) s += 6; else if(/en-(NG|ZA|GH|AU|IE)/i.test(v.lang)) s += 4; else if(/en-US/i.test(v.lang)) s += 3; if(/natural|neural|online/i.test(v.name)) s += 8; if(/enhanced|premium/i.test(v.name)) s += 4; if(!v.localService) s += 1; if(s > bs){ bs = s; best = v; } });
+    en.forEach(v=>{ let s = 0; want.forEach((w,i)=>{ if(v.name.indexOf(w) >= 0) s = Math.max(s, 40 - i); }); if(/en-(NG|GH|KE)/i.test(v.lang)) s += 7; else if(/en-GB/i.test(v.lang)) s += 6; else if(/en-(ZA|AU|IE)/i.test(v.lang)) s += 4; else if(/en-US/i.test(v.lang)) s += 3; if(/natural|neural|online/i.test(v.name)) s += 8; if(/enhanced|premium/i.test(v.name)) s += 4; if(!v.localService) s += 1; if(s > bs){ bs = s; best = v; } });
     return this.cache[who] = best;
   },
-  say(txt){ // make chemistry readable aloud
+  say(txt){ // make chemistry readable aloud, then make the interjections sound like a person
     const sub = { '₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9' }, sup = { '⁺':' plus','⁻':' minus','²':' squared','³':' cubed' };
-    return String(txt).replace(/NOVA-9/g,'Nova nine').replace(/\bMo\b/g,'Moe').replace(/\bHCl\b/g,'hydrochloric acid').replace(/\bNaOH\b/g,'sodium hydroxide').replace(/\bNaCl\b/g,'sodium chloride').replace(/\bH2O\b/g,'water').replace(/\bCO2\b/g,'carbon dioxide').replace(/\bpH\b/g,'P H').replace(/ΔH/g,'delta H').replace(/ΔG/g,'delta G').replace(/ΔS/g,'delta S').replace(/⇌/g,' is in equilibrium with ').replace(/→/g,' gives ')
-      .replace(/[₀-₉]/g, m=> ' ' + sub[m]).replace(/[⁺⁻²³]/g, m=> sup[m]).replace(/([A-Z][a-z]?)(\d+)/g,'$1 $2').replace(/[·•]/g,',').replace(/[“”"]/g,'').replace(/\s*[—–]\s*/g,', ').replace(/…/g,'.').replace(/\s+/g,' ').trim();
+    return this.human(String(txt).replace(/NOVA-9/g,'Nova nine').replace(/\bMo\b/g,'Moe').replace(/\bHCl\b/g,'hydrochloric acid').replace(/\bNaOH\b/g,'sodium hydroxide').replace(/\bNaCl\b/g,'sodium chloride').replace(/\bH2O\b/g,'water').replace(/\bCO2\b/g,'carbon dioxide').replace(/\bpH\b/g,'P H').replace(/ΔH/g,'delta H').replace(/ΔG/g,'delta G').replace(/ΔS/g,'delta S').replace(/⇌/g,' is in equilibrium with ').replace(/→/g,' gives ')
+      .replace(/[₀-₉]/g, m=> ' ' + sub[m]).replace(/[⁺⁻²³]/g, m=> sup[m]).replace(/([A-Z][a-z]?)(\d+)/g,'$1 $2').replace(/[·•]/g,',').replace(/[“”"]/g,'').replace(/\s*[—–]\s*/g,', ').replace(/…/g,'.').replace(/\s+/g,' ').trim());
+  },
+  human(t){ // spell sounds the way a speech engine will actually voice them
+    return t.replace(/\bEi(i+)?\b/gi, (m,x)=> x ? 'Ayyy' : 'Ayy').replace(/\bHm+\b/gi,'Mmmm').replace(/\bHmph\b/gi,'Mmph').replace(/\bTch\b/g,'Tsk')
+      .replace(/\bChale\b/g,'Chah-lay').replace(/\bHaba\b/g,'Hah-bah').replace(/\bKai\b/g,'Kye').replace(/\bAh ah\b/gi,'Ah, ah').replace(/\bAhh+\b/gi,'Aahh').replace(/\bOhh+\b/gi,'Ohhh').replace(/\bHa(ha)+\b/gi,'Ha ha ha');
+  },
+  chunks(txt){ // sentence by sentence, with a drawn-out little pause after each interjection
+    const IJ = /^(Ayy+|Mmm+|Mmph|Tsk|Aahh?|Ohh*|Oh ho|Ah, ah|Chah-lay|Hah-bah|Kye|Eh|Eh eh|Ooh|Aha|Wow|Ha ha ha|Ha)$/i, out = [];
+    (txt.match(/[^.!?]+[.!?]*/g) || []).forEach(raw=>{
+      let s = raw.trim(); if(!s) return;
+      const m = s.match(/^([A-Za-z ,-]{2,12}?)([,!.])\s+(\S.*)$/);
+      if(m && IJ.test(m[1].trim())){ out.push({ t:m[1].trim() + '!', dp:.1, dr:-.14, ij:1 }); s = m[3]; }
+      else if(IJ.test(s.replace(/[,!.?]+$/,'').trim())){ out.push({ t:s.replace(/[,!.?]+$/,'') + '!', dp:.1, dr:-.14, ij:1 }); return; }
+      const last = s.slice(-1); out.push({ t:s, dp:last === '!' ? .05 : last === '?' ? .03 : 0, dr:last === '!' ? .03 : 0 });
+    });
+    for(let i = 0; i < out.length - 1; i++){ if(!out[i].ij && !out[i + 1].ij && out[i].t.length < 16){ out[i + 1].t = out[i].t + ' ' + out[i + 1].t; out[i + 1].dp = out[i].dp; out.splice(i, 1); i--; } }
+    return out;
   },
   prosody(who, mood){
-    if(who === 'mo') return { pitch:mood === 'aha' ? 1.4 : mood === 'sad' ? 1.1 : 1.25, rate:mood === 'thinking' ? .96 : 1.04 };
-    return { smug:{ pitch:.8, rate:.94 }, hurt:{ pitch:.95, rate:.9 }, angry:{ pitch:.72, rate:1.1 }, laugh:{ pitch:.9, rate:1.04 }, shocked:{ pitch:1.05, rate:1.1 }, idle:{ pitch:.85, rate:1 } }[mood] || { pitch:.85, rate:1 };
+    if(who === 'mo') return { pitch:mood === 'aha' ? 1.25 : mood === 'sad' ? 1.02 : 1.12, rate:mood === 'thinking' ? .94 : mood === 'aha' ? 1.1 : 1.02 };
+    return { smug:{ pitch:.95, rate:.98 }, hurt:{ pitch:1, rate:.92 }, angry:{ pitch:.88, rate:1.08 }, laugh:{ pitch:1.02, rate:1.04 }, shocked:{ pitch:1.12, rate:1.1 }, idle:{ pitch:.95, rate:1 } }[mood] || { pitch:.95, rate:1 };
   },
   speak(who, text, mood, done){
     if(!this.on || !this.ok()){ if(done) done(); return; }
     try{
-      const sy = window.speechSynthesis; sy.cancel();
-      const u = new SpeechSynthesisUtterance(this.say(text)), p = this.prosody(who, mood), v = this.pick(who);
-      if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
-      u.pitch = p.pitch; u.rate = p.rate; u.volume = 1;
-      u.onstart = ()=> setTalk(who, true); u.onend = u.onerror = ()=>{ setTalk(who, false); if(done) done(); };
+      const sy = window.speechSynthesis, tok = ++this.tok; sy.cancel();
+      const parts = this.chunks(this.say(text)), p = this.prosody(who, mood), v = this.pick(who), jit = ()=> Math.random() - .5;
+      if(!parts.length){ if(done) done(); return; }
       if(who === 'nova') SND.play('chirp');
-      sy.speak(u);
+      parts.forEach((ch, i)=>{
+        const u = new SpeechSynthesisUtterance(ch.t);
+        if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+        u.pitch = clamp(p.pitch + jit() * .14 + ch.dp, .6, 1.6); u.rate = clamp(p.rate + jit() * .08 + ch.dr, .7, 1.3); u.volume = 1;
+        if(i === 0) u.onstart = ()=>{ if(tok === VOX.tok) setTalk(who, true); };
+        u.onend = ()=>{ if(tok === VOX.tok && i === parts.length - 1){ setTalk(who, false); if(done) done(); } };
+        u.onerror = ()=>{ if(tok === VOX.tok){ setTalk(who, false); if(done) done(); } };
+        sy.speak(u);
+      });
     }catch(e){ if(done) done(); }
   },
-  stop(){ try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} setTalk('nova', false); setTalk('mo', false); }
+  stop(){ this.tok++; try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){} setTalk('nova', false); setTalk('mo', false); }
 };
 // ----------------------------------------------------------------------------------- colour palettes (pick one with the swatches in the hub or the palette button)
 const PV = a=> `--ca-bg:${a[0]};--ca-bg2:${a[1]};--ca-surf:${a[2]};--ca-surf2:${a[3]};--ca-line:${a[4]};--ca-ink:${a[5]};--ca-mute:${a[6]};--ca-brand:${a[7]};--ca-brand2:${a[8]};--ca-on:${a[9]};--ca-amber:${a[10]};--ca-amber-ink:${a[11]};--ca-amber-bg:${a[12]};--ca-p1:${a[13]};--ca-p2:${a[14]}`;
@@ -785,7 +807,7 @@ function teachGiveUp(){
   const list = missingAsks(T), chat = $('#chat'), d = document.createElement('div'); d.className = 'ca-donecard giveup';
   d.innerHTML = `<b>You gave up. That is okay.</b><p>Mo reached ${Math.round(T.und)}% understanding. Here is what he still wanted to hear about ${esc(MO_LABEL[T.id] || 'this topic')}:</p><ul>${(list.length ? list : ['A clear example, in your own words.']).map(x=> `<li>${esc(x)}</li>`).join('')}</ul><p>+${xp} XP for trying${lv ? ' and a new level' : ''}. Come back when you are ready.</p><div class="ca-actions"><button class="ca-pill primary" data-a="teachgo" data-v="${esc(T.id)}">Try this topic again</button><button class="ca-pill ghost" data-a="teach">Pick another topic</button><button class="ca-pill ghost" data-a="back">Back to hub</button></div>`;
   chat.appendChild(d); const c = $('.ca-compose'); if(c) c.hidden = true;
-  moSay(pick(['It is alright. Even moles need a nap before the tricky bits.','Thanks for trying. I learned something anyway. Next time, maybe.','No worries! I will keep digging at this while you rest.']), 'sad'); chat.scrollTop = chat.scrollHeight;
+  moSay(pick(['Ah, it’s alright. Even moles need a nap before the tricky bits.','Hmm, okay. Thanks for trying, I learned something anyway.','No worries! I’ll keep digging while you rest.']), 'sad'); chat.scrollTop = chat.scrollHeight;
 }
 function teachDone(){
   const T = S.T, P = S.prof, first = P.teachTopics.indexOf(T.id) < 0; if(first) P.teachTopics.push(T.id); P.teach++;
@@ -1592,7 +1614,7 @@ function onClick(e){
     case 'back': return go('hub');
     case 'vox': {
       if(!VOX.ok()) return toast('This browser has no speech voices, so NOVA stays silent.');
-      VOX.on = !VOX.on; setPref(); if(VOX.on){ SND.init(); VOX.load(); const n = pick(['Voice online. Try to keep up.','Speaking now. Do not blink.','Audio engaged, {name}.']); VOX.speak('nova', spin(n, brainCtx()), 'smug'); } else VOX.stop();
+      VOX.on = !VOX.on; setPref(); if(VOX.on){ SND.init(); VOX.load(); const n = pick(['Ei, I’m online! Try to keep up.','Hmm, can you hear me? Good. Don’t blink.','Okay, I’m talking now, {name}.']); VOX.speak('nova', spin(n, brainCtx()), 'smug'); } else VOX.stop();
       $$('[data-a="vox"]').forEach(x=>{ x.setAttribute('aria-pressed', VOX.on); x.querySelector('span').textContent = 'Voice ' + (VOX.on ? 'on' : 'off'); }); return;
     }
     case 'snd': SND.on = !SND.on; setPref(); if(SND.on){ SND.init(); SND.play('ok'); } $$('[data-a="snd"]').forEach(x=> x.setAttribute('aria-pressed', SND.on)); return;
