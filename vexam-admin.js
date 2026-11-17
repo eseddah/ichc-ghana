@@ -259,11 +259,37 @@ function mount(el, sb){
     const clr = ai.querySelector('#aiClear'); if(clr) clr.addEventListener('click', ()=>{ if(!safe()) return; if(!confirm('Remove every question the AI wrote? Questions you wrote yourself stay.')) return; e.questions = e.questions.filter(q=> !q.ai); if(!e.questions.length) e.questions.push(DEFQ('mcq')); st.ai.msg = ''; paintEditor(); });
     B.querySelectorAll('[data-f="correct"]').forEach(x=> x.addEventListener('change', ()=>{ const n = x.closest('.q'); qs[+n.dataset.i].check = false; const er = n.querySelector('.err'); if(er) er.remove(); }));
     B.querySelectorAll('[data-q]').forEach(x=> x.addEventListener('click', ()=>{ if(!safe()) return; const i = +x.closest('.q').dataset.i, a = x.dataset.q; if(a === 'del'){ if(qs.length > 1 || confirm('An exam needs at least one question.')) qs.splice(i, 1); } else if(a === 'dup'){ if(qs.length >= MAXQ){ say(`An exam can have at most ${MAXQ} questions.`, true); return; } qs.splice(i + 1, 0, Object.assign(JSON.parse(JSON.stringify(qs[i])), { id:uid() })); } else if(a === 'up' && i > 0) qs.splice(i - 1, 0, qs.splice(i, 1)[0]); else if(a === 'down' && i < qs.length - 1) qs.splice(i + 1, 0, qs.splice(i, 1)[0]); paintEditor(); }));
+    // Same rules the server applies, checked here first so the problem is named on the spot (and shown next to the question) instead of failing silently.
+    const problems = ()=>{
+      if(String(e.title || '').trim().length < 3) return { msg:'Add a title for the exam (at least 3 characters).', f:'#edTitle' };
+      if(!(Date.parse(e.endAt) > Date.parse(e.startAt))) return { msg:'The closing time must be after the opening time.', f:'#edEnd' };
+      if(!qs.length) return { msg:'Add at least one question.' };
+      if(qs.length > MAXQ) return { msg:`An exam can have at most ${MAXQ} questions. You have ${qs.length}. Remove ${qs.length - MAXQ}.` };
+      for(let i = 0; i < qs.length; i++){
+        const q = qs[i];
+        if(String(q.text || '').trim().length < 3) return { msg:`Question ${i + 1} has no text.`, qi:i };
+        if(q.type === 'mcq'){
+          const o = (q.options || []).slice(0, 4); if(o.length !== 4 || o.some(x=> !String(x || '').trim())) return { msg:`Question ${i + 1} needs all four options filled in.`, qi:i };
+          if(![0, 1, 2, 3].includes(+q.correct)) return { msg:`Question ${i + 1}: choose the correct option.`, qi:i };
+        }
+      }
+      return null;
+    };
+    const flash = (msg, qi, f)=>{
+      say(msg, true); B.querySelectorAll('[data-ve]').forEach(n=> n.remove()); B.querySelectorAll('.q').forEach(n=>{ n.style.outline = ''; });
+      const card = qi != null && qi >= 0 ? B.querySelectorAll('.q')[qi] : null;
+      if(card){ card.style.outline = '2px solid #d33'; card.insertAdjacentHTML('afterbegin', `<div class="err" data-ve>${esc(msg)}</div>`); card.scrollIntoView({ behavior:'smooth', block:'center' }); }
+      else { const t = f && B.querySelector(f); const x = t || R.querySelector('#vxMsg'); if(x){ x.scrollIntoView({ behavior:'smooth', block:'center' }); if(t && t.focus) t.focus(); } }
+    };
+    let busy = false;
     const save = async (publish, force)=>{
-      if(!safe()) return; try{
+      if(busy) return; if(!safe()) return;
+      const pr = problems(); if(pr) return flash(pr.msg, pr.qi, pr.f);
+      busy = true; B.querySelectorAll('#edSave,#edPub').forEach(x=>{ x.disabled = true; }); try{
         const r = await call('save_exam', { exam:Object.assign({}, e, { questions:e.questions.map(q=>{ const c = Object.assign({}, q); delete c.ai; delete c.check; return c; }) }), force:!!force }); e.id = r.id; if(publish){ await call('set_status', { id:r.id, status:'published' }); }
         st.ed = null; await go(); say(publish ? 'Saved and published. Visitors can see it on the Exams page.' : 'Saved.');
-      }catch(x){ if(x.code === 'locked' && confirm(x.message + '\n\nSave the change anyway?')) return save(publish, true); say(x.message, true); }
+      }catch(x){ busy = false; if(x.code === 'locked' && confirm(x.message + '\n\nSave the change anyway?')) return save(publish, true); const m = String(x.message || '').match(/^Question (\d+)/); flash(x.message || 'Could not save. Please try again.', m ? +m[1] - 1 : null); }
+      finally{ busy = false; B.querySelectorAll('#edSave,#edPub').forEach(x=>{ x.disabled = false; }); }
     };
     B.querySelector('#edSave').addEventListener('click', ()=> save(false)); const p = B.querySelector('#edPub'); if(p) p.addEventListener('click', ()=> save(true));
   }
