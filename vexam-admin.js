@@ -230,6 +230,9 @@ function mount(el, sb){
     <div class="g2"><div><label>Opens (your local time)</label><input type="datetime-local" id="edStart" value="${toLocal(e.startAt)}"></div><div><label>Closes (your local time)</label><input type="datetime-local" id="edEnd" value="${toLocal(e.endAt)}"></div><div><label>Attempts per visitor</label><input type="number" id="edAtt" min="1" max="10" value="${e.attempts}"></div><div><label>Leaving the exam: auto-submit after more than (0 = never)</label><input type="number" id="edLim" min="0" max="50" value="${e.settings.leaveLimit || 0}"></div></div>
     <div class="row" style="margin-top:10px"><label class="chk"><input type="checkbox" id="edFs" ${e.settings.fullscreen !== false ? 'checked' : ''}> Require full screen</label><label class="chk"><input type="checkbox" id="edRev" ${e.settings.mcqReview !== false ? 'checked' : ''}> Show right answers after multiple choice submit</label><label class="chk"><input type="checkbox" id="edVer" ${e.settings.verifyEmail ? 'checked' : ''}> Visitors must confirm their email with a code before starting</label><label class="chk"><input type="checkbox" id="edDis" ${e.settings.allowDisputes !== false ? 'checked' : ''}> Visitors can argue their results by message</label></div></div>
     ${aiCardHtml(e)}
+    <div class="card" id="vxTimer"><div class="row sp"><h3>⏱ Timer for every question</h3><span class="sub">Currently about ${Math.round(totalT / 60)} min in total</span></div>
+    <div class="sub" style="margin-bottom:8px">Set one time and apply it to all ${qs.length} question${qs.length === 1 ? '' : 's'} at once. You can still change any single question afterwards.</div>
+    <div class="row" style="align-items:flex-end;gap:10px"><div style="flex:1;min-width:150px;max-width:240px"><label>Seconds per question</label><input type="number" min="10" max="3600" step="10" id="tmAll" placeholder="e.g. 90"></div><button class="btn a" id="tmGo">Apply to all questions</button></div></div>
     <div class="row sp" style="margin:8px 0"><h3>Questions (${qs.length}) of ${MAXQ} max · ${totalM} marks · about ${Math.round(totalT / 60)} min</h3></div>${qHtml}
     <div class="row" style="margin-bottom:14px"><span class="sub">Add:</span>${Object.keys(TLAB).map(t=> `<button class="btn sm" data-add="${t}">${TLAB[t]}</button>`).join('')}</div>
     <div class="row"><button class="btn p" id="edSave">Save</button>${e.status !== 'published' ? '<button class="btn a" id="edPub">Save and publish</button>' : ''}<button class="btn g" id="edCancel">Cancel</button></div>`);
@@ -242,6 +245,13 @@ function mount(el, sb){
     const safe = ()=>{ try{ pull(); return true; }catch(x){ say('Choose valid opening and closing times first.', true); return false; } };
     B.querySelector('#edBack').addEventListener('click', ()=>{ st.ed = null; go(); }); B.querySelector('#edCancel').addEventListener('click', ()=>{ st.ed = null; go(); });
     B.querySelectorAll('[data-add]').forEach(x=> x.addEventListener('click', ()=>{ if(safe()){ if(qs.length >= MAXQ) return say(`An exam can have at most ${MAXQ} questions.`, true); qs.push(DEFQ(x.dataset.add)); paintEditor(); } }));
+    B.querySelector('#tmGo').addEventListener('click', ()=>{
+      const v = Math.round(+B.querySelector('#tmAll').value);
+      if(!(v >= 10 && v <= 3600)) return say('Enter a time between 10 and 3600 seconds.', true);
+      if(!safe()) return;
+      qs.forEach(q=>{ q.timeSec = v; }); paintEditor();
+      say(`Timer set to ${v} seconds for all ${qs.length} question${qs.length === 1 ? '' : 's'}. Remember to save.`);
+    });
     const ai = B.querySelector('#vxAi');
     ai.addEventListener('input', ()=>{ aiReadForm(B); const t = B.querySelector('#aiTot'); if(t) t.textContent = `· ${aiTotal()} to add (${qs.filter(q=> String(q.text || '').trim() || q.ai).length} already in the list, limit ${MAXQ})`; });
     ai.querySelectorAll('[data-aipre]').forEach(x=> x.addEventListener('click', ()=>{ Object.assign(st.ai, AI_PRE[x.dataset.aipre]); AI_FIELDS.forEach(f=>{ ai.querySelector('#ai_' + f[0]).value = st.ai[f[0]]; }); ai.dispatchEvent(new Event('input')); }));
