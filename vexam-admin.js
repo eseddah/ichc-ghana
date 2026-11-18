@@ -119,24 +119,27 @@ function mount(el, sb){
   }
   function aiFromDraft(d){
     const p = aiParseText(d.content), notes = aiParseNotes(d.notes);
+    const V = d.verification || {}, unsure = new Set(V.unresolved || []), sq = Array.isArray(d.questions) ? d.questions : [];
     const qs = p.questions.map((x, i)=>{
       const n = notes[i + 1] || {};
       let type = x.options ? 'mcq' : (AI_LAB[String(n.label || '').toLowerCase()] || 'short'); if(type === 'mcq' && !x.options) type = 'short';
       const t = AI_TYPE[type], q = { id:uid(), type, text:cf(x.text), marks:x.marks || t.m, timeSec:t.s, options:['', '', '', ''], correct:0, scheme:'', answer:'', ai:true };
       if(type === 'mcq'){
         q.options = x.options.map(o=> cf(o));
-        const L = (String(n.answer || '').match(/^\s*\(?([ABCD])\b/i) || [])[1];
-        if(L) q.correct = 'ABCD'.indexOf(L.toUpperCase());
+        const L = (String(n.answer || '').match(/^\s*\(?([ABCD])\b/i) || [])[1], sc = sq[i] && sq[i].correct;
+        if(Number.isInteger(sc) && sc >= 0 && sc < 4) q.correct = sc;
+        else if(L) q.correct = 'ABCD'.indexOf(L.toUpperCase());
         else { const k = q.options.findIndex(o=> o && String(n.answer || '').toLowerCase().includes(o.toLowerCase())); if(k >= 0) q.correct = k; else q.check = true; }
         q.scheme = cf(n.scheme || '');
       } else { q.answer = cf(n.answer || ''); q.scheme = cf(n.scheme || ''); }
+      if(unsure.has(i + 1) || (V.skipped && (type === 'mcq' || type === 'calc'))) q.unsure = true;
       return q;
     });
     return { questions:qs, data:p.data };
   }
   async function aiCall(spec){
     const run = async ()=>{
-      const r = await Promise.race([sb.functions.invoke('exam-ai', { body:{ action:'draft', spec } }), new Promise(res=> setTimeout(()=> res({ error:{ timeout:true } }), 110000))]);
+      const r = await Promise.race([sb.functions.invoke('exam-ai', { body:{ action:'draft', spec } }), new Promise(res=> setTimeout(()=> res({ error:{ timeout:true } }), 140000))]);
       if(r.error){ let m = ''; try{ const j = await r.error.context.json(); m = j.error || ''; }catch(x){} throw new Error(m || 'unavailable'); }
       return r.data;
     };
@@ -174,12 +177,17 @@ function mount(el, sb){
     const flat = []; AI_FIELDS.forEach(f=>{ for(let i = 0; i < A[f[0]]; i++) flat.push(f[0]); });
     const nb = Math.ceil(total / AI_BATCH), batches = []; let pos = 0;
     for(let b = 0; b < nb; b++){ const size = Math.floor(total / nb) + (b < total % nb ? 1 : 0), mix = {}; flat.slice(pos, pos + size).forEach(t=>{ mix[t] = (mix[t] || 0) + 1; }); pos += size; batches.push(mix); }
+    const aiTok = t=> new Set(String(t || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w=> w.length > 2));
+    const aiJac = (a, b)=>{ if(!a.size || !b.size) return 0; let i = 0; a.forEach(x=>{ if(b.has(x)) i++; }); return i / (a.size + b.size - i); };
     const stems = aiStems(qs, Math.max(0, 1380 - A.guide.length - 220)), ready = new Array(nb).fill(null), FATAL = ['quota', 'rate_limited', 'not_configured', 'forbidden', 'not_member'];
-    let flushed = 0, finished = 0, added = 0, firstErr = null, fatal = false;
+    let flushed = 0, finished = 0, added = 0, dupes = 0, firstErr = null, fatal = false;
     const flush = ()=>{
       while(flushed < nb && ready[flushed]){
         const r = ready[flushed]; ready[flushed] = null; flushed++; if(r === 'skip') continue;
-        r.parsed.questions.slice(0, MAXQ - qs.length).forEach(q=>{ qs.push(q); added++; });
+        r.parsed.questions.slice(0, MAXQ - qs.length).forEach(q=>{
+          const tk = aiTok(q.text); if(qs.some(o=> aiJac(tk, aiTok(o.text)) >= 0.55)){ dupes++; return; }
+          qs.push(q); added++;
+        });
         if(r.parsed.data && !e.dataLine && flushed === 1) e.dataLine = r.parsed.data;
       }
     };
@@ -191,7 +199,8 @@ function mount(el, sb){
         await sleep(450 * b); if(fatal) { ready[b] = 'skip'; finished++; return; }
         const cnt = Object.keys(mix).reduce((n, k)=> n + mix[k], 0), marks = Object.keys(mix).reduce((m, k)=> m + mix[k] * AI_TYPE[k].m, 0);
         const note = (nb > 1 ? `This is part ${b + 1} of ${nb} of one larger exam, written alongside the other parts. Cover a different sub-area of the topic from the other parts and vary the question styles. ` : '') + (stems ? `Do not repeat or closely resemble these existing questions: ${stems}.` : '');
-        const spec = { title:e.title.trim(), subject:e.subject.trim(), topics:A.topics, level:A.level, difficulty:A.diff, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt * 1.5)), instructions:(A.guide.trim() + (A.guide.trim() && note ? '\n' : '') + note).slice(0, 1490), dataSheet:A.data && b === 0 && !e.dataLine, previous:'', refine:'' };
+        const pool = A.topics.length ? A.topics : AI_TOPICS, bt = nb > 1 && pool.length > 1 ? [pool[b % pool.length], pool[(b + 1) % pool.length]] : A.topics;
+        const spec = { title:e.title.trim(), subject:e.subject.trim(), topics:bt, level:A.level, difficulty:A.diff, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt * 1.5)), instructions:(A.guide.trim() + (A.guide.trim() && note ? '\n' : '') + note).slice(0, 1490), dataSheet:A.data && b === 0 && !e.dataLine, previous:'', refine:'' };
         try{ const data = await aiCall(spec), parsed = aiFromDraft(data); if(!parsed.questions.length) throw new Error('unavailable'); ready[b] = { parsed }; }
         catch(x){ console.error('AI part failed', b + 1, x); if(!firstErr) firstErr = x; if(x && FATAL.includes(x.message)) fatal = true; ready[b] = 'skip'; }
         finished++; flush();
@@ -199,7 +208,7 @@ function mount(el, sb){
       for(let i = 0; i < nb; i++) if(!ready[i] && i >= flushed) ready[i] = 'skip'; flush();
     }catch(x){ console.error(x); if(!firstErr) firstErr = x; }
     clearInterval(tick); A.busy = false;
-    A.msg = added >= total ? `Added ${added} question${added === 1 ? '' : 's'}. Check them below, then save.` : (added ? `Added ${added} of ${total} questions. ` : 'Nothing was generated. ') + aiErr(firstErr || new Error('unavailable')) + (added ? ' Press Generate again for the rest.' : '');
+    A.msg = (dupes ? `${dupes} repeated question${dupes === 1 ? ' was' : 's were'} left out. ` : '') + (added >= total ? `Added ${added} question${added === 1 ? '' : 's'}. Check them below, then save.` : (added ? `Added ${added} of ${total} questions. ` : 'Nothing was generated. ') + aiErr(firstErr || new Error('unavailable')) + (added ? ' Press Generate again for the rest.' : ''));
     if(st.ed === e){ safe(); paintEditor(); }
   }
   const aiCardHtml = e=>{
@@ -220,6 +229,7 @@ function mount(el, sb){
     shell(); const e = st.ed, qs = e.questions;
     const totalM = qs.reduce((n, q)=> n + (+q.marks || 0), 0), totalT = qs.reduce((n, q)=> n + (+q.timeSec || 0), 0);
     const qHtml = qs.map((q, i)=> `<div class="q" data-i="${i}"><div class="hd"><b>Question ${i + 1} · ${TLAB[q.type]}</b><span class="row"><button class="btn sm g" data-q="up">Up</button><button class="btn sm g" data-q="down">Down</button><button class="btn sm g" data-q="dup">Duplicate</button><button class="btn sm d" data-q="del">Remove</button></span></div>
+      ${q.unsure ? '<div class="err">The AI’s second check could not confirm this answer. Please work it out yourself before publishing.</div>' : ''}
       <label>Question</label><textarea data-f="text" placeholder="Write the question. Chemical formulas like H2O and arrows like -> are formatted for visitors automatically.">${esc(q.text)}</textarea>
       <div class="g2"><div><label>Marks</label><input type="number" min="0.5" max="50" step="0.5" data-f="marks" value="${esc(q.marks)}"></div><div><label>Time for this question (seconds)</label><input type="number" min="10" max="3600" step="10" data-f="timeSec" value="${esc(q.timeSec)}"></div></div>
       ${q.type === 'mcq' ? `${q.check ? '<div class="err">The AI did not make the correct option clear. Please tick the right one.</div>' : ''}<label>Options (tick the correct one)</label>${[0, 1, 2, 3].map(k=> `<div class="opt"><input type="radio" name="c${i}" data-f="correct" value="${k}" ${+q.correct === k ? 'checked' : ''}><input data-f="opt${k}" value="${esc((q.options || [])[k] || '')}" placeholder="Option ${'ABCD'[k]}"></div>`).join('')}<label>Explanation shown after submitting (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>` : `<label>Model answer (shown to the visitor after you release results)</label><textarea data-f="answer">${esc(q.answer || '')}</textarea><label>Marking scheme (optional)</label><textarea data-f="scheme">${esc(q.scheme || '')}</textarea>`}</div>`).join('');
