@@ -1875,8 +1875,8 @@ function alertPriorityBadge(p){
 // An alert's audience is resolved live from the current roster every time it's needed
 // (rather than snapshotted at send time) so a student added to a targeted group later
 // still sees the alert, and one removed from it stops seeing it.
-function resolveAlertAudience(alert){
-  const pool = (alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice()).filter(s=>!ghostedStudent(s));
+function resolveAlertAudience(alert, inactiveOnly){
+  const pool = (alert.coordinatorId ? DB.students.filter(s=>s.coordinatorId===alert.coordinatorId) : DB.students.slice()).filter(s=>inactiveOnly ? ghostedStudent(s) : !ghostedStudent(s));
   const t = alert.target || {scope:'all', groups:[], studentIds:[]};
   if(t.scope==='groups') return pool.filter(s=>s.group && t.groups.includes(s.group));
   if(t.scope==='students') return pool.filter(s=>t.studentIds.includes(s.id));
@@ -2400,6 +2400,11 @@ function practiceQuestionSection(role){
     <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(chemify(p.question))}</div></div>`).join('')}</div>` : ''}`;
 }
 
+// Inactive (locked-out) students who have an email address. Only the Ambassador may email them, and only when she ticks the option.
+function inactiveEmailTargets(coordinatorId){
+  if(!ME || ME.role!=='ambassador') return [];
+  return (coordinatorId ? (DB.students||[]).filter(s=>s.coordinatorId===coordinatorId) : (DB.students||[])).filter(s=>ghostedStudent(s) && pemHasEmail(s));
+}
 function audienceFor(coordinatorId){
   const students = (coordinatorId ? DB.students.filter(s=>s.coordinatorId===coordinatorId) : DB.students).filter(s=>!ghostedStudent(s));
   const coords = coordinatorId ? DB.coordinators.filter(c=>c.id===coordinatorId) : DB.coordinators;
@@ -2407,7 +2412,8 @@ function audienceFor(coordinatorId){
 }
 
 // Every update lets the sender choose email and/or text message. App (push) notifications are automatic for everyone.
-function askChannels(title){
+function askChannels(title, opts){
+  const inactN = (opts && opts.inactiveCount) || 0;
   let saved = null; try{ saved = JSON.parse(localStorage.getItem('ichc_channels') || 'null'); }catch(e){}
   saved = saved || { email:true, sms:false };
   return new Promise(resolve=>{
@@ -2418,11 +2424,12 @@ function askChannels(title){
       <p class="note" style="margin:0 0 12px;" id="chTitle"></p>
       <label class="eb-check"><input type="checkbox" id="chEmail" ${saved.email?'checked':''}> Email</label>
       <label class="eb-check"><input type="checkbox" id="chSms" ${saved.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit)</span></label>
+      ${inactN ? `<label class="eb-check"><input type="checkbox" id="chInact"> Also email ${inactN} inactive account${inactN===1?'':'s'} <span style="color:var(--muted); font-size:12px;">(locked out of the portal, email only)</span></label>` : ''}
       <p class="note" style="margin:10px 0 14px;">&#128276; App notifications on phones and computers go to everyone automatically.</p>
       <div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn ghost small" id="chSkip" type="button">Neither</button><button class="btn teal small" id="chGo" type="button">Send</button></div></div>`;
     document.body.appendChild(o); o.querySelector('#chTitle').textContent = title;
-    const done = ch=>{ try{ localStorage.setItem('ichc_channels', JSON.stringify(ch)); }catch(e){} o.remove(); resolve(ch); };
-    o.querySelector('#chGo').addEventListener('click', ()=>done({ email:o.querySelector('#chEmail').checked, sms:o.querySelector('#chSms').checked }));
+    const done = ch=>{ try{ localStorage.setItem('ichc_channels', JSON.stringify({ email:ch.email, sms:ch.sms })); }catch(e){} o.remove(); resolve(ch); };
+    o.querySelector('#chGo').addEventListener('click', ()=>done({ email:o.querySelector('#chEmail').checked, sms:o.querySelector('#chSms').checked, inactive:!!(o.querySelector('#chInact') && o.querySelector('#chInact').checked && o.querySelector('#chEmail').checked) }));
     o.querySelector('#chSkip').addEventListener('click', ()=>done({ email:false, sms:false }));
   });
 }
@@ -2444,8 +2451,10 @@ async function notifyBroadcast({title, body, coordinatorId, author, role, refId,
 
   const s = DB.settings || {};
 
-  const ch = await askChannels(title);
+  const inactList = (narrowed && audience==='coordinators') ? [] : inactiveEmailTargets(coordinatorId);
+  const ch = await askChannels(title, { inactiveCount: inactList.length });
   if(ch.email) dispatchEmails(recipients, { subject:title, body, author, kind:'announcement' });
+  if(ch.email && ch.inactive && inactList.length) dispatchEmails(inactList, { subject:title, body, author, kind:'announcement', allowInactive:true });
   if(ch.sms && s.webhookUrl){
     recipients.filter(r=>r.phone && r.notifySms).forEach(r=>{
       const isStudent = r.coordinatorId !== undefined;
@@ -2467,8 +2476,10 @@ async function dispatchAlertNotifications(alert){
   const title = `${prefix}: ${alert.title}`;
   const body = alert.actionUrl ? `${alert.message} ${normalizeUrl(alert.actionUrl)}` : alert.message;
 
-  const ch = await askChannels(title);
+  const inactAlert = (ME && ME.role==='ambassador') ? resolveAlertAudience(alert, true).filter(pemHasEmail) : [];
+  const ch = await askChannels(title, { inactiveCount: inactAlert.length });
   if(ch.email) dispatchEmails(targets, { subject:title, body, author:alert.author, kind:'alert' });
+  if(ch.email && ch.inactive && inactAlert.length) dispatchEmails(inactAlert, { subject:title, body, author:alert.author, kind:'alert', allowInactive:true });
   if(ch.sms && s.webhookUrl){
     targets.filter(r=>r.phone && r.notifySms).forEach(r=>{
       queueSmsSend(s.webhookUrl, { to:r.phone, name:r.name, from:alert.author, subject:title, message:withPortalLink(body),
@@ -5073,6 +5084,7 @@ function nlGroups(){
   add('Joining the programme', 'websubs', 'Website newsletter subscribers', (window.WEB_SUBS||[]).map(x=>({ id:'sub:'+x.id, email:x.email, name:x.name||'', unsubToken:x.token })));
   add('Joining the programme', 'applicants', 'Applicants waiting for a decision', apps.filter(a=>a.status!=='interested'));
   add('Joining the programme', 'onboarding', 'Accepted students still onboarding', students.filter(s=>s.stage && s.stage!=='Completed'));
+  if(ME && ME.role==='ambassador'){ const inact = (DB.students||[]).filter(s=>ghostedStudent(s)); if(inact.length) add('Locked-out accounts (optional)', 'inactive', 'Inactive students (locked out of the portal)', inact); }
   return g;
 }
 function nlRecipients(){
@@ -5083,7 +5095,7 @@ function nlRecipients(){
     if(!em){ noEmail++; return; }
     if(r.notifyEmail===false){ off++; return; }
     const isCoord = (DB.coordinators||[]).some(c=>c.id===r.id), isStudent = !isCoord && r.coordinatorId!==undefined;
-    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null, unsubToken: r.unsubToken||null });
+    out.push({ email:r.email.trim(), name:r.name, id:r.id, role: isCoord ? 'coordinator' : (isStudent ? 'student' : 'applicant'), coordinatorId: isStudent ? (r.coordinatorId||null) : null, unsubToken: r.unsubToken||null, inactive: g.key==='inactive' });
   }));
   return { list:out, noEmail, off };
 }
@@ -5226,16 +5238,17 @@ function wireNewsletter(){
 function nlQueue(rec, isTest){
   const subject = NL.subject.trim(), html = nlBuildEmail(NL, rec), text = nlBuildText(NL, rec), s = DB.settings || {};
   const useServer = s.emailMode !== 'emailjs' && typeof sbReady !== 'undefined' && sbReady;
-  const fallback = ()=>dispatchEmails([Object.assign({}, rec, { notifyEmail:true })], { subject, body:text, author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', noPortalLink:true });
+  const fallback = ()=>dispatchEmails([Object.assign({}, rec, { notifyEmail:true })], { subject, body:text, author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', noPortalLink:true, allowInactive:!!rec.inactive });
   if(!useServer){ fallback(); return; }
-  queueServerEmail({ to:rec.email, name:rec.name, subject, message:text, html, layout:'newsletter', author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', replyTo: ME && ME.email,
+  queueServerEmail({ ...(rec.inactive ? { allowInactive:true } : {}), to:rec.email, name:rec.name, subject, message:text, html, layout:'newsletter', author:ME.name, kind: isTest ? 'newsletter-test' : 'newsletter', replyTo: ME && ME.email,
     recipientId:rec.id, recipientRole:rec.role, studentCoordinatorId:rec.coordinatorId||null }, fallback);
 }
 async function nlSend(){
   if(NL.sending) return; const r = nlRecipients(); if(!r.list.length) return;
   if(!NL.subject.trim()){ NL.status = { ok:false, msg:'Add an email subject first.' }; return nlRefresh(); }
   if(!NL.blocks.some(b=>b.title.trim()||b.body.trim())){ NL.status = { ok:false, msg:'Add at least one item to the newsletter.' }; return nlRefresh(); }
-  if(!confirm(`Send "${NL.subject.trim()}" to ${r.list.length} ${r.list.length===1?'person':'people'}? Each person gets their own email. Have you sent yourself a test?`)) return;
+  const nIn = r.list.filter(x=>x.inactive).length;
+  if(!confirm(`Send "${NL.subject.trim()}" to ${r.list.length} ${r.list.length===1?'person':'people'}? Each person gets their own email.${nIn ? ` ${nIn} of them ${nIn===1?'is an inactive account':'are inactive accounts'} locked out of the portal.` : ''} Have you sent yourself a test?`)) return;
   NL.sending = true; nlRefresh();
   r.list.forEach(rec=>nlQueue(rec,false));
   const groups = nlGroups().filter(g=>NL.sel[g.key]).map(g=>g.label), content = {}; NL_FIELDS.forEach(k=>content[k] = JSON.parse(JSON.stringify(NL[k])));
