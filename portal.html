@@ -1277,6 +1277,7 @@ try{
   if(sbReady && sb.functions && typeof sb.functions.invoke==='function'){
     const _invoke = sb.functions.invoke.bind(sb.functions);
     sb.functions.invoke = (name, opts)=>{
+      try{ if(name==='send-email' && opts && opts.body && opts.body.allowInactive){ const { allowInactive, ...rest } = opts.body; return _invoke(name, Object.assign({}, opts, { body: rest })); } }catch(e){}
       try{ if((name==='send-email' || name==='send-sms') && opts && opts.body && ghostedId(opts.body.recipientId)) return Promise.resolve({ data:{ ok:true, skipped:'inactive' }, error:null }); }catch(e){}
       return _invoke(name, opts);
     };
@@ -1783,7 +1784,7 @@ window.addEventListener('focus', ()=>{ if(ME) pollLive(true); });
 // each, so a broadcast to many recipients doesn't get rate-limited.
 let _emailQueue = Promise.resolve();
 function queueEmailSend(payload, meta){
-  if(meta && ghostedId(meta.recipientId)) return Promise.resolve();
+  if(meta && !meta.allowInactive && ghostedId(meta.recipientId)) return Promise.resolve();
   const logResult = (status, detail)=>{
     if(!meta || typeof sbReady === 'undefined' || !sbReady) return;
     try{ sb.rpc('append_kv_item', { p_key:'email:log', p_item:{ id:(crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()), to:payload.template_params.to_email, name:meta.name||null, subject:meta.subject||'', message:String(meta.message||'').slice(0,1500), author:meta.author||null, kind:meta.kind||null, recipientId:meta.recipientId||null, recipientRole:meta.recipientRole||null, studentCoordinatorId:meta.studentCoordinatorId||null, via:'emailjs', status, detail, ts:Date.now() } }).then(()=>{}, ()=>{}); }catch(e){}
@@ -4268,7 +4269,7 @@ document.addEventListener('click', e=>{ const b = e.target.closest('[data-share-
 // ---- Server email (Brevo): branded, logged, resendable. Falls back to EmailJS when the server is not set up ----
 let _srvEmailQueue = Promise.resolve();
 function queueServerEmail(payload, fallback){
-  if(payload && ghostedId(payload.recipientId)) return;
+  if(payload && !payload.allowInactive && ghostedId(payload.recipientId)) return;
   _srvEmailQueue = _srvEmailQueue.then(async ()=>{
     try{
       const { error } = await sb.functions.invoke('send-email', { body: payload });
@@ -4280,7 +4281,7 @@ function queueServerEmail(payload, fallback){
     await new Promise(r=>setTimeout(r, 400));
   });
 }
-function dispatchEmails(list, { subject, body, author, kind, noPortalLink }){
+function dispatchEmails(list, { subject, body, author, kind, noPortalLink, allowInactive }){
   const msgText = noPortalLink ? body : withPortalLink(body);
   const s = DB.settings || {};
   const targets = list.filter(r=>r.email && r.notifyEmail!==false);
@@ -4290,12 +4291,12 @@ function dispatchEmails(list, { subject, body, author, kind, noPortalLink }){
     if(s.emailjsPublicKey && s.emailjsServiceId && s.emailjsTemplateId)
       queueEmailSend({ service_id:s.emailjsServiceId, template_id:s.emailjsTemplateId, user_id:s.emailjsPublicKey,
         template_params:{ to_email:r.email, to_name:r.name, from_name:author, subject, message:msgText } },
-        { name:r.name, subject, message:msgText, author, kind:kind||'', recipientId:r.id, recipientRole:r.role || (isStudent?'student':'coordinator'), studentCoordinatorId:isStudent ? r.coordinatorId : null });
+        { allowInactive:!!allowInactive, name:r.name, subject, message:msgText, author, kind:kind||'', recipientId:r.id, recipientRole:r.role || (isStudent?'student':'coordinator'), studentCoordinatorId:isStudent ? r.coordinatorId : null });
   };
   targets.forEach(r=>{
     if(!useServer){ viaJs(r); return; }
     const isStudent = r.coordinatorId !== undefined;
-    queueServerEmail({ to:r.email, name:r.name, subject, message:msgText, author, kind: kind||'', replyTo: ME && ME.email,
+    queueServerEmail({ ...(allowInactive ? { allowInactive:true } : {}), to:r.email, name:r.name, subject, message:msgText, author, kind: kind||'', replyTo: ME && ME.email,
       recipientId:r.id, recipientRole: r.role || (isStudent ? 'student' : 'coordinator'), studentCoordinatorId: isStudent ? r.coordinatorId : null }, ()=>viaJs(r));
   });
 }
@@ -4505,21 +4506,23 @@ const BC = {
   sms:{ sel:{}, search:'', group:'all', onlyContact:true, draft:'', sign:true, link:false, sending:false, status:null },
   email:{ sel:{}, search:'', group:'all', onlyContact:true, subject:'', body:'', sign:true, link:false, sending:false, status:null }
 };
+function bcInactiveWhy(rec){ const a = studentAccess(rec); return a.reason==='blocked' ? 'switched off' : a.reason==='idle' ? `not seen for ${a.days} days` : 'never joined'; }
 function bcPeople(mode){
   const hasC = mode==='sms' ? psmsHasPhone : pemHasEmail;
+  const canInact = mode==='email' && !!ME && ME.role==='ambassador';   // only the Ambassador can email inactive accounts
   const mk = (rec, kind)=>{
-    const ok = hasC(rec), second = kind==='student' && isNewFlow(rec);
-    return { key:(kind==='student' ? 's:' : 'c:') + rec.id, kind, set: kind==='coordinator' ? 'coordinator' : (second ? 'second' : 'first'), rec,
+    const ok = hasC(rec), second = kind==='student' && isNewFlow(rec), inact = canInact && kind==='student' && ghostedStudent(rec);
+    return { key:(kind==='student' ? 's:' : 'c:') + rec.id, kind, set: kind==='coordinator' ? 'coordinator' : (inact ? 'inactive' : (second ? 'second' : 'first')), rec,
       name: rec.name || (kind==='student' ? 'Unnamed student' : 'Unnamed coordinator'), ok,
       off: ok && (mode==='sms' ? !rec.notifySms : rec.notifyEmail===false),
-      sub: ok ? (mode==='sms' ? rec.phone : rec.email) : (mode==='sms' ? 'No phone number on file' : 'No email address on file') };
+      sub: (inact ? 'Inactive · ' + bcInactiveWhy(rec) + ' · ' : '') + (ok ? (mode==='sms' ? rec.phone : rec.email) : (mode==='sms' ? 'No phone number on file' : 'No email address on file')) };
   };
-  return (DB.coordinators||[]).map(c=>mk(c,'coordinator')).concat((DB.students||[]).filter(s=>!ghostedStudent(s)).map(s=>mk(s,'student')))
+  return (DB.coordinators||[]).map(c=>mk(c,'coordinator')).concat((DB.students||[]).filter(s=>canInact || !ghostedStudent(s)).map(s=>mk(s,'student')))
     .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
 }
 function bcShown(mode){
   const S = BC[mode], term = S.search.trim().toLowerCase();
-  return bcPeople(mode).filter(p=>S.group==='all' || p.set===S.group)
+  return bcPeople(mode).filter(p=>S.group==='all' ? p.set!=='inactive' : p.set===S.group)
     .filter(p=>!S.onlyContact || p.ok)
     .filter(p=>!term || [p.rec.name, p.rec.email, p.rec.phone, p.rec.group, p.kind==='student' ? coordName(p.rec.coordinatorId) : ''].some(v=>String(v||'').toLowerCase().includes(term)));
 }
@@ -4529,7 +4532,7 @@ function bcListHtml(mode){
   if(!(DB.students||[]).length && !(DB.coordinators||[]).length) return '<div class="empty">No students or coordinators yet.</div>';
   const rows = bcShown(mode);
   if(!rows.length) return '<div class="empty">Nobody matches. Try another search or filter.</div>';
-  return [['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set (new applicants)']].map(([k,t])=>{
+  return (S.group==='inactive' && mode==='email' ? '<p class="note" style="margin:0 0 10px;">These accounts are locked out of the portal (not seen for 14 days, switched off, or never joined). Nothing else in the portal reaches them, so this email is how they hear from you.</p>' : '') + [['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set (new applicants)'],['inactive','Inactive accounts']].map(([k,t])=>{
     const r = rows.filter(p=>p.set===k); if(!r.length) return '';
     const n = r.filter(p=>S.sel[p.key]).length;
     return `<div class="bc-sec">${t}<span>${n} of ${r.length} ticked</span></div>` + r.map(p=>{
@@ -4544,9 +4547,9 @@ function bcListHtml(mode){
 function bcToHtml(mode){
   const sel = bcSelected(mode), word = mode==='sms' ? 'text' : 'email';
   if(!sel.length) return `<div class="psms-empty">Tick the students and/or coordinators you want to ${word} from the list.</div>`;
-  const st = sel.filter(p=>p.kind==='student'), co = sel.filter(p=>p.kind==='coordinator'), two = st.filter(p=>p.set==='second').length;
+  const st = sel.filter(p=>p.kind==='student'), co = sel.filter(p=>p.kind==='coordinator'), two = st.filter(p=>p.set==='second').length, inactN = st.filter(p=>p.set==='inactive').length;
   const names = sel.slice(0,4).map(p=>escapeHtml(psmsFirst(p.rec))).join(', ') + (sel.length>4 ? ` and ${sel.length-4} more` : '');
-  return `<div class="psms-to-name">${sel.length} ${sel.length===1?'person':'people'} selected</div><div class="psms-to-sub">${st.length} student${st.length===1?'':'s'} (${st.length-two} first set, ${two} second set) · ${co.length} coordinator${co.length===1?'':'s'}</div><div class="psms-to-sub">${names}</div>`;
+  return `<div class="psms-to-name">${sel.length} ${sel.length===1?'person':'people'} selected</div><div class="psms-to-sub">${st.length} student${st.length===1?'':'s'} (${st.length-two-inactN} first set, ${two} second set${inactN ? ', ' + inactN + ' inactive' : ''}) · ${co.length} coordinator${co.length===1?'':'s'}</div><div class="psms-to-sub">${names}</div>`;
 }
 function bcSmsText(rec){
   let t = BC.sms.draft.trim().replace(/\{name\}/g, psmsFirst(rec)); if(!t) return '';
@@ -4557,6 +4560,7 @@ function bcSmsText(rec){
 function bcView(mode){
   const sms = mode==='sms', S = BC[mode], word = sms ? 'text' : 'email';
   const chips = [['all','Everyone'],['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set']];
+  if(!sms && ME && ME.role==='ambassador'){ const nIn = bcPeople('email').filter(p=>p.set==='inactive' && p.ok).length; chips.push(['inactive','Inactive accounts' + (nIn ? ` (${nIn})` : '')]); }
   return `
   <div class="section-title"><div><h2>${sms?'Text people':'Email people'}</h2><p>Pick the students and/or coordinators you want to ${word}. Everyone you tick gets their own ${word}, and nobody sees who else received it. Type {name} where you want each person's first name.</p></div></div>
   ${sms && !psmsSmsOn() ? `<p class="note" style="margin-bottom:14px;">Text messaging isn't connected yet. Add the SMS webhook in Settings, then come back to send.</p>` : ''}
@@ -4610,7 +4614,11 @@ async function bcSend(mode){
   const off = list.filter(p=>p.off);
   if(off.length && !confirm(`${off.length} of the ${list.length} people you picked have ${word} updates turned off. Press OK to ${word} them as well, or Cancel to skip them.`)) list = list.filter(p=>!p.off);
   if(!list.length) return;
+  if(!sms && !(ME && ME.role==='ambassador')) list = list.filter(p=>p.set!=='inactive');
+  if(!list.length) return;
   if(list.length>1 && !confirm(`Send this ${word} to ${list.length} people? Each person gets their own ${word}.`)) return;
+  const inactSel = sms ? [] : list.filter(p=>p.set==='inactive');
+  if(inactSel.length && !confirm(`${inactSel.length} of the ${list.length} are inactive accounts, locked out of the portal. They will still get this email. Press OK to send, or Cancel to go back.`)) return;
   S.sending = true; S.status = null; bcRefresh(mode);
   if(sms){
     let sent = 0; const failed = [];
@@ -4630,7 +4638,7 @@ async function bcSend(mode){
     list.forEach(p=>{
       let message = S.body.trim().replace(/\{name\}/g, psmsFirst(p.rec));
       if(S.sign && ME && ME.name) message += `\n\n${ME.name}`;
-      dispatchEmails([Object.assign({}, p.rec, { notifyEmail:true })], { subject:S.subject.trim(), body:message, author:ME.name, kind:'personal', noPortalLink: !S.link });
+      dispatchEmails([Object.assign({}, p.rec, { notifyEmail:true })], { subject:S.subject.trim(), body:message, author:ME.name, kind:'personal', noPortalLink: !S.link, allowInactive: p.set==='inactive' });
     });
     S.sending = false;
     S.status = { ok:true, msg:`${list.length} email${list.length===1?'':'s'} queued. They go out one after another, and each result will appear under Recent personal emails and in the Email Log.` };
