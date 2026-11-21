@@ -217,31 +217,116 @@
       sb.from('series_email_log').select('*').order('at', { ascending: false }).limit(8)]);
     if (t.error || !t.data) { root.innerHTML = '<div class="card"><p class="note">Could not load the email settings.</p></div>'; return; }
     const T = t.data, L = lg.data || [];
-    root.innerHTML = `<div class="card" style="margin-bottom:18px;"><h3 style="margin:0 0 4px;">Confirmation email</h3>
-      <p class="note" style="margin:0 0 8px;">Sent automatically to everyone who completes the sign-up form. <b>{details}</b> fills in what they chose (session, topic or talk). ${HELP}</p>
-      <label style="display:flex;gap:8px;align-items:center;margin:8px 0;"><input type="checkbox" data-t-on ${T.enabled ? 'checked' : ''}> Send the confirmation email automatically</label>
-      <label style="display:block;margin-top:8px;">Subject<input data-t-sub value="${esc(T.subject)}" maxlength="150" style="width:100%;"></label>
-      <label style="display:block;margin-top:8px;">Message<textarea data-t-body rows="9" maxlength="4000" style="width:100%;">${esc(T.body)}</textarea></label>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-        <button class="btn amber small" type="button" data-t-save>Save confirmation email</button>
-        <button class="btn ghost small" type="button" data-t-test>Email me a preview</button></div>
-      <p class="note" data-t-note style="margin:10px 0 0;"></p></div>
+    if (!document.getElementById('sem-css')) {
+      const st = document.createElement('style'); st.id = 'sem-css';
+      st.textContent = `
+.sem{display:grid;gap:22px}
+.sem-card{background:#fff;border:1px solid #DDD8C9;border-radius:18px;box-shadow:0 1px 2px rgba(15,36,56,.04),0 14px 30px -24px rgba(15,36,56,.35);overflow:hidden}
+.sem-head{display:flex;gap:14px;align-items:center;padding:18px 24px;border-bottom:1px solid #DDD8C9;background:linear-gradient(#fff,#FBFAF6)}
+.sem-ico{flex:none;width:42px;height:42px;border-radius:12px;background:#0F2438;color:#E39A3B;display:grid;place-items:center}
+.sem-ico svg{width:20px;height:20px}
+.sem-head h3{margin:0;font-size:17px;color:#0A1826}
+.sem-head p{margin:3px 0 0;font-size:13.5px;color:#6B7280;line-height:1.45}
+.sem-body{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+.sem-form{padding:22px 24px;display:grid;gap:16px;align-content:start}
+.sem-prev{padding:22px 24px;background:#F4F1E8;border-left:1px solid #DDD8C9}
+@media(max-width:900px){.sem-body{grid-template-columns:1fr}.sem-prev{border-left:0;border-top:1px solid #DDD8C9}}
+.sem-sec{font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#C97F22;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.sem-sec b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#0F2438;color:#fff;font-size:11px;letter-spacing:0}
+.sem-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:560px){.sem-grid{grid-template-columns:1fr}}
+.sem-form label{margin:0}
+.sem-form label>span{display:block;margin-bottom:6px}
+.sem-form input[type=text],.sem-form input:not([type]),.sem-form select,.sem-form textarea{width:100%}
+.sem-form textarea{min-height:170px;line-height:1.55;resize:vertical}
+.sem-switch{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid #DDD8C9;border-radius:12px;background:#FBFAF6;text-transform:none!important;letter-spacing:0!important;font-size:14px!important;color:#1B2430!important;font-weight:600!important}
+.sem-switch input{width:18px;height:18px;accent-color:#E39A3B;flex:none}
+.sem-hint{font-size:12.5px;color:#6B7280;line-height:1.5;margin:0}
+.sem-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sem-tags code{font-size:12px;background:#F4F1E8;border:1px solid #DDD8C9;border-radius:6px;padding:2px 7px;color:#0F2438}
+.sem-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding-top:4px}
+.sem-note{font-size:13px;color:#6B7280;margin:0;min-height:18px}
+.sem-count{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#0F2438;background:#FFF4E0;border:1px solid #F0D3A0;border-radius:999px;padding:6px 14px}
+.sem-who{border:1px solid #DDD8C9;border-radius:12px;background:#FBFAF6;padding:10px 12px;display:none}
+.sem-who summary{cursor:pointer;font-size:13px;font-weight:600;color:#0F2438}
+.sem-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:170px;overflow:auto}
+.sem-chip{display:inline-flex;align-items:center;gap:8px;padding:3px 11px 3px 3px;border-radius:999px;background:#fff;border:1px solid #DDD8C9;font-size:13px;color:#1B2430}
+.sem-av{width:24px;height:24px;border-radius:50%;background:#0F2438;color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center}
+.sem-ptitle{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6B7280}
+.sem-ptitle em{font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;font-size:12px}
+.sem-mail{background:#fff;border:1px solid #DDD8C9;border-radius:14px;overflow:hidden;box-shadow:0 18px 30px -24px rgba(15,36,56,.5)}
+.sem-mmeta{padding:12px 18px;border-bottom:1px solid #EEE9DA;font-size:12.5px;color:#6B7280;display:grid;gap:3px}
+.sem-mmeta b{color:#1B2430;font-weight:600}
+.sem-mtop{background:#0F2438;padding:20px 22px 18px}
+.sem-mtop small{display:block;color:#E39A3B;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.sem-mtop div{color:#fff;font-size:17px;font-weight:700;line-height:1.3}
+.sem-mbody{padding:20px 22px;font-size:14px;line-height:1.65;color:#1B2430;white-space:pre-wrap;word-break:break-word;min-height:120px}
+.sem-mfoot{padding:14px 22px;background:#FBFAF6;border-top:1px solid #EEE9DA;font-size:11.5px;color:#6B7280;line-height:1.5}
+.sem-flag{display:flex;height:5px}.sem-flag i{flex:1}.sem-flag i:nth-child(1){background:#CE1126}.sem-flag i:nth-child(2){background:#FCD116}.sem-flag i:nth-child(3){background:#006B3F}
+.sem-log{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:13.5px}
+.sem-log li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;padding:10px 12px;border:1px solid #EEE9DA;border-radius:10px;background:#FBFAF6}
+.sem-log .t{font-size:12px;color:#6B7280}
+.sem-tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;background:#E7F4EC;color:#0B6B3A}
+.sem-tag.p{background:#EEF1F6;color:#41506B}.sem-tag.f{background:#FDECEA;color:#B42318}
+`;
+      document.head.appendChild(st);
+    }
+    const ICON_MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+    const ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>';
+    const TAGS = '<div class="sem-tags"><code>{first_name}</code><code>{full_name}</code><code>{email}</code><code>{country}</code></div>';
+    const mockup = id => `<div class="sem-ptitle">Live preview <em>Example with a sample name</em></div>
+      <div class="sem-mail"><div class="sem-mmeta"><span><b>To:</b> <span data-${id}-to></span></span><span><b>Subject:</b> <span data-${id}-psub></span></span></div>
+        <div class="sem-mtop"><small>Chemistry Series</small><div data-${id}-psub2></div></div>
+        <div class="sem-mbody" data-${id}-pbody></div>
+        <div class="sem-mfoot">You are receiving this because you signed up for the Chemistry Series.</div><div class="sem-flag"><i></i><i></i><i></i></div></div>
+      <p class="sem-hint" style="margin-top:10px;">An approximate preview. Use “Email me a preview” to see the real email in your inbox.</p>`;
+    const logHtml = L.length ? `<div class="sem-card"><div class="sem-head"><div><h3>Recently sent</h3><p>The last ${L.length} emails sent from this page.</p></div></div><div class="sem-form"><ul class="sem-log">` + L.map(x => {
+      const prev = x.kind === 'test';
+      return `<li><span class="sem-tag ${prev ? 'p' : ''}">${prev ? 'Preview' : x.recipients + ' sent'}</span>${!prev && x.failed ? `<span class="sem-tag f">${x.failed} failed</span>` : ''}<b>${esc(x.subject)}</b><span class="t">${esc(when(x.at))} · by ${esc(x.by_email)}</span></li>`;
+    }).join('') + '</ul></div></div>' : '';
 
-      <div class="card"><h3 style="margin:0 0 4px;">Email the people who signed up</h3>
-      <p class="note" style="margin:0 0 8px;">Send an announcement, session details or a reminder. ${HELP}</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <select data-m-intent><option value="">Everyone</option><option value="attend">Attending</option><option value="suggest">Suggested a topic</option><option value="speak">Speakers</option></select>
-        <select data-m-status><option value="">Any status</option>${STATUS.map(s => `<option value="${s}">${cap(s)}</option>`).join('')}</select>
-        <input data-m-country placeholder="Country (optional)" style="min-width:170px;"></div>
-      <p class="note" data-m-count style="margin:8px 0;"></p>
-      <label style="display:block;">Subject<input data-m-sub maxlength="150" style="width:100%;"></label>
-      <label style="display:block;margin-top:8px;">Message<textarea data-m-body rows="8" maxlength="5000" style="width:100%;" placeholder="Hi {first_name},"></textarea></label>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-        <button class="btn ghost small" type="button" data-m-test>Email me a preview</button>
-        <button class="btn amber small" type="button" data-m-send>Send</button></div>
-      <p class="note" data-m-note style="margin:10px 0 0;"></p>
-      ${L.length ? '<details style="margin-top:12px;"><summary><b>Recently sent</b></summary><ul style="margin:8px 0 0 18px;padding:0;font-size:13.5px;">' + L.map(x => `<li>${esc(when(x.at))}: ${esc(x.kind === 'test' ? 'Preview' : x.recipients + ' sent' + (x.failed ? ', ' + x.failed + ' failed' : ''))} · “${esc(x.subject)}” · by ${esc(x.by_email)}</li>`).join('') + '</ul></details>' : ''}</div>`;
+    root.innerHTML = `<div class="sem">
+      <div class="sem-card"><div class="sem-head"><div class="sem-ico">${ICON_MAIL}</div><div><h3>Confirmation email</h3><p>Sent automatically to everyone who completes the sign-up form.</p></div></div>
+        <div class="sem-body"><div class="sem-form">
+          <label class="sem-switch"><input type="checkbox" data-t-on ${T.enabled ? 'checked' : ''}> Send the confirmation email automatically</label>
+          <label><span>Subject</span><input data-t-sub value="${esc(T.subject)}" maxlength="150"></label>
+          <label><span>Message</span><textarea data-t-body maxlength="4000">${esc(T.body)}</textarea></label>
+          <p class="sem-hint"><b>{details}</b> fills in what they chose (session, topic or talk). You can also use:</p>${TAGS}
+          <div class="sem-actions"><button class="btn amber small" type="button" data-t-save>Save confirmation email</button><button class="btn ghost small" type="button" data-t-test>Email me a preview</button></div>
+          <p class="sem-note" data-t-note></p></div>
+          <div class="sem-prev">${mockup('t')}</div></div></div>
 
+      <div class="sem-card"><div class="sem-head"><div class="sem-ico">${ICON_SEND}</div><div><h3>Email the people who signed up</h3><p>Send an announcement, session details or a reminder. Each person gets their own name filled in.</p></div></div>
+        <div class="sem-body"><div class="sem-form">
+          <div><p class="sem-sec"><b>1</b> Choose who receives it</p>
+            <div class="sem-grid">
+              <label><span>Joining as</span><select data-m-intent><option value="">Everyone</option><option value="attend">Attending</option><option value="suggest">Suggested a topic</option><option value="speak">Speakers</option></select></label>
+              <label><span>Status</span><select data-m-status><option value="">Any status</option>${STATUS.map(s => `<option value="${s}">${cap(s)}</option>`).join('')}</select></label>
+              <label><span>Country</span><input data-m-country placeholder="Optional"></label></div>
+            <p style="margin:12px 0 8px;"><span class="sem-count" data-m-count>Counting…</span></p>
+            <details class="sem-who" data-m-namesbox><summary>See who will receive it</summary><div class="sem-chips" data-m-names></div></details></div>
+          <div><p class="sem-sec"><b>2</b> Write your message</p>
+            <label style="display:block;margin-bottom:12px;"><span>Subject</span><input data-m-sub maxlength="150" placeholder="e.g. Your Chemistry Series session details"></label>
+            <label><span>Message</span><textarea data-m-body maxlength="5000" placeholder="Hi {first_name},"></textarea></label>
+            <p class="sem-hint" style="margin-top:8px;">Personalise with:</p>${TAGS}</div>
+          <div><p class="sem-sec"><b>3</b> Send</p>
+            <div class="sem-actions"><button class="btn ghost small" type="button" data-m-test>Email me a preview</button><button class="btn amber small" type="button" data-m-send>Send to everyone selected</button></div>
+            <p class="sem-note" data-m-note style="margin-top:10px;"></p></div></div>
+          <div class="sem-prev">${mockup('m')}</div></div></div>
+      ${logHtml}</div>`;
+
+    // Live previews: fill the placeholders with a sample person so the layout can be judged as you type.
+    const fillTpl = (t, v) => esc(t).replace(/\{(first_name|full_name|email|country|details)\}/g, (m, k) => esc(v[k] || m));
+    const sample = () => { const n = (names[0] || 'Ama Mensah'); return { first_name: n.split(' ')[0], full_name: n, email: 'name@example.com', country: 'Ghana', details: 'Session: January 2027' }; };
+    const paint = (id, subSel, bodySel, fallbackSub) => {
+      const v = sample(), sub = $(root, subSel).value.trim() || fallbackSub, body = $(root, bodySel).value;
+      $(root, `[data-${id}-to]`).textContent = v.full_name + ' <' + v.email + '>';
+      $(root, `[data-${id}-psub]`).innerHTML = fillTpl(sub, v); $(root, `[data-${id}-psub2]`).innerHTML = fillTpl(sub, v);
+      $(root, `[data-${id}-pbody]`).innerHTML = body.trim() ? fillTpl(body, v) : '<span style="color:#9AA1AC;">Your message appears here as you type.</span>';
+    };
+    const repaint = () => { paint('t', '[data-t-sub]', '[data-t-body]', 'Your subject'); paint('m', '[data-m-sub]', '[data-m-body]', 'Your subject'); };
+
+    let names = [];
     const say = (sel, text, bad) => { const n = $(root, sel); n.textContent = text; n.style.color = bad ? '#B42318' : ''; };
     const busy = (btn, on, label) => { btn.disabled = on; if (label) btn.textContent = on ? 'Working…' : label; };
     const aud = () => ({ intent: $(root, '[data-m-intent]').value, status: $(root, '[data-m-status]').value, country: $(root, '[data-m-country]').value.trim() });
@@ -263,14 +348,22 @@
 
     const recount = async () => {
       const a = aud();
-      let q = sb.from('series_signups').select('id', { count: 'exact', head: true }).eq('consent', true);
+      let q = sb.from('series_signups').select('id,full_name', { count: 'exact' }).eq('consent', true).order('full_name', { ascending: true }).limit(500);
       if (a.intent) q = q.eq('intent', a.intent); if (a.status) q = q.eq('status', a.status); if (a.country) q = q.eq('country', a.country);
-      const { count, error } = await q;
-      say('[data-m-count]', error ? '' : (count || 0) + (count === 1 ? ' person matches.' : ' people match.'));
+      const { data, count, error } = await q;
+      names = error ? [] : (data || []).map(r => (r.full_name || '').trim()).filter(Boolean);
+      say('[data-m-count]', error ? '' : (count || 0) + (count === 1 ? ' person will receive this' : ' people will receive this'));
+      const box = $(root, '[data-m-namesbox]'), ol = $(root, '[data-m-names]');
+      const ini = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+      ol.innerHTML = names.map(n => '<span class="sem-chip"><span class="sem-av">' + esc(ini(n)) + '</span>' + esc(n) + '</span>').join('');
+      box.style.display = names.length ? 'block' : 'none';
+      repaint();
       return count || 0;
     };
     ['[data-m-intent]', '[data-m-status]'].forEach(s => $(root, s).addEventListener('change', recount));
     $(root, '[data-m-country]').addEventListener('change', recount);
+    ['[data-t-sub]', '[data-t-body]', '[data-m-sub]', '[data-m-body]'].forEach(q => $(root, q).addEventListener('input', repaint));
+    repaint();
     recount();
 
     $(root, '[data-m-test]').addEventListener('click', async e => {
@@ -285,14 +378,15 @@
       if (subject.length < 3 || message.length < 3) return say('[data-m-note]', 'Write a subject and a message first.', true);
       const n = await recount();
       if (!n) return say('[data-m-note]', 'No one matches that audience.', true);
-      if (!confirm('Send this email to ' + n + (n === 1 ? ' person?' : ' people?') + ' This cannot be undone.')) return;
-      busy(b, true, 'Send'); say('[data-m-note]', 'Sending… keep this page open.');
+      const preview = names.slice(0, 15).join(', ') + (names.length > 15 ? ' and ' + (names.length - 15) + ' more' : '');
+      if (!confirm('Send this email to ' + n + (n === 1 ? ' person' : ' people') + (preview ? ':\n\n' + preview : '') + '\n\nThis cannot be undone.')) return;
+      busy(b, true, 'Send to everyone selected'); say('[data-m-note]', 'Sending… keep this page open.');
       try {
         const r = await callMail(sb, { action: 'send', subject, message, audience: aud() });
-        say('[data-m-note]', 'Done: ' + r.sent + ' sent' + (r.failed ? ', ' + r.failed + ' could not be delivered.' : '.'), !!r.failed);
+        say('[data-m-note]', 'Done: ' + r.sent + ' sent' + (r.failed ? ', ' + r.failed + ' could not be delivered.' : '.') + (names.length ? ' Sent to: ' + names.join(', ') + '.' : ''), !!r.failed);
         setTimeout(() => emailCard(root, sb), 2500);
       } catch (x) { say('[data-m-note]', x.message, true); }
-      busy(b, false, 'Send');
+      busy(b, false, 'Send to everyone selected');
     });
   }
 

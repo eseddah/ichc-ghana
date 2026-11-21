@@ -157,13 +157,13 @@ const REQ = new Set(['full_name', 'email', 'country', 'institution', 'role', 'ro
 const star = n => REQ.has(n) ? el('span', { class: 'req', 'aria-hidden': 'true' }, '*') : '';
 const reqNote = () => el('p', { class: 'reqnote' }, el('span', { class: 'req', 'aria-hidden': 'true' }, '*'), 'Required');
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-// Preferred-month choices begin from December 2026.
+// Preferred-month choices run from January 2027 to February 2027 (the series runs to 31 December 2026).
 function monthOpts() {
-  const FIRST = 2026 * 12 + 11, all = (C.options.months || []);
+  const FIRST = 2027 * 12 + 0, LAST = 2027 * 12 + 1, all = (C.options.months || []);
   const idx = o => { const t = (o.label + ' ' + o.value).toLowerCase(), y = /(20\d\d)/.exec(t), m = MONTH_NAMES.findIndex(n => t.includes(n.toLowerCase())); return y && m >= 0 ? +y[1] * 12 + m : null; };
-  const kept = all.filter(o => { const i = idx(o); return i === null || i >= FIRST; });
+  const kept = all.filter(o => { const i = idx(o); return i === null || (i >= FIRST && i <= LAST); });
   if (kept.some(o => idx(o) !== null)) return kept;
-  const gen = []; for (let i = 0; i < 12; i++) { const n = FIRST + i, l = MONTH_NAMES[n % 12] + ' ' + Math.floor(n / 12); gen.push({ value: l, label: l }); }
+  const gen = []; for (let n = FIRST; n <= LAST; n++) { const l = MONTH_NAMES[n % 12] + ' ' + Math.floor(n / 12); gen.push({ value: l, label: l }); }
   return gen.concat(kept);
 }
 // Attending and suggesting a topic are now one option.
