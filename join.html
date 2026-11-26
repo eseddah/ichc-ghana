@@ -130,15 +130,15 @@ button:disabled{opacity:.6;cursor:wait}
 // ---- Supabase connection (same project as the portal) ----
 var SB_URL = "https://ggbfzfzbquywzuxkoufp.supabase.co";
 var SB_KEY = "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn";
-var TABLE = "collab_signups";
+var ENDPOINT = SB_URL + "/functions/v1/collab-signup"; // verifies the captcha on the server, then saves
 // ---- Google reCAPTCHA v2 ("I'm not a robot") site key: paste yours here ----
-var RECAPTCHA_SITE_KEY = "PASTE_YOUR_RECAPTCHA_SITE_KEY";
+var RECAPTCHA_SITE_KEY = "6LctOzQuAAAAAB_IDgCTFJ8Yn5rRjFZ0nIpKKA_5";
 
 var $ = function(id){ return document.getElementById(id); };
 ["Ahafo","Ashanti","Bono","Bono East","Central","Eastern","Greater Accra","North East","Northern","Oti","Savannah","Upper East","Upper West","Volta","Western","Western North"]
   .forEach(function(r){ var o = document.createElement("option"); o.textContent = r; $("region").appendChild(o); });
 
-var captchaId = null, captchaOn = RECAPTCHA_SITE_KEY.indexOf("PASTE") !== 0;
+var captchaId = null, captchaOn = true;
 function renderCaptcha(){
   if(!captchaOn || captchaId !== null) return;
   if(window.grecaptcha && grecaptcha.render){ captchaId = grecaptcha.render("captcha", { sitekey: RECAPTCHA_SITE_KEY }); }
@@ -175,16 +175,24 @@ $("f").addEventListener("submit", async function(e){
     full_name: val("full_name"), gender: gender.value, phone: val("phone"), email: val("email").toLowerCase(),
     school: val("school"), level: $("level").value, region: $("region").value,
     chem_level: $("chem_level").value, wants_coordinator: pick.value,
-    notes: val("notes") || null, consent: true
+    notes: val("notes") || null, consent: true,
+    captcha: grecaptcha.getResponse(captchaId)
   };
   $("go").disabled = true; $("go").textContent = "Sending…";
   try{
-    var res = await fetch(SB_URL + "/rest/v1/" + TABLE, {
+    var res = await fetch(ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type":"application/json", "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Prefer":"return=minimal" },
+      headers: { "Content-Type":"application/json", "apikey":SB_KEY },
       body: JSON.stringify(row)
     });
     if(res.status === 409){ finish(row, true); return; }
+    if(res.status === 400){
+      var j = await res.json().catch(function(){ return {}; });
+      $("formErr").textContent = j.error === "captcha" ? "The “I’m not a robot” check failed. Please tick it again." : "Some details look invalid. Please check the form.";
+      $("formErr").style.display = "block"; $("go").disabled = false; $("go").textContent = "Sign me up";
+      if(window.grecaptcha) grecaptcha.reset(captchaId);
+      return;
+    }
     if(!res.ok) throw new Error("HTTP " + res.status);
     finish(row, false);
   }catch(err){
