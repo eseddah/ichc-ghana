@@ -1412,6 +1412,8 @@ async function loadDB(){
   DB.ambassadorProfiles = ambassadorProfiles || {};
   DB.examRetakes = Array.isArray(examRetakes) ? examRetakes : [];
   try{ const qr = await sGet('posts:qReports', true); DB.qReports = Array.isArray(qr) ? qr : []; }catch(e){ DB.qReports = []; }
+  // Coordinators who stepped down: kept on file only so a certificate can still be issued to them and verified.
+  try{ const fc = await sGet('roster:formerCoordinators', true); DB.formerCoordinators = Array.isArray(fc) ? fc : []; }catch(e){ DB.formerCoordinators = []; }
   // Presence needs the roster in place first, so it stays a separate step —
   // everything above it is independent and safe to run together.
   DB.presence = await loadAllPresence();
@@ -1484,7 +1486,8 @@ const KEY_MAP = {
   applicationDecisions:'application_decisions:list',
   exams:'posts:exams', examAttempts:'posts:examAttempts', examKeys:'posts:examKeys', attendance:'posts:attendance', progressNotes:'posts:progressNotes',
   alerts:'posts:alerts', loungePosts:'posts:lounge', polls:'posts:polls', quizzes:'posts:quizzes', smsLog:'sms:log',
-  ambassadorProfiles:'ambassador:profiles', examRetakes:'posts:examRetakes', qReports:'posts:qReports'
+  ambassadorProfiles:'ambassador:profiles', examRetakes:'posts:examRetakes', qReports:'posts:qReports',
+  formerCoordinators:'roster:formerCoordinators'
 };
 const KEY_MAP_REVERSE = Object.fromEntries(Object.entries(KEY_MAP).map(([prop,key])=>[key,prop]));
 async function saveKey(name){
@@ -1850,18 +1853,27 @@ function renderIchcBadge(){
   const el = document.getElementById('ichcStrip'); if(!el) return;
   el.href = ICHC_URL; el.classList.toggle('on', !(DB.settings && DB.settings.ichcBadgeOff));
 }
+function awaitingBannerHtml(){
+  if(!ME || ME.role!=='student') return '';
+  const st = (DB.students||[]).find(x=>x.id===ME.id);
+  if(!st || !st.awaitingReassignment || st.coordinatorId) return '';
+  return `<div class="status-banner-item maint"><span class="badge alert-imp">Coordinator update</span><span>${escapeHtml(st.previousCoordinatorName || 'Your coordinator')} has stepped down. You are still in the programme and the Ambassador will assign you a new coordinator very soon; we will email you when that is done. Keep practising in the meantime.</span></div>`;
+}
 function renderStatusBanner(){
   const el = document.getElementById('statusBanner');
   if(!el) return;
   const status = systemStatus();
-  if(status==='operational'){ el.innerHTML = ''; return; }
-  const msg = systemStatusMessage();
-  const isMaintenance = status==='maintenance';
-  el.innerHTML = `
+  let html = '';
+  if(status!=='operational'){
+    const msg = systemStatusMessage();
+    const isMaintenance = status==='maintenance';
+    html += `
     <div class="status-banner-item ${isMaintenance?'maint':'degraded'}">
       <span class="badge ${isMaintenance?'alert-crit':'alert-imp'}">${isMaintenance?'Maintenance':'Degraded'}</span>
       <span>${escapeHtml(msg || (isMaintenance ? 'The programme site is temporarily down for maintenance — some features may be unavailable.' : "Something isn't working quite right — the team's aware and on it."))}</span>
     </div>`;
+  }
+  el.innerHTML = html + awaitingBannerHtml();
 }
 function normalizeUrl(u){ if(!u) return ''; return /^https?:\/\//i.test(u) ? u : 'https://' + u; }
 function fmtDateTime(ts){
@@ -2424,7 +2436,7 @@ function askChannels(title, opts){
       <p class="note" style="margin:0 0 12px;" id="chTitle"></p>
       <label class="eb-check"><input type="checkbox" id="chEmail" ${saved.email?'checked':''}> Email</label>
       <label class="eb-check"><input type="checkbox" id="chSms" ${saved.sms?'checked':''}> Text message <span style="color:var(--muted); font-size:12px;">(uses SMS credit)</span></label>
-      ${inactN ? `<label class="eb-check"><input type="checkbox" id="chInact"> Also email ${inactN} inactive account${inactN===1?'':'s'} <span style="color:var(--muted); font-size:12px;">(locked out of the portal, email only)</span></label>` : ''}
+      ${inactN ? `<label class="eb-check"><input type="checkbox" id="chInact"> Also email ${inactN} paused account${inactN===1?'':'s'} <span style="color:var(--muted); font-size:12px;">(portal switched off, email only)</span></label>` : ''}
       <p class="note" style="margin:10px 0 14px;">&#128276; App notifications on phones and computers go to everyone automatically.</p>
       <div style="display:flex; gap:8px; justify-content:flex-end;"><button class="btn ghost small" id="chSkip" type="button">Neither</button><button class="btn teal small" id="chGo" type="button">Send</button></div></div>`;
     document.body.appendChild(o); o.querySelector('#chTitle').textContent = title;
@@ -3341,7 +3353,6 @@ function renderLegacy(tab){
   else if(tab==='appcontrol' && canAdminApps()) html = appControlView();
   else if(tab==='actstats' && canSeeActivity()) html = actStatsView();
   else if(tab==='actreach' && canSeeActivity()) html = actReachView();
-  else if(tab==='reactivate' && canReactivate()) html = reactivateView();
   else if(tab==='duties' && ME.role==='ambassador') html = dutiesAdminView();
   else if(tab==='series' && ME.role==='ambassador') html = '<div id="seriesRoot"></div>';
   else if(typeof tab==='string' && tab.indexOf('pf_')===0 && ME.role==='coordinator' && DUTY_INFO[tab.slice(3)] && hasDuty(tab.slice(3))) html = portfolioView(tab.slice(3));
@@ -4517,7 +4528,7 @@ const BC = {
   sms:{ sel:{}, search:'', group:'all', onlyContact:true, draft:'', sign:true, link:false, sending:false, status:null },
   email:{ sel:{}, search:'', group:'all', onlyContact:true, subject:'', body:'', sign:true, link:false, sending:false, status:null }
 };
-function bcInactiveWhy(rec){ const a = studentAccess(rec); return a.reason==='blocked' ? 'switched off' : a.reason==='idle' ? `not seen for ${a.days} days` : 'never joined'; }
+function bcInactiveWhy(rec){ return 'portal paused'; }
 function bcPeople(mode){
   const hasC = mode==='sms' ? psmsHasPhone : pemHasEmail;
   const canInact = mode==='email' && !!ME && ME.role==='ambassador';   // only the Ambassador can email inactive accounts
@@ -4526,7 +4537,7 @@ function bcPeople(mode){
     return { key:(kind==='student' ? 's:' : 'c:') + rec.id, kind, set: kind==='coordinator' ? 'coordinator' : (inact ? 'inactive' : (second ? 'second' : 'first')), rec,
       name: rec.name || (kind==='student' ? 'Unnamed student' : 'Unnamed coordinator'), ok,
       off: ok && (mode==='sms' ? !rec.notifySms : rec.notifyEmail===false),
-      sub: (inact ? 'Inactive · ' + bcInactiveWhy(rec) + ' · ' : '') + (ok ? (mode==='sms' ? rec.phone : rec.email) : (mode==='sms' ? 'No phone number on file' : 'No email address on file')) };
+      sub: (inact ? 'Paused · ' : '') + (ok ? (mode==='sms' ? rec.phone : rec.email) : (mode==='sms' ? 'No phone number on file' : 'No email address on file')) };
   };
   return (DB.coordinators||[]).map(c=>mk(c,'coordinator')).concat((DB.students||[]).filter(s=>canInact || !ghostedStudent(s)).map(s=>mk(s,'student')))
     .sort((a,b)=>String(a.name).localeCompare(String(b.name)));
@@ -4543,7 +4554,7 @@ function bcListHtml(mode){
   if(!(DB.students||[]).length && !(DB.coordinators||[]).length) return '<div class="empty">No students or coordinators yet.</div>';
   const rows = bcShown(mode);
   if(!rows.length) return '<div class="empty">Nobody matches. Try another search or filter.</div>';
-  return (S.group==='inactive' && mode==='email' ? '<p class="note" style="margin:0 0 10px;">These accounts are locked out of the portal (not seen for 14 days, switched off, or never joined). Nothing else in the portal reaches them, so this email is how they hear from you.</p>' : '') + [['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set (new applicants)'],['inactive','Inactive accounts']].map(([k,t])=>{
+  return (S.group==='inactive' && mode==='email' ? '<p class="note" style="margin:0 0 10px;">These accounts are paused, so the students cannot open the portal. Nothing else in the portal reaches them, so this email is how they hear from you.</p>' : '') + [['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set (new applicants)'],['inactive','Paused accounts']].map(([k,t])=>{
     const r = rows.filter(p=>p.set===k); if(!r.length) return '';
     const n = r.filter(p=>S.sel[p.key]).length;
     return `<div class="bc-sec">${t}<span>${n} of ${r.length} ticked</span></div>` + r.map(p=>{
@@ -4571,7 +4582,7 @@ function bcSmsText(rec){
 function bcView(mode){
   const sms = mode==='sms', S = BC[mode], word = sms ? 'text' : 'email';
   const chips = [['all','Everyone'],['coordinator','Coordinators'],['first','Students · first set'],['second','Students · second set']];
-  if(!sms && ME && ME.role==='ambassador'){ const nIn = bcPeople('email').filter(p=>p.set==='inactive' && p.ok).length; chips.push(['inactive','Inactive accounts' + (nIn ? ` (${nIn})` : '')]); }
+  if(!sms && ME && ME.role==='ambassador'){ const nIn = bcPeople('email').filter(p=>p.set==='inactive' && p.ok).length; chips.push(['inactive','Paused accounts' + (nIn ? ` (${nIn})` : '')]); }
   return `
   <div class="section-title"><div><h2>${sms?'Text people':'Email people'}</h2><p>Pick the students and/or coordinators you want to ${word}. Everyone you tick gets their own ${word}, and nobody sees who else received it. Type {name} where you want each person's first name.</p></div></div>
   ${sms && !psmsSmsOn() ? `<p class="note" style="margin-bottom:14px;">Text messaging isn't connected yet. Add the SMS webhook in Settings, then come back to send.</p>` : ''}
@@ -4629,7 +4640,7 @@ async function bcSend(mode){
   if(!list.length) return;
   if(list.length>1 && !confirm(`Send this ${word} to ${list.length} people? Each person gets their own ${word}.`)) return;
   const inactSel = sms ? [] : list.filter(p=>p.set==='inactive');
-  if(inactSel.length && !confirm(`${inactSel.length} of the ${list.length} are inactive accounts, locked out of the portal. They will still get this email. Press OK to send, or Cancel to go back.`)) return;
+  if(inactSel.length && !confirm(`${inactSel.length} of the ${list.length} are paused accounts that cannot open the portal. They will still get this email. Press OK to send, or Cancel to go back.`)) return;
   S.sending = true; S.status = null; bcRefresh(mode);
   if(sms){
     let sent = 0; const failed = [];
@@ -5084,7 +5095,7 @@ function nlGroups(){
   add('Joining the programme', 'websubs', 'Website newsletter subscribers', (window.WEB_SUBS||[]).map(x=>({ id:'sub:'+x.id, email:x.email, name:x.name||'', unsubToken:x.token })));
   add('Joining the programme', 'applicants', 'Applicants waiting for a decision', apps.filter(a=>a.status!=='interested'));
   add('Joining the programme', 'onboarding', 'Accepted students still onboarding', students.filter(s=>s.stage && s.stage!=='Completed'));
-  if(ME && ME.role==='ambassador'){ const inact = (DB.students||[]).filter(s=>ghostedStudent(s)); if(inact.length) add('Locked-out accounts (optional)', 'inactive', 'Inactive students (locked out of the portal)', inact); }
+  if(ME && ME.role==='ambassador'){ const inact = (DB.students||[]).filter(s=>ghostedStudent(s)); if(inact.length) add('Paused accounts (optional)', 'inactive', 'Paused students (portal switched off)', inact); }
   return g;
 }
 function nlRecipients(){
@@ -5248,7 +5259,7 @@ async function nlSend(){
   if(!NL.subject.trim()){ NL.status = { ok:false, msg:'Add an email subject first.' }; return nlRefresh(); }
   if(!NL.blocks.some(b=>b.title.trim()||b.body.trim())){ NL.status = { ok:false, msg:'Add at least one item to the newsletter.' }; return nlRefresh(); }
   const nIn = r.list.filter(x=>x.inactive).length;
-  if(!confirm(`Send "${NL.subject.trim()}" to ${r.list.length} ${r.list.length===1?'person':'people'}? Each person gets their own email.${nIn ? ` ${nIn} of them ${nIn===1?'is an inactive account':'are inactive accounts'} locked out of the portal.` : ''} Have you sent yourself a test?`)) return;
+  if(!confirm(`Send "${NL.subject.trim()}" to ${r.list.length} ${r.list.length===1?'person':'people'}? Each person gets their own email.${nIn ? ` ${nIn} of them ${nIn===1?'is a paused account':'are paused accounts'} that cannot open the portal.` : ''} Have you sent yourself a test?`)) return;
   NL.sending = true; nlRefresh();
   r.list.forEach(rec=>nlQueue(rec,false));
   const groups = nlGroups().filter(g=>NL.sel[g.key]).map(g=>g.label), content = {}; NL_FIELDS.forEach(k=>content[k] = JSON.parse(JSON.stringify(NL[k])));
@@ -5259,14 +5270,14 @@ async function nlSend(){
   const a = document.getElementById('nlAud'); if(a) a.innerHTML = nlAudienceHtml(); const h = document.getElementById('nlHist'); if(h) h.innerHTML = nlHistoryHtml(); nlRefresh();
 }
 
-// ================= Student access: active / inactive =================
-// Active   = signed in (or manually activated) within the last 14 days.
-// Inactive = never joined, last seen more than 14 days ago, or switched off by the Ambassador / a coordinator.
-// Inactive students are locked out of the portal (unless it's a brand-new student who has never joined and the
-// "require activation" setting is off) and asked to contact the Ambassador / their coordinator.
-const IDLE_LIMIT_MS = 14 * 864e5;
+// ================= Student access: "Quiet" tag + optional pause =================
+// Nobody is locked out for being away, and there is no reactivation step. A student who has not been seen for a
+// while simply carries a "Quiet" tag (information only, so coordinators know who to nudge); a student who has not
+// signed in yet is "New". The only way a portal stops working is a deliberate Pause by the Ambassador or the
+// student's own coordinator, and whoever paused it resumes it with one click.
+const QUIET_AFTER_MS = 21 * 864e5;   // label only: this never locks anyone
 const LASTSEEN_PREFIX = 'lastseen:';
-let peopleStatus = 'all', STATUS_REQ = [];
+let peopleStatus = 'all';
 async function loadAllLastSeen(){
   if(!sbReady) return {};
   const emails = new Set();
@@ -5287,94 +5298,66 @@ function studentSeenMs(s){
 }
 function studentAccess(s){
   const seen = studentSeenMs(s), ref = Math.max(seen, s.activatedAt || 0);
-  if(s.portalBlocked) return { state:'inactive', locked:true, reason:'blocked', by:s.blockedBy || 'ambassador', seen };
-  if(!ref) return { state:'inactive', locked:!!(DB.settings && DB.settings.lockNeverJoined), reason:'never', seen:0 };
+  if(s.portalBlocked) return { state:'paused', locked:true, reason:'blocked', by:s.blockedBy || 'ambassador', seen };
+  if(!ref) return { state:'active', locked:false, tag:'new', seen:0 };
   const idle = Date.now() - ref;
-  if(idle > IDLE_LIMIT_MS) return { state:'inactive', locked:true, reason:'idle', seen:ref, days:Math.floor(idle/864e5) };
-  return { state:'active', locked:false, seen:ref, days:Math.floor(idle/864e5) };
+  return { state:'active', locked:false, tag: idle > QUIET_AFTER_MS ? 'quiet' : 'active', seen:ref, days:Math.floor(idle/864e5) };
 }
-// ===== Ghosting: a switched-off or inactive student is treated as if they were not on the platform =====
-// They are left out of every audience (announcements, alerts, classes, results, personal emails and texts) and the
-// email / SMS senders refuse them as a last line of defence. Only the reactivation screen still reaches them.
-function ghostedStudent(s){
-  if(!s) return false;
-  if(s.portalBlocked) return true;
-  if(!DB || !DB.lastSeen) return false;   // activity data not loaded yet: never ghost on a guess
-  return !!studentAccess(s).locked;
-}
+function studentAccessKey(s){ const a = studentAccess(s); return a.state==='paused' ? 'paused' : (a.tag==='quiet' ? 'quiet' : 'active'); }
+// A paused student is treated as if they were not on the platform (left out of audiences; senders refuse them).
+function ghostedStudent(s){ return !!(s && s.portalBlocked); }
 function ghostedId(id){
   try{ if(!id || !DB || !DB.students) return false; const s = DB.students.find(x=>x.id===id); return !!s && ghostedStudent(s); }catch(e){ return false; }
 }
 function accessBadge(s){
   const a = studentAccess(s);
-  if(a.state === 'active') return `<span class="acc-badge acc-on">Active${a.days>0 ? ' · seen '+a.days+'d ago' : ' · seen today'}</span>`;
-  const why = a.reason==='blocked' ? `switched off by ${a.by==='coordinator'?'a coordinator':'the Ambassador'}` : a.reason==='idle' ? `not seen for ${a.days} days` : 'never joined';
-  return `<span class="acc-badge acc-off">Inactive · ${why}</span>`;
+  if(a.state === 'paused') return `<span class="acc-badge acc-off">Paused · by ${a.by==='coordinator'?'a coordinator':'the Ambassador'}</span>`;
+  if(a.tag === 'new') return `<span class="acc-badge acc-on">New · hasn't signed in yet</span>`;
+  if(a.tag === 'quiet') return `<span class="acc-badge acc-off" style="background:rgba(227,154,59,.16); color:var(--amber-deep);">Quiet · last seen ${a.days} days ago</span>`;
+  return `<span class="acc-badge acc-on">Active${a.days>0 ? ' · seen '+a.days+'d ago' : ' · seen today'}</span>`;
 }
 async function setStudentAccess(id, makeActive, by){
   const st = DB.students.find(x=>x.id===id); if(!st) return;
   if(!makeActive && ME.role==='coordinator' && st.coordinatorId!==ME.id) return;
-  if(makeActive && ME.role==='coordinator' && st.portalBlocked && st.blockedBy==='ambassador'){ alert('The Ambassador switched this portal off, so only the Ambassador can switch it back on.'); return render(currentTab); }
+  if(makeActive && ME.role==='coordinator' && st.portalBlocked && st.blockedBy==='ambassador'){ alert('The Ambassador paused this portal, so only the Ambassador can resume it.'); return render(currentTab); }
   if(makeActive){ st.portalBlocked = false; st.blockedBy = null; st.activatedAt = Date.now(); }
   else { st.portalBlocked = true; st.blockedBy = by; st.blockedAt = Date.now(); }
   await saveKey('students');
   render(currentTab);
 }
 function accessControlsAmb(s){
-  const a = studentAccess(s), on = a.state === 'active';
-  return `<button class="btn ${on?'ghost':'teal'} small" data-access-amb="${s.id}" data-make="${on?'off':'on'}">${on?'Make inactive':'Activate'}</button>`;
+  const paused = !!s.portalBlocked;
+  return `<button class="btn ${paused?'teal':'ghost'} small" data-access-amb="${s.id}" data-make="${paused?'on':'off'}">${paused?'Resume portal':'Pause portal'}</button>`;
 }
 function accessRowCoord(s){
-  const a = studentAccess(s), on = a.state === 'active', ambLocked = s.portalBlocked && s.blockedBy === 'ambassador';
+  const on = !s.portalBlocked, ambLocked = s.portalBlocked && s.blockedBy === 'ambassador';
   return `<div class="item-body" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">${accessBadge(s)}
-    <label class="acc-tick"><input type="checkbox" data-access-coord="${s.id}" ${on?'checked':''} ${ambLocked?'disabled':''}> Active</label>
-    ${ambLocked ? '<span style="font-size:12px; color:var(--muted);">Only the Ambassador can switch this back on.</span>' : ''}</div>`;
+    <label class="acc-tick"><input type="checkbox" data-access-coord="${s.id}" ${on?'checked':''} ${ambLocked?'disabled':''}> Portal on</label>
+    ${ambLocked ? '<span style="font-size:12px; color:var(--muted);">Only the Ambassador can resume this one.</span>' : ''}</div>`;
 }
 function accessSummary(list){
-  const n = list.length, act = list.filter(s=>studentAccess(s).state==='active').length;
-  return {n, act, off:n-act};
-}
-async function loadStatusRequests(){ try{ STATUS_REQ = (await sGet('status:requests', true)) || []; }catch(e){ STATUS_REQ = []; } }
-function pendingRequests(list){
-  const ids = new Set(list.map(s=>s.id)), latest = new Map();
-  STATUS_REQ.forEach(r=>{ if(ids.has(r.studentId) && (!latest.has(r.studentId) || latest.get(r.studentId).ts < r.ts)) latest.set(r.studentId, r); });
-  return [...latest.values()].filter(r=>{ const st = list.find(x=>x.id===r.studentId); return st && studentAccess(st).state==='inactive' && r.ts > (st.activatedAt||0); }).sort((a,b)=>b.ts-a.ts);
-}
-function requestBoxHtml(list){
-  const reqs = pendingRequests(list); if(!reqs.length) return '';
-  return `<div class="card" style="margin-bottom:14px; border-color:rgba(227,154,59,.7);"><b>${reqs.length} student${reqs.length>1?'s':''} asked to be reactivated</b>
-    ${reqs.map(r=>`<div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:8px;"><span style="font-weight:600;">${escapeHtml(r.name||'')}</span><span style="font-size:12px; color:var(--muted);">${fmtDateTime(r.ts)}</span><button class="btn teal small" data-req-activate="${r.studentId}">Activate</button></div>`).join('')}</div>`;
+  const n = list.length; let active = 0, quiet = 0, paused = 0;
+  list.forEach(s=>{ const k = studentAccessKey(s); if(k==='paused') paused++; else if(k==='quiet') quiet++; else active++; });
+  return { n, active, quiet, paused };
 }
 async function wireAccess(tab){
   document.querySelectorAll('[data-access-amb]').forEach(b=>b.addEventListener('click', ()=>setStudentAccess(b.dataset.accessAmb, b.dataset.make==='on', 'ambassador')));
   document.querySelectorAll('[data-access-coord]').forEach(c=>c.addEventListener('change', ()=>setStudentAccess(c.dataset.accessCoord, c.checked, 'coordinator')));
   document.querySelectorAll('[data-people-status]').forEach(b=>b.addEventListener('click', ()=>{ peopleStatus = b.dataset.peopleStatus; render('people'); }));
-  const fill = ()=>{
-    const box = document.getElementById('statusReqBox'); if(!box) return;
-    box.innerHTML = requestBoxHtml(ME.role==='ambassador' ? DB.students : myStudents());
-    box.querySelectorAll('[data-req-activate]').forEach(b=>b.addEventListener('click', ()=>setStudentAccess(b.dataset.reqActivate, true, ME.role)));
-  };
-  await loadStatusRequests(); fill(); paintStages();
+  wireAwaiting();
+  paintStages();
 }
+// Only reachable when a portal was paused on purpose. No requests, no reactivation officer: they contact their coordinator or the Ambassador.
 function showInactiveScreen(st, a){
   const coord = (DB.coordinators||[]).find(c=>c.id===st.coordinatorId);
-  const why = a.reason==='blocked' ? `Your portal has been switched off by ${a.by==='coordinator' ? 'your coordinator' : 'the Ambassador'}.` : a.reason==='idle' ? `You haven't been on the portal for more than two weeks, so it was set to inactive.` : `Your portal hasn't been activated yet.`;
-  showAuthPopup('Your portal is inactive', `${why} Please contact ${(dutyPerson('reactivation')||{}).name || 'the reactivation officer'} (below) or your coordinator and ask them to activate your portal.`);
+  const who = a.by==='coordinator' ? 'your coordinator' : 'the Ambassador';
+  showAuthPopup('Your portal is paused', `Your portal has been paused by ${who}. Please message ${coord ? coord.name : 'your coordinator'} or the Ambassador and they can switch it back on for you.`);
   const ok = document.getElementById('authPopupOkBtn'), box = document.createElement('div');
   box.id = 'authPopupExtra'; box.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-bottom:10px;';
-  const first = String(st.name||'').trim().split(/\s+/)[0] || '';
-  const msg = `Hello, this is ${st.name}. My Chemistry Competition Prep portal is inactive. Please activate it for me.`;
+  const msg = `Hello, this is ${st.name}. My Chemistry Competition Prep portal is paused. Could you please switch it back on for me?`;
   if(coord && coord.phone && waLink(coord.phone, msg)) box.insertAdjacentHTML('beforeend', `<a class="wa-btn wa-big" style="justify-content:center;" href="${waLink(coord.phone, msg)}" target="_blank" rel="noopener">${WA_ICON}Message my coordinator</a>`);
-  const rv = dutyPerson('reactivation');
-  if(rv && rv.phone && waLink(rv.phone, msg)) box.insertAdjacentHTML('beforeend', `<a class="wa-btn wa-big" style="justify-content:center;" href="${waLink(rv.phone, msg)}" target="_blank" rel="noopener">${WA_ICON}WhatsApp ${escapeHtml(rv.name||'reactivation')}</a>`);
-  if(rv && rv.email) box.insertAdjacentHTML('beforeend', `<a class="btn ghost" style="justify-content:center; text-decoration:none;" href="mailto:${escapeHtml(rv.email)}?subject=${encodeURIComponent('Please activate my portal')}&body=${encodeURIComponent(msg)}">Email ${escapeHtml(rv.name||'reactivation')}</a>`);
-  const req = document.createElement('button'); req.type = 'button'; req.className = 'btn teal'; req.style.justifyContent = 'center'; req.textContent = 'Send a reactivation request';
-  req.addEventListener('click', async ()=>{
-    req.disabled = true; req.textContent = 'Sending…';
-    try{ await sb.rpc('append_kv_item', { p_key:'status:requests', p_item:{ id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())), studentId:st.id, name:st.name, email:st.email, coordinatorId:st.coordinatorId||null, ts:Date.now() } }); req.textContent = 'Request sent ✓ your coordinator and the reactivation officer can see it'; }
-    catch(e){ req.disabled = false; req.textContent = 'Could not send. Try the buttons above.'; }
-  });
-  box.appendChild(req); ok.parentNode.insertBefore(box, ok); ok.textContent = 'Sign out';
+  if(coord && coord.email) box.insertAdjacentHTML('beforeend', `<a class="btn ghost" style="justify-content:center; text-decoration:none;" href="mailto:${escapeHtml(coord.email)}?subject=${encodeURIComponent('My portal is paused')}&body=${encodeURIComponent(msg)}">Email ${escapeHtml(coord.name||'my coordinator')}</a>`);
+  ok.parentNode.insertBefore(box, ok); ok.textContent = 'Sign out';
 }
 
 
@@ -6167,7 +6150,7 @@ function certItemHtml(c){
   </div>`;
 }
 function certificatesAmbassadorView(){
-  const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+  const pool = certTypeFilter==='coordinator' ? certPool() : DB.students;
   const issued = [...DB.certificates].sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
   const defaultProgram = programName();
   return `
@@ -6186,7 +6169,7 @@ function certificatesAmbassadorView(){
     </div>
     <div class="field" style="margin:14px 0 6px;"><label>${certTypeFilter==='coordinator'?'Coordinators':'Students'} to issue to</label></div>
     <div style="max-height:220px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px;">
-      ${pool.length ? pool.map(p=>`<label class="alert-scope-opt" style="font-size:13.5px;"><input type="checkbox" value="${p.id}" class="certPersonChk" ${certSelectedIds.has(p.id)?'checked':''} style="width:auto;">${escapeHtml(p.name)}${p.email?(' · '+escapeHtml(p.email)):''}</label>`).join('') : `<div class="empty" style="padding:14px;">No ${certTypeFilter==='coordinator'?'coordinators':'students'} on the roster yet.</div>`}
+      ${pool.length ? pool.map(p=>`<label class="alert-scope-opt" style="font-size:13.5px;"><input type="checkbox" value="${p.id}" class="certPersonChk" ${certSelectedIds.has(p.id)?'checked':''} style="width:auto;">${escapeHtml(p.name)}${p.email?(' · '+escapeHtml(p.email)):''}${p._former?' <span style="color:var(--muted); font-size:12px;">(stepped down)</span>':''}</label>`).join('') : `<div class="empty" style="padding:14px;">No ${certTypeFilter==='coordinator'?'coordinators':'students'} on the roster yet.</div>`}
     </div>
     <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
       <button class="btn ghost small" id="certSelectAll">Select all</button>
@@ -6225,10 +6208,10 @@ async function issueCertificatesBulk(){
   const dateVal = document.getElementById('certDate').value || today();
   const details = (document.getElementById('certDetails').value||'').trim();
   const type = certTypeFilter==='coordinator' ? 'service' : 'participation';
-  const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+  const pool = certTypeFilter==='coordinator' ? certPool() : DB.students;
   if(btn){ btn.disabled = true; btn.textContent = 'Issuing…'; }
   setStatus('Issuing…');
-  let okCount = 0;
+  let okCount = 0, mailed = 0;
   const errors = [];
   for(const id of certSelectedIds){
     const person = pool.find(p=>p.id===id);
@@ -6247,7 +6230,7 @@ async function issueCertificatesBulk(){
       issued_by: ME.name
     };
     const result = await insertCertificate(cert);
-    if(result.ok) okCount++;
+    if(result.ok){ okCount++; if(person._former && person.email){ emailFormerCertificate(person, cert); mailed++; } }
     else errors.push(`${person.name}: ${result.error}`);
   }
   certSelectedIds = new Set();
@@ -6257,7 +6240,7 @@ async function issueCertificatesBulk(){
   const finalStatus = document.getElementById('certIssueStatus');
   if(finalStatus){
     if(okCount && !errors.length){
-      finalStatus.textContent = `✓ Issued ${okCount} certificate${okCount===1?'':'s'}.`;
+      finalStatus.textContent = `✓ Issued ${okCount} certificate${okCount===1?'':'s'}.${mailed ? ` ${mailed} former coordinator${mailed===1?' was':'s were'} emailed the verification link.` : ''}`;
       finalStatus.style.color = 'var(--teal-deep)';
     } else if(okCount && errors.length){
       finalStatus.textContent = `Issued ${okCount}, but ${errors.length} failed — ${errors[0]}`;
@@ -6596,6 +6579,174 @@ function ghanaRegionKey(text){
   }
   return best;
 }
+// ================= A coordinator steps down =================
+// The coordinator leaves the programme: not counted, not on the public site, no sign-in. Their students stay in the
+// programme and wait ("awaiting reassignment") until the Ambassador gives them a new coordinator. If asked, the person
+// is kept on a private "former coordinators" list so a certificate can still be issued to them and verified publicly
+// (public verification reads the certificates table only, so it never depends on the roster).
+function firstNameOf(n){ return String(n||'').trim().split(/\s+/)[0] || 'there'; }
+function stepDownDefaults(coord){
+  return {
+    subject: 'An update about your coordinator',
+    body: [
+      `We are writing to let you know that ${coord.name} has stepped down as a coordinator with ${programName()} and will no longer be supporting students in the programme.`,
+      `This does not change your place in the programme. You are still one of our students, and your portal, practice questions, exams and announcements all stay open to you.`,
+      `What happens next: the Ambassador will assign you to a new coordinator very soon. We will email you as soon as that is done, with your new coordinator's name and how to reach them. Until then, please keep practising and joining sessions as usual.`,
+      `If you have a question or need help before then, just reply to this email or contact the Ambassador directly.`,
+      `Thank you for your patience, and for your commitment to chemistry.`
+    ].join('\n\n')
+  };
+}
+function stepDownDialog(coord, kids){
+  const d = stepDownDefaults(coord), withEmail = kids.filter(k=>k.email).length;
+  return new Promise(resolve=>{
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed; inset:0; z-index:2000; background:rgba(8,20,30,.65); display:flex; align-items:center; justify-content:center; padding:16px;';
+    o.innerHTML = `<div role="dialog" aria-modal="true" style="background:#fff; border-radius:16px; padding:20px; width:min(580px,100%); max-height:92vh; overflow:auto;">
+      <h3 style="margin:0 0 6px; font-size:18px;" id="sdTitle"></h3>
+      <p class="note" style="margin:0 0 10px;" id="sdWhat"></p>
+      <ul style="margin:0 0 12px 18px; padding:0; font-size:13px; color:var(--muted); line-height:1.6;">
+        <li>They are removed from the coordinator count, the public team page and the Ghana map, and can no longer sign in as a coordinator.</li>
+        <li>Their students stay in the programme and are marked <b>awaiting reassignment</b> until you give them a new coordinator.</li>
+        <li>Anything they were appointed to under Team &amp; duties is handed back to you.</li>
+      </ul>
+      ${kids.length ? `<label class="eb-check"><input type="checkbox" id="sdEmail" ${withEmail?'checked':'disabled'}> Email ${withEmail} of their ${kids.length} student${kids.length===1?'':'s'} about this</label>
+      <div id="sdMail" style="margin:6px 0 10px;">
+        <div class="field" style="margin:0 0 8px;"><label>Subject</label><input id="sdSubject"></div>
+        <div class="field" style="margin:0;"><label>Message <span style="text-transform:none; font-weight:400;">(each student gets "Dear [first name]," at the top and your name at the bottom)</span></label><textarea id="sdBody" rows="11" style="width:100%; font-family:inherit; font-size:13.5px;"></textarea></div>
+      </div>` : ''}
+      <label class="eb-check"><input type="checkbox" id="sdKeep" checked> Keep on file as a former coordinator, so a certificate can still be issued and verified <span style="color:var(--muted); font-size:12px;">(private list, not part of the programme)</span></label>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:14px;"><button class="btn ghost small" id="sdNo" type="button">Cancel</button><button class="btn amber small" id="sdGo" type="button">Step down</button></div></div>`;
+    document.body.appendChild(o);
+    o.querySelector('#sdTitle').textContent = `Step down ${coord.name}`;
+    o.querySelector('#sdWhat').textContent = kids.length ? `${kids.length} student${kids.length===1?'':'s'} currently ${kids.length===1?'has':'have'} ${firstNameOf(coord.name)} as their coordinator.` : `${firstNameOf(coord.name)} has no students at the moment.`;
+    if(kids.length){ o.querySelector('#sdSubject').value = d.subject; o.querySelector('#sdBody').value = d.body;
+      const cb = o.querySelector('#sdEmail'); cb.addEventListener('change', ()=>{ o.querySelector('#sdMail').style.display = cb.checked ? '' : 'none'; }); }
+    const done = v=>{ o.remove(); resolve(v); };
+    o.querySelector('#sdNo').addEventListener('click', ()=>done(null));
+    o.addEventListener('click', e=>{ if(e.target===o) done(null); });
+    o.querySelector('#sdGo').addEventListener('click', ()=>{
+      const mail = !!(kids.length && o.querySelector('#sdEmail').checked);
+      const subject = kids.length ? o.querySelector('#sdSubject').value.trim() : '', body = kids.length ? o.querySelector('#sdBody').value.trim() : '';
+      if(mail && (!subject || !body)){ alert('Please fill in the subject and the message, or untick the email.'); return; }
+      done({ email:mail, subject, body, keep:o.querySelector('#sdKeep').checked });
+    });
+  });
+}
+async function stepDownCoordinator(id){
+  const coord = (DB.coordinators||[]).find(c=>c.id===id); if(!coord) return;
+  const kids = (DB.students||[]).filter(s=>s.coordinatorId===id);
+  const opt = await stepDownDialog(coord, kids); if(!opt) return;
+  const now = Date.now();
+  kids.forEach(s=>{ s.previousCoordinatorId = coord.id; s.previousCoordinatorName = coord.name; s.coordinatorId = null; s.awaitingReassignment = true; s.awaitingSince = now; });
+  // hand back any duty they held
+  const em = String(coord.email||'').toLowerCase(); let dutiesChanged = false;
+  if(em){
+    const all = {}; Object.keys(DUTY_DEFAULTS).forEach(k=>{ all[k] = { email: dutyEmail(k) }; });
+    Object.keys(all).forEach(k=>{ if(all[k].email===em){ all[k] = { email:'' }; dutiesChanged = true; } });
+    if(dutiesChanged) DB.settings = { ...DB.settings, duties: all };
+  }
+  if(opt.keep){
+    DB.formerCoordinators = (DB.formerCoordinators||[]).filter(f=>f.id!==coord.id);
+    DB.formerCoordinators.push({ id:coord.id, name:coord.name, email:coord.email||'', subject:coord.subject||'', region:coord.region||'', phone:coord.phone||'', joined:coord.joined||'', steppedDownAt:today(), studentsAtExit:kids.length });
+  }
+  DB.coordinators = DB.coordinators.filter(c=>c.id!==coord.id);
+  // students first (nobody is ever left pointing at a missing coordinator), the roster last
+  const ok = await saveKey('students');
+  if(opt.keep) await saveKey('formerCoordinators');
+  if(dutiesChanged) await saveKey('settings');
+  await saveKey('coordinators');
+  await syncPublicDirectory();
+  let sent = 0;
+  if(opt.email){
+    kids.filter(s=>s.email).forEach(s=>{
+      dispatchEmails([Object.assign({}, s, { notifyEmail:true })], { subject:opt.subject, body:`Dear ${firstNameOf(s.name)},\n\n${opt.body}\n\nWarm regards,\n${ME.name}`, author:ME.name, kind:'coordinator-change' });
+      sent++;
+    });
+  }
+  try{ await logDuty('assign', `${coord.name} stepped down as coordinator; ${kids.length} student(s) awaiting reassignment`); }catch(e){}
+  render('people');
+  alert(`${coord.name} has stepped down.${kids.length ? `\n\n${kids.length} student${kids.length===1?' is':'s are'} now awaiting a new coordinator (see the orange card under Students in People).` : ''}${sent ? `\n${sent} email${sent===1?' was':'s were'} sent to their students.` : ''}${ok===false ? '\n\nWarning: the student list may not have saved. Please check People.' : ''}`);
+}
+function awaitingStudents(){ return (DB.students||[]).filter(s=>s.awaitingReassignment && !s.coordinatorId); }
+function awaitingOverviewHtml(){
+  const n = awaitingStudents().length; if(!n) return '';
+  return `<div class="card" style="margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; border-color:rgba(227,154,59,.7);"><span><b>${n} student${n===1?'':'s'} awaiting a new coordinator</b>: their coordinator stepped down</span><button class="btn amber small" type="button" data-go-tab="people">Reassign</button></div>`;
+}
+function awaitingCardHtml(){
+  const list = awaitingStudents(); if(!list.length) return '';
+  const load = {}; (DB.coordinators||[]).forEach(c=>{ load[c.id] = DB.students.filter(s=>s.coordinatorId===c.id).length; });
+  const opts = `<option value="">Choose a coordinator…</option>` + (DB.coordinators||[]).map(c=>`<option value="${c.id}">${escapeHtml(c.name)} · ${load[c.id]||0} student${load[c.id]===1?'':'s'}</option>`).join('');
+  return `<div class="card" id="awaitCard" style="margin-bottom:14px; border-color:rgba(227,154,59,.7);">
+    <b>${list.length} student${list.length===1?'':'s'} awaiting a new coordinator</b>
+    <p class="note" style="margin:6px 0 10px;">Their coordinator stepped down. They stay in the programme and were told they would be reassigned soon. When you assign them, they and their new coordinator are emailed automatically.</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">${list.map(s=>`<div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;"><span style="font-weight:600; min-width:150px;">${escapeHtml(s.name||'')}</span><span style="font-size:12px; color:var(--muted);">was with ${escapeHtml(s.previousCoordinatorName||'a former coordinator')}</span><select data-await-sel="${s.id}" style="width:auto; padding:6px 10px; font-size:12.5px;">${opts}</select><button class="btn teal small" type="button" data-await-assign="${s.id}">Assign</button></div>`).join('')}</div>
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding-top:10px; border-top:1px solid var(--line);">
+      <select id="awaitBulk" style="width:auto; padding:6px 10px; font-size:12.5px;">${opts}</select>
+      <button class="btn amber small" type="button" id="awaitAssignAll">Assign all to this coordinator</button>
+      <button class="btn ghost small" type="button" id="awaitEven">Share evenly (fewest students first)</button>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; color:var(--ink); margin:0; text-transform:none;"><input type="checkbox" id="awaitNotify" checked style="width:auto;"> Email students and coordinators</label>
+    </div></div>`;
+}
+async function assignStudents(ids, coordId, notify){
+  const load = {}; (DB.coordinators||[]).forEach(c=>{ load[c.id] = DB.students.filter(s=>s.coordinatorId===c.id).length; });
+  const picks = [];
+  ids.map(id=>DB.students.find(s=>s.id===id)).filter(Boolean).forEach(s=>{
+    let cid = coordId;
+    if(coordId==='even'){ cid = Object.keys(load).sort((a,b)=>load[a]-load[b])[0]; }
+    const coord = (DB.coordinators||[]).find(c=>c.id===cid); if(!coord) return;
+    s.coordinatorId = cid; s.awaitingReassignment = false; s.reassignedAt = Date.now(); load[cid] = (load[cid]||0) + 1;
+    picks.push({ s, coord });
+  });
+  if(!picks.length){ alert('Choose a coordinator first.'); return; }
+  await saveKey('students'); await syncPublicDirectory();
+  if(notify) notifyAssignments(picks);
+  render('people');
+}
+// Tells each student who their new coordinator is and tells each coordinator who has joined them.
+function notifyAssignments(picks){
+  const programme = programName(), from = (ME && ME.name) || 'The Ambassador';
+  picks.forEach(({ s, coord })=>{
+    if(!s.email) return;
+    const reach = [coord.email ? `by email at ${coord.email}` : '', coord.phone ? `on ${coord.phone}` : ''].filter(Boolean).join(' or ');
+    dispatchEmails([Object.assign({}, s, { notifyEmail:true })], { subject:'You have a new coordinator', author:from, kind:'coordinator-assigned',
+      body:`Dear ${firstNameOf(s.name)},\n\nGood news: you have been assigned to ${coord.name}, your new coordinator with ${programme}. ${firstNameOf(coord.name)} will be in touch with you soon${reach ? `, and you can also reach them ${reach}` : ''}.\n\nNothing is lost in the change: your progress, practice and results all carry over, so you can carry on exactly where you stopped.\n\nThank you for your patience.\n\nWarm regards,\n${from}` });
+  });
+  const byCoord = new Map();
+  picks.forEach(p=>{ if(!byCoord.has(p.coord.id)) byCoord.set(p.coord.id, { coord:p.coord, list:[] }); byCoord.get(p.coord.id).list.push(p.s); });
+  byCoord.forEach(({ coord, list })=>{
+    if(!coord.email) return;
+    const lines = list.map(s=>`• ${s.name}${s.email ? ' · ' + s.email : ''}${s.phone ? ' · ' + s.phone : ''}${s.previousCoordinatorName ? ' (previously with ' + s.previousCoordinatorName + ')' : ''}`).join('\n');
+    dispatchEmails([Object.assign({}, coord, { notifyEmail:true })], { subject:`${list.length} student${list.length===1?'':'s'} assigned to you`, author:from, kind:'coordinator-assigned',
+      body:`Dear ${firstNameOf(coord.name)},\n\nThe following student${list.length===1?' has':'s have'} been assigned to you:\n\n${lines}\n\nThey know a new coordinator is coming, so please introduce yourself soon, check where they have got to in the roadmap, and help them carry on from there. Their progress is already in your My students list.\n\nThank you for looking after them.\n\nWarm regards,\n${from}` });
+  });
+}
+function wireAwaiting(){
+  const notify = ()=>{ const c = document.getElementById('awaitNotify'); return !c || c.checked; };
+  document.querySelectorAll('[data-await-assign]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.awaitAssign, sel = document.querySelector(`[data-await-sel="${id}"]`);
+    assignStudents([id], sel && sel.value, notify());
+  }));
+  const all = document.getElementById('awaitAssignAll');
+  if(all) all.addEventListener('click', ()=>assignStudents(awaitingStudents().map(s=>s.id), document.getElementById('awaitBulk').value, notify()));
+  const even = document.getElementById('awaitEven');
+  if(even) even.addEventListener('click', ()=>{ if(!(DB.coordinators||[]).length){ alert('There are no coordinators to assign to yet.'); return; } assignStudents(awaitingStudents().map(s=>s.id), 'even', notify()); });
+}
+function formerCoordinatorsHtml(){
+  const list = DB.formerCoordinators || []; if(!list.length) return '';
+  return `<div class="section-title" style="margin-top:6px;"><div><h2>Stepped down</h2><p>Not part of the programme: not counted, not on the public site, no sign-in. Kept here only so a Certificate of Service can still be issued and verified (see Certificates).</p></div></div>
+    <div class="list" style="margin-bottom:30px;">${list.map(f=>`<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(f.name)}</span><span class="item-meta">stepped down ${fmtDate(f.steppedDownAt)}</span></div>
+      <div class="item-body">${escapeHtml(f.email||'no email on file')}${f.studentsAtExit ? ` · had ${f.studentsAtExit} student${f.studentsAtExit===1?'':'s'}` : ''} · ${(DB.certificates||[]).some(c=>c.recipient_id===f.id) ? 'certificate issued' : 'no certificate yet'}</div>
+      <div class="item-actions"><button class="btn ghost small" data-del-former="${f.id}">Remove from this list</button></div></div>`).join('')}</div>`;
+}
+function certPool(){
+  return [ ...(DB.coordinators||[]), ...(DB.formerCoordinators||[]).filter(f=>!(DB.coordinators||[]).some(c=>c.id===f.id)).map(f=>Object.assign({}, f, { _former:true })) ];
+}
+function emailFormerCertificate(person, cert){
+  const url = certVerifyUrl(cert.id);
+  dispatchEmails([Object.assign({}, person, { notifyEmail:true })], { subject:`Your Certificate of Service, ${cert.program_name}`, author:(ME && ME.name) || 'The Ambassador', kind:'certificate', noPortalLink:true,
+    body:`Dear ${firstNameOf(person.name)},\n\nThank you for the time and care you gave to students as a coordinator with ${cert.program_name}. In recognition of your service, a Certificate of Service has been issued to you.\n\nCertificate ID: ${cert.id}\nVerify it at any time: ${url}\n\nAnyone you share the link or the ID with can confirm that it is genuine. The Ambassador will send you the certificate file (PDF) separately.\n\n${CERT_DISCLAIMER}\n\nWith thanks and best wishes,\n${(ME && ME.name) || 'The Ambassador'}` });
+}
 async function syncPublicDirectory(){
   // Never overwrite the live public directory with a failed or empty load
   if(dbLoadError || !(DB.coordinators||[]).length) return;
@@ -6634,6 +6785,7 @@ function ambassadorView(tab){
       <h1>Hi ${escapeHtml(first)}.</h1>
       <p>${DB.students.length} students across ${DB.coordinators.length} coordinators. Here is what needs you today.</p>
     </div>
+    ${awaitingOverviewHtml()}
     ${DB.applications.length ? `<div class="card" style="margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;"><span><b>${DB.applications.length} new application${DB.applications.length===1?'':'s'}</b> waiting for a decision</span><button class="btn amber small" type="button" data-go-tab="applications">Review</button></div>` : ''}
     ${activeSessions.length ? `<div class="card" style="margin-bottom:14px;"><b>${activeSessions.length} session${activeSessions.length===1?'':'s'} live right now:</b> ${activeSessions.map(c=>escapeHtml(c.title)).join(', ')}</div>` : ''}
     <div class="stat-row">
@@ -6673,7 +6825,7 @@ function ambassadorView(tab){
   if(tab==='people'){
     const pq = (peopleSearch||'').toLowerCase().trim();
     const coordMatch = c => !pq || [c.name,c.email,c.subject,c.region,c.bio].some(v=>v && String(v).toLowerCase().includes(pq));
-    const studentMatch = s => (peopleStatus==='all' || studentAccess(s).state===peopleStatus) && (!pq || [s.name,s.email,s.school,s.region,s.group,s.ageRange,s.howHeard,s.status,coordName(s.coordinatorId)].some(v=>v && String(v).toLowerCase().includes(pq)));
+    const studentMatch = s => (peopleStatus==='all' || studentAccessKey(s)===peopleStatus) && (!pq || [s.name,s.email,s.school,s.region,s.group,s.ageRange,s.howHeard,s.status,coordName(s.coordinatorId)].some(v=>v && String(v).toLowerCase().includes(pq)));
     const shownCoords = DB.coordinators.filter(coordMatch);
     const shownStudents = DB.students.filter(studentMatch);
     return `
@@ -6722,9 +6874,10 @@ function ambassadorView(tab){
             </label>
             <button class="btn teal small" data-save-coord="${c.id}">Save</button>
           </div>
-          <div class="item-actions"><button class="btn ghost small" data-remove-coord="${c.id}">Remove</button></div>
+          <div class="item-actions"><button class="btn ghost small" data-remove-coord="${c.id}">Step down…</button></div>
         </div>`).join('') : `<div class="empty">${pq ? 'No coordinators match your search.' : 'No coordinators yet. <b>Add the first one above</b> to start building your team.'}</div>`}
     </div>
+    ${formerCoordinatorsHtml()}
     ${chainDivider()}
     <div class="section-title" style="margin-top:24px;"><div><h2>Students</h2><p>Everyone accepted into the outreach programme. Add them here first — this is what lets them sign in.</p></div>
       <button class="btn ghost small" id="exportStudentsCsv">Export CSV</button>
@@ -6743,12 +6896,12 @@ function ambassadorView(tab){
       </div>
       <button class="btn amber small" id="addStudentBtn" style="margin-top:10px;">Add student</button>
     </div>
-    <div id="statusReqBox"></div>
+    ${awaitingCardHtml()}
     <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
       <span style="font-size:13px; font-weight:600;">Portal access</span>
-      ${(()=>{ const t = accessSummary(DB.students); return `<span style="font-size:12.5px; color:var(--muted);">${t.act} active · ${t.off} inactive of ${t.n}</span>`; })()}
-      ${[['all','All'],['active','Active'],['inactive','Inactive']].map(([v,l])=>`<button class="btn ${peopleStatus===v?'teal':'ghost'} small" data-people-status="${v}">${l}</button>`).join('')}
-      <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Active means seen in the last 14 days. Inactive students (not seen for 14 days, switched off, or never joined) are locked out and asked to contact you or their coordinator.</span>
+      ${(()=>{ const t = accessSummary(DB.students); return `<span style="font-size:12.5px; color:var(--muted);">${t.active} active · ${t.quiet} quiet · ${t.paused} paused of ${t.n}</span>`; })()}
+      ${[['all','All'],['active','Active'],['quiet','Quiet'],['paused','Paused']].map(([v,l])=>`<button class="btn ${peopleStatus===v?'teal':'ghost'} small" data-people-status="${v}">${l}</button>`).join('')}
+      <span style="font-size:12px; color:var(--muted); flex-basis:100%;">Quiet means not seen for about three weeks. It is only a tag: nobody is locked out for being away, so there is nothing to reactivate. Pause a portal only when you mean to.</span>
     </div>
     <div class="card" style="margin-bottom:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 14px;">
       <span style="font-size:13px; font-weight:600;">Text updates</span>
@@ -6934,13 +7087,11 @@ function coordinatorView(tab){
   }
   if(tab==='students'){
     const allMine = myStudents();
-    const isOff = s=>studentAccess(s).state==='inactive';
-    const mine = MYSTU==='active' ? allMine.filter(s=>!isOff(s)) : MYSTU==='inactive' ? allMine.filter(isOff) : [...allMine].sort((a,b)=>(isOff(b)?1:0)-(isOff(a)?1:0));
+    const mine = MYSTU==='all' ? [...allMine].sort((a,b)=>{ const r = { quiet:0, paused:1, active:2 }; return (r[studentAccessKey(a)]??2) - (r[studentAccessKey(b)]??2); }) : allMine.filter(s=>studentAccessKey(s)===MYSTU);
     const groups = [...new Set(mine.map(s=>s.group).filter(Boolean))];
     return `
-    <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster. Untick <b>Active</b> to switch a student's portal off, tick it to switch it back on.</p></div></div>
-    ${(()=>{ const t = accessSummary(allMine); return `<p class="note" style="margin-bottom:10px;">${t.act} active · ${t.off} inactive of ${t.n}. Students not seen for 14 days become inactive automatically.</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;">${[['all','All ('+t.n+')'],['active','Active ('+t.act+')'],['inactive','Deactivated ('+t.off+')']].map(([v,l])=>`<button type="button" class="mc-chip" data-mystu="${v}" style="${MYSTU===v?'background:var(--navy-deep); color:#fff;':''}">${l}</button>`).join('')}</div>`; })()}
-    <div id="statusReqBox"></div>
+    <div class="section-title"><div><h2>My students</h2><p>Assign groups so revision sessions and call sheets can target the right cluster. Students tagged <b>Quiet</b> are the ones to nudge first. Untick <b>Portal on</b> only to pause a student on purpose.</p></div></div>
+    ${(()=>{ const t = accessSummary(allMine); return `<p class="note" style="margin-bottom:10px;">${t.active} active · ${t.quiet} quiet · ${t.paused} paused of ${t.n}. Quiet is only a tag; nobody is locked out for being away.</p><div style="display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px;">${[['all','All ('+t.n+')'],['active','Active ('+t.active+')'],['quiet','Quiet ('+t.quiet+')'],['paused','Paused ('+t.paused+')']].map(([v,l])=>`<button type="button" class="mc-chip" data-mystu="${v}" style="${MYSTU===v?'background:var(--navy-deep); color:#fff;':''}">${l}</button>`).join('')}</div>`; })()}
     <div class="list">
       ${mine.length ? mine.map(s=>{
         const notes = DB.progressNotes.filter(n=>n.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
@@ -7638,8 +7789,7 @@ function settingsView(){
     <p class="note" style="margin:0 0 6px;">The matching secret key goes in Supabase as the <b>RECAPTCHA_SECRET_KEY</b> secret. Leave this empty to switch the check off.</p>
     <p class="note" style="margin:0 0 6px;">Applications are open all the time by default. Tick this only if you need to stop taking them for a while.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Student access</h3>
-    <label class="eb-check" style="margin:0 0 4px;"><input type="checkbox" id="setLockNew" ${s.lockNeverJoined?'checked':''}> Also lock students who have never joined (they can't sign in until you or their coordinator activates them)</label>
-    <p class="note" style="margin:0 0 6px;">Off by default, so a new student can sign in for the first time. Students not seen for 14 days are always locked.</p>
+    <p class="note" style="margin:0 0 6px;">Nobody is locked out for being away and there is no reactivation step. A student not seen for about three weeks just shows a <b>Quiet</b> tag so you know who to nudge. You or a coordinator can still pause a portal on purpose.</p>
     <h3 style="font-size:15px; margin:18px 0 8px;">Email delivery</h3>
     <div class="field" style="margin:0 0 6px;"><label>Send emails through</label>
       <select id="setEmailMode"><option value="server" ${s.emailMode==='emailjs'?'':'selected'}>Server via Brevo (recommended: 300 free per day, with an Email Log)</option><option value="emailjs" ${s.emailMode==='emailjs'?'selected':''}>EmailJS only (from the browser; small free limit)</option></select></div>
@@ -9496,9 +9646,12 @@ function wireHandlers(tab){
     DB.coordinators.push({id:uid(), name, email, subject:q('cSubject').value.trim(), region:q('cRegion').value.trim(), bio:'', phone:q('cPhone').value.trim(), notifyEmail:true, notifySms:!!q('cPhone').value.trim(), joined:today()});
     await saveKey('coordinators'); await syncPublicDirectory(); render('people');
   });
-  document.querySelectorAll('[data-remove-coord]').forEach(b=>b.addEventListener('click', async ()=>{
-    DB.coordinators = DB.coordinators.filter(c=>c.id!==b.dataset.removeCoord);
-    await saveKey('coordinators'); await syncPublicDirectory(); render('people');
+  document.querySelectorAll('[data-remove-coord]').forEach(b=>b.addEventListener('click', ()=>stepDownCoordinator(b.dataset.removeCoord)));
+  document.querySelectorAll('[data-del-former]').forEach(b=>b.addEventListener('click', async ()=>{
+    const f = (DB.formerCoordinators||[]).find(x=>x.id===b.dataset.delFormer); if(!f) return;
+    if(!confirm(`Remove ${f.name} from this list? Certificates already issued to them stay valid and can still be verified, but you will not be able to issue them a new one.`)) return;
+    DB.formerCoordinators = DB.formerCoordinators.filter(x=>x.id!==f.id);
+    await saveKey('formerCoordinators'); render('people');
   }));
   document.querySelectorAll('[data-save-coord]').forEach(b=>b.addEventListener('click', async ()=>{
     const id = b.dataset.saveCoord;
@@ -9542,7 +9695,10 @@ function wireHandlers(tab){
       if(!newName){ alert('A student needs a name — it can\'t be left blank.'); nameInp.value = s.name || ''; return; }
       s.name = newName;
     }
+    const wasAwaiting = !!(s.awaitingReassignment && !s.coordinatorId);
     if(coordSel) s.coordinatorId = coordSel.value || null;
+    let reassignedNow = null;
+    if(wasAwaiting && s.coordinatorId){ s.awaitingReassignment = false; s.reassignedAt = Date.now(); reassignedNow = (DB.coordinators||[]).find(c=>c.id===s.coordinatorId) || null; }
     if(groupInp) s.group = groupInp.value.trim();
     if(startedChk) s.started = startedChk.checked;
     if(phoneInp) s.phone = phoneInp.value.trim();
@@ -9551,6 +9707,7 @@ function wireHandlers(tab){
       s.notifySms = smsChk.checked;
     }
     await saveKey('students'); await syncPublicDirectory(); render('people');
+    if(reassignedNow) notifyAssignments([{ s, coord: reassignedNow }]);
   }));
   // WhatsApp updates checkbox: saves the moment it is ticked (this is the person's opt-in for WhatsApp messages)
   document.querySelectorAll('[data-wa-for]').forEach(chk=>chk.addEventListener('change', async ()=>{
@@ -9793,7 +9950,6 @@ function wireHandlers(tab){
     DB.settings = {
       ...DB.settings,
       emailMode: q('setEmailMode').value,
-      lockNeverJoined: q('setLockNew').checked,
       applicationsClosed: q('setPauseApps').checked,
       recaptchaSiteKey: q('setRecaptcha').value.trim(),
       emailjsPublicKey: q('setEmailKey').value.trim(),
@@ -10069,7 +10225,7 @@ function wireHandlers(tab){
       if(countEl) countEl.textContent = `${certSelectedIds.size} selected`;
     }));
     if(q('certSelectAll')) q('certSelectAll').addEventListener('click', ()=>{
-      const pool = certTypeFilter==='coordinator' ? DB.coordinators : DB.students;
+      const pool = certTypeFilter==='coordinator' ? certPool() : DB.students;
       pool.forEach(p=>certSelectedIds.add(p.id));
       render('certificates');
     });
@@ -10352,13 +10508,11 @@ async function lrRanking(root){
 
 // ===========================================================================
 // DUTY ROLES — the Ambassador hands sections to named coordinators and can reassign them at any time.
-//   reactivation : switches students' portals back on; is the contact students see on the inactive screen
 //   applications : interest list, applicants, open/pause + deadline, interviews and the rest of Applications
-//   activity     : activity statistics, and emails/WhatsApp to very inactive students and coordinators
+//   activity     : activity statistics, and emails/WhatsApp to quiet students and coordinators
 // Who holds each role lives in settings (DB.settings.duties). Until the Ambassador changes it, DUTY_DEFAULTS apply.
 // ===========================================================================
 const DUTY_DEFAULTS = {
-  reactivation:{ email:'nyaw58846@gmail.com' },
   applications:{ email:'kassimhassan1290@gmail.com' },
   activity:{ email:'davidarmahx774@gmail.com' },
   // Programme portfolios: unassigned until the Ambassador appoints someone.
@@ -10366,12 +10520,6 @@ const DUTY_DEFAULTS = {
 };
 const PORTFOLIO_KEYS = ['updates','welfare','content','exams','comms','events','community','support'];
 const DUTY_INFO = {
-  reactivation:{ title:'Account Reactivation', tab:'Reactivation', duties:[
-    'Handle every request to reactivate a student portal, and switch it back on once you are satisfied the student is serious.',
-    'Be the contact students see on the inactive screen: your email and WhatsApp.',
-    'Keep the Ambassador informed about students who keep going inactive.' ],
-    outcomes:[ 'Every reactivation request is answered promptly, ideally within 24 hours.', 'Only students who show they intend to work are reactivated.', 'Students who keep lapsing are reported to the Ambassador.' ],
-    tips:[ 'Students see your email and WhatsApp on their inactive screen, so keep your phone number current on your profile.', 'Ask the student why they went quiet before you activate; a short WhatsApp message is enough.', 'Students the Ambassador switched off can only be reactivated by the Ambassador.' ] },
   applications:{ title:'Applications', tab:'Applicants', duties:[
     'Check the interest form and move people to Applicants when applications are open.',
     'Open or pause applications and set deadlines, in consultation with the Ambassador.',
@@ -10380,9 +10528,9 @@ const DUTY_INFO = {
     tips:[ 'Agree dates and decisions with the Ambassador before they go public.', 'The Open & deadline page controls what the public site shows visitors.', 'Keep accepted applicants moving into onboarding.' ] },
   activity:{ title:'Activity & Follow-up', tab:'Activity', duties:[
     'Track how active coordinators and students are, using the activity statistics.',
-    'Email or WhatsApp students and coordinators who are very inactive and not working on their courses.',
+    'Email or WhatsApp students and coordinators who are quiet and not working on their courses.',
     'Report concerns to the Ambassador, who can view your activity and reassign this role.' ],
-    outcomes:[ 'Very inactive students and coordinators are contacted every week.', 'The number of inactive students falls from month to month.', 'The Ambassador receives clear information on who needs support or reassignment.' ],
+    outcomes:[ 'Quiet students and coordinators are contacted every week.', 'The number of quiet students falls from month to month.', 'The Ambassador receives clear information on who needs support or reassignment.' ],
     tips:[ 'Be encouraging: ask what is in the way before you warn anyone.', 'Use email for a record and WhatsApp for a personal touch.', 'Your messages are logged so the Ambassador can see the follow-up being done.' ] },
   updates:{ title:'Updates & Guide', tab:'Updates', duties:[
     'Read every new portal update as soon as it appears and understand what it changes for students and coordinators.',
@@ -10446,13 +10594,11 @@ function dutyPerson(k){
 }
 function canAdminApps(){ return !!ME && (ME.role==='ambassador' || hasDuty('applications')); }
 function canSeeActivity(){ return !!ME && (ME.role==='ambassador' || hasDuty('activity')); }
-function canReactivate(){ return !!ME && (ME.role==='ambassador' || hasDuty('reactivation')); }
 function dutyTabs(){
   if(!ME || ME.role!=='coordinator') return [];
   const t = [];
   if(hasDuty('applications')) t.push({ k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['appcontrol','Open & deadline'],['applicantmsg','Updates'],['onboarding','Onboarding']] });
   if(hasDuty('activity')) t.push({ k:'activity', l:'Activity', ic:'people', subs:[['actstats','Activity stats'],['actreach','Reach out'],['load','Coordinator load']] });
-  if(hasDuty('reactivation')) t.push({ k:'reactivation', l:'Reactivation', ic:'students', subs:[['reactivate','Reactivation']] });
   PORTFOLIO_KEYS.forEach(k=>{ if(hasDuty(k) && DUTY_INFO[k]) t.push({ k:'pf_'+k, l:DUTY_INFO[k].tab, ic:'people', subs:[['pf_'+k, DUTY_INFO[k].tab]] }); });
   return t;
 }
@@ -10540,7 +10686,7 @@ function actCoordRows(){
   });
 }
 function lvlBadge(l){
-  const m = { ok:['Active','#1F8A70'], low:['Slipping','#B9770E'], very:['Very inactive','#C0392B'] }[l] || ['','#888'];
+  const m = { ok:['Active','#1F8A70'], low:['Slipping','#B9770E'], very:['Quiet','#C0392B'] }[l] || ['','#888'];
   return `<span class="badge" style="background:${m[1]}1f; color:${m[1]};">${m[0]}</span>`;
 }
 function seenText(days){ return days===null ? 'Never signed in' : days===0 ? 'Seen today' : `Seen ${days} day${days===1?'':'s'} ago`; }
@@ -10576,13 +10722,13 @@ function actStatsView(){
   const stat = (v,l)=>`<div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700;">${v}</div><div class="note" style="margin:0;">${l}</div></div>`;
   const chip = (attr,val,label,cur)=>`<button type="button" class="mc-chip" ${attr}="${val}" style="${cur===val?'background:var(--navy-deep); color:#fff;':''}">${label}</button>`;
   return `${ME.role==='coordinator' ? dutyCardHtml('activity') : ''}
-  <div class="section-title"><div><h2>Activity statistics</h2><p>Who is working and who has gone quiet. Active means seen in the last 7 days, slipping is 7 to 13 days, very inactive is 14 days or more (or never signed in).</p></div></div>
-  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;">${stat(cnt(st,'ok'),'students active')}${stat(cnt(st,'low'),'students slipping')}${stat(cnt(st,'very'),'students very inactive')}</div>
-  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">${stat(cnt(co,'ok'),'coordinators active')}${stat(cnt(co,'low'),'coordinators slipping')}${stat(cnt(co,'very'),'coordinators very inactive')}</div>
+  <div class="section-title"><div><h2>Activity statistics</h2><p>Who is working and who has gone quiet. Active means seen in the last 7 days, slipping is 7 to 13 days, quiet is 14 days or more (or never signed in).</p></div></div>
+  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px;">${stat(cnt(st,'ok'),'students active')}${stat(cnt(st,'low'),'students slipping')}${stat(cnt(st,'very'),'students quiet')}</div>
+  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">${stat(cnt(co,'ok'),'coordinators active')}${stat(cnt(co,'low'),'coordinators slipping')}${stat(cnt(co,'very'),'coordinators quiet')}</div>
   <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px;">
     ${chip('data-act-who','students','Students',ACT.who)}${chip('data-act-who','coordinators','Coordinators',ACT.who)}
     <span style="width:10px;"></span>
-    ${chip('data-act-level','all','All',ACT.level)}${chip('data-act-level','very','Very inactive',ACT.level)}${chip('data-act-level','low','Slipping',ACT.level)}${chip('data-act-level','ok','Active',ACT.level)}
+    ${chip('data-act-level','all','All',ACT.level)}${chip('data-act-level','very','Quiet',ACT.level)}${chip('data-act-level','low','Slipping',ACT.level)}${chip('data-act-level','ok','Active',ACT.level)}
     <input id="actSearch" type="search" placeholder="Search name or email" value="${escapeHtml(ACT.search)}" style="margin-left:auto; max-width:240px;">
   </div>
   <div class="list" id="actList">${actListHtml()}</div>`;
@@ -10611,7 +10757,7 @@ function actReachView(){
   return `${ME.role==='coordinator' ? dutyCardHtml('activity') : ''}
   <div class="section-title"><div><h2>Reach out</h2><p>Message people who have gone quiet. Emails go out from the portal in one tap. WhatsApp opens a ready message for each person, and you press send.</p></div></div>
   <div class="psms-wrap"><div class="card">
-    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_low','Slipping students (still active, quiet for 7+ days)')}${opt('coords_very','Very inactive coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
+    <div class="field"><label for="rcAud">Who</label><select id="rcAud">${opt('students_low','Slipping students (still active, away for 7+ days)')}${opt('coords_very','Quiet coordinators (14+ days)')}${opt('coords_low','All inactive coordinators (7+ days)')}</select></div>
     <div class="field"><label for="rcSubject">Email subject</label><input id="rcSubject" maxlength="150" value="${escapeHtml(REACH.subject)}"></div>
     <div class="field"><label for="rcBody">Message (use {name} and {days})</label><textarea id="rcBody" rows="8" maxlength="1500">${escapeHtml(REACH.body)}</textarea></div>
     <div class="psms-foot"><span class="psms-count" id="rcCount"></span><button class="btn teal" id="rcSend" type="button">Email everyone listed</button></div>
@@ -10651,31 +10797,6 @@ function appControlView(){
     <p class="note" style="margin:0 0 10px;">Leave the deadline empty for no deadline.</p>
     <button class="btn amber small" id="dcSave" type="button">Save</button> <span id="dcMsg" class="note"></span>
   </div>`;
-}
-function reactivateView(){
-  return `${ME.role==='coordinator' ? dutyCardHtml('reactivation') : ''}
-  <div class="section-title"><div><h2>Reactivation</h2><p>Students whose portal is switched off ask you to bring it back. Students see your email and WhatsApp on their inactive screen. Check they are serious, then activate.</p></div></div>
-  <div id="rvBox"><div class="empty">Loading…</div></div>`;
-}
-async function fillReactivate(){
-  const box = document.getElementById('rvBox'); if(!box) return;
-  await loadStatusRequests();
-  const inactive = (DB.students||[]).filter(s=>studentAccess(s).state==='inactive');
-  const asked = new Set(pendingRequests(DB.students).map(r=>r.studentId));
-  const sorted = [...inactive].sort((a,b)=>(asked.has(b.id)?1:0)-(asked.has(a.id)?1:0) || String(a.name).localeCompare(String(b.name)));
-  box.innerHTML = sorted.length ? `<div class="list">${sorted.map(s=>{
-    const a = studentAccess(s), amb = s.portalBlocked && s.blockedBy==='ambassador';
-    return `<div class="item"><div class="item-head"><span class="item-title">${escapeHtml(s.name||'')}</span><span class="item-meta">${asked.has(s.id)?'Asked to be reactivated':''}</span></div>
-      <div class="item-body">${accessBadge(s)} <span style="font-size:12.5px; color:var(--muted);">Coordinator: ${escapeHtml(coordName(s.coordinatorId))}</span></div>
-      <div class="item-actions">${amb ? '<span class="note" style="margin:0;">Switched off by the Ambassador, so only the Ambassador can switch it back on.</span>' : `<button class="btn teal small" type="button" data-rv-activate="${s.id}">Activate</button>`}
-      ${s.phone && waLink(s.phone,'') ? `<a class="wa-btn" href="${waLink(s.phone, `Hello ${String(s.name||'').split(/\s+/)[0]}, your Chemistry Competition Prep portal has been reactivated. Please log in and continue your work.`)}" target="_blank" rel="noopener">${WA_ICON}WhatsApp student</a>` : ''}</div></div>`;
-  }).join('')}</div>` : '<div class="empty">No inactive students right now.</div>';
-  box.querySelectorAll('[data-rv-activate]').forEach(b=>b.addEventListener('click', async ()=>{
-    const s = DB.students.find(x=>x.id===b.dataset.rvActivate); if(!s) return;
-    b.disabled = true; b.textContent = 'Activating…';
-    await logDuty('reactivation', `Reactivated ${s.name}`);
-    await setStudentAccess(s.id, true, ME.role);
-  }));
 }
 // ---- Ambassador: team & duties ----
 function dutyAppointMessage(k, person){
@@ -10720,7 +10841,7 @@ function dutiesAdminView(){
   ${dutyEmailComposeHtml()}
   ${compose}
   <div class="section-title" style="margin-top:6px;"><div><h2>Portal duties</h2><p>These hand a section of the portal to a coordinator.</p></div></div>
-  ${dutyCard('reactivation')}${dutyCard('applications')}${dutyCard('activity')}
+  ${dutyCard('applications')}${dutyCard('activity')}
   <div class="section-title" style="margin-top:26px;"><div><h2>Programme portfolios</h2><p>Appoint coordinators to lead an area of the programme. Each person gets the same appointment message, a workspace under their own menu, and a way to report back to you.</p></div></div>
   ${PORTFOLIO_KEYS.map(dutyCard).join('')}
   <div class="section-title" style="margin-top:26px;"><div><h2>Series Manager</h2><p>Appoint one person to run the Chemistry Series sign-ups. They get a separate sign-in that opens only the series responses.</p></div></div>
@@ -10736,7 +10857,7 @@ async function fillDutyLog(){
   const box = document.getElementById('dutyLogBox'); if(!box) return;
   let log = []; try{ log = (await sGet('duty:log', true)) || []; }catch(e){}
   log = [...log].sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,60);
-  const label = { reactivation:'Reactivation', applications:'Applications', activity:'Activity', assign:'Assignment' };
+  const label = { reactivation:'Reactivation (retired)', applications:'Applications', activity:'Activity', assign:'Assignment' };
   PORTFOLIO_KEYS.forEach(k=>{ label[k] = DUTY_INFO[k].title; });
   box.innerHTML = log.length ? log.map(e=>`<div class="item" style="padding:10px 12px;"><div class="item-head"><span class="item-title">${escapeHtml(e.by||'')}</span><span class="item-meta">${fmtDateTime(e.ts)}</span></div><div class="item-body"><span class="badge">${escapeHtml(label[e.duty]||e.duty||'')}</span> ${escapeHtml(e.action||'')}</div></div>`).join('') : '<div class="empty">Nothing recorded yet.</div>';
 }
@@ -10782,7 +10903,6 @@ function wireDuty(tab){
     q('rcSend').addEventListener('click', reachSendAll);
     refresh();
   }
-  if(tab==='reactivate') fillReactivate();
   document.querySelectorAll('[data-mystu]').forEach(b=>b.addEventListener('click', ()=>{ MYSTU = b.dataset.mystu; render('students'); }));
   if(tab==='settings') wireWaGroups();
   if(tab==='duties'){
@@ -10835,11 +10955,11 @@ function wireDuty(tab){
   }
 }
 
-document.addEventListener('click', e=>{ const a = e.target && e.target.closest ? e.target.closest('[data-wa-log]') : null; if(a && ME) logDuty(typeof currentTab!=='undefined' && currentTab==='reactivate' ? 'reactivation' : 'activity', `Opened WhatsApp to ${a.dataset.waLog}`); });
+document.addEventListener('click', e=>{ const a = e.target && e.target.closest ? e.target.closest('[data-wa-log]') : null; if(a && ME) logDuty('activity', `Opened WhatsApp to ${a.dataset.waLog}`); });
 // ===========================================================================
-// WhatsApp groups for new applicants, coordinator/student summaries, inactive-student lock-out
+// WhatsApp groups for new applicants, coordinator/student summaries, paused-student screen
 // ===========================================================================
-let MYSTU = 'all'; // coordinator's "My students" filter: all | active | inactive
+let MYSTU = 'all'; // coordinator's "My students" filter: all | active | quiet | paused
 function waGroups(){ return Array.isArray(DB.settings && DB.settings.waGroups) ? DB.settings.waGroups : []; }
 function oldWaUrl(){ return ((DB.settings && DB.settings.whatsappGroupUrl) || '').trim() || DEFAULT_WA_GROUP; }
 function currentWaGroupId(){ const id = DB.settings && DB.settings.waGroupCurrent; return waGroups().some(g=>g.id===id) ? id : ''; }
@@ -10891,26 +11011,26 @@ function wireWaGroups(){
 // ---- Ambassador: every coordinator with their students and group numbers ----
 function coordSummaryView(){
   const coords = [...(DB.coordinators||[])].sort((a,b)=>String(a.name).localeCompare(String(b.name))), studs = DB.students||[];
-  const isAct = s=>studentAccess(s).state==='active';
+  const isAct = s=>studentAccessKey(s)==='active';
   const stat = (v,l)=>`<div class="card" style="flex:1; min-width:120px; text-align:center;"><div style="font-size:26px; font-weight:700;">${v}</div><div class="note" style="margin:0;">${l}</div></div>`;
   const blockFor = (title, sub, list)=>{
     const act = list.filter(isAct).length, groups = new Map();
     list.forEach(s=>{ const g = String(s.group||'').trim() || 'No group'; groups.set(g, (groups.get(g)||0)+1); });
     const gl = [...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0], undefined, {numeric:true}));
     return `<details class="card" style="margin-bottom:10px;"><summary style="cursor:pointer; list-style:none;"><div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;"><b>${escapeHtml(title)}</b>
-      <span class="note" style="margin:0;">${list.length} student${list.length===1?'':'s'} · <span style="color:#1F8A70;">${act} active</span> · <span style="color:#C0392B;">${list.length-act} inactive</span></span></div>
+      <span class="note" style="margin:0;">${list.length} student${list.length===1?'':'s'} · <span style="color:#1F8A70;">${act} active</span> · <span style="color:#C0392B;">${list.length-act} quiet or paused</span></span></div>
       <div class="note" style="margin:4px 0 0;">${sub}</div></summary>
       ${list.length ? `<div style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;">${gl.map(([g,n])=>`<span class="badge">${g==='No group' ? 'No group' : 'Group '+escapeHtml(g)}: ${n}</span>`).join('')}</div>
       <div style="overflow:auto;"><table style="width:100%; border-collapse:collapse; font-size:13px;"><thead><tr style="text-align:left; color:var(--muted);"><th style="padding:4px 8px;">Student</th><th style="padding:4px 8px;">Group</th><th style="padding:4px 8px;">Status</th><th style="padding:4px 8px;">Last seen</th></tr></thead><tbody>
       ${[...list].sort((a,b)=>String(a.group||'').localeCompare(String(b.group||''), undefined, {numeric:true}) || String(a.name).localeCompare(String(b.name))).map(s=>{ const d = dutyDays(studentSeenMs(s)); return `<tr style="border-top:1px solid rgba(15,36,56,.08);"><td style="padding:6px 8px;">${escapeHtml(s.name||'')}</td><td style="padding:6px 8px;">${escapeHtml(s.group||'—')}</td><td style="padding:6px 8px;">${accessBadge(s)}</td><td style="padding:6px 8px;">${seenText(d)}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="note" style="margin:10px 0 0;">No students yet.</p>'}</details>`;
   };
   const unassigned = studs.filter(s=>!s.coordinatorId || !coords.some(c=>c.id===s.coordinatorId));
-  return `<div class="section-title"><div><h2>Coordinators & students</h2><p>Every coordinator with their students: how many are active, how many have gone inactive, and which group each student is in. Open a coordinator to see the students.</p></div></div>
-  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">${stat(coords.length,'coordinators')}${stat(studs.length,'students')}${stat(studs.filter(isAct).length,'active')}${stat(studs.filter(s=>!isAct(s)).length,'inactive')}</div>
+  return `<div class="section-title"><div><h2>Coordinators & students</h2><p>Every coordinator with their students: how many are active, how many are quiet or paused, and which group each student is in. Open a coordinator to see the students.</p></div></div>
+  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">${stat(coords.length,'coordinators')}${stat(studs.length,'students')}${stat(studs.filter(isAct).length,'active')}${stat(studs.filter(s=>!isAct(s)).length,'quiet or paused')}</div>
   ${coords.map(c=>{ const d = dutyDays(coordSeenMs(c)); return blockFor(c.name||'Unnamed', `${[c.region,c.subject].filter(Boolean).map(escapeHtml).join(' · ') || 'No region or subject'} · coordinator ${seenText(d).toLowerCase()}`, studs.filter(s=>s.coordinatorId===c.id)); }).join('')}
   ${unassigned.length ? blockFor('Not yet paired', 'Students without a coordinator', unassigned) : ''}`;
 }
-// ---- Inactive students cannot use the portal ----
+// ---- A paused student cannot use the portal ----
 async function lockOutStudent(st, a){
   ME = null;
   try{ await sDelete('me', false); }catch(e){}
@@ -12535,7 +12655,7 @@ function crPaintPanel(){
   box.innerHTML = `<div class="card" style="margin-bottom:14px;">
       <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;"><h3 style="margin:0; font-size:16px;">Automatic class reminders</h3>
         <label class="eb-check" style="margin:0;"><input type="checkbox" id="crOn" ${cfg.on?'checked':''}> <b>${cfg.on?'On':'Off'}</b></label></div>
-      <p class="note" style="margin:6px 0 10px;">Eligible students are reminded again and again as a class gets closer. Students who are inactive or switched off are never contacted. A reminder goes out only once for each time slot, even if several people have the portal open.</p>
+      <p class="note" style="margin:6px 0 10px;">Eligible students are reminded again and again as a class gets closer. Students whose portal is paused are never contacted. A reminder goes out only once for each time slot, even if several people have the portal open.</p>
       <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">${CR_OFFSETS.map(([m,l])=>`<button type="button" class="mc-chip" data-cr-off="${m}" aria-pressed="${cfg.offsets.includes(m)}">${l}</button>`).join('')}</div>
       <label class="eb-check"><input type="checkbox" id="crPush" ${cfg.ch.push?'checked':''}> App notification (web push)</label>
       <label class="eb-check"><input type="checkbox" id="crEmail" ${cfg.ch.email?'checked':''}> Email</label>
@@ -12575,7 +12695,7 @@ const UPD_BUILTIN = [
   { id:'g-home', kind:'guide', tag:'Guide', ts:0, title:'Home and Overview',
     body:'*Who uses it:* everyone.\n\nThis is the first screen after sign-in. Students see their onboarding steps first (confirm your place, watch the orientation video), and after that their coordinator\u2019s details and daily work. Coordinators see an overview of their group. The Ambassador sees programme-wide numbers and the Activity feed, which lists every call sheet, resource, practice question and message from every coordinator in one place.' },
   { id:'g-students', kind:'guide', tag:'Guide', ts:0, title:'My students',
-    body:'*Who uses it:* coordinators (the Ambassador sees all students under People).\n\nShows your students, lowest progress first. Give each student a group so revision sessions and call sheets can target the right cluster. Each student shows whether they are Active or Inactive. A student who has not been seen for a long time is switched to inactive and is then left out of announcements, alerts, classes and reminders until they are reactivated. If the Ambassador switched a student off, only the Ambassador can switch them back on.' },
+    body:'*Who uses it:* coordinators (the Ambassador sees all students under People).\n\nShows your students, lowest progress first. Give each student a group so revision sessions and call sheets can target the right cluster. Each student shows a tag: Active, Quiet (not seen for a few weeks, which is only a nudge and never locks anyone out) or New (has not signed in yet). Quiet students still get every announcement, alert and class reminder. Untick Portal on only if you need to pause a student on purpose; if the Ambassador paused a student, only the Ambassador can resume them.' },
   { id:'g-sessions', kind:'guide', tag:'Guide', ts:0, title:'Sessions (call sheets)',
     body:'*Who uses it:* coordinators publish, students read.\n\nPublish your session schedule with a title, start and end time (Accra time), a meeting link and notes. The status changes by itself: Upcoming, Active, Completed or Cancelled. Students see their coordinator\u2019s sessions, plus any class the Ambassador scheduled for them. Students are reminded automatically before each session.' },
   { id:'g-roadmap', kind:'guide', tag:'Guide', ts:0, title:'Roadmap, practice, quizzes and mock',
@@ -12593,7 +12713,7 @@ const UPD_BUILTIN = [
   { id:'g-classes', kind:'guide', tag:'Guide', ts:0, title:'Schedule classes and reminders',
     body:'*Who uses it:* the Ambassador.\n\nSchedule a class for all students, one coordinator\u2019s students or selected students. Choose whether to tell them by email, text message or app notification. You can cancel, un-cancel, remove or notify again.\n\n*Automatic reminders:* choose the reminder times (for example 1 day, 3 hours, 1 hour and 15 minutes before) and the channels. The page lists every coordinator with their students and whether each is active, so you can see who will and will not be reminded. The reminder log shows what was sent.' },
   { id:'g-people', kind:'guide', tag:'Guide', ts:0, title:'People, activity and reach out',
-    body:'*Who uses it:* the Ambassador and the coordinator holding the Activity duty.\n\n\u2022 *People:* the roster of coordinators and students. Add them first, because this is what lets them sign in.\n\u2022 *Coordinators & students:* every coordinator with their students, how many are active or inactive, and each student\u2019s group.\n\u2022 *Coordinator load:* how many students each coordinator has, fewest first, so you know who has room.\n\u2022 *Activity stats:* Active means seen in the last 7 days, slipping is 7 to 13 days, very inactive is 14 days or more.\n\u2022 *Reach out:* email or WhatsApp people who have gone quiet. Be encouraging and ask what is in the way.' },
+    body:'*Who uses it:* the Ambassador and the coordinator holding the Activity duty.\n\n\u2022 *People:* the roster of coordinators and students. Add them first, because this is what lets them sign in.\n\u2022 *Coordinators & students:* every coordinator with their students, how many are active or quiet, and each student\u2019s group.\n\u2022 *Coordinator load:* how many students each coordinator has, fewest first, so you know who has room.\n\u2022 *Activity stats:* Active means seen in the last 7 days, slipping is 7 to 13 days, quiet is 14 days or more.\n\u2022 *Reach out:* email or WhatsApp people who have gone quiet. Be encouraging and ask what is in the way.' },
   { id:'g-applicants', kind:'guide', tag:'Guide', ts:0, title:'Applicants and onboarding',
     body:'*Who uses it:* the Ambassador and the coordinator holding the Applications duty.\n\nApplications arrive from the public form. Mark an applicant in review, invite them to an interview (they get the details, and the panel coordinators are invited on WhatsApp), then accept or decline. Accepting switches on their student portal; the Ambassador writes the email and text separately. People who signed up while applications were closed wait on the Interest List until you move them in. *Onboarding* holds the videos new students must watch to the end before they unlock their coordinator and the WhatsApp group. *Open & deadline* opens or pauses applications and sets the closing date.' },
   { id:'g-broadcast', kind:'guide', tag:'Guide', ts:0, title:'Announcements and messages',
