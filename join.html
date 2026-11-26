@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Chemistry Competition Prep · IChC | Sign up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+<style>
+:root{--navy:#0B2545;--blue:#13407A;--accent:#1D6FD8;--accent-dark:#1559B0;--bg:#EEF2F7;--card:#fff;--ink:#14202E;--muted:#5B6B7C;--line:#D5DDE6;--err:#B3261E;--ok:#16794C}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:44px 20px 92px;text-align:center}
+.hero h1{margin:0;font-size:clamp(24px,5vw,34px);font-weight:800;letter-spacing:-.01em}
+.hero p{margin:10px auto 0;max-width:460px;color:#C9D8EC;font-size:15px}
+.wrap{max-width:640px;margin:-56px auto 0;padding:0 16px 48px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(11,37,69,.10)}
+@media(max-width:480px){.card{padding:20px}}
+.sec{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-dark);margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.sec:not(:first-of-type){margin-top:26px}
+.field{margin-bottom:16px}
+label,legend{display:block;font-weight:600;font-size:14px;margin-bottom:6px;padding:0}
+.opt{font-weight:400;color:var(--muted)}
+input[type=text],input[type=tel],input[type=email],select,textarea{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:16px}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,111,216,.18)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+fieldset{border:0;margin:0 0 16px;padding:0}
+.choice{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;font-size:15px;background:#fff}
+.row .choice{margin-bottom:0}
+.choice input{margin-top:3px;accent-color:var(--accent)}
+.choice small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.choice:has(input:checked){border-color:var(--accent);background:#EAF2FD}
+.consent{display:flex;gap:10px;font-size:13.5px;color:var(--muted);line-height:1.5;margin:8px 0 16px}
+.consent input{margin-top:3px;accent-color:var(--accent)}
+#captcha{margin:0 0 18px;min-height:78px}
+button{width:100%;padding:14px 20px;border:0;border-radius:10px;background:var(--accent);color:#fff;font:700 16px 'Inter',sans-serif;cursor:pointer}
+button:hover{background:var(--accent-dark)}
+button:disabled{opacity:.6;cursor:wait}
+.err{color:var(--err);font-size:13px;margin-top:5px;display:none}
+.field.bad .err{display:block}.field.bad input,.field.bad select{border-color:var(--err)}
+#formErr{color:var(--err);font-size:14px;margin:0 0 12px;display:none}
+.hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+.done{text-align:center;padding:14px 4px}
+.done h2{margin:0 0 8px;font-size:22px}
+.done p{color:var(--muted);line-height:1.55;margin:0 0 16px}
+.tick{width:56px;height:56px;border-radius:50%;background:var(--ok);color:#fff;font-size:30px;line-height:56px;margin:0 auto 14px}
+.wabtn{display:block;text-align:center;text-decoration:none;background:#25D366;color:#06301A;font-weight:700;font-size:16px;padding:14px 20px;border-radius:10px}
+.later{background:none;color:var(--muted);font-weight:600;margin-top:8px;font-size:14px}.later:hover{background:none;color:var(--ink)}
+.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:rgba(11,37,69,.6);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
+.sheet{background:#fff;border-radius:16px;padding:26px 22px;max-width:420px;width:100%;text-align:center}
+.sheet h2{margin:0 0 8px;font-size:20px}.sheet p{color:var(--muted);margin:0 0 16px;line-height:1.5}
+.foot{margin-top:22px;text-align:center;font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="hero"><h1>Chemistry Competition Prep · IChC</h1></header>
+
+<div class="wrap">
+  <div class="card" id="formCard">
+    <form id="f" novalidate autocomplete="on">
+      <h2 class="sec">Personal details</h2>
+      <div class="field"><label for="full_name">Full name</label><input type="text" id="full_name" autocomplete="name" required><div class="err">Please enter your full name.</div></div>
+      <fieldset id="genderSet">
+        <legend>Gender</legend>
+        <div class="row">
+          <label class="choice"><input type="radio" name="gender" value="Male"><span>Male</span></label>
+          <label class="choice"><input type="radio" name="gender" value="Female"><span>Female</span></label>
+        </div>
+        <div class="err">Please choose one.</div>
+      </fieldset>
+      <div class="row">
+        <div class="field"><label for="phone">Phone / WhatsApp number</label><input type="tel" id="phone" autocomplete="tel" placeholder="e.g. 024 123 4567" required><div class="err">Enter a valid phone number.</div></div>
+        <div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="email" required><div class="err">Enter a valid email address.</div></div>
+      </div>
+
+      <h2 class="sec">Education</h2>
+      <div class="field"><label for="school">School or university</label><input type="text" id="school" autocomplete="organization" required><div class="err">Please tell us where you study.</div></div>
+      <div class="row">
+        <div class="field"><label for="level">Class / level</label>
+          <select id="level" required><option value="">Select…</option><option>SHS 1</option><option>SHS 2</option><option>SHS 3</option><option>Level 100</option><option>Level 200</option><option>Level 300</option><option>Level 400+</option><option>Graduate / other</option></select><div class="err">Please choose one.</div></div>
+        <div class="field"><label for="region">Region</label>
+          <select id="region" required><option value="">Select…</option></select><div class="err">Please choose your region.</div></div>
+      </div>
+      <div class="field"><label for="chem_level">How comfortable are you with chemistry?</label>
+        <select id="chem_level" required><option value="">Select…</option><option>Just starting out</option><option>Comfortable with the basics</option><option>Strong, I want a challenge</option></select><div class="err">Please choose one.</div></div>
+
+      <h2 class="sec">Training</h2>
+      <fieldset id="pairing">
+        <legend>Would you like to be paired with a coordinator for training?</legend>
+        <label class="choice"><input type="radio" name="wants_coordinator" value="yes"><span>Yes, pair me with a coordinator<small>A coordinator will guide your training and practice.</small></span></label>
+        <label class="choice"><input type="radio" name="wants_coordinator" value="no"><span>No, not for now<small>You’ll still be part of the community.</small></span></label>
+        <div class="err" style="margin-top:0">Please choose an option.</div>
+      </fieldset>
+      <div class="field"><label for="notes">Anything else we should know? <span class="opt">(optional)</span></label><textarea id="notes"></textarea></div>
+
+      <div class="hp" aria-hidden="true"><label>Website <input type="text" id="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="consent"><input type="checkbox" id="consent"><span>I agree that Chemistry Competition Prep may contact me by phone, WhatsApp, SMS and email about this programme, and store the details I’ve entered here.</span></label>
+      <div id="captcha"></div>
+      <p id="formErr" role="alert"></p>
+      <button type="submit" id="go">Sign me up</button>
+    </form>
+  </div>
+
+  <div class="card done hidden" id="doneCard">
+    <div class="tick">✓</div>
+    <h2>You’re in!</h2>
+    <p id="doneMsg"></p>
+    <a class="wabtn" href="https://chat.whatsapp.com/EpcsKPVkuaG2Ag5l3LFlhC" target="_blank" rel="noopener">Join the WhatsApp group</a>
+  </div>
+  <p class="foot">Chemistry Competition Prep · Ghana</p>
+</div>
+
+<div class="modal hidden" id="waModal" role="dialog" aria-modal="true" aria-labelledby="waT">
+  <div class="sheet">
+    <div class="tick" style="background:#25D366">✆</div>
+    <h2 id="waT">One last step: join the WhatsApp group</h2>
+    <p>This is where announcements, practice and updates for new students are shared.</p>
+    <a class="wabtn" href="https://chat.whatsapp.com/EpcsKPVkuaG2Ag5l3LFlhC" target="_blank" rel="noopener">Join the WhatsApp group</a>
+    <button type="button" class="later" onclick="document.getElementById('waModal').classList.add('hidden')">Maybe later</button>
+  </div>
+</div>
+
+<script>
+// ---- Supabase connection (same project as the portal) ----
+var SB_URL = "https://ggbfzfzbquywzuxkoufp.supabase.co";
+var SB_KEY = "sb_publishable_J701w4qoZgUhPuUz7fLD5A_2XuFb8Vn";
+var TABLE = "collab_signups";
+// ---- Google reCAPTCHA v2 ("I'm not a robot") site key: paste yours here ----
+var RECAPTCHA_SITE_KEY = "PASTE_YOUR_RECAPTCHA_SITE_KEY";
+
+var $ = function(id){ return document.getElementById(id); };
+["Ahafo","Ashanti","Bono","Bono East","Central","Eastern","Greater Accra","North East","Northern","Oti","Savannah","Upper East","Upper West","Volta","Western","Western North"]
+  .forEach(function(r){ var o = document.createElement("option"); o.textContent = r; $("region").appendChild(o); });
+
+var captchaId = null, captchaOn = RECAPTCHA_SITE_KEY.indexOf("PASTE") !== 0;
+function renderCaptcha(){
+  if(!captchaOn || captchaId !== null) return;
+  if(window.grecaptcha && grecaptcha.render){ captchaId = grecaptcha.render("captcha", { sitekey: RECAPTCHA_SITE_KEY }); }
+  else setTimeout(renderCaptcha, 300);
+}
+renderCaptcha();
+
+function bad(id, on){ var f = $(id).closest(".field"); if(f) f.classList.toggle("bad", on); return on; }
+function val(id){ return $(id).value.trim(); }
+
+$("f").addEventListener("submit", async function(e){
+  e.preventDefault();
+  $("formErr").style.display = "none";
+  if($("website").value) return; // bot trap
+  var digits = val("phone").replace(/\D/g,"");
+  var pick = document.querySelector("input[name=wants_coordinator]:checked");
+  var gender = document.querySelector("input[name=gender]:checked");
+  $("genderSet").querySelector(".err").style.display = gender ? "none" : "block";
+  var invalid = [
+    bad("full_name", val("full_name").length < 3),
+    bad("phone", digits.length < 9 || digits.length > 15),
+    bad("email", !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val("email"))),
+    bad("school", val("school").length < 2),
+    bad("level", !$("level").value),
+    bad("region", !$("region").value),
+    bad("chem_level", !$("chem_level").value)
+  ].some(Boolean);
+  $("pairing").querySelector(".err").style.display = pick ? "none" : "block";
+  if(invalid || !pick || !gender){ $("formErr").textContent = "Please fix the highlighted fields."; $("formErr").style.display = "block"; return; }
+  if(!$("consent").checked){ $("formErr").textContent = "Please tick the box to agree to be contacted."; $("formErr").style.display = "block"; return; }
+  if(captchaOn && !(window.grecaptcha && grecaptcha.getResponse(captchaId))){ $("formErr").textContent = "Please tick “I’m not a robot”."; $("formErr").style.display = "block"; return; }
+
+  var row = {
+    full_name: val("full_name"), gender: gender.value, phone: val("phone"), email: val("email").toLowerCase(),
+    school: val("school"), level: $("level").value, region: $("region").value,
+    chem_level: $("chem_level").value, wants_coordinator: pick.value,
+    notes: val("notes") || null, consent: true
+  };
+  $("go").disabled = true; $("go").textContent = "Sending…";
+  try{
+    var res = await fetch(SB_URL + "/rest/v1/" + TABLE, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Prefer":"return=minimal" },
+      body: JSON.stringify(row)
+    });
+    if(res.status === 409){ finish(row, true); return; }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    finish(row, false);
+  }catch(err){
+    $("formErr").textContent = "Something went wrong and your details weren’t sent. Check your connection and try again.";
+    $("formErr").style.display = "block";
+    $("go").disabled = false; $("go").textContent = "Sign me up";
+    if(captchaOn && window.grecaptcha) grecaptcha.reset(captchaId);
+  }
+});
+
+function finish(row, dup){
+  var first = row.full_name.split(/\s+/)[0];
+  var msg = dup ? "This email is already signed up, " + first + ". No need to do it again; we’ll be in touch."
+    : row.wants_coordinator === "yes" ? "Thanks, " + first + "! We’ll pair you with a coordinator and contact you on the number and email you gave."
+    : "Thanks, " + first + "! You’re part of the community, and you can ask for a coordinator any time.";
+  $("doneMsg").textContent = msg;
+  $("waModal").classList.remove("hidden");
+  $("formCard").classList.add("hidden"); $("doneCard").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+</script>
+</body>
+</html>

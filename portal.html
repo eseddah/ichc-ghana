@@ -3339,6 +3339,7 @@ function renderLegacy(tab){
   else if(tab==='mock') html = '<div id="mockRoot"></div>';
   else if(tab==='chat') html = chatView();
   else if(tab==='applications') html = applicationsView();
+  else if(tab==='collab' && ME.role==='ambassador') html = collabView();
   else if(tab==='alerts') html = alertsAdminView(ME.role==='coordinator' ? ME.id : null);
   else if(tab==='lounge') html = loungeView();
   else if(tab==='certificates') html = certificatesView();
@@ -5443,7 +5444,7 @@ function lockedHomeExtras(){
 }
 async function onbSave(){ ONB.data.updated = Date.now(); const st = obState(onbStudent(), ONB.data, ONB.videos); if(st.all && !ONB.data.completedAt) ONB.data.completedAt = Date.now(); await sSet('onboard:' + ME.id, ONB.data, true); }
 function studentCoordinatorCard(){ return studentCoordinatorCardPlain(); }
-function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbHomeRoot"></div>' : ''; }
+function onboardingCardHtml(){ return isNewFlow(onbStudent()) ? '<div id="onbHomeRoot"></div>' : collabWaCardHtml(); }
 function onbMeView(){
   return `<div class="section-title"><div><h2>Onboarding</h2><p>These steps are compulsory. Confirm your place, and watch the orientation video to the end if one is posted. Your coordinator and the Ambassador can see your progress.</p></div></div>
   <div id="onbRoot" class="card" style="margin-bottom:16px;"><p class="note">Loading your onboarding…</p></div>`;
@@ -9467,12 +9468,116 @@ function xpFsChange(){
   XP.fsGate = true; xpGate();
 }
 
+
+// ================= Collab sign-ups: students recruited through partners (public page join.html) =================
+const COLLAB_WA_URL = 'https://chat.whatsapp.com/EpcsKPVkuaG2Ag5l3LFlhC';
+const COLLAB = { rows:null, filter:'all', q:'', err:'', busy:false };
+function collabView(){
+  return `<div class="section-title"><div><h2>Collab sign-ups</h2><p>Students who joined through a partner using the short sign-up page (join.html). Pair the ones who asked for a coordinator; the rest stay listed with their details.</p></div></div><div id="collabRoot"><p class="note">Loading sign-ups…</p></div>`;
+}
+async function collabLoad(){
+  if(typeof sbReady === 'undefined' || !sbReady){ COLLAB.err = 'Storage is not connected.'; COLLAB.rows = []; return; }
+  const { data, error } = await sb.from('collab_signups').select('*').order('created_at', { ascending:false }).limit(3000);
+  if(error){ COLLAB.err = error.message || 'Could not load sign-ups.'; COLLAB.rows = []; return; }
+  COLLAB.err = ''; COLLAB.rows = data || [];
+}
+function collabPaint(){
+  const root = document.getElementById('collabRoot'); if(!root) return;
+  const rows = COLLAB.rows || [], e = escapeHtml;
+  const paired = r=>!!r.coordinator_id;
+  const cnt = { all:rows.length, waiting:rows.filter(r=>r.wants_coordinator==='yes' && !paired(r)).length, paired:rows.filter(paired).length, no:rows.filter(r=>r.wants_coordinator==='no').length };
+  const q = COLLAB.q.trim().toLowerCase();
+  const list = rows.filter(r=>{
+    if(COLLAB.filter==='waiting' && !(r.wants_coordinator==='yes' && !paired(r))) return false;
+    if(COLLAB.filter==='paired' && !paired(r)) return false;
+    if(COLLAB.filter==='no' && r.wants_coordinator!=='no') return false;
+    return !q || [r.full_name,r.email,r.phone,r.school,r.region].some(v=>String(v||'').toLowerCase().includes(q));
+  });
+  const pill = (k,l,n)=>`<button type="button" class="btn ${COLLAB.filter===k?'':'ghost'} small" data-cf="${k}">${l} (${n})</button>`;
+  const coords = (DB.coordinators||[]);
+  const card = r=>{
+    const want = r.wants_coordinator==='yes';
+    const chip = paired(r) ? `<span class="badge" style="background:rgba(31,138,112,.15); color:var(--teal-deep);">Paired with ${e(r.coordinator_name||'a coordinator')}</span>`
+      : want ? `<span class="badge" style="background:rgba(227,154,59,.18); color:var(--amber-deep);">Wants a coordinator</span>` : `<span class="badge">No coordinator</span>`;
+    const msg = `Hi ${String(r.full_name).split(' ')[0]}, welcome to Chemistry Competition Prep! Join our WhatsApp group here: ${COLLAB_WA_URL}`;
+    const d = (l,v)=> v ? `<div><span style="color:var(--muted); font-size:12px;">${l}</span><br>${e(v)}</div>` : '';
+    return `<div class="item" style="padding:14px;">
+      <div class="item-head"><span class="item-title">${e(r.full_name)}</span><span class="item-meta">${e(r.gender||'')} · ${new Date(r.created_at).toLocaleDateString()}</span></div>
+      <div style="margin:6px 0 10px;">${chip}</div>
+      <div class="item-body" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; font-size:13.5px;">
+        ${d('Phone',r.phone)}${d('Email',r.email)}${d('School',r.school)}${d('Class / level',r.level)}${d('Region',r.region)}${d('Chemistry level',r.chem_level)}${d('Notes',r.notes)}
+      </div>
+      <div class="field" style="margin:12px 0 0;"><label style="font-size:12px;">Ambassador note</label><input data-cnote="${r.id}" value="${e(r.ambassador_note||'')}" placeholder="Private note"></div>
+      <div class="item-actions" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+        <a class="btn ghost small" target="_blank" rel="noopener" href="${waLink(r.phone, msg)}">WhatsApp</a>
+        <a class="btn ghost small" href="mailto:${e(r.email)}">Email</a>
+        ${want && !paired(r) ? `<select data-cpick="${r.id}"><option value="">Pair with coordinator…</option>${coords.map(c=>`<option value="${e(c.id)}">${e(c.name)}</option>`).join('')}</select><button type="button" class="btn small" data-cpair="${r.id}">Pair</button>` : ''}
+        <button type="button" class="btn ghost small" data-cdel="${r.id}">Delete</button>
+      </div></div>`;
+  };
+  root.innerHTML = COLLAB.err ? `<p class="note" style="color:var(--err);">${e(COLLAB.err)}</p>` : `
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">${pill('all','All',cnt.all)}${pill('waiting','Waiting to be paired',cnt.waiting)}${pill('paired','Paired',cnt.paired)}${pill('no','Not pairing',cnt.no)}<button type="button" class="btn ghost small" id="cExport">Export CSV</button></div>
+    <div class="field"><input id="cSearch" placeholder="Search name, phone, email, school, region…" value="${e(COLLAB.q)}"></div>
+    <div class="list">${list.map(card).join('') || '<p class="note">No sign-ups here yet.</p>'}</div>`;
+}
+async function collabSave(id, patch){
+  const { error } = await sb.from('collab_signups').update(patch).eq('id', id);
+  if(error){ alert('Could not save: ' + error.message); return false; }
+  const r = COLLAB.rows.find(x=>x.id===id); if(r) Object.assign(r, patch); return true;
+}
+async function wireCollab(){
+  if(!COLLAB.rows) await collabLoad();
+  collabPaint();
+  const root = document.getElementById('collabRoot'); if(!root) return;
+  root.addEventListener('click', async ev=>{
+    const t = ev.target.closest('button'); if(!t) return;
+    if(t.dataset.cf){ COLLAB.filter = t.dataset.cf; collabPaint(); return; }
+    if(t.id==='cExport'){
+      const cols = ['created_at','full_name','gender','phone','email','school','level','region','chem_level','wants_coordinator','status','coordinator_name','notes','ambassador_note'];
+      const csv = [cols.join(',')].concat((COLLAB.rows||[]).map(r=>cols.map(c=>'"'+String(r[c]==null?'':r[c]).replace(/"/g,'""')+'"').join(','))).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'collab-signups.csv'; a.click(); return;
+    }
+    if(t.dataset.cdel){ if(!confirm('Delete this sign-up permanently?')) return; const { error } = await sb.from('collab_signups').delete().eq('id', t.dataset.cdel); if(error){ alert(error.message); return; } COLLAB.rows = COLLAB.rows.filter(x=>x.id!==t.dataset.cdel); collabPaint(); return; }
+    if(t.dataset.cpair){
+      const id = t.dataset.cpair, r = COLLAB.rows.find(x=>x.id===id), sel = root.querySelector(`[data-cpick="${id}"]`), c = coordById(sel && sel.value);
+      if(!r || !c){ alert('Choose a coordinator first.'); return; }
+      const email = String(r.email).toLowerCase();
+      if((DB.students||[]).some(s=>(s.email||'').toLowerCase()===email)){ alert('A student with this email is already in the portal.'); return; }
+      t.disabled = true;
+      // No "stage" on purpose: these students skip the onboarding steps and get the WhatsApp group pop-up instead.
+      DB.students.push({ id:uid(), name:r.full_name, email, coordinatorId:c.id, group:'', status:'Accepted', phone:r.phone, gender:r.gender, school:r.school, level:r.level, region:r.region, notifyEmail:true, notifySms:true, joined:today(), collab:true, waUrl:COLLAB_WA_URL });
+      await saveKey('students'); await syncPublicDirectory();
+      if(await collabSave(id, { status:'Paired', coordinator_id:c.id, coordinator_name:c.name })) collabPaint();
+    }
+  });
+  root.addEventListener('change', async ev=>{ const n = ev.target.dataset && ev.target.dataset.cnote; if(n) await collabSave(n, { ambassador_note: ev.target.value.trim() || null }); });
+  root.addEventListener('input', ev=>{ if(ev.target.id==='cSearch'){ COLLAB.q = ev.target.value; const pos = ev.target.selectionStart; collabPaint(); const i = document.getElementById('cSearch'); if(i){ i.focus(); i.setSelectionRange(pos,pos); } } });
+}
+function coordById(id){ return (DB.coordinators||[]).find(c=>c.id===id); }
+// ---- Student side: WhatsApp group card and one-time pop-up (replaces onboarding for collab students) ----
+function collabWaCardHtml(){
+  const s = onbStudent(); if(!s || !s.collab) return '';
+  return `<div class="card" style="margin-bottom:16px; display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;"><div><b>Join the WhatsApp group</b><div class="note" style="margin:4px 0 0;">Announcements, practice and updates are shared there.</div></div><a class="btn" href="${escapeHtml(waUrlFor(s))}" target="_blank" rel="noopener" data-collab-wa>Join the group</a></div>`;
+}
+function collabWaPopup(){
+  const s = onbStudent(); if(!s || !s.collab || s.waPromptDone || document.getElementById('collabWaModal')) return;
+  const m = document.createElement('div'); m.id = 'collabWaModal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(10,24,38,.62);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999;';
+  m.innerHTML = `<div class="card" style="max-width:420px;width:100%;text-align:center;"><h2 style="margin:0 0 8px;">Welcome, ${escapeHtml(String(s.name).split(' ')[0])}!</h2><p class="note">Join the WhatsApp group to stay in the loop with your coordinator and fellow students.</p><a class="btn" id="cwaJoin" href="${escapeHtml(waUrlFor(s))}" target="_blank" rel="noopener" style="display:block;margin-top:12px;">Join the WhatsApp group</a><button type="button" class="btn ghost" id="cwaLater" style="margin-top:8px;width:100%;">Maybe later</button></div>`;
+  document.body.appendChild(m);
+  const done = async (joined)=>{ m.remove(); if(joined){ s.waPromptDone = true; await saveKey('students'); } };
+  m.querySelector('#cwaJoin').addEventListener('click', ()=>done(true));
+  m.querySelector('#cwaLater').addEventListener('click', ()=>done(false));
+}
+
 function wireHandlers(tab){
   const q = (id)=>document.getElementById(id);
   if(tab==='welcome' || tab==='onbme') wireOnboarding();
   if(tab==='learn') wireLearn();
   if(tab==='roadmap' || tab==='welcome') wireRoadmap();
   if(tab==='onboarding') wireOnboardingSetup();
+  if(tab==='collab') wireCollab();
+  if(tab==='welcome' && ME && ME.role==='student') collabWaPopup();
   if(tab==='applicantmsg') wireApplicantMsg();
   if(tab==='personalsms') wirePersonalSms();
   if(tab==='whatsapp') wireWa();
@@ -11013,6 +11118,7 @@ function oldWaUrl(){ return ((DB.settings && DB.settings.whatsappGroupUrl) || ''
 function currentWaGroupId(){ const id = DB.settings && DB.settings.waGroupCurrent; return waGroups().some(g=>g.id===id) ? id : ''; }
 // Students keep the group link they were given. Anyone without one (everyone before this update) keeps the original link.
 function waUrlFor(s){
+  if(s && s.waUrl) return s.waUrl;
   const g = s && s.waGroupId ? waGroups().find(x=>x.id===s.waGroupId) : null;
   return g ? g.url : oldWaUrl();
 }
@@ -11203,7 +11309,7 @@ const NAV = {
   ambassador:[
     { k:'overview', l:'Overview', ic:'home', subs:[['overview','Overview'],['feed','Activity']] },
     { k:'roadmap', l:'Roadmap', ic:'roadmap', host:true },
-    { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
+    { k:'applicants', l:'Applicants', ic:'applications', subs:[['applications','Applications'],['collab','Collab sign-ups'],['applicantmsg','Updates'],['onboarding','Onboarding']] },
     { k:'people', l:'People', ic:'people', subs:[['people','People'],['coordsummary','Coordinators & students'],['load','Coordinator load'],['actstats','Activity stats'],['actreach','Reach out']] },
     { k:'classes', l:'Classes', ic:'calls', subs:[['classes','Schedule classes'],['lessons','Lesson videos']] },
     { k:'broadcast', l:'Broadcast', ic:'announce', subs:[['announce','Announcements'],['alerts','Alerts'],['personalsms','Text people'],['personalemail','Email people'],['whatsapp','WhatsApp'],['newsletter','Newsletters']] },
