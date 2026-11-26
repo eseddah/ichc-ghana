@@ -2966,7 +2966,7 @@ function initMascot(){
   edit.addEventListener('click', e=>{ if(e.target===edit) edit.classList.remove('on'); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') edit.classList.remove('on'); });
   $('mcWaveBtn').addEventListener('click', ()=>{ const p=$('mcPrev'); p.classList.remove('mc-wave'); void p.offsetWidth; p.classList.add('mc-wave'); });
-  const showDock = ()=>{ pop.classList.remove('on'); dock.classList.add('on'); if(!reduce) dock.animate([{transform:'scale(.7)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450}); setTimeout(mcCelebrateCerts, 400); };
+  const showDock = ()=>{ pop.classList.remove('on'); dock.classList.add('on'); if(!reduce) dock.animate([{transform:'scale(.7)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:450}); setTimeout(mcCelebrateCerts, 400); setTimeout(()=>{ try{ pushBannerTry(0); }catch(e){} }, 1100); };
   let done = false;
   const retract = ()=>{
     if(done) return; done = true;
@@ -5756,13 +5756,59 @@ function openPushAsk(){
     if(r.perm==='denied'){ yes.remove(); o.querySelector('#paNot').textContent = 'Close'; }
   });
 }
+// Big "turn on notifications" banner for students and coordinators. It slides in after the welcome greeting has finished
+// and comes back every visit until notifications are on. "Not now" hides it for the rest of the session only.
+function pushBannerTry(n){
+  try{
+    n = n || 0;
+    if(!ME || (ME.role!=='student' && ME.role!=='coordinator')) return;
+    if(document.getElementById('pushBanner') || sessionStorage.getItem('ichc_pushbanner_off')) return;
+    if(document.querySelector('#mcPop.on, #mcCert')){ if(n < 14) setTimeout(()=>pushBannerTry(n+1), 1500); return; }   // let the welcome greeting finish first
+    const st = pushState(), needsInstall = st.ios && !st.supported, denied = st.perm === 'denied';
+    if(st.on) return;
+    if(!needsInstall && !st.supported){ if(n < 6) setTimeout(()=>pushBannerTry(n+1), 1500); return; }   // notification service still loading
+    if(st.perm === 'granted' && n < 3){ setTimeout(()=>pushBannerTry(n+1), 2500); return; }   // permission already given: give the quiet re-subscribe a moment
+    if(!document.getElementById('pushBannerCss')){
+      const css = document.createElement('style'); css.id = 'pushBannerCss';
+      css.textContent = '.pb{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translate(-50%,-150%);width:min(94vw,640px);z-index:9000;display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#0B2A4A,#12446E);color:#fff;box-shadow:0 16px 40px rgba(5,20,40,.45);border:1px solid rgba(227,154,59,.55);transition:transform .45s cubic-bezier(.2,.9,.3,1.2)}'
+        + '.pb.on{transform:translate(-50%,0)}.pb-ic{flex:0 0 auto;width:48px;height:48px;border-radius:14px;background:#E39A3B;color:#0B2A4A;display:grid;place-items:center}'
+        + '.pb-tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.4}.pb-tx b{font-size:17px}'
+        + '.pb-btns{display:flex;gap:10px;flex:1 1 100%}.pb-yes{flex:1;background:#E39A3B;color:#0B2A4A;border:0;border-radius:12px;padding:13px 16px;font-weight:700;font-size:15px;cursor:pointer}'
+        + '.pb-yes:disabled{opacity:.7;cursor:default}.pb-no{background:transparent;color:#cfe0f0;border:1px solid rgba(255,255,255,.35);border-radius:12px;padding:13px 16px;font-size:14px;cursor:pointer}'
+        + '@media (prefers-reduced-motion:reduce){.pb{transition:none}}';
+      document.head.appendChild(css);
+    }
+    const bell = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.500 7.500 2.500 7.500h-17S6 15 6 9z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>';
+    const lead = needsInstall ? 'On an iPhone or iPad, tap the Share button, choose Add to Home Screen, then open the portal from your Home Screen and allow notifications.'
+      : denied ? 'Notifications are blocked in your browser. Tap the lock icon next to the address bar, set Notifications to Allow, then refresh this page.'
+      : 'Allow notifications to get class reminders, announcements, exam alerts and messages from your coordinator the moment they arrive.';
+    const o = document.createElement('div'); o.id = 'pushBanner'; o.className = 'pb'; o.setAttribute('role','alert');
+    o.innerHTML = '<div class="pb-ic">' + bell + '</div><div class="pb-tx"><b>Don\'t miss a thing</b><span id="pbMsg"></span></div><div class="pb-btns">'
+      + ((needsInstall || denied) ? '<button type="button" class="pb-yes" id="pbNo">Got it</button>' : '<button type="button" class="pb-yes" id="pbYes">Allow notifications now</button><button type="button" class="pb-no" id="pbNo">Not now</button>') + '</div>';
+    o.querySelector('#pbMsg').textContent = lead;
+    document.body.appendChild(o);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add('on')));
+    const close = ()=>{ o.classList.remove('on'); setTimeout(()=>o.remove(), 500); };
+    o.querySelector('#pbNo').addEventListener('click', ()=>{ try{ sessionStorage.setItem('ichc_pushbanner_off','1'); }catch(e){} close(); });
+    const yes = o.querySelector('#pbYes');
+    if(yes) yes.addEventListener('click', async ()=>{
+      yes.disabled = true; yes.textContent = 'Waiting for your browser…';
+      const r = await pushAllow(), msg = o.querySelector('#pbMsg');
+      if(r.on){ msg.textContent = 'Notifications are on. You are all set 🎉'; yes.textContent = 'Done'; setTimeout(close, 1600); return; }
+      yes.disabled = false; yes.textContent = 'Allow notifications now';
+      if(r.perm === 'denied'){ msg.textContent = 'Notifications are blocked in your browser. Tap the lock icon next to the address bar, set Notifications to Allow, then refresh this page.'; yes.remove(); o.querySelector('#pbNo').textContent = 'Got it'; }
+      else msg.textContent = 'Nothing was switched on. Tap the button and choose Allow when your browser asks.';
+    });
+  }catch(e){ console.warn('push banner skipped', e); }
+}
 const PUSH_SNOOZE_KEY = 'ichc_push_snooze';
 function pushSnoozed(){ try{ return Date.now() < Number(localStorage.getItem(PUSH_SNOOZE_KEY)||0); }catch(e){ return false; } }
 function pushSnooze(days){ try{ localStorage.setItem(PUSH_SNOOZE_KEY, String(Date.now() + days*864e5)); }catch(e){} }
 function initPushUi(){
   paintBell();
   const st = pushState(), seenKey = 'ichc_push_prompted', isStu = !!ME && ME.role==='student';
-  if(!pushSnoozed()){
+  if(ME && (ME.role==='student' || ME.role==='coordinator')){ setTimeout(()=>pushBannerTry(0), 1200); }
+  else if(!pushSnoozed()){
     if(isStu){
       const undecided = (st.supported && !st.on && st.perm !== 'denied') || (st.ios && !st.supported);
       if(undecided && !sessionStorage.getItem(seenKey)){ sessionStorage.setItem(seenKey, '1'); setTimeout(openPushAsk, 1800); }
@@ -5801,7 +5847,9 @@ async function pushRegister(){
     let key = localStorage.getItem('ichc_push_dev');
     if(!key){ key = ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2))).slice(0,36); localStorage.setItem('ichc_push_dev', key); }
     const on = !!(OS.User && OS.User.PushSubscription && OS.User.PushSubscription.optedIn);
-    await sb.rpc('push_register', { p_external_id:String(ME.id), p_device_key:key, p_platform:'web', p_subscribed:on });
+    let sid = ''; try{ sid = String((OS.User.PushSubscription && OS.User.PushSubscription.id) || ''); }catch(e){}
+    const args = { p_external_id:String(ME.id), p_device_key:key, p_platform:'web', p_subscribed:on }; if(sid) args.p_sub_id = sid;
+    await sb.rpc('push_register', args);
   }catch(e){ /* best effort */ }
 }
 function pushTag(){
