@@ -3476,6 +3476,7 @@ function renderLegacy(tab){
   else if(tab==='arena') html = '<div id="arenaRoot"></div>';
   else if(tab==='lessons') html = lessonsView();
   else if(tab==='exercise') html = '<div id="exRoot"></div>';
+  else if(tab==='handout' && (ME.role==='coordinator' || ME.role==='ambassador')) html = '<div id="hdRoot"></div>';
   else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
@@ -3494,6 +3495,7 @@ function renderLegacy(tab){
   if(typeof wireDuty==='function') wireDuty(tab);
   if(tab==='arena') arenaMount();
   if(tab==='exercise' && typeof exMount==='function') exMount();
+  if(tab==='handout' && typeof hdMount==='function') hdMount();
   if(tab==='aichats') aiChatsMount();
   if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
@@ -14505,6 +14507,196 @@ async function onClick(ev){
     }
   }
 }
+})();
+</script>
+
+<style>
+.hd-wrap{max-width:860px}
+.hd-sec{border:1px solid var(--line); border-radius:14px; background:#fff; margin:10px 0; overflow:hidden}
+.hd-sec>summary{cursor:pointer; padding:14px 16px; font-weight:700; color:var(--navy-deep); list-style:none; display:flex; justify-content:space-between; gap:12px}
+.hd-sec>summary::-webkit-details-marker{display:none}
+.hd-sec>summary::after{content:'+'; color:var(--amber-deep,#C97F22); font-size:20px; line-height:1}
+.hd-sec[open]>summary::after{content:'\2013'}
+.hd-body{padding:0 16px 14px; font-size:15px; line-height:1.6}
+.hd-body p{margin:0 0 8px}.hd-body ul{margin:6px 0 10px; padding-left:20px}.hd-body li{margin:3px 0}
+.hd-new{border-left:4px solid var(--amber); background:rgba(227,154,59,.1); padding:10px 12px; border-radius:0 10px 10px 0; margin:12px 0; font-size:14px}
+.hd-edit label{display:block; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:12px 0 4px}
+.hd-edit input[type=text],.hd-edit textarea{width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font:inherit}
+.hd-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:10px 0}
+.hd-tbl{width:100%; border-collapse:collapse; font-size:14px}.hd-tbl th,.hd-tbl td{text-align:left; padding:9px 10px; border-bottom:1px solid var(--line)}
+</style>
+<script>
+/* ======================================================================
+   COORDINATOR HANDOUT  (added November 2026)
+   One handout for coordinators: highlights, duties, rules, policies and other essentials.
+   The Ambassador edits it (Settings > Coordinator handout) and publishes; coordinators read it
+   under Home > Handout and confirm they have read the current version.
+   Data lives in ichc_kv:
+     coordinator:handout            { title, intro, sections:[{id,title,body}], version, updatedAt, updatedBy }
+     coordinator:handout:ack:<id>   { version, at, name }   (one per coordinator, written by that coordinator)
+   ====================================================================== */
+(function(){
+'use strict';
+const KEY='coordinator:handout', ackKey=id=>'coordinator:handout:ack:'+id;
+const E=s=>escapeHtml(String(s==null?'':s));
+const HD={doc:null,myAck:null,acks:null,draft:null,mode:'read'};
+const R=()=>document.getElementById('hdRoot');
+const isAmb=()=>!!ME&&ME.role==='ambassador';
+const inl=s=>E(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+function fmt(t){const L=String(t||'').split('\n');let h='',ul=false;const close=()=>{if(ul){h+='</ul>';ul=false;}};
+  L.forEach(l=>{const m=l.match(/^\s*[-\u2022]\s+(.*)/);
+    if(m){if(!ul){h+='<ul>';ul=true;}h+='<li>'+inl(m[1])+'</li>';}
+    else if(!l.trim()){close();}else{close();h+='<p>'+inl(l)+'</p>';}});
+  close();return h;}
+
+/* Starter text. Shown only to the Ambassador, who must review it and press Publish. [edit: ...] marks the choices only you can make. */
+const STARTER=[
+{title:'At a glance',body:`Chemistry Competition Prep, Ghana Chapter is a free, volunteer-run programme that trains Ghanaian students for the International Chemistry Competition. As a coordinator you are the student’s main contact: you guide them through the roadmap, set and mark practice, and keep them motivated.
+
+- **Your students:** the students placed with you, usually by region.
+- **Your tools:** the portal (roadmap, exercises, exams, sessions, alerts, coordinator lounge).
+- **Your first contact for any question:** the Ambassador (see Contacts).
+- **Read this handout in full once**, then confirm at the bottom of the page.`},
+{title:'Your duties',body:`- Welcome each new student, introduce yourself and explain how the programme works.
+- Guide students through the roadmap topic by topic and check that they are keeping up.
+- Hold sessions at least [edit: how often, e.g. once a week] and record attendance.
+- Post practice questions, exercises and exams, and mark and release results in good time.
+- Give feedback that explains the idea behind a mistake, not only the correct answer.
+- Keep progress notes and call sheets up to date so another coordinator could step in.
+- Follow up with students who go quiet, and tell the Ambassador if you cannot reach them.
+- Take part in the coordinator lounge and read alerts and announcements.`},
+{title:'Rules of conduct',body:`- Be respectful, patient and encouraging to every student, whatever their level.
+- Keep all programme communication on official channels: the portal, the official WhatsApp group, or programme email.
+- Never write a student’s answers for them, and do not share exam questions or answer keys outside the programme.
+- Do not pressure students for money, favours or personal information.
+- Be punctual for sessions. If you must cancel, tell your students and the Ambassador as early as you can.
+- Declare any conflict of interest to the Ambassador, for example when a relative is one of your students.
+- Represent the programme well in public and on social media.`},
+{title:'Policies',body:`**Student privacy.** Students’ details are for programme use only. Do not share, screenshot or post them outside the programme, and do not use them for anything else.
+
+**Safeguarding.** Many students are under 18. Teach in group settings or channels the Ambassador can see. Avoid private one-to-one meetings away from the programme, and report any welfare concern to the Ambassador straight away.
+
+**Photos and recordings.** Only share photos or recordings of students with their consent (and a parent or guardian’s consent for under-18s). [edit: who gives consent and how]
+
+**Academic honesty.** Students must do their own work. Report suspected cheating to the Ambassador instead of dealing with it privately.
+
+**Response times.** Reply to student messages within [edit: target, e.g. 48 hours].
+
+**Leaving or being unavailable.** Give the Ambassador at least [edit: notice period] so your students can be handed over properly.`},
+{title:'Sessions and marking',body:`- Plan each session around one roadmap topic and finish with a few practice questions.
+- Mark exercises within [edit: turnaround, e.g. 5 days] of the deadline unless the Ambassador agrees otherwise.
+- Use model answers and comments to show the method, and state marks clearly.
+- Escalate unusual results, appeals and retake requests to the Ambassador.`},
+{title:'Using the portal',body:`- **Home:** your overview, your students and your sessions.
+- **Roadmap:** the ten topic blocks, with questions, exams and materials for each.
+- **Exercises:** post and mark exercises; students can answer by typing or by photo.
+- **Alerts and Inbox:** send alerts to your students and read announcements.
+- **Coordinator lounge:** ask questions and share ideas with other coordinators.
+Sign in with the Google account registered for you. Never share your login.`},
+{title:'Contacts and escalation',body:`**Local Ambassador, IChC:** Eddah Edmond Seyram
+**Email:** eseyram@amb.intchc.org
+
+Go to the Ambassador for welfare concerns, suspected cheating, technical problems, requests to change a student’s placement, and anything this handout does not cover. For an emergency, contact [edit: emergency contact or process].`}
+];
+
+async function load(){const v=await sGet(KEY,true);HD.doc=(v&&Array.isArray(v.sections))?v:null;}
+async function loadAcks(){const cs=DB.coordinators||[];const r=await Promise.all(cs.map(c=>sGet(ackKey(c.id),true)));HD.acks={};cs.forEach((c,i)=>{HD.acks[c.id]=r[i]||null;});}
+window.hdMount=async function(){
+  if(!R())return;R().innerHTML='<div class="empty">Loading…</div>';
+  await load();
+  if(ME.role==='coordinator')HD.myAck=await sGet(ackKey(ME.id),true);
+  if(isAmb()){ if(!HD.doc&&HD.mode==='read')startEdit(); if(HD.mode==='acks')await loadAcks(); }
+  paint();
+};
+const ver=()=>(HD.doc&&HD.doc.version)||1;
+function docView(d,showBanner){
+  const need=!(HD.myAck&&HD.myAck.version>=ver());
+  return `<div class="hd-wrap"><h2 style="margin:0 0 4px">${E(d.title||'Coordinator handout')}</h2>
+  <div style="color:var(--muted);font-size:13px">Version ${d.version||1} · Updated ${E(fmtDateTime(d.updatedAt))}${d.updatedBy?' by '+E(d.updatedBy):''}</div>
+  ${d.intro?`<p style="margin:12px 0">${E(d.intro)}</p>`:''}
+  ${showBanner?(need?`<div class="hd-new"><b>${HD.myAck?'The handout was updated.':'Please read the handout.'}</b> Read it in full, then confirm at the bottom of the page.</div>`:''):''}
+  ${d.sections.map((s,i)=>`<details class="hd-sec" ${i===0?'open':''}><summary>${E(s.title)}</summary><div class="hd-body">${fmt(s.body)}</div></details>`).join('')}
+  <div class="hd-row"><button class="btn ghost small" data-hd="print">Print or save as PDF</button>${showBanner?(need?`<button class="btn" data-hd="ack">I have read this handout</button>`:`<span class="badge coord">Confirmed version ${HD.myAck.version}</span>`):''}</div></div>`;
+}
+function ambHtml(){
+  const tab=(m,l)=>`<button type="button" class="pill${HD.mode===m?' on':''}" data-hd="mode" data-m="${m}">${l}</button>`;
+  const bar=`<div class="hd-row">${tab('read','Preview')}${tab('edit','Edit')}${tab('acks','Read confirmations')}</div>`;
+  if(HD.mode==='edit')return bar+editHtml();
+  if(HD.mode==='acks')return bar+acksHtml();
+  return bar+(HD.doc?docView(HD.doc,false):'<div class="empty">Nothing published yet. Press Edit to review the starter handout.</div>');
+}
+function coordHtml(){
+  if(!HD.doc)return '<div class="card"><div class="empty">The Ambassador is still preparing the coordinator handout. Please check back soon.</div></div>';
+  return docView(HD.doc,true);
+}
+function secEdit(s,i){
+  return `<div class="card" data-sec="${i}" data-id="${E(s.id)}"><div class="hd-row" style="margin-top:0"><input type="text" class="hd-t" maxlength="80" placeholder="Section title" value="${E(s.title)}" style="flex:1;min-width:160px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit">
+  <button type="button" class="btn ghost small" data-hd="up" data-i="${i}" aria-label="Move up">↑</button><button type="button" class="btn ghost small" data-hd="down" data-i="${i}" aria-label="Move down">↓</button><button type="button" class="btn ghost small" data-hd="del" data-i="${i}">Delete</button></div>
+  <textarea class="hd-b" rows="8" placeholder="Write the section here…">${E(s.body)}</textarea></div>`;
+}
+function editHtml(){
+  const d=HD.draft;
+  return `<div class="hd-wrap hd-edit"><div class="hd-new">Nothing here is visible to coordinators until you press <b>Publish</b>. Write plain text, start a line with “- ” for a bullet, and use **bold** for emphasis. Fill in every <b>[edit: …]</b> note before publishing.</div>
+  <label for="hdTitle">Handout title</label><input type="text" id="hdTitle" maxlength="100" value="${E(d.title)}">
+  <label for="hdIntro">Short introduction (optional)</label><textarea id="hdIntro" rows="2">${E(d.intro)}</textarea>
+  ${d.sections.map(secEdit).join('')}
+  <div class="hd-row"><button type="button" class="btn ghost small" data-hd="add">Add section</button><button type="button" class="btn ghost small" data-hd="reset">Reset to starter text</button></div>
+  ${HD.doc?`<label style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)"><input type="checkbox" id="hdBump" checked> Ask all coordinators to read and confirm again</label>`:''}
+  <div class="hd-row"><button type="button" class="btn" data-hd="publish">Publish to coordinators</button>${HD.doc?'<button type="button" class="btn ghost" data-hd="cancel">Cancel</button>':''}</div><div id="hdMsg" role="status" style="font-size:13.5px"></div></div>`;
+}
+function acksHtml(){
+  if(!HD.acks)return '<div class="empty">Loading…</div>';
+  if(!HD.doc)return '<div class="empty">Publish the handout first.</div>';
+  const cs=DB.coordinators||[];let ok=0;
+  const rows=cs.map(c=>{const a=HD.acks[c.id],cur=a&&a.version>=ver();if(cur)ok++;
+    return `<tr><td>${E(c.name)}</td><td>${cur?'<span class="badge coord">Confirmed</span>':(a?'<span class="badge stud">Needs to re-confirm</span>':'<span class="badge amb">Not yet</span>')}</td><td>${a?E(fmtDateTime(a.at)):'—'}</td></tr>`;}).join('');
+  return `<div class="hd-wrap"><p><b>${ok}</b> of <b>${cs.length}</b> coordinators have confirmed version ${ver()}.</p><div style="overflow-x:auto"><table class="hd-tbl"><thead><tr><th>Coordinator</th><th>Status</th><th>Confirmed</th></tr></thead><tbody>${rows||'<tr><td colspan="3">No coordinators yet.</td></tr>'}</tbody></table></div></div>`;
+}
+function paint(){const r=R();if(!r)return;r.innerHTML=isAmb()?ambHtml():coordHtml();r.onclick=onClick;}
+function startEdit(){const src=HD.doc?HD.doc.sections:STARTER;
+  HD.draft={title:(HD.doc&&HD.doc.title)||'Coordinator handout',intro:(HD.doc&&HD.doc.intro)||'',sections:src.map(s=>({id:s.id||uid(),title:s.title,body:s.body}))};HD.mode='edit';}
+function readDraft(){const r=R();if(!r||HD.mode!=='edit')return;const g=id=>r.querySelector(id);
+  HD.draft={title:g('#hdTitle').value,intro:g('#hdIntro').value,sections:[...r.querySelectorAll('[data-sec]')].map(el=>({id:el.dataset.id,title:el.querySelector('.hd-t').value,body:el.querySelector('.hd-b').value}))};}
+function msg(t,bad){const m=document.getElementById('hdMsg');if(m){m.textContent=t;m.style.color=bad?'#C0392B':'var(--teal-deep,#1F8A70)';}}
+async function publish(){
+  readDraft();const d=HD.draft,bumpEl=document.getElementById('hdBump'),bump=!!(HD.doc&&bumpEl&&bumpEl.checked);
+  const secs=d.sections.filter(s=>s.title.trim()||s.body.trim());
+  if(!secs.length)return msg('Add at least one section.',1);
+  if(secs.some(s=>!s.title.trim()))return msg('Every section needs a title.',1);
+  const open=secs.filter(s=>/\[edit:/i.test(s.title+' '+s.body)).length;
+  if(open&&!confirm(open+' section(s) still have [edit: …] notes in them. Publish anyway?'))return;
+  const doc={title:d.title.trim()||'Coordinator handout',intro:d.intro.trim(),sections:secs.map(s=>({id:s.id,title:s.title.trim(),body:s.body.trim()})),version:HD.doc?ver()+(bump?1:0):1,updatedAt:Date.now(),updatedBy:ME.name};
+  const ok=await sSet(KEY,doc,true);
+  if(!ok)return msg('Could not save. Check your connection and try again.',1);
+  HD.doc=doc;HD.mode='read';paint();webToast('Handout published.');
+}
+function printDoc(){
+  const d=HD.doc;if(!d)return;const w=window.open('','_blank');if(!w){webToast('Allow pop-ups to print.',true);return;}
+  w.document.write(`<!doctype html><title>${E(d.title)}</title><style>body{font:15px/1.6 system-ui,sans-serif;max-width:720px;margin:30px auto;padding:0 20px;color:#14213D}h1{font-size:24px;margin:0}h2{font-size:17px;margin:22px 0 4px;border-bottom:1px solid #ddd;padding-bottom:4px}.m{color:#666;font-size:13px}ul{padding-left:20px}</style><h1>${E(d.title)}</h1><div class="m">Version ${d.version||1} · ${E(fmtDateTime(d.updatedAt))}</div>${d.intro?'<p>'+E(d.intro)+'</p>':''}${d.sections.map(s=>'<h2>'+E(s.title)+'</h2>'+fmt(s.body)).join('')}`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+async function onClick(ev){
+  const b=ev.target.closest('[data-hd]');if(!b)return;const a=b.dataset.hd,i=+b.dataset.i;
+  if(a==='print')return printDoc();
+  if(a==='ack'){const ok=await sSet(ackKey(ME.id),{version:ver(),at:Date.now(),name:ME.name},true);if(ok){HD.myAck={version:ver(),at:Date.now(),name:ME.name};paint();webToast('Thank you. Confirmed.');}else webToast('Could not save your confirmation.',true);return;}
+  if(!isAmb())return;
+  if(a==='mode'){readDraft();const m=b.dataset.m;if(m==='edit'&&HD.mode!=='edit')startEdit();else HD.mode=m;if(m==='acks'){HD.acks=null;paint();await loadAcks();}paint();return;}
+  if(a==='cancel'){HD.mode='read';return paint();}
+  readDraft();
+  if(a==='add')HD.draft.sections.push({id:uid(),title:'',body:''});
+  else if(a==='del'){if(confirm('Delete this section?'))HD.draft.sections.splice(i,1);else return;}
+  else if(a==='up'&&i>0){const s=HD.draft.sections;[s[i-1],s[i]]=[s[i],s[i-1]];}
+  else if(a==='down'&&i<HD.draft.sections.length-1){const s=HD.draft.sections;[s[i+1],s[i]]=[s[i],s[i+1]];}
+  else if(a==='reset'){if(!confirm('Replace everything in the editor with the starter text?'))return;HD.draft.sections=STARTER.map(s=>({id:uid(),title:s.title,body:s.body}));}
+  else if(a==='publish')return publish();
+  paint();
+}
+/* navigation entry + icon */
+try{
+  TAB_ICONS.handout='<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>';
+  const c=NAV.coordinator;if(c&&!c.some(t=>t.k==='handout'))c.splice(1,0,{k:'handout',l:'Handout',ic:'handout',subs:[['handout','Coordinator handout']]});
+  const st=NAV.ambassador&&NAV.ambassador.find(t=>t.k==='settings');if(st&&!st.subs.some(s=>s[0]==='handout'))st.subs.splice(2,0,['handout','Coordinator handout']);
+}catch(e){console.error('handout nav failed',e);}
 })();
 </script>
 
