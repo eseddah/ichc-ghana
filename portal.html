@@ -1074,6 +1074,95 @@ OneSignalDeferred.push(async function(OneSignal){
   try{ await OneSignal.init({ appId:'c711029f-212c-4c50-8498-ea78aecbb153', serviceWorkerPath:'OneSignalSDKWorker.js', notifyButton:{ enable:false }, welcomeNotification:{ disable:true } }); window.__OS = OneSignal; }catch(e){ console.warn('OneSignal init failed', e); window.__OS_ERR = String(e && e.message || e); }
 });
 </script>
+<style id="lgStyle">
+/* ===== Portal login (redesign): flat colour, chunky controls, real motion ===== */
+#onboarding .lg{min-height:100vh; display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);}
+.lg-hero{background:var(--navy); color:#fff; position:relative; overflow:hidden; padding:44px 52px 40px; display:flex; flex-direction:column; justify-content:space-between; gap:26px;}
+.lg-hero::before,.lg-hero::after{content:''; position:absolute; border-radius:50%; pointer-events:none;}
+.lg-hero::before{width:520px; height:520px; right:-230px; top:-210px; background:#6A4DFF;}
+.lg-hero::after{width:380px; height:380px; left:-160px; bottom:-180px; background:#4F33DB;}
+.lg-hero>*{position:relative; z-index:1;}
+.lg-brand{display:flex; align-items:center; gap:12px; color:#fff; text-decoration:none;}
+.lg-brand .hexlogo{width:52px; color:var(--amber); flex:none;}
+.lg-brand .hexlogo text{fill:#fff;}
+.lg-brand b{display:block; font-family:'Sora',sans-serif; font-weight:800; font-size:17px; line-height:1.2;}
+.lg-brand small{display:block; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#CFC6FF; margin-top:2px;}
+.lg-art{display:flex; justify-content:center; align-items:center;}
+.lg-art svg{width:min(100%,400px); height:auto; overflow:visible;}
+.lg-hero h1{font-family:'Sora',sans-serif; font-weight:800; font-size:clamp(30px,3.5vw,44px); line-height:1.1; letter-spacing:-.025em; margin:0 0 12px; color:#fff;}
+.lg-hero h1 em{font-style:normal; color:var(--amber);}
+.lg-lead{font-size:16px; line-height:1.6; color:#E6E0FF; max-width:440px; margin:0 0 18px;}
+.lg-chips{display:flex; flex-wrap:wrap; gap:8px;}
+.lg-chip{display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; padding:7px 13px; border-radius:999px; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.24);}
+.lg-chip i{width:9px; height:9px; border-radius:50%; background:var(--c); flex:none;}
+
+.lg-main{display:flex; align-items:center; justify-content:center; padding:34px 22px;}
+.lg-card{width:100%; max-width:470px; background:#fff; border:2px solid var(--line); border-radius:24px; box-shadow:0 6px 0 var(--line); padding:26px 30px 28px;}
+.lg-back{display:inline-flex; align-items:center; gap:6px; font-size:13.5px; font-weight:800; color:var(--muted); text-decoration:none; padding:4px 0; margin-bottom:14px; border-radius:8px;}
+.lg-back:hover{color:var(--navy);}
+.lg-greet{display:inline-block; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--navy-deep); background:var(--butter); border:2px solid var(--amber); border-radius:999px; padding:4px 12px; margin-bottom:10px;}
+.lg-card h2{font-family:'Sora',sans-serif; font-weight:800; font-size:27px; line-height:1.15; letter-spacing:-.02em; margin:0 0 6px; color:var(--navy-deep);}
+.lg-sub{font-size:14.5px; color:var(--muted); line-height:1.55; margin:0 0 20px;}
+
+.lg-card .pk-box{background:var(--mint); border:2px solid var(--teal-deep); box-shadow:0 4px 0 var(--teal-deep); border-radius:18px; padding:14px 16px; margin-bottom:20px;}
+.lg-card .pk-sub{color:#35566A;}
+
+.lg-tiles{display:flex; flex-direction:column; gap:14px; margin:0 0 14px;}
+.lg-tile{position:relative; display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 14px 13px 14px; border:2px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 4px 0 var(--line); cursor:pointer; font-family:inherit; color:var(--ink); transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;}
+.lg-tile:hover{transform:translateY(-2px); border-color:var(--navy); box-shadow:0 6px 0 var(--navy);}
+.lg-tile:active{transform:translateY(3px); box-shadow:0 1px 0 var(--navy);}
+.lg-tile:focus-visible,.lg-mini:focus-visible,.lg-back:focus-visible,.lg-apply .btn:focus-visible{outline:3px solid var(--navy); outline-offset:3px;}
+.lg-tile:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:0 4px 0 var(--line); border-color:var(--line);}
+.lg-ic{width:50px; height:50px; border-radius:15px; flex:none; display:flex; align-items:center; justify-content:center; border:2px solid var(--navy-deep); box-shadow:0 3px 0 var(--navy-deep); color:var(--navy-deep);}
+.lg-ic svg{width:25px; height:25px; display:block;}
+.lg-ic.stud{background:var(--amber);} .lg-ic.coord{background:var(--teal);} .lg-ic.amb{background:var(--lilac);}
+.lg-tx{flex:1; min-width:0;}
+.lg-tx b{display:block; font-family:'Sora',sans-serif; font-weight:800; font-size:15.5px; color:var(--navy-deep);}
+.lg-tx span{display:block; font-size:13px; color:var(--muted); margin-top:2px; line-height:1.4;}
+.lg-go{width:34px; height:34px; border-radius:50%; background:var(--lilac); color:var(--navy); display:flex; align-items:center; justify-content:center; flex:none; transition:background .12s ease, color .12s ease, transform .12s ease;}
+.lg-go svg{width:18px; height:18px;}
+.lg-tile:hover .lg-go{background:var(--navy); color:#fff; transform:translateX(2px);}
+.lg-last{position:absolute; top:-11px; right:16px; background:var(--navy-deep); color:#fff; font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; padding:3px 10px; border-radius:999px;}
+.lg-tile.is-last{border-color:var(--navy);}
+
+.lg-google{display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--muted); margin:0;}
+.lg-google svg{width:16px; height:16px; flex:none;}
+.lg-msg{text-align:center; font-size:13px; font-weight:600; margin:10px 0 0; min-height:18px; color:#C0392B;}
+.lg-msg[data-state="info"]{color:var(--navy);}
+
+.lg-or{display:flex; align-items:center; gap:12px; margin:20px 0 14px; color:var(--muted); font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;}
+.lg-or::before,.lg-or::after{content:''; flex:1; height:2px; background:var(--line); border-radius:2px;}
+.lg-minis{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.lg-mini{display:flex; align-items:center; gap:10px; padding:11px 12px; border:2px solid var(--line); border-radius:16px; text-decoration:none; color:var(--ink); background:#fff; transition:border-color .12s ease, transform .12s ease;}
+.lg-mini:hover{border-color:var(--navy); transform:translateY(-1px);}
+.lg-mini .dot{width:34px; height:34px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex:none; color:var(--navy-deep);}
+.lg-mini .dot svg{width:18px; height:18px;}
+.lg-mini .dot.sky{background:#CDEFFD;} .lg-mini .dot.coral{background:var(--peach);}
+.lg-mini b{display:block; font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px; color:var(--navy-deep); line-height:1.2;}
+.lg-mini span{display:block; font-size:11.5px; color:var(--muted); line-height:1.35; margin-top:1px;}
+
+.lg-apply{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--butter); border:2px solid var(--amber); border-radius:18px; padding:13px 16px; margin-top:18px;}
+.lg-apply b{display:block; font-family:'Sora',sans-serif; font-weight:800; font-size:14.5px; color:var(--navy-deep);}
+.lg-apply span{display:block; font-size:12.5px; color:#6B5A1E;}
+
+@keyframes lgBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+@keyframes lgWob{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(4deg);}}
+@keyframes lgRise{0%{transform:translateY(14px); opacity:0;}20%{opacity:.9;}100%{transform:translateY(-34px); opacity:0;}}
+.lg-bob{animation:lgBob 4.4s ease-in-out infinite;}
+.lg-wob{transform-box:fill-box; transform-origin:center; animation:lgWob 7s ease-in-out infinite;}
+.lg-rise{animation:lgRise 6s ease-in infinite;}
+@media (prefers-reduced-motion:reduce){.lg-bob,.lg-wob,.lg-rise{animation:none !important;} .lg-tile,.lg-go,.lg-mini{transition:none !important;}}
+
+@media (max-width:860px){
+  #onboarding .lg{grid-template-columns:1fr;}
+  .lg-hero{padding:24px 22px 78px; gap:16px;}
+  .lg-art,.lg-lead,.lg-chips{display:none;}
+  .lg-hero h1{font-size:28px; margin:0;}
+  .lg-main{padding:0 16px 34px; margin-top:-52px; position:relative; z-index:2;}
+  .lg-card{padding:22px 20px 24px;}
+}
+@media (max-width:420px){ .lg-minis{grid-template-columns:1fr;} .lg-card h2{font-size:24px;} }
+</style>
 </head>
 <body>
 
@@ -1094,98 +1183,121 @@ OneSignalDeferred.push(async function(OneSignal){
 </template>
 
 <div id="onboarding">
-  <div class="onb-split">
-    <div class="onb-hero">
-      <svg class="onb-hero-bg" viewBox="0 0 400 500" width="100%" height="100%" preserveAspectRatio="xMaxYMin slice" xmlns="http://www.w3.org/2000/svg">
-        <g stroke="var(--chalk)" stroke-width="1.2" fill="none">
-          <circle cx="330" cy="70" r="5"/><circle cx="380" cy="110" r="5"/><circle cx="290" cy="120" r="5"/><circle cx="340" cy="165" r="5"/>
-          <line x1="330" y1="70" x2="380" y2="110"/><line x1="330" y1="70" x2="290" y2="120"/><line x1="290" y1="120" x2="340" y2="165"/><line x1="380" y1="110" x2="340" y2="165"/>
-        </g>
-      </svg>
-      <div class="onb-hero-inner">
-        <div class="onb-hero-brand">
-          <div class="hexlogo"></div>
-          <div class="name">Chemistry Competition Prep<small>Ghana Chapter</small></div>
-        </div>
-        <div class="onb-hero-eyebrow">Portal access</div>
-        <h1>Welcome back.</h1>
-        <p class="lead">Sign in to continue your chemistry journey — materials, practice, mock rounds, and everything your coordinator posts.</p>
-        <div class="onb-hero-feats">
-          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Learn</b>Build your knowledge</span></div>
-          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><b>Connect</b>With mentors &amp; peers</span></div>
-          <div class="onb-hero-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a2 2 0 0 1-2 4M7 5H4a2 2 0 0 0 2 4"/></svg><span><b>Compete</b>Reach global stages</span></div>
+  <div class="lg">
+    <section class="lg-hero" aria-label="Chemistry Competition Prep, Ghana">
+      <div class="lg-brand">
+        <div class="hexlogo"></div>
+        <div><b>Chemistry Competition Prep</b><small>Ghana Chapter</small></div>
+      </div>
+
+      <div class="lg-art" aria-hidden="true">
+        <svg viewBox="0 0 420 340" xmlns="http://www.w3.org/2000/svg" focusable="false">
+          <g fill="#7B63FF">
+            <circle class="lg-rise" cx="58" cy="120" r="10" style="animation-delay:-1s"/>
+            <circle class="lg-rise" cx="372" cy="262" r="14" style="animation-delay:-3.4s; animation-duration:7.5s"/>
+            <circle class="lg-rise" cx="112" cy="316" r="7" style="animation-delay:-2.2s"/>
+            <circle class="lg-rise" cx="326" cy="30" r="8" style="animation-delay:-4.6s; animation-duration:6.8s"/>
+          </g>
+          <g stroke="#16123F" stroke-width="9" stroke-linecap="round">
+            <line x1="282.75" y1="148" x2="350" y2="92"/>
+            <line x1="137.25" y1="232" x2="70" y2="288"/>
+            <line x1="210" y1="106" x2="210" y2="42"/>
+          </g>
+          <g class="lg-wob">
+            <polygon points="210,106 282.75,148 282.75,232 210,274 137.25,232 137.25,148" fill="#16123F" transform="translate(0,9)"/>
+            <polygon points="210,106 282.75,148 282.75,232 210,274 137.25,232 137.25,148" fill="#FFC93C" stroke="#16123F" stroke-width="8" stroke-linejoin="round"/>
+            <circle cx="210" cy="190" r="40" fill="none" stroke="#16123F" stroke-width="7"/>
+          </g>
+          <g class="lg-bob" style="animation-delay:-.4s">
+            <circle cx="350" cy="99" r="30" fill="#16123F"/><circle cx="350" cy="92" r="30" fill="#FF6B6B" stroke="#16123F" stroke-width="7"/>
+            <text x="350" y="102" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="28" fill="#16123F">O</text>
+          </g>
+          <g class="lg-bob" style="animation-delay:-2.1s">
+            <circle cx="70" cy="295" r="30" fill="#16123F"/><circle cx="70" cy="288" r="30" fill="#38BDF8" stroke="#16123F" stroke-width="7"/>
+            <text x="70" y="298" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="28" fill="#16123F">N</text>
+          </g>
+          <g class="lg-bob" style="animation-delay:-1.2s">
+            <circle cx="210" cy="49" r="28" fill="#16123F"/><circle cx="210" cy="42" r="28" fill="#10B981" stroke="#16123F" stroke-width="7"/>
+            <text x="210" y="52" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="27" fill="#16123F">H</text>
+          </g>
+        </svg>
+      </div>
+
+      <div>
+        <h1>Pick up where you <em>left off.</em></h1>
+        <p class="lg-lead">Practice questions, mock rounds, exercises and feedback from your coordinator, all in one place.</p>
+        <div class="lg-chips">
+          <span class="lg-chip" style="--c:#FFC93C"><i></i>Daily practice</span>
+          <span class="lg-chip" style="--c:#10B981"><i></i>Mock competitions</span>
+          <span class="lg-chip" style="--c:#38BDF8"><i></i>Exercises</span>
+          <span class="lg-chip" style="--c:#FF6B6B"><i></i>Certificates</span>
         </div>
       </div>
-      <div class="onb-hero-footer"><div class="bar"></div>Chemistry Competition Prep — Ghana Chapter</div>
-    </div>
+    </section>
 
-    <div class="onb-panel">
-      <div class="onb-panel-card">
-        <a href="index.html" class="onb-back">← Back to website</a>
-        <div class="onb-panel-eyebrow">Portal login</div>
-        <h1>Who are you?</h1>
-        <p class="sub">Select your role to continue.</p>
+    <section class="lg-main">
+      <div class="lg-card">
+        <a href="index.html" class="lg-back">← Back to website</a>
+        <div><span class="lg-greet" id="lgGreet">Welcome back</span></div>
+        <h2>Sign in to the portal</h2>
+        <p class="lg-sub">Choose how you use the portal. You will continue with your Google account.</p>
 
         <div class="pk-box hidden" id="passkeyBox"></div>
 
-        <div class="portal-picks" id="portalPicks">
-          <button class="portal-pick" data-role="student" type="button">
-            <span class="portal-pick-icon stud">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.6-2-6-2v13c2.4 0 4.4.7 6 2 1.6-1.3 3.6-2 6-2V4.5c-2.4 0-4.4.7-6 2z"/><line x1="12" y1="6.5" x2="12" y2="19.5"/></svg>
-            </span>
-            <span class="portal-pick-text">
-              <span class="portal-pick-title">Student</span>
-              <span class="portal-pick-sub">Access your courses, practice, resources and progress</span>
-            </span>
-            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+        <div class="lg-tiles" id="portalPicks">
+          <button class="portal-pick lg-tile" data-role="student" type="button" aria-label="Continue as a student with Google">
+            <span class="lg-ic stud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></svg></span>
+            <span class="lg-tx"><b>I’m a student</b><span>Practice, exercises, lessons and your progress</span></span>
+            <span class="lg-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
           </button>
-
-          <button class="portal-pick" data-role="coordinator" type="button">
-            <span class="portal-pick-icon coord">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="8.5" y1="10.5" x2="15.5" y2="10.5"/><line x1="8.5" y1="14.5" x2="15.5" y2="14.5"/><line x1="8.5" y1="18.5" x2="12.5" y2="18.5"/></svg>
-            </span>
-            <span class="portal-pick-text">
-              <span class="portal-pick-title">Coordinator</span>
-              <span class="portal-pick-sub">Manage students, sessions and learning activities</span>
-            </span>
-            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+          <button class="portal-pick lg-tile" data-role="coordinator" type="button" aria-label="Continue as a coordinator with Google">
+            <span class="lg-ic coord"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12l2 2 4-4"/><path d="M9 17h6"/></svg></span>
+            <span class="lg-tx"><b>I’m a coordinator</b><span>Manage your students, sessions and marking</span></span>
+            <span class="lg-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
           </button>
-
-          <button class="portal-pick" data-role="ambassador" type="button">
-            <span class="portal-pick-icon amb">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><polygon points="12,3 20,7.5 20,16.5 12,21 4,16.5 4,7.5"/><polyline points="8.5,12 11,14.5 15.5,9.5" stroke-linecap="round"/></svg>
-            </span>
-            <span class="portal-pick-text">
-              <span class="portal-pick-title">Ambassador</span>
-              <span class="portal-pick-sub">Manage the programme and community</span>
-            </span>
-            <span class="portal-pick-chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,6 15,12 9,18"/></svg></span>
+          <button class="portal-pick lg-tile" data-role="ambassador" type="button" aria-label="Continue as the Ambassador with Google">
+            <span class="lg-ic amb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,3 20,7.5 20,16.5 12,21 4,16.5 4,7.5"/><polyline points="8.5,12 11,14.5 15.5,9.5"/></svg></span>
+            <span class="lg-tx"><b>I’m the Ambassador</b><span>Run the programme and review everything</span></span>
+            <span class="lg-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
           </button>
         </div>
 
-        <p id="googleMsg" style="text-align:center; font-size:13px; margin:0; min-height:16px; color:#C0392B;"></p>
+        <p class="lg-google"><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>Secure sign-in with Google</p>
+        <p id="googleMsg" class="lg-msg" role="status" aria-live="polite"></p>
 
-        <div class="onb-divider">OR</div>
+        <div class="lg-or">Or</div>
+        <div class="lg-minis">
+          <a href="?verify" id="onboardingVerifyLink" class="lg-mini">
+            <span class="dot sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></span>
+            <span><b>Verify a certificate</b><span>Check a certificate ID</span></span>
+          </a>
+          <a href="mailto:eseyram@amb.intchc.org" class="lg-mini">
+            <span class="dot coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+            <span><b>Contact us</b><span>We’re happy to help</span></span>
+          </a>
+        </div>
 
-        <a href="?verify" id="onboardingVerifyLink" class="onb-side-card">
-          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><path d="M9 15l2 2 4-4"/></svg></span>
-          <span class="tx"><b>Verify Your Certificate</b><span>If you've already participated and need to verify your certificate, click here.</span></span>
-          <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg></span>
-        </a>
-        <a href="mailto:eseyram@amb.intchc.org" class="onb-side-card">
-          <span class="ic" style="background:rgba(227,154,59,.16); color:var(--amber-deep);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,6 12,13 22,6"/></svg></span>
-          <span class="tx"><b>Contact Us</b><span>Have questions? We're here to help.</span></span>
-          <span class="go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg></span>
-        </a>
-
-        <div class="onb-apply-row">
-          <span>New to the programme?</span>
-          <a href="apply.html" class="onb-apply-link">Apply here →</a>
+        <div class="lg-apply">
+          <div><b>New to the programme?</b><span>Apply to join.</span></div>
+          <a href="apply.html" class="btn amber small">Apply here →</a>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </div>
+<script>
+(function(){
+  try{
+    var g = document.getElementById('lgGreet');
+    if(g){ var h = new Date().getHours(); g.textContent = h < 12 ? 'Good morning' : (h < 18 ? 'Good afternoon' : 'Good evening'); }
+    var picks = document.getElementById('portalPicks'); if(!picks) return;
+    var last = null; try{ last = localStorage.getItem('lg:lastRole'); }catch(e){}
+    var t = last && picks.querySelector('.portal-pick[data-role="' + last + '"]');
+    if(t){ t.classList.add('is-last'); var s = document.createElement('span'); s.className = 'lg-last'; s.textContent = 'Last used'; t.appendChild(s); }
+    picks.addEventListener('click', function(e){ var b = e.target.closest('.portal-pick'); if(b){ try{ localStorage.setItem('lg:lastRole', b.dataset.role); }catch(x){} } }, true);
+  }catch(e){}
+})();
+</script>
 
 <div id="authPopup" class="hidden">
   <div class="onb-box card" style="text-align:center;">
@@ -2681,7 +2793,7 @@ function initOnboarding(){
 async function handleGoogleSignIn(ev){
   const picks = document.querySelectorAll('.portal-pick');
   const msg = document.getElementById('googleMsg');
-  if(!sbReady){ msg.textContent = 'We could not connect just now. Check your internet connection and try again.'; return; }
+  if(!sbReady){ msg.dataset.state = 'error'; msg.textContent = 'We could not connect just now. Check your internet connection and try again.'; return; }
   const clickedRole = ev.currentTarget.dataset.role;
   // This flag is the ONLY thing that authorizes an automatic sign-in — in
   // resolveGoogleSession() and in boot()'s cached-session check. No click
@@ -2694,7 +2806,7 @@ async function handleGoogleSignIn(ev){
   // no dead gap between the click and visible feedback while the browser sets
   // up the redirect to Google.
   picks.forEach(p=>{ p.disabled = true; });
-  msg.textContent = 'Redirecting to Google…';
+  msg.dataset.state = 'info'; msg.textContent = 'Redirecting to Google…';
   try{
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
@@ -2704,7 +2816,7 @@ async function handleGoogleSignIn(ev){
   }catch(e){
     sessionStorage.removeItem('ichc_pending_role');
     picks.forEach(p=>{ p.disabled = false; });
-    msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador.';
+    msg.dataset.state = 'error'; msg.textContent = 'Google sign-in isn\'t set up yet — ask the Ambassador.';
   }
 }
 
@@ -3361,6 +3473,7 @@ function renderLegacy(tab){
   else if(tab==='onbme' && ME.role==='student') html = onbMeView();
   else if(tab==='arena') html = '<div id="arenaRoot"></div>';
   else if(tab==='lessons') html = lessonsView();
+  else if(tab==='exercise') html = '<div id="exRoot"></div>';
   else if(tab==='updates' && ME.role==='ambassador') html = updatesWorkspaceHtml();
   else if(tab==='emaillog') html = '<div id="emailLogRoot"></div>';
   else if(tab==='smslog') html = smsLogView();
@@ -3378,6 +3491,7 @@ function renderLegacy(tab){
   wireHandlers(tab);
   if(typeof wireDuty==='function') wireDuty(tab);
   if(tab==='arena') arenaMount();
+  if(tab==='exercise' && typeof exMount==='function') exMount();
   if(tab==='aichats') aiChatsMount();
   if(WEB_TABS.includes(tab) && ME.role==='ambassador') webMount(tab);
   if(tab==='series' && typeof seriesMount==='function') seriesMount();
@@ -13351,5 +13465,863 @@ function arenaMount(){
   ChemArena.mount(el, { ctx:'portal', role:ME.role, name:ME.name, userKey:String(ME.id), siteUrl:(DB.settings && DB.settings.siteUrl) || '', getSb:()=>sb, ready:()=>sbReady, onLive:()=>{ render('mock'); } });
 }
 </script>
+<style id="exStyle">
+.ex-note{font-size:13px; color:var(--muted); line-height:1.55;}
+.ex-grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+.ex-card{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; display:flex; flex-direction:column; gap:8px;}
+.ex-card h3{margin:0; font-size:16px; line-height:1.35;}
+.ex-meta{display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12.5px; color:var(--muted);}
+.ex-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+.ex-chips{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px;}
+.ex-chip{border:1.5px solid var(--line); background:var(--paper); border-radius:999px; padding:6px 14px; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink);}
+.ex-chip.on{background:var(--navy-deep); color:var(--chalk); border-color:var(--navy-deep);}
+.ex-chip i{font-style:normal; opacity:.7; margin-left:4px;}
+.ex-sec{margin:0 0 18px;}
+.ex-sec>h3{margin:0 0 4px; font-size:16px;}
+.ex-two{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.ex-three{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+@media(max-width:640px){.ex-two,.ex-three{grid-template-columns:1fr;}}
+.ex-opt{display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:8px; cursor:pointer; text-transform:none; letter-spacing:0; font-size:14px; font-weight:500; color:var(--ink); background:var(--paper);}
+.ex-opt input{width:auto; margin-top:3px;}
+.ex-opt.on{border-color:var(--teal); background:rgba(31,138,112,.07);}
+.ex-q{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px;}
+.ex-q-h{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.ex-q-n{font-family:'Sora',sans-serif; font-weight:700; color:var(--navy-deep);}
+.ex-q-body{font-size:15px; line-height:1.65; white-space:pre-wrap; margin:0 0 10px;}
+.ex-imgs{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0;}
+.ex-img{position:relative; width:112px; height:112px; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:var(--chalk); cursor:zoom-in;}
+.ex-img.big{width:min(100%,360px); height:auto; max-height:380px;}
+.ex-img img{width:100%; height:100%; object-fit:cover; display:block;}
+.ex-img.big img{object-fit:contain;}
+.ex-img button{position:absolute; top:4px; right:4px; width:24px; height:24px; border-radius:50%; border:0; background:rgba(10,24,38,.8); color:#fff; font-size:15px; line-height:1; cursor:pointer;}
+.ex-file{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--line); border-radius:10px; font-size:13px; background:var(--chalk); text-decoration:none; color:var(--ink);}
+.ex-file button{border:0; background:none; cursor:pointer; font-size:16px; color:var(--muted);}
+.ex-add{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px;}
+.ex-ai{border:1.5px solid rgba(31,138,112,.35); background:rgba(31,138,112,.05); border-radius:12px; padding:14px 16px; margin:10px 0 14px;}
+.ex-warn{border:1.5px solid var(--amber); background:rgba(227,154,59,.12); border-radius:10px; padding:10px 12px; font-size:13.5px; margin:8px 0;}
+.ex-err{color:#B3261E; font-size:13.5px; min-height:18px;}
+.ex-ok{color:var(--teal-deep);}
+.ex-bar{position:sticky; top:0; z-index:30; background:var(--navy-deep); color:var(--chalk); border-radius:12px; padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px;}
+.ex-bar b{font-size:14.5px;}
+.ex-clock{font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:500; margin-left:auto;}
+.ex-clock.low{color:#FF9B8E;}
+.ex-tbl{width:100%; border-collapse:collapse; font-size:13.5px;}
+.ex-tbl th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:8px 10px; border-bottom:1px solid var(--line);}
+.ex-tbl td{padding:10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+.ex-score{font-family:'Sora',sans-serif; font-weight:700; font-size:34px; color:var(--navy-deep);}
+.ex-mark{width:84px !important; display:inline-block;}
+.ex-model{border-left:4px solid var(--teal); background:rgba(31,138,112,.07); padding:10px 12px; border-radius:0 10px 10px 0; font-size:14px; white-space:pre-wrap; margin:8px 0;}
+.ex-fb{border-left:4px solid var(--amber); background:rgba(227,154,59,.1); padding:10px 12px; border-radius:0 10px 10px 0; font-size:14px; white-space:pre-wrap; margin:8px 0;}
+.ex-amb{border:1.5px solid var(--navy-deep); border-radius:12px; padding:12px 14px; margin-top:14px; background:rgba(15,36,56,.04);}
+#exZoom{position:fixed; inset:0; z-index:3000; background:rgba(8,20,30,.88); display:flex; align-items:center; justify-content:center; padding:16px; cursor:zoom-out;}
+#exZoom img{max-width:100%; max-height:100%; border-radius:8px; background:#fff;}
+</style>
+
+<script>
+/* ======================================================================
+   EXERCISES  (added November 2026)
+   Coordinators and the Ambassador post exercises (typed, photographed, uploaded or AI-drafted);
+   students answer by typing, photo or file, with an optional timer and a due date;
+   coordinators mark and release; the Ambassador reviews everything.
+   Data lives in ichc_kv:
+     exercise:list                       every exercise (questions, timing, audience)
+     exercise:sub:<exerciseId>:<studentId>   one submission per student per exercise (single writer)
+   Pictures and files go to the existing storage bucket under exercise/...
+   ====================================================================== */
+(function(){
+'use strict';
+const KEY_LIST = 'exercise:list';
+const subKey = (exId, sid)=>`exercise:sub:${exId}:${sid}`;
+const E = (s)=>escapeHtml(String(s==null ? '' : s));
+const EX = { list:null, subs:{}, screen:'home', id:null, filter:'all', b:null, run:null, rev:null, att:null, tick:null, save:null, busy:false };
+const root = ()=>document.getElementById('exRoot');
+const isStaff = ()=>!!ME && ME.role!=='student';
+const isAmb = ()=>!!ME && ME.role==='ambassador';
+const find = (id)=>(EX.list||[]).find(x=>x.id===id);
+const totalMarks = (it)=>(it.questions||[]).reduce((n,q)=>n+(Number(q.marks)||0),0);
+const T = (ts)=>ts ? fmtDateTime(ts) : '';
+const clean = (s)=>String(s||'').replace(/[^a-z0-9_-]/gi,'');
+const TYPE_LABEL = { written:'Written answer', calc:'Calculation', mcq:'Multiple choice' };
+const DEFAULT_MARKS = { mcq:1, written:5, calc:4 };
+const TOPICS = (typeof EXAM_TOPICS!=='undefined' && EXAM_TOPICS) || ['Stoichiometry','Atomic structure & periodic table','Bonding & structure','Acids, bases & equilibrium','Thermodynamics & kinetics','Electrochemistry','Organic chemistry','Inorganic chemistry','Analytical & lab skills'];
+
+// ---------- navigation entry + icon ----------
+try{
+  TAB_ICONS.exercise = '<path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1z"/><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 11l2 2 4-4"/><path d="M9 17h6"/>';
+  const item = { k:'exercise', l:'Exercises', ic:'exercise', subs:[['exercise','Exercises']] };
+  ['student','coordinator','ambassador'].forEach(r=>{
+    const arr = NAV[r]; if(!arr || arr.some(t=>t.k==='exercise')) return;
+    let i = arr.findIndex(t=>t.k==='roadmap'); if(i<0) i = arr.findIndex(t=>t.k==='welcome' || t.k==='overview' || t.k==='space');
+    arr.splice(i<0 ? 0 : i+1, 0, item);
+  });
+}catch(e){ console.error('exercise nav failed', e); }
+
+// ---------- state helpers ----------
+function status(it){
+  if(it.status==='draft') return 'draft';
+  if(it.status==='closed') return 'closed';
+  const n = Date.now();
+  if(it.opensAt && n < it.opensAt) return 'scheduled';
+  if(it.dueAt && n > it.dueAt) return it.allowLate ? 'overdue' : 'closed';
+  return 'open';
+}
+const STATE = { draft:['Draft','amb'], scheduled:['Scheduled','stud'], open:['Open','coord'], overdue:['Late work accepted','stud'], closed:['Closed','amb'] };
+const badge = (st)=>`<span class="badge ${STATE[st][1]}">${STATE[st][0]}</span>`;
+
+function audienceStudents(it){
+  const all = (DB.students||[]).filter(s=>!ghostedStudent(s)), a = it.audience || { mode:'mine' };
+  if(a.mode==='all') return all;
+  if(a.mode==='select') return all.filter(s=>(a.studentIds||[]).includes(s.id));
+  if(a.mode==='coords') return all.filter(s=>(a.coordIds||[]).includes(s.coordinatorId));
+  return all.filter(s=>s.coordinatorId===it.ownerId);
+}
+function staffStudents(it){ const a = audienceStudents(it); return isAmb() ? a : a.filter(s=>s.coordinatorId===ME.id); }
+function visibleToStudent(it){ return it.status!=='draft' && audienceStudents(it).some(s=>s.id===ME.id); }
+function staffSees(it){ return isAmb() || it.ownerId===ME.id || (it.status!=='draft' && staffStudents(it).length>0); }
+const canEdit = (it)=>isAmb() || it.ownerId===ME.id;
+const subOf = (it, sid)=>(EX.subs[it.id]||{})[sid] || null;
+const mySub = (it)=>subOf(it, ME.id);
+function audienceText(it){
+  const a = it.audience || { mode:'mine' };
+  if(a.mode==='all') return 'Every student';
+  if(a.mode==='select') return `${(a.studentIds||[]).length} selected student${(a.studentIds||[]).length===1?'':'s'}`;
+  if(a.mode==='coords') return `${(a.coordIds||[]).length} coordinator group${(a.coordIds||[]).length===1?'':'s'}`;
+  return `${it.ownerName ? it.ownerName.split(' ')[0] + '\u2019s' : 'My'} students`;
+}
+function formsText(it){
+  const f = it.forms || {}, bits = [];
+  if(f.type) bits.push('typed'); if(f.photo) bits.push('photo'); if(f.file) bits.push('file');
+  return bits.length ? bits.join(', ') : 'choices only';
+}
+const allMcq = (it)=>(it.questions||[]).length>0 && it.questions.every(q=>q.type==='mcq' && q.options && q.options[q.correct]);
+function endsAt(it, sub){
+  if(sub && (sub.status==='returned' || sub.resubmitted)) return 0;
+  let end = 0;
+  if(it.timerMin && sub && sub.startedAt) end = sub.startedAt + it.timerMin*60000;
+  if(it.dueAt && !it.allowLate) end = end ? Math.min(end, it.dueAt) : 0;
+  return end;
+}
+const fmtClock = (ms)=>{ const s = Math.max(0, Math.floor(ms/1000)), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return (h?h+':':'') + String(m).padStart(h?2:1,'0') + ':' + String(x).padStart(2,'0'); };
+
+// ---------- loading and saving ----------
+async function loadList(){ const v = await sGet(KEY_LIST, true); if(Array.isArray(v)) EX.list = v; else if(!EX.list) EX.list = []; return EX.list; }
+async function saveItem(it){
+  const fresh = await sGet(KEY_LIST, true), base = Array.isArray(fresh) ? fresh : (EX.list||[]);
+  it.updatedAt = Date.now();
+  const next = base.filter(x=>x && x.id!==it.id).concat([it]);
+  const ok = await sSet(KEY_LIST, next, true);
+  if(ok) EX.list = next;
+  return ok;
+}
+async function loadSubs(items){
+  const keys = [];
+  items.forEach(it=>{ EX.subs[it.id] = {}; (isStaff() ? staffStudents(it) : [{ id:ME.id }]).forEach(s=>keys.push(subKey(it.id, s.id))); });
+  const chunks = []; for(let i=0;i<keys.length;i+=120) chunks.push(keys.slice(i,i+120));
+  await Promise.all(chunks.map(async c=>{
+    try{
+      const { data, error } = await sb.from('ichc_kv').select('key,value').in('key', c);
+      if(error) throw error;
+      (data||[]).forEach(r=>{ const v = r.value; if(v && v.exId && v.studentId){ (EX.subs[v.exId] = EX.subs[v.exId] || {})[v.studentId] = v; } });
+    }catch(e){ console.error('exercise submissions load failed', e); }
+  }));
+}
+async function saveSub(sub){
+  const ok = await sSet(subKey(sub.exId, sub.studentId), sub, true);
+  if(ok) (EX.subs[sub.exId] = EX.subs[sub.exId] || {})[sub.studentId] = sub;
+  return ok;
+}
+async function notify(title, body, toIds, refId){
+  if(!toIds || !toIds.length) return;
+  try{ await appendShared('notifications', { id:uid(), refId:refId||null, kind:'exercise', title, body, author:ME.name, role:ME.role, coordinatorId:null, date:today(), ts:Date.now(), seenBy:{ [ME.id]:Date.now() }, toIds }); }catch(e){ console.error('exercise notify failed', e); }
+}
+
+// ---------- picture / file uploads ----------
+async function uploadOne(file, folder){
+  if(!sbReady) throw new Error('You are offline.');
+  const isImg = /^image\//.test(file.type || '');
+  let body = file, ct = file.type || 'application/octet-stream', ext = (String(file.name||'').split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5) || 'bin';
+  if(isImg){ body = await compressImageFile(file, 1600, 0.82); ct = 'image/jpeg'; ext = 'jpg'; }
+  else if(file.size > 10*1024*1024) throw new Error('That file is bigger than 10 MB.');
+  const path = `${folder}/${Date.now().toString(36)}${Math.random().toString(36).slice(2,7)}.${ext}`;
+  const { error } = await sb.storage.from(PROFILE_PHOTO_BUCKET).upload(path, body, { contentType:ct, upsert:false });
+  if(error) throw error;
+  return { u: sb.storage.from(PROFILE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl, n: String(file.name||'file').slice(0,80), t: isImg ? 'img' : 'file' };
+}
+function zoom(url){
+  const o = document.createElement('div'); o.id = 'exZoom'; o.innerHTML = `<img src="${E(url)}" alt="">`;
+  o.addEventListener('click', ()=>o.remove()); document.body.appendChild(o);
+}
+const imgThumb = (u, del)=>`<div class="ex-img" data-ex-zoom="${E(u)}"><img src="${E(u)}" alt="Picture" loading="lazy">${del ? `<button type="button" data-ex-del="${E(del)}" aria-label="Remove">\u00d7</button>` : ''}</div>`;
+const fileChip = (f, del)=>`<span class="ex-file"><a href="${E(f.u)}" target="_blank" rel="noopener">\ud83d\udcc4 ${E(f.n||'File')}</a>${del ? `<button type="button" data-ex-del="${E(del)}" aria-label="Remove">\u00d7</button>` : ''}</span>`;
+const attachHtml = (list, delPrefix)=>(list||[]).map((f,i)=> f.t==='file' ? fileChip(f, delPrefix ? delPrefix+':'+i : '') : imgThumb(f.u, delPrefix ? delPrefix+':'+i : '')).join('');
+
+// ---------- entry point (called by the portal after the tab is drawn) ----------
+window.exMount = async function(){
+  const r = root(); if(!r) return;
+  if(EX.owner !== (ME && ME.id)){ stopTick(); Object.assign(EX, { owner:ME && ME.id, list:null, subs:{}, screen:'home', id:null, filter:'all', b:null, run:null, rev:null }); }
+  r.innerHTML = '<div class="empty">Loading exercises\u2026</div>';
+  if(!r.dataset.wired){ r.dataset.wired = '1'; }
+  r.onclick = onClick; r.onchange = onChange; r.oninput = onInput;
+  try{
+    await loadList();
+    const mine = EX.list.filter(it=> isStaff() ? staffSees(it) : visibleToStudent(it));
+    await loadSubs(mine);
+  }catch(e){ console.error(e); }
+  if(EX.screen==='builder' && EX.b){ paintBuilder(); return; }
+  if(EX.screen==='run' && EX.run){ paintRun(); return; }
+  if(EX.screen==='detail' && EX.id && find(EX.id)){ paintDetail(); return; }
+  if(EX.screen==='review' && EX.rev){ paintReview(); return; }
+  EX.screen = 'home'; paintHome();
+};
+function go(screen, id){ stopTick(); EX.screen = screen; if(id!==undefined) EX.id = id; window.scrollTo({ top:0 }); ({ home:paintHome, detail:paintDetail, builder:paintBuilder, run:paintRun, review:paintReview, preview:paintPreview })[screen](); }
+function stopTick(){ if(EX.tick){ clearInterval(EX.tick); EX.tick = null; } }
+const html = (h)=>{ const r = root(); if(r) r.innerHTML = h; };
+const head = (title, sub, actions)=>`<div class="section-title"><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div><div class="ex-row">${actions||''}</div></div>`;
+
+// ======================================================================
+// HOME
+// ======================================================================
+function subState(it, sub){
+  if(!sub) return 'new';
+  if(sub.status==='reviewed') return 'reviewed';
+  if(sub.status==='returned') return 'returned';
+  if(sub.status==='submitted') return sub.late ? 'late' : 'submitted';
+  return 'progress';
+}
+const SUB_LABEL = { new:'Not started', progress:'In progress', submitted:'Submitted', late:'Submitted late', returned:'Returned to student', reviewed:'Reviewed' };
+function score(it, sub){
+  const rv = sub && sub.review; if(!rv) return null;
+  let got = 0; (it.questions||[]).forEach(q=>{ got += Number(rv.marks && rv.marks[q.id])||0; });
+  return { got, max: totalMarks(it) };
+}
+function paintHome(){ return isStaff() ? paintStaffHome() : paintStudentHome(); }
+
+function studentCard(it){
+  const st = status(it), sub = mySub(it), ss = subState(it, sub), sc = (ss==='reviewed' && sub.review && sub.review.released) ? score(it, sub) : null;
+  const due = it.dueAt ? `Due ${E(T(it.dueAt))}` : 'No deadline';
+  let cta = 'Open';
+  if(ss==='new') cta = st==='open' || st==='overdue' ? 'Start' : 'View';
+  else if(ss==='progress' || ss==='returned') cta = 'Continue';
+  else if(ss==='reviewed') cta = 'See feedback';
+  return `<div class="ex-card"><div class="ex-row" style="justify-content:space-between;"><span class="badge ${ss==='reviewed'?'coord':ss==='new'?'stud':'amb'}">${SUB_LABEL[ss]}</span>${badge(st)}</div>
+    <h3>${E(it.title)}</h3>
+    <div class="ex-meta"><span>${E(it.topic||'Chemistry')}</span><span>${(it.questions||[]).length} question${(it.questions||[]).length===1?'':'s'}</span><span>${totalMarks(it)} marks</span>${it.timerMin ? `<span>\u23f1 ${it.timerMin} min timer</span>` : ''}</div>
+    <div class="ex-meta"><span>${due}</span><span>From ${E(it.ownerName||'your coordinator')}</span></div>
+    ${sc ? `<div><b style="font-size:18px;">${sc.got}/${sc.max}</b> <span class="ex-note">${sc.max?Math.round(100*sc.got/sc.max):0}%</span></div>` : ''}
+    <div><button class="btn small ${ss==='new'||ss==='progress'||ss==='returned' ? 'amber':'secondary'}" data-ex="open" data-id="${it.id}">${cta}</button></div></div>`;
+}
+function paintStudentHome(){
+  const items = (EX.list||[]).filter(visibleToStudent).sort((a,b)=>(a.dueAt||9e15)-(b.dueAt||9e15));
+  const todo = [], waiting = [], done = [], missed = [], later = [];
+  items.forEach(it=>{
+    const st = status(it), ss = subState(it, mySub(it));
+    if(ss==='reviewed') done.push(it);
+    else if(ss==='submitted' || ss==='late') waiting.push(it);
+    else if(st==='scheduled') later.push(it);
+    else if(st==='closed') missed.push(it);
+    else todo.push(it);
+  });
+  const sec = (t, arr, hint)=> arr.length ? `<div class="ex-sec"><h3>${t} <span class="ex-note">(${arr.length})</span></h3>${hint?`<p class="ex-note" style="margin:0 0 10px;">${hint}</p>`:''}<div class="ex-grid">${arr.map(studentCard).join('')}</div></div>` : '';
+  html(head('Exercises', 'Practice set by your coordinator. Answer by typing, or by taking a photo of your working.', '<button class="btn ghost small" data-ex="refresh">Refresh</button>') +
+    (items.length ? sec('To do', todo) + sec('Coming up', later, 'These open later.') + sec('Waiting for marking', waiting) + sec('Marked', done) + sec('Closed without a submission', missed) : '<div class="empty"><b>No exercises yet.</b><br>When your coordinator posts one, it appears here and you get a notification.</div>'));
+}
+
+function staffCard(it){
+  const st = status(it), studs = staffStudents(it), subs = studs.map(s=>subOf(it, s.id)).filter(Boolean);
+  const submitted = subs.filter(s=>s.status==='submitted' || s.status==='reviewed' || s.status==='returned').length;
+  const toMark = subs.filter(s=>s.status==='submitted').length;
+  const ambWait = isAmb() ? subs.filter(s=>s.status==='reviewed' && !s.amb).length : 0;
+  return `<div class="ex-card"><div class="ex-row" style="justify-content:space-between;">${badge(st)}<span class="badge ${it.ownerRole==='ambassador'?'amb':'coord'}">${it.ownerRole==='ambassador'?'Ambassador':E((it.ownerName||'Coordinator').split(' ')[0])}</span></div>
+    <h3>${E(it.title||'Untitled')}</h3>
+    <div class="ex-meta"><span>${E(it.topic||'Chemistry')}</span><span>${(it.questions||[]).length} questions</span><span>${totalMarks(it)} marks</span>${it.timerMin?`<span>\u23f1 ${it.timerMin} min</span>`:''}<span>${E(audienceText(it))}</span></div>
+    <div class="ex-meta"><span>${it.opensAt ? 'Opens '+E(T(it.opensAt))+' \u00b7 ' : ''}${it.dueAt ? 'Due '+E(T(it.dueAt)) : 'No deadline'}</span></div>
+    ${st==='draft' ? '' : `<div class="ex-meta"><span><b>${submitted}</b> of ${studs.length} submitted</span>${toMark?`<span style="color:var(--amber-deep);"><b>${toMark}</b> to mark</span>`:''}${ambWait?`<span style="color:var(--teal-deep);"><b>${ambWait}</b> awaiting your review</span>`:''}</div>`}
+    <div class="ex-row"><button class="btn small" data-ex="detail" data-id="${it.id}">${st==='draft' ? 'Open' : 'Submissions'}</button>${canEdit(it) ? `<button class="btn secondary small" data-ex="edit" data-id="${it.id}">Edit</button>` : `<button class="btn secondary small" data-ex="preview" data-id="${it.id}">Preview</button>`}</div></div>`;
+}
+function paintStaffHome(){
+  const all = (EX.list||[]).filter(staffSees).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const f = EX.filter, counts = {};
+  all.forEach(it=>{ const s = status(it); counts[s] = (counts[s]||0)+1; });
+  const shown = all.filter(it=> f==='all' || status(it)===f || (f==='closed' && status(it)==='overdue') || (f==='mine' && it.ownerId===ME.id));
+  const chip = (k,l,n)=>`<button class="ex-chip${f===k?' on':''}" data-ex="filter" data-id="${k}">${l}${n!=null?`<i>${n}</i>`:''}</button>`;
+  let overview = '';
+  if(isAmb() && all.length){
+    const rows = (DB.coordinators||[]).map(c=>{
+      const mine = all.filter(it=>it.ownerId===c.id && it.status!=='draft');
+      const studs = (DB.students||[]).filter(s=>s.coordinatorId===c.id && !ghostedStudent(s));
+      let sub = 0, mark = 0, rev = 0, pend = 0;
+      all.filter(it=>it.status!=='draft').forEach(it=>studs.forEach(s=>{ if(!audienceStudents(it).some(x=>x.id===s.id)) return; const x = subOf(it, s.id); if(!x) return; if(x.status!=='in_progress') sub++; if(x.status==='submitted') mark++; if(x.status==='reviewed'){ rev++; if(!x.amb) pend++; } }));
+      return `<tr><td>${E(c.name)}</td><td>${mine.length}</td><td>${studs.length}</td><td>${sub}</td><td>${mark ? `<b style="color:var(--amber-deep);">${mark}</b>` : 0}</td><td>${rev}</td><td>${pend ? `<b style="color:var(--teal-deep);">${pend}</b>` : 0}</td></tr>`;
+    }).join('');
+    overview = `<details class="card" style="margin-bottom:16px;"><summary style="cursor:pointer; font-weight:700;">Programme overview by coordinator</summary><div style="overflow:auto; margin-top:10px;"><table class="ex-tbl"><thead><tr><th>Coordinator</th><th>Exercises posted</th><th>Students</th><th>Submitted</th><th>Waiting to be marked</th><th>Marked</th><th>Awaiting your review</th></tr></thead><tbody>${rows || '<tr><td colspan="7">No coordinators yet.</td></tr>'}</tbody></table></div></details>`;
+  }
+  html(head('Exercises', isAmb() ? 'Post exercises for the whole programme and review how every coordinator is marking.' : 'Set practice for your students, then mark their work.',
+      '<button class="btn ghost small" data-ex="refresh">Refresh</button><button class="btn amber" data-ex="new">+ New exercise</button>') +
+    overview +
+    `<div class="ex-chips">${chip('all','All',all.length)}${chip('open','Open',counts.open||0)}${chip('scheduled','Scheduled',counts.scheduled||0)}${chip('draft','Drafts',counts.draft||0)}${chip('closed','Closed',(counts.closed||0)+(counts.overdue||0))}${isAmb()?chip('mine','Posted by me',null):''}</div>` +
+    (shown.length ? `<div class="ex-grid">${shown.map(staffCard).join('')}</div>` : `<div class="empty"><b>${all.length?'Nothing in this view.':'No exercises yet.'}</b><br>Tap <b>New exercise</b> to type questions, photograph them, upload from your gallery, or let the AI draft them.</div>`));
+}
+
+// ======================================================================
+// STAFF: exercise detail, student list, review
+// ======================================================================
+function paintDetail(){
+  const it = find(EX.id); if(!it) return go('home');
+  const studs = staffStudents(it).sort((a,b)=>a.name.localeCompare(b.name));
+  const st = status(it);
+  let sub = 0, toMark = 0, rev = 0, sumPct = 0, nPct = 0;
+  const rows = studs.map(s=>{
+    const x = subOf(it, s.id), ss = subState(it, x), sc = x && x.review ? score(it, x) : null;
+    if(x && x.status!=='in_progress') sub++; if(ss==='submitted' || ss==='late') toMark++; if(ss==='reviewed') rev++;
+    if(sc && sc.max && x.status==='reviewed'){ sumPct += sc.got/sc.max; nPct++; }
+    return `<tr><td><b>${E(s.name)}</b>${isAmb()?`<div class="ex-note">${E(((DB.coordinators||[]).find(c=>c.id===s.coordinatorId)||{}).name||'')}</div>`:''}</td>
+      <td><span class="badge ${ss==='reviewed'?'coord':(ss==='submitted'||ss==='late')?'stud':'amb'}">${SUB_LABEL[ss]}</span></td>
+      <td>${x && x.submittedAt ? E(T(x.submittedAt)) : '\u2013'}</td>
+      <td>${sc && x.status==='reviewed' ? `${sc.got}/${sc.max}` : '\u2013'}</td>
+      ${isAmb() ? `<td>${x && x.amb ? '\u2713' : (x && x.status==='reviewed' ? '<span class="ex-note">pending</span>' : '\u2013')}</td>` : ''}
+      <td style="text-align:right;">${x && x.status!=='in_progress' ? `<button class="btn small ${ss==='submitted'||ss==='late'?'amber':'secondary'}" data-ex="review" data-id="${it.id}" data-sid="${s.id}">${ss==='reviewed'?'Open':'Review'}</button>` : ''}</td></tr>`;
+  }).join('');
+  html(head(E(it.title), `${E(it.topic||'Chemistry')} \u00b7 ${(it.questions||[]).length} questions \u00b7 ${totalMarks(it)} marks \u00b7 ${E(audienceText(it))}`,
+      `<button class="btn ghost small" data-ex="home">\u2190 All exercises</button>${canEdit(it) ? `<button class="btn secondary small" data-ex="edit" data-id="${it.id}">Edit</button>` : ''}<button class="btn secondary small" data-ex="preview" data-id="${it.id}">Preview</button>`) +
+    `<div class="stat-row"><div class="stat"><div class="n">${studs.length}</div><div class="l">Students</div></div><div class="stat"><div class="n">${sub}</div><div class="l">Submitted</div></div><div class="stat"><div class="n">${toMark}</div><div class="l">To mark</div></div><div class="stat"><div class="n">${nPct ? Math.round(100*sumPct/nPct)+'%' : '\u2013'}</div><div class="l">Average (marked)</div></div></div>
+    <div class="card" style="margin-bottom:16px;"><div class="ex-row" style="justify-content:space-between;"><div>${badge(st)} <span class="ex-note" style="margin-left:6px;">${it.opensAt?'Opens '+E(T(it.opensAt))+' \u00b7 ':''}${it.dueAt?'Due '+E(T(it.dueAt)):'No deadline'}${it.timerMin?' \u00b7 '+it.timerMin+' minute timer':''} \u00b7 answers: ${E(formsText(it))}</span></div>
+      <div class="ex-row">${canEdit(it) ? `<button class="btn secondary small" data-ex="toggle" data-id="${it.id}">${it.status==='closed' ? 'Reopen' : (it.status==='draft' ? 'Publish' : 'Close now')}</button><button class="btn ghost small" data-ex="dup" data-id="${it.id}">Duplicate</button><button class="btn ghost small" data-ex="csv" data-id="${it.id}">Export CSV</button><button class="btn ghost small" data-ex="delete" data-id="${it.id}" style="color:#B3261E;">Delete</button>` : `<button class="btn ghost small" data-ex="csv" data-id="${it.id}">Export CSV</button>`}</div></div></div>
+    ${it.status==='draft' ? '<div class="ex-warn">This exercise is a draft. Students cannot see it yet.</div>' : ''}
+    <div class="card" style="overflow:auto;"><table class="ex-tbl"><thead><tr><th>Student</th><th>Status</th><th>Submitted</th><th>Score</th>${isAmb()?'<th>Ambassador</th>':''}<th></th></tr></thead><tbody>${rows || `<tr><td colspan="6" class="ex-note">No students in this audience yet.</td></tr>`}</tbody></table></div>`);
+}
+
+function paintPreview(){
+  const it = find(EX.id); if(!it) return go('home');
+  html(head('Preview: '+E(it.title), 'This is how the questions look to students.', `<button class="btn ghost small" data-ex="detail" data-id="${it.id}">\u2190 Back</button>`) +
+    (it.instructions ? `<div class="ex-warn">${E(it.instructions)}</div>` : '') +
+    (it.questions||[]).map((q,i)=>`<div class="ex-q">${questionView(it,q,i)}${q.type==='mcq' ? (q.options||[]).map((o,k)=>`<div class="ex-opt${k===q.correct?' on':''}"><span><b>${'ABCDEF'[k]})</b> ${E(o)}${k===q.correct?' \u2713':''}</span></div>`).join('') : ''}${modelBlock(q)}</div>`).join(''));
+}
+function exportCsv(it){
+  const q = (v)=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const lines = [['Student','Coordinator','Status','Submitted','Late','Score','Out of'].map(q).join(',')];
+  staffStudents(it).forEach(s=>{
+    const x = subOf(it, s.id), sc = x && x.review ? score(it, x) : null;
+    lines.push([s.name, ((DB.coordinators||[]).find(c=>c.id===s.coordinatorId)||{}).name||'', SUB_LABEL[subState(it,x)], x&&x.submittedAt?new Date(x.submittedAt).toISOString():'', x&&x.late?'yes':'', sc&&x.status==='reviewed'?sc.got:'', totalMarks(it)].map(q).join(','));
+  });
+  const blob = new Blob([lines.join('\n')], { type:'text/csv' }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = (it.title||'exercise').replace(/[^a-z0-9]+/gi,'-').toLowerCase() + '-results.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+function questionView(it, q, i, opts){
+  opts = opts || {};
+  return `<div class="ex-q-h"><span class="ex-q-n">Q${i+1}</span><span class="badge amb">${E(TYPE_LABEL[q.type]||'Question')}</span><span class="ex-note">${Number(q.marks)||0} mark${(Number(q.marks)||0)===1?'':'s'}</span></div>
+    ${q.text ? `<p class="ex-q-body">${E(q.text)}</p>` : ''}${(q.imgs||[]).length ? `<div class="ex-imgs">${q.imgs.map(u=>`<div class="ex-img big" data-ex-zoom="${E(u)}"><img src="${E(u)}" alt="Question picture"></div>`).join('')}</div>` : ''}`;
+}
+function answerView(it, q, a){
+  if(!a) return '<div class="ex-note"><i>No answer.</i></div>';
+  let h = '';
+  if(q.type==='mcq') h += a.choice==null ? '<div class="ex-note"><i>No option chosen.</i></div>' : `<div><b>Chose:</b> ${'ABCDEF'[a.choice]}) ${E((q.options||[])[a.choice]||'')}</div>`;
+  if(a.text) h += `<div class="ex-q-body" style="background:var(--chalk); border-radius:10px; padding:10px 12px;">${E(a.text)}</div>`;
+  if((a.files||[]).length) h += `<div class="ex-imgs">${attachHtml(a.files)}</div>`;
+  return h || '<div class="ex-note"><i>No answer.</i></div>';
+}
+const modelBlock = (q)=> (q.type==='mcq' && q.options && q.options[q.correct]) || q.answer || q.scheme ? `<div class="ex-model"><b>Model answer</b>${q.type==='mcq' && q.options && q.options[q.correct] ? `<div>${'ABCDEF'[q.correct]}) ${E(q.options[q.correct])}</div>` : ''}${q.answer ? `<div>${E(q.answer)}</div>` : ''}${q.scheme ? `<div class="ex-note" style="margin-top:4px;">${E(q.scheme)}</div>` : ''}</div>` : '';
+
+function openReview(exId, sid){
+  const it = find(exId), sub = it && subOf(it, sid); if(!it || !sub) return;
+  const copy = JSON.parse(JSON.stringify(sub));
+  copy.review = copy.review || { marks:{}, comments:{}, overall:'', released:false };
+  (it.questions||[]).forEach(q=>{ if(q.type==='mcq' && copy.review.marks[q.id]===undefined && q.options && q.options[q.correct]){ const a = (copy.answers||{})[q.id]; copy.review.marks[q.id] = a && a.choice===q.correct ? (Number(q.marks)||0) : 0; } });
+  EX.rev = { exId, sid, sub:copy }; go('review', exId);
+}
+function paintReview(){
+  const R = EX.rev, it = R && find(R.exId); if(!it) return go('home');
+  const sub = R.sub, rv = sub.review, s = (DB.students||[]).find(x=>x.id===R.sid) || { name:sub.studentName };
+  const qs = (it.questions||[]).map((q,i)=>`<div class="ex-q">${questionView(it,q,i)}
+      <div style="margin:8px 0 4px;"><b style="font-size:13px;">${E(s.name.split(' ')[0])}\u2019s answer</b></div>${answerView(it, q, (sub.answers||{})[q.id])}${modelBlock(q)}
+      <div class="ex-two" style="margin-top:10px;"><div class="field" style="margin:0;"><label>Marks (out of ${Number(q.marks)||0})</label><input type="number" min="0" max="${Number(q.marks)||0}" step="0.5" data-ex-mark="${q.id}" value="${rv.marks[q.id]===undefined?'':E(rv.marks[q.id])}"></div>
+      <div class="field" style="margin:0;"><label>Comment to the student</label><input data-ex-cmt="${q.id}" data-qf="text" value="${E(rv.comments[q.id]||'')}" placeholder="Optional"></div></div></div>`).join('');
+  const work = (sub.work||[]).length ? `<div class="ex-q"><b>Extra working uploaded</b><div class="ex-imgs">${attachHtml(sub.work)}</div></div>` : '';
+  const amb = isAmb() ? `<div class="ex-amb"><b>Ambassador review</b><p class="ex-note" style="margin:2px 0 8px;">${sub.amb ? `Reviewed by ${E(sub.amb.by)} on ${E(T(sub.amb.at))}.` : 'You can change any mark above, then record your review here. The note is private to staff.'}</p>
+      <textarea id="exAmbNote" rows="2" placeholder="Private note to the coordinator (optional)">${E(sub.amb ? sub.amb.note : '')}</textarea><div style="margin-top:8px;"><button class="btn small teal" data-ex="rev-amb">${sub.amb ? 'Update my review' : 'Mark as reviewed by Ambassador'}</button></div></div>`
+    : (sub.amb && sub.amb.note ? `<div class="ex-amb"><b>Note from the Ambassador</b><div style="white-space:pre-wrap; margin-top:4px;">${E(sub.amb.note)}</div></div>` : '');
+  const sc = score(it, sub);
+  html(head(`Review: ${E(s.name)}`, `${E(it.title)} \u00b7 ${sub.submittedAt ? 'submitted '+E(T(sub.submittedAt)) : 'not submitted'}${sub.late?' \u00b7 <b style="color:#B3261E;">late</b>':''}${sub.auto?' \u00b7 auto-submitted when the timer ended':''}`,
+      `<button class="btn ghost small" data-ex="detail" data-id="${it.id}">\u2190 Back to list</button>`) +
+    `<div class="ex-warn" style="margin-top:0;">Current score: <b id="exLiveScore">${sc.got}/${sc.max}</b> ${sub.review && sub.review.released ? '\u00b7 released to the student' : '\u00b7 not released yet'}</div>` + qs + work +
+    `<div class="card" style="margin-top:6px;"><div class="field"><label>Overall feedback</label><textarea id="exOverall" rows="3" data-qf="text" placeholder="What went well, what to revise next">${E(rv.overall||'')}</textarea></div>
+      <div class="ex-err" id="exRevMsg"></div>
+      <div class="ex-row"><button class="btn teal" data-ex="rev-release">Save and release to student</button><button class="btn secondary" data-ex="rev-save">Save as draft</button><button class="btn ghost" data-ex="rev-return">Return for correction</button></div></div>` + amb);
+}
+function readReview(){
+  const R = EX.rev; if(!R) return;
+  const rv = R.sub.review, it = find(R.exId);
+  root().querySelectorAll('[data-ex-mark]').forEach(i=>{ const v = i.value.trim(); if(v==='') delete rv.marks[i.dataset.exMark]; else { const q = it.questions.find(x=>x.id===i.dataset.exMark); rv.marks[i.dataset.exMark] = Math.max(0, Math.min(Number(q.marks)||0, parseFloat(v)||0)); } });
+  root().querySelectorAll('[data-ex-cmt]').forEach(i=>{ rv.comments[i.dataset.exCmt] = i.value.trim(); });
+  const o = document.getElementById('exOverall'); if(o) rv.overall = o.value.trim();
+}
+async function persistReview(how){
+  const R = EX.rev, it = find(R.exId), sub = R.sub, rv = sub.review, msg = document.getElementById('exRevMsg');
+  readReview();
+  const say = (t, ok)=>{ if(msg){ msg.textContent = t; msg.className = 'ex-err' + (ok?' ex-ok':''); } };
+  if(how==='release'){
+    const missing = (it.questions||[]).filter(q=>rv.marks[q.id]===undefined).length;
+    if(missing && !confirm(`${missing} question${missing===1?' has':'s have'} no mark yet and will count as 0. Release anyway?`)) return;
+    (it.questions||[]).forEach(q=>{ if(rv.marks[q.id]===undefined) rv.marks[q.id] = 0; });
+    sub.status = 'reviewed'; rv.released = true;
+  } else if(how==='return'){
+    if(!rv.overall && !confirm('Return without saying what to correct? Add it under Overall feedback first if you can.')) return;
+    sub.status = 'returned'; rv.released = false;
+  }
+  rv.by = ME.name; rv.byId = ME.id; rv.byRole = ME.role; rv.at = Date.now();
+  say('Saving\u2026', true);
+  const ok = await saveSub(sub);
+  if(!ok) return say('Could not save. Check your connection and try again.');
+  if(how==='release') notify(`Your work is marked: ${it.title}`, `You scored ${score(it, sub).got} out of ${totalMarks(it)}. Open Exercises to see the feedback.`, [sub.studentId], it.id);
+  if(how==='return') notify(`Please correct and resubmit: ${it.title}`, rv.overall ? rv.overall.slice(0,160) : 'Your teacher returned this exercise for correction.', [sub.studentId], it.id);
+  say(how==='release' ? 'Released to the student.' : how==='return' ? 'Returned to the student.' : 'Draft saved.', true);
+  setTimeout(()=>go('detail', it.id), 700);
+}
+
+// ======================================================================
+// STUDENT: run an exercise
+// ======================================================================
+function newSub(it){
+  return { id:uid(), exId:it.id, studentId:ME.id, studentName:ME.name, coordinatorId:myCoordinatorId(), status:'in_progress', startedAt:Date.now(), answers:{}, work:[] };
+}
+function openStudent(id){
+  const it = find(id); if(!it) return;
+  const sub = mySub(it), ss = subState(it, sub), st = status(it);
+  if(ss==='reviewed' || ss==='submitted' || ss==='late'){ EX.run = { exId:id, sub, view:'result' }; return go('run'); }
+  if(st==='scheduled'){ return alert(`This exercise opens ${T(it.opensAt)}.`); }
+  if(st==='closed' && ss==='new'){ return alert('This exercise is closed and you have no submission.'); }
+  if(st==='closed' && (ss==='progress')){ alert('The deadline has passed, so your saved answers are being submitted now.'); EX.run = { exId:id, sub, view:'work' }; EX.screen = 'run'; return submitRun(true); }
+  EX.run = { exId:id, sub, view: sub ? 'work' : 'intro' }; go('run');
+}
+function paintRun(){
+  const R = EX.run, it = R && find(R.exId); if(!it) return go('home');
+  if(R.view==='intro') return paintIntro(it);
+  if(R.view==='result') return paintResult(it);
+  paintWork(it);
+}
+function paintIntro(it){
+  const forms = it.forms || {}, how = [];
+  if(forms.type) how.push('type your answer'); if(forms.photo) how.push('take a photo or upload from your gallery'); if(forms.file) how.push('upload a PDF or document');
+  html(head(E(it.title), E(it.topic||''), '<button class="btn ghost small" data-ex="home">\u2190 Back</button>') +
+    `<div class="card"><div class="ex-meta" style="margin-bottom:10px;"><span>${(it.questions||[]).length} questions</span><span>${totalMarks(it)} marks</span><span>${it.dueAt ? 'Due '+E(T(it.dueAt)) : 'No deadline'}</span><span>From ${E(it.ownerName||'your coordinator')}</span></div>
+    ${it.instructions ? `<h3 style="font-size:15px; margin:0 0 4px;">Instructions</h3><p class="ex-q-body">${E(it.instructions)}</p>` : ''}
+    <h3 style="font-size:15px; margin:0 0 4px;">How to answer</h3><p style="margin:0 0 10px; font-size:14px;">You can ${how.length ? how.join(', or ') : 'choose the correct option'}.${forms.photo ? ' Write on paper, keep the page flat and well lit, and make sure the writing is readable.' : ''}</p>
+    ${it.timerMin ? `<div class="ex-warn"><b>\u23f1 Timed: ${it.timerMin} minutes.</b> The clock starts when you press Start and keeps running even if you close the page. When it reaches zero your answers are submitted automatically.</div>` : ''}
+    ${status(it)==='overdue' ? '<div class="ex-warn">The deadline has passed. Your work will be marked as late.</div>' : ''}
+    <div style="margin-top:14px;"><button class="btn amber" data-ex="begin">${it.timerMin ? 'Start the timer' : 'Start'}</button></div></div>`);
+}
+async function beginRun(){
+  const R = EX.run, it = find(R.exId);
+  if(!R.sub){ R.sub = newSub(it); await saveSub(R.sub); }
+  R.view = 'work'; paintRun();
+}
+function paintWork(it){
+  const R = EX.run, sub = R.sub, forms = it.forms || {}, end = endsAt(it, sub);
+  if(end && Date.now() >= end && sub.status==='in_progress'){ return submitRun(true); }
+  const qs = (it.questions||[]).map((q,i)=>{
+    const a = (sub.answers||{})[q.id] || {};
+    let inp = '';
+    if(q.type==='mcq') inp = (q.options||[]).map((o,k)=>`<label class="ex-opt${a.choice===k?' on':''}"><input type="radio" name="c_${q.id}" data-ex-choice="${q.id}" value="${k}"${a.choice===k?' checked':''}><span><b>${'ABCDEF'[k]})</b> ${E(o)}</span></label>`).join('');
+    else {
+      if(forms.type) inp += `<textarea rows="${q.type==='calc'?6:4}" data-ex-ans="${q.id}" data-qf="answer" placeholder="Type your answer and working here">${E(a.text||'')}</textarea>`;
+      if(forms.photo || forms.file){
+        inp += `<div class="ex-imgs" id="exA_${q.id}">${attachHtml(a.files, 'a:'+q.id)}</div><div class="ex-row">`;
+        if(forms.photo) inp += `<button type="button" class="btn secondary small" data-ex="cam" data-q="${q.id}">\ud83d\udcf7 Take a photo</button><button type="button" class="btn secondary small" data-ex="gal" data-q="${q.id}">\ud83d\uddbc Choose from gallery</button>`;
+        if(forms.file) inp += `<button type="button" class="btn secondary small" data-ex="doc" data-q="${q.id}">\ud83d\udcc4 Upload a file</button>`;
+        inp += '</div>';
+      }
+      if(!inp) inp = '<div class="ex-note">No answer box is turned on for this exercise.</div>';
+    }
+    return `<div class="ex-q">${questionView(it,q,i)}${inp}</div>`;
+  }).join('');
+  const extra = (forms.photo || forms.file) ? `<div class="ex-q"><b>Extra working (optional)</b><p class="ex-note" style="margin:2px 0 8px;">Doing it all on a few sheets? Add them here instead of per question.</p><div class="ex-imgs" id="exA___work">${attachHtml(sub.work, 'w')}</div><div class="ex-row">${forms.photo ? '<button type="button" class="btn secondary small" data-ex="cam" data-q="__work">\ud83d\udcf7 Take a photo</button><button type="button" class="btn secondary small" data-ex="gal" data-q="__work">\ud83d\uddbc Choose from gallery</button>' : ''}${forms.file ? '<button type="button" class="btn secondary small" data-ex="doc" data-q="__work">\ud83d\udcc4 Upload a file</button>' : ''}</div></div>` : '';
+  html(`<div class="ex-bar"><b>${E(it.title)}</b><span id="exSaveState" class="ex-note" style="color:#C9D4DF;"></span>${end ? '<span class="ex-clock" id="exClock">--:--</span>' : ''}</div>` +
+    `<input type="file" id="exFileCam" accept="image/*" capture="environment" hidden><input type="file" id="exFileGal" accept="image/*" multiple hidden><input type="file" id="exFileDoc" accept=".pdf,.doc,.docx,application/pdf" hidden>` +
+    (sub.status==='returned' && sub.review && sub.review.overall ? `<div class="ex-fb"><b>Returned for correction</b><br>${E(sub.review.overall)}</div>` : '') +
+    (it.instructions ? `<div class="ex-warn" style="background:var(--paper);">${E(it.instructions)}</div>` : '') + qs + extra +
+    `<div class="ex-err" id="exRunMsg"></div><div class="ex-row" style="margin:6px 0 30px;"><button class="btn teal" data-ex="submit">Submit my work</button><button class="btn secondary" data-ex="savenow">Save and leave</button></div>`);
+  stopTick();
+  if(end){
+    const upd = ()=>{ const left = end - Date.now(), c = document.getElementById('exClock'); if(!c) return stopTick(); c.textContent = fmtClock(left); c.classList.toggle('low', left < 5*60000); if(left <= 0){ stopTick(); submitRun(true); } };
+    upd(); EX.tick = setInterval(upd, 1000);
+  }
+}
+function saveState(t){ const e = document.getElementById('exSaveState'); if(e) e.textContent = t; }
+function queueSave(){
+  saveState('Unsaved changes\u2026'); clearTimeout(EX.save);
+  EX.save = setTimeout(async ()=>{ const R = EX.run; if(!R || !R.sub || R.view!=='work') return; saveState('Saving\u2026'); const ok = await saveSub(R.sub); saveState(ok ? 'Saved' : 'Could not save, check your connection'); }, 1400);
+}
+async function addFiles(qid, files, isDoc){
+  const R = EX.run, it = find(R.exId), msg = document.getElementById('exRunMsg');
+  if(!files.length) return;
+  const folder = `exercise/${clean(it.id)}/work/${clean(ME.id)}`;
+  for(const f of files){
+    try{
+      if(msg){ msg.className = 'ex-err ex-ok'; msg.textContent = 'Uploading\u2026'; }
+      const rec = await uploadOne(f, folder);
+      if(qid==='__work') R.sub.work = (R.sub.work||[]).concat([rec]);
+      else { const a = (R.sub.answers[qid] = R.sub.answers[qid] || {}); a.files = (a.files||[]).concat([rec]); }
+      const box = document.getElementById('exA_'+qid); if(box) box.innerHTML = attachHtml(qid==='__work' ? R.sub.work : R.sub.answers[qid].files, qid==='__work' ? 'w' : 'a:'+qid);
+      if(msg) msg.textContent = '';
+    }catch(e){ console.error(e); if(msg){ msg.className = 'ex-err'; msg.textContent = (typeof friendlyUploadError==='function' ? friendlyUploadError(e) : (e.message||'Upload failed')); } }
+  }
+  queueSave();
+}
+async function submitRun(auto){
+  const R = EX.run, it = find(R.exId), sub = R.sub, msg = document.getElementById('exRunMsg');
+  const have = (q)=>{ const a = sub.answers[q.id]; return a && (a.choice!=null || (a.text && a.text.trim()) || (a.files||[]).length); };
+  const blank = (it.questions||[]).filter(q=>!have(q) && !((sub.work||[]).length)).length;
+  if(!auto){
+    if(blank && !confirm(`${blank} question${blank===1?' is':'s are'} blank. Submit anyway?`)) return;
+    if(!blank && !confirm('Submit your work? You will not be able to change it after this unless your teacher returns it.')) return;
+  }
+  stopTick(); clearTimeout(EX.save);
+  const wasReturned = sub.status==='returned';
+  sub.status = 'submitted'; sub.submittedAt = Date.now(); sub.late = !!(it.dueAt && sub.submittedAt > it.dueAt + 60000); sub.auto = !!auto; if(wasReturned) sub.resubmitted = (sub.resubmitted||0)+1;
+  if(allMcq(it)){
+    const marks = {}; it.questions.forEach(q=>{ const a = sub.answers[q.id]; marks[q.id] = a && a.choice===q.correct ? (Number(q.marks)||0) : 0; });
+    sub.review = { marks, comments:{}, overall:'', released:true, by:'Auto-marked', byRole:'system', at:Date.now() }; sub.status = 'reviewed';
+  }
+  const ok = await saveSub(sub);
+  if(!ok){ sub.status = 'in_progress'; if(msg){ msg.className = 'ex-err'; msg.textContent = 'Could not submit. Check your connection and press Submit again. Your answers are still here.'; } return; }
+  const coordIds = [sub.coordinatorId, it.ownerId].filter((v,i,a)=>v && a.indexOf(v)===i);
+  if(sub.status==='submitted') notify(`${ME.name} submitted: ${it.title}`, sub.late ? 'Submitted late.' : 'Ready to mark.', coordIds, it.id);
+  R.view = 'result'; R.justSubmitted = true; paintRun();
+}
+function showSolutions(it, sub){
+  const rule = it.solutions || 'after_review', rv = sub && sub.review;
+  if(rule==='never') return false;
+  if(rule==='after_submit') return !!(sub && sub.status!=='in_progress');
+  if(rule==='after_due') return !!(it.dueAt && Date.now() > it.dueAt);
+  return !!(rv && rv.released);
+}
+function paintResult(it){
+  const R = EX.run, sub = mySub(it) || R.sub, rv = sub.review, released = rv && rv.released, sc = released ? score(it, sub) : null, sol = showSolutions(it, sub);
+  const canRedo = (sub.status==='returned') || (sub.status==='submitted' && !it.timerMin && !(rv && rv.released) && (!it.dueAt || Date.now() < it.dueAt));
+  const qs = (it.questions||[]).map((q,i)=>`<div class="ex-q">${questionView(it,q,i)}<div style="margin:6px 0;"><b style="font-size:13px;">Your answer</b></div>${answerView(it,q,(sub.answers||{})[q.id])}
+      ${released ? `<div class="ex-row" style="margin-top:8px;"><b>${Number((rv.marks||{})[q.id])||0} / ${Number(q.marks)||0}</b></div>${rv.comments && rv.comments[q.id] ? `<div class="ex-fb">${E(rv.comments[q.id])}</div>` : ''}` : ''}${sol ? modelBlock(q) : ''}</div>`).join('');
+  html(head(E(it.title), released ? 'Marked' : 'Submitted', '<button class="btn ghost small" data-ex="home">\u2190 All exercises</button>') +
+    (released ? `<div class="card" style="margin-bottom:16px; text-align:center;"><div class="ex-score">${sc.got} / ${sc.max}</div><div class="ex-note">${sc.max ? Math.round(100*sc.got/sc.max) : 0}% \u00b7 marked by ${E(rv.by||'your coordinator')}</div>${rv.overall ? `<div class="ex-fb" style="text-align:left; margin-top:12px;">${E(rv.overall)}</div>` : ''}</div>`
+      : `<div class="card" style="margin-bottom:16px;"><b>${R.justSubmitted ? 'Your work has been submitted. \u2713' : 'Submitted'}</b><p class="ex-note" style="margin:4px 0 0;">${E(T(sub.submittedAt))}${sub.late ? ' \u00b7 marked as late' : ''}${sub.auto ? ' \u00b7 submitted automatically when the time ended' : ''}. Your coordinator will mark it and you will get a notification.</p>${canRedo ? '<div style="margin-top:10px;"><button class="btn secondary small" data-ex="redo">Edit my answers</button></div>' : ''}</div>`) +
+    (released && sub.resubmitted ? '' : '') + (sub.status==='returned' ? `<div class="card" style="margin-bottom:16px;"><button class="btn amber" data-ex="redo">Correct and resubmit</button></div>` : '') + qs);
+}
+
+// ======================================================================
+// STAFF: builder
+// ======================================================================
+function freshExercise(){
+  const due = new Date(Date.now() + 7*864e5); due.setHours(23, 59, 0, 0);
+  return { id:uid(), title:'', topic:'', instructions:'', status:'draft', ownerId:ME.id, ownerName:ME.name, ownerRole:ME.role,
+    audience: isAmb() ? { mode:'all', studentIds:[], coordIds:[] } : { mode:'mine', studentIds:[], coordIds:[] },
+    forms:{ type:true, photo:true, file:false }, timerMin:0, opensAt:0, dueAt:due.getTime(), allowLate:false, solutions:'after_review', questions:[], aiChecked:false, createdAt:Date.now() };
+}
+function newQ(type, patch){ return Object.assign({ id:uid(), type:type||'written', text:'', imgs:[], marks:DEFAULT_MARKS[type||'written'], answer:'', scheme:'', options: type==='mcq' ? ['','','',''] : undefined, correct:0, ai:false }, patch||{}); }
+function startBuilder(it){ EX.b = it ? JSON.parse(JSON.stringify(it)) : freshExercise(); EX.b._new = !it; EX.b._ai = false; go('builder'); }
+
+function qEditor(q, i, n){
+  return `<div class="ex-q" data-qid="${q.id}">
+    <div class="ex-q-h"><span class="ex-q-n">Q${i+1}</span>
+      <select data-ex-qf="type" style="width:auto;">${Object.keys(TYPE_LABEL).map(k=>`<option value="${k}"${q.type===k?' selected':''}>${TYPE_LABEL[k]}</option>`).join('')}</select>
+      <span class="ex-note">Marks</span><input type="number" min="0" step="0.5" data-ex-qf="marks" value="${E(q.marks)}" style="width:72px;">
+      ${q.ai ? '<span class="badge alert-imp">AI draft</span>' : ''}
+      <span style="margin-left:auto;" class="ex-row"><button type="button" class="btn ghost small" data-ex="q-up" data-q="${q.id}"${i===0?' disabled':''}>\u2191</button><button type="button" class="btn ghost small" data-ex="q-down" data-q="${q.id}"${i===n-1?' disabled':''}>\u2193</button><button type="button" class="btn ghost small" data-ex="q-del" data-q="${q.id}" style="color:#B3261E;">Remove</button></span></div>
+    <div class="field"><label>Question (type it, or leave blank if the picture is the question)</label><textarea rows="3" data-ex-qf="text" data-qf="text" placeholder="Type the question here">${E(q.text)}</textarea></div>
+    <div class="ex-imgs" data-imgs>${(q.imgs||[]).map((u,k)=>imgThumb(u, 'q:'+q.id+':'+k)).join('')}</div>
+    <div class="ex-row" style="margin-bottom:10px;"><button type="button" class="btn secondary small" data-ex="q-cam" data-q="${q.id}">\ud83d\udcf7 Take a picture</button><button type="button" class="btn secondary small" data-ex="q-gal" data-q="${q.id}">\ud83d\uddbc Add from gallery</button></div>
+    ${q.type==='mcq' ? `<div class="field"><label>Options (tick the correct one)</label>${(q.options||[]).map((o,k)=>`<div class="ex-row" style="margin-bottom:6px; flex-wrap:nowrap;"><input type="radio" name="cor_${q.id}" data-ex-correct="${k}" ${q.correct===k?'checked':''} style="width:auto;"><input data-ex-opt="${k}" data-qf="opt" value="${E(o)}" placeholder="Option ${'ABCDEF'[k]}"></div>`).join('')}<button type="button" class="btn ghost small" data-ex="opt-add" data-q="${q.id}"${(q.options||[]).length>=6?' disabled':''}>+ Option</button></div>` : ''}
+    <div class="field" style="margin-bottom:0;"><label>${q.type==='mcq' ? 'Explanation (shown with the answer)' : 'Model answer and marking notes'}</label><textarea rows="2" data-ex-qf="answer" data-qf="answer" placeholder="${q.type==='mcq' ? 'Why this option is correct' : 'What a full-mark answer contains. Only staff see this until you allow students to see solutions.'}">${E(q.answer)}</textarea>${q.ai && q.check ? '<div class="ex-warn">The AI did not clearly say which option is correct. Pick it yourself.</div>' : ''}</div></div>`;
+}
+function paintQuestions(){
+  const box = document.getElementById('exQList'), b = EX.b; if(!box || !b) return;
+  box.innerHTML = b.questions.length ? b.questions.map((q,i)=>qEditor(q,i,b.questions.length)).join('') : '<div class="empty">No questions yet. Use one of the buttons above to add some.</div>';
+  const t = document.getElementById('exTotal'); if(t) t.textContent = `${b.questions.length} question${b.questions.length===1?'':'s'} \u00b7 ${totalMarks(b)} marks`;
+  const w = document.getElementById('exAiWarn'); if(w) w.style.display = b.questions.some(q=>q.ai) ? 'block' : 'none';
+}
+function bMsg(t, ok){ const m = document.getElementById('exBMsg'); if(m){ m.textContent = t||''; m.className = 'ex-err' + (ok?' ex-ok':''); } }
+function paintBuilder(){
+  const b = EX.b; if(!b) return go('home');
+  const a = b.audience, f = b.forms;
+  const studs = isAmb() ? (DB.students||[]).filter(s=>!ghostedStudent(s)) : myStudentsList();
+  const audOpts = isAmb()
+    ? `<option value="all"${a.mode==='all'?' selected':''}>Every student in the programme</option><option value="coords"${a.mode==='coords'?' selected':''}>Chosen coordinators\u2019 students</option><option value="select"${a.mode==='select'?' selected':''}>Chosen students</option>`
+    : `<option value="mine"${a.mode==='mine'?' selected':''}>All my students</option><option value="select"${a.mode==='select'?' selected':''}>Chosen students only</option>`;
+  const picker = a.mode==='select'
+    ? `<div class="card" style="max-height:220px; overflow:auto; margin-top:8px;">${studs.sort((x,y)=>x.name.localeCompare(y.name)).map(s=>`<label class="ex-opt${(a.studentIds||[]).includes(s.id)?' on':''}" style="margin-bottom:4px;"><input type="checkbox" data-ex-stu="${s.id}" ${(a.studentIds||[]).includes(s.id)?'checked':''}> ${E(s.name)}</label>`).join('') || '<span class="ex-note">No students yet.</span>'}</div>`
+    : a.mode==='coords'
+    ? `<div class="card" style="max-height:220px; overflow:auto; margin-top:8px;">${(DB.coordinators||[]).map(c=>`<label class="ex-opt${(a.coordIds||[]).includes(c.id)?' on':''}" style="margin-bottom:4px;"><input type="checkbox" data-ex-crd="${c.id}" ${(a.coordIds||[]).includes(c.id)?'checked':''}> ${E(c.name)}</label>`).join('')}</div>` : '';
+  html(head(b._new ? 'New exercise' : 'Edit exercise', 'Add questions any way you like, then set how students answer and when it is due.', '<button class="btn ghost small" data-ex="b-cancel">Cancel</button>') +
+    `<input type="file" id="exBCam" accept="image/*" capture="environment" hidden><input type="file" id="exBGal" accept="image/*" multiple hidden><input type="file" id="exBQImg" accept="image/*" multiple hidden>
+    <div class="card ex-sec"><h3>1. Details</h3>
+      <div class="field"><label>Title</label><input id="exTitle" value="${E(b.title)}" placeholder="e.g. Mole calculations, set 3"></div>
+      <div class="ex-two"><div class="field"><label>Topic</label><select id="exTopic"><option value="">General</option>${TOPICS.map(t=>`<option${b.topic===t?' selected':''}>${E(t)}</option>`).join('')}</select></div>
+      <div class="field"><label>Show model answers to students</label><select id="exSol"><option value="after_review"${b.solutions==='after_review'?' selected':''}>After I release their marks</option><option value="after_submit"${b.solutions==='after_submit'?' selected':''}>Right after they submit</option><option value="after_due"${b.solutions==='after_due'?' selected':''}>After the due date</option><option value="never"${b.solutions==='never'?' selected':''}>Never</option></select></div></div>
+      <div class="field" style="margin-bottom:0;"><label>Instructions for students</label><textarea id="exInstr" rows="3" data-qf="text" placeholder="e.g. Show all working. Use 3 significant figures.">${E(b.instructions)}</textarea></div></div>
+
+    <div class="card ex-sec"><h3>2. Questions</h3><p class="ex-note" style="margin:0 0 6px;" id="exTotal"></p>
+      <div class="ex-add"><button class="btn secondary small" data-ex="add-type">\u270f\ufe0f Type a question</button><button class="btn secondary small" data-ex="add-cam">\ud83d\udcf7 Take a picture</button><button class="btn secondary small" data-ex="add-gal">\ud83d\uddbc Upload from gallery</button><button class="btn teal small" data-ex="ai-toggle">\u2728 Generate with AI</button></div>
+      <div id="exAiPanel" class="ex-ai${b._ai?'':' hidden'}">${aiPanelHtml()}</div>
+      <div class="ex-warn" id="exAiWarn" style="display:none;"><b>AI drafts can contain wrong answers.</b> Read every AI question and its model answer before you publish.</div>
+      <div id="exQList"></div></div>
+
+    <div class="card ex-sec"><h3>3. How students answer</h3>
+      <label class="ex-opt${f.type?' on':''}"><input type="checkbox" data-ex-form="type" ${f.type?'checked':''}><span><b>Type the answer</b><br><span class="ex-note">A text box under each written question.</span></span></label>
+      <label class="ex-opt${f.photo?' on':''}"><input type="checkbox" data-ex-form="photo" ${f.photo?'checked':''}><span><b>Photo of written work</b><br><span class="ex-note">Take a picture with the camera or choose from the gallery.</span></span></label>
+      <label class="ex-opt${f.file?' on':''}"><input type="checkbox" data-ex-form="file" ${f.file?'checked':''}><span><b>Upload a file (PDF or Word)</b><br><span class="ex-note">Max 10 MB per file.</span></span></label></div>
+
+    <div class="card ex-sec"><h3>4. Timing</h3>
+      <div class="ex-three"><div class="field"><label>Opens (optional)</label><input type="datetime-local" id="exOpen" value="${b.opensAt ? toLocalInput(new Date(b.opensAt)) : ''}"></div>
+      <div class="field"><label>Due (optional)</label><input type="datetime-local" id="exDue" value="${b.dueAt ? toLocalInput(new Date(b.dueAt)) : ''}"></div>
+      <div class="field"><label>Timer (minutes, 0 = no timer)</label><input type="number" min="0" max="600" id="exTimer" value="${b.timerMin||0}"></div></div>
+      <label class="ex-opt${b.allowLate?' on':''}" style="margin:0;"><input type="checkbox" id="exLate" ${b.allowLate?'checked':''}><span><b>Accept late work</b><br><span class="ex-note">After the due date, work is still accepted but marked <i>late</i>. With this off, the exercise closes at the due date.</span></span></label>
+      <p class="ex-note" style="margin:8px 0 0;">The timer starts when a student presses Start. When it ends their work is submitted automatically.</p></div>
+
+    <div class="card ex-sec"><h3>5. Who gets it</h3>
+      <select id="exAud">${audOpts}</select>${picker}</div>
+
+    <div class="card"><label class="ex-opt" style="margin-bottom:10px; ${b.questions.some(q=>q.ai)?'':'display:none;'}" id="exAiAckBox"><input type="checkbox" id="exAiAck" ${b.aiChecked?'checked':''}><span>I have read the AI-drafted questions and checked every model answer.</span></label>
+      <div class="ex-err" id="exBMsg"></div>
+      <div class="ex-row"><button class="btn amber" data-ex="b-publish">${b.status==='published' || b.status==='closed' ? 'Save changes' : 'Publish to students'}</button><button class="btn secondary" data-ex="b-draft">Save as draft</button></div>
+      ${b.status==='draft' || b._new ? '' : '<p class="ex-note" style="margin:8px 0 0;">Editing questions after students have submitted does not change marks already given.</p>'}</div>`);
+  paintQuestions();
+  const ack = document.getElementById('exAiAckBox'); if(ack) ack.style.display = b.questions.some(q=>q.ai) ? 'flex' : 'none';
+}
+function myStudentsList(){ return (DB.students||[]).filter(s=>s.coordinatorId===ME.id && !ghostedStudent(s)); }
+function aiPanelHtml(){
+  return `<b>Draft questions with AI</b><p class="ex-note" style="margin:2px 0 10px;">Tick topics, choose how many and what kind. Questions arrive with model answers for you to check.</p>
+    <div class="ex-chips" style="margin-bottom:10px;">${TOPICS.map(t=>`<label class="ex-chip" style="display:inline-flex; align-items:center; gap:6px; text-transform:none; letter-spacing:0; margin:0;"><input type="checkbox" data-ex-aitopic value="${E(t)}" style="width:auto;"> ${E(t)}</label>`).join('')}</div>
+    <div class="ex-three"><div class="field"><label>How many (max 20)</label><input type="number" id="exAiN" min="1" max="20" value="6"></div>
+      <div class="field"><label>Kind</label><select id="exAiKind"><option value="mixed">Mixed</option><option value="mcq">Multiple choice only</option><option value="written">Short written only</option><option value="calc">Calculations only</option></select></div>
+      <div class="field"><label>Difficulty</label><select id="exAiDiff"><option>Foundation</option><option selected>Intermediate</option><option>Olympiad</option><option value="Progressive">Progressive (easy to hard)</option></select></div></div>
+    <div class="field"><label>Level</label><select id="exAiLevel"><option value="Junior">Junior (10th grade and below)</option><option value="Youth" selected>Youth (11th-13th grade)</option><option value="Senior">Senior (university)</option><option value="Mixed">Mixed</option></select></div>
+    <div class="field"><label>Anything specific? (optional)</label><textarea id="exAiNote" rows="2" data-qf="text" placeholder="e.g. limiting reagent, real-life word problems"></textarea></div>
+    <div class="ex-row"><button class="btn teal small" data-ex="ai-go" id="exAiGo">Generate</button><span class="ex-note" id="exAiMsg"></span></div>`;
+}
+function syncBuilderFields(){
+  const b = EX.b, g = (id)=>document.getElementById(id); if(!b || !g('exTitle')) return;
+  b.title = g('exTitle').value.trim(); b.topic = g('exTopic').value; b.instructions = g('exInstr').value.trim(); b.solutions = g('exSol').value;
+  const o = g('exOpen').value, d = g('exDue').value;
+  b.opensAt = o ? Date.parse(o) : 0; b.dueAt = d ? Date.parse(d) : 0; b.timerMin = Math.max(0, Math.min(600, parseInt(g('exTimer').value,10)||0)); b.allowLate = g('exLate').checked;
+  const ack = g('exAiAck'); if(ack) b.aiChecked = ack.checked;
+}
+function validate(b){
+  if(!b.title) return 'Give the exercise a title.';
+  if(!b.questions.length) return 'Add at least one question.';
+  for(let i=0;i<b.questions.length;i++){
+    const q = b.questions[i], n = i+1;
+    if(!q.text.trim() && !(q.imgs||[]).length) return `Question ${n} is empty. Type it or add a picture.`;
+    if(q.type==='mcq'){ const opts = (q.options||[]).filter(o=>String(o).trim()); if(opts.length<2) return `Question ${n} needs at least two options.`; if(!String((q.options||[])[q.correct]||'').trim()) return `Question ${n}: choose which option is correct.`; }
+  }
+  if(!allMcq(b) && !b.forms.type && !b.forms.photo && !b.forms.file) return 'Turn on at least one way for students to answer.';
+  if(b.opensAt && b.dueAt && b.dueAt <= b.opensAt) return 'The due date must be after the opening time.';
+  if(b.audience.mode==='select' && !(b.audience.studentIds||[]).length) return 'Choose at least one student, or pick a wider audience.';
+  if(b.audience.mode==='coords' && !(b.audience.coordIds||[]).length) return 'Choose at least one coordinator.';
+  if(b.questions.some(q=>q.ai) && !b.aiChecked) return 'Tick the box to confirm you checked the AI-drafted answers.';
+  return '';
+}
+async function saveBuilder(publish){
+  syncBuilderFields();
+  const b = EX.b, wasPublished = b.status==='published' || b.status==='closed';
+  if(publish){ const err = validate(b); if(err) return bMsg(err); }
+  else if(!b.title) return bMsg('Give the exercise a title first.');
+  b.questions.forEach(q=>{ if(q.type==='mcq') q.options = (q.options||[]).map(o=>String(o).trim()); });
+  const item = JSON.parse(JSON.stringify(b)); delete item._new; delete item._ai;
+  const firstPublish = publish && item.status==='draft';
+  if(publish && item.status==='draft') item.status = 'published';
+  bMsg('Saving\u2026', true);
+  const ok = await saveItem(item);
+  if(!ok) return bMsg('Could not save. Check your connection and try again.');
+  if(firstPublish){
+    const ids = audienceStudents(item).map(s=>s.id);
+    notify(`New exercise: ${item.title}`, `${item.dueAt ? 'Due '+T(item.dueAt)+'. ' : ''}${item.timerMin ? 'Timed: '+item.timerMin+' minutes. ' : ''}Open Exercises in your portal.`, ids, item.id);
+  }
+  EX.b = null; EX.id = item.id; await loadSubs([item]); go('detail', item.id);
+}
+async function runAi(){
+  const b = EX.b, g = (id)=>document.getElementById(id), msg = g('exAiMsg'), btn = g('exAiGo');
+  syncBuilderFields();
+  const topics = [...document.querySelectorAll('[data-ex-aitopic]:checked')].map(x=>x.value);
+  const n = Math.max(1, Math.min(20, parseInt(g('exAiN').value,10)||6)), kind = g('exAiKind').value;
+  if(!topics.length && !b.topic && !b.title) { msg.textContent = 'Tick a topic or give the exercise a title first.'; return; }
+  const want = { mcq:0, short:0, calc:0 };
+  if(kind==='mcq') want.mcq = n; else if(kind==='written') want.short = n; else if(kind==='calc') want.calc = n;
+  else { want.mcq = Math.ceil(n*0.4); want.calc = Math.floor(n*0.3); want.short = n - want.mcq - want.calc; }
+  const batches = []; let cur = {}, c = 0;
+  Object.keys(want).forEach(k=>{ for(let i=0;i<want[k];i++){ cur[k] = (cur[k]||0)+1; if(++c===6){ batches.push(cur); cur = {}; c = 0; } } });
+  if(c) batches.push(cur);
+  const stems = b.questions.map(q=>q.text.replace(/\s+/g,' ').slice(0,38)).filter(Boolean).slice(0,12).join(' | ');
+  const userNote = g('exAiNote').value.trim();
+  const base = 'These are practice exercises for students preparing for the International Chemistry Competition. Give each question a single, checkable answer and double-check every answer before writing it. Use proper chemistry symbols. ';
+  btn.disabled = true; let finished = 0, added = 0, firstErr = null; const t0 = Date.now();
+  const iv = setInterval(()=>{ msg.textContent = `Writing ${n} question${n===1?'':'s'}\u2026 ${finished} of ${batches.length} parts done (${Math.round((Date.now()-t0)/1000)}s)`; }, 1000);
+  const hadExb = (typeof EXB !== 'undefined') && EXB;
+  if(!hadExb){ try{ EXB = { sec:{ ...EXAM_TYPE_SEC } }; }catch(e){} }
+  const FATAL = ['quota','offline','not_configured','rate_limited','forbidden','not_member'];
+  let fatal = false;
+  const one = async (mix, idx)=>{
+    const marks = Object.keys(mix).reduce((m,k)=>m + mix[k]*EXAM_TYPE_MARKS[k], 0), cnt = Object.values(mix).reduce((x,y)=>x+y,0);
+    const note = (batches.length>1 ? `Part ${idx+1} of ${batches.length}: cover a different sub-area from the other parts. ` : '') + (stems ? `Do not repeat these: ${stems}. ` : '');
+    const spec = { title:b.title || (topics[0]||b.topic||'Chemistry exercise'), subject:b.topic||'', topics: topics.length ? topics : (b.topic ? [b.topic] : []), level:g('exAiLevel').value, difficulty:g('exAiDiff').value, mix, totalMarks:marks, timeLimitMin:Math.max(5, Math.round(cnt*1.5)), instructions:(base + userNote + ' ' + note).slice(0,1490), dataSheet:false, previous:'', refine:'' };
+    const waits = [3000, 7000];
+    for(let k=0;;k++){
+      try{
+        const data = await Promise.race([examAi('draft', { spec }), new Promise((_,rej)=>setTimeout(()=>rej(new Error('unavailable')), 110000))]);
+        const parsed = exbFromDraft(data).questions;
+        if(!parsed.length) throw new Error('unavailable');
+        return parsed;
+      }catch(e){
+        if(e && FATAL.includes(e.message)){ fatal = true; throw e; }
+        if(!e || e.message!=='unavailable' || k>=waits.length) throw e;
+        await new Promise(r=>setTimeout(r, waits[k]));
+      }
+    }
+  };
+  try{
+    let next = 0;
+    const worker = async (w)=>{
+      if(w) await new Promise(r=>setTimeout(r, 600*w));
+      while(next < batches.length && !fatal){
+        const i = next++;
+        try{
+          const qs = await one(batches[i], i);
+          qs.forEach(p=>{
+            const type = p.type==='mcq' ? 'mcq' : (p.type==='calc' ? 'calc' : 'written');
+            b.questions.push(newQ(type, { text:p.text, options: type==='mcq' ? p.options : undefined, correct: p.correct||0, marks:p.marks || DEFAULT_MARKS[type], answer:p.answer||'', scheme:p.scheme||'', ai:true, check:!!p.check }));
+            added++;
+          });
+          b.aiChecked = false; paintQuestions();
+        }catch(e){ console.error('exercise AI part failed', e); if(!firstErr) firstErr = e; }
+        finished++;
+      }
+    };
+    await Promise.all(Array.from({ length:Math.min(3, batches.length) }, (_,w)=>worker(w)));
+  } finally {
+    clearInterval(iv); btn.disabled = false;
+    if(!hadExb){ try{ EXB = null; }catch(e){} }
+  }
+  const ack = g('exAiAckBox'); if(ack) ack.style.display = b.questions.some(q=>q.ai) ? 'flex' : 'none'; const ak = g('exAiAck'); if(ak) ak.checked = false;
+  const errText = firstErr && typeof exbErrText==='function' ? exbErrText(firstErr) : (firstErr ? 'The AI did not answer.' : '');
+  msg.textContent = added >= n ? `\u2713 Added ${added} question${added===1?'':'s'}. Check each answer below.` : (added ? `Added ${added} of ${n}. ${errText}` : `Nothing was generated. ${errText}`);
+}
+
+// ======================================================================
+// EVENTS
+// ======================================================================
+function qFind(qid){ return EX.b && EX.b.questions.find(q=>q.id===qid); }
+async function builderUpload(files, mode, qid){
+  const b = EX.b; if(!files.length) return;
+  const folder = `exercise/${clean(b.id)}/q`;
+  bMsg('Uploading ' + files.length + ' picture' + (files.length===1?'':'s') + '\u2026', true);
+  const recs = [];
+  for(const f of files){ try{ recs.push(await uploadOne(f, folder)); }catch(e){ console.error(e); bMsg(typeof friendlyUploadError==='function' ? friendlyUploadError(e) : (e.message||'Upload failed')); return; } }
+  if(mode==='attach'){ const q = qFind(qid); if(q) q.imgs = (q.imgs||[]).concat(recs.map(r=>r.u)); }
+  else if(mode==='single' || files.length===1){ recs.forEach(r=>b.questions.push(newQ('written', { imgs:[r.u] }))); }
+  else if(mode==='many'){
+    if(confirm(`Make ${recs.length} separate questions, one per picture?\n\nOK = one question per picture\nCancel = all ${recs.length} pictures in one question`)) recs.forEach(r=>b.questions.push(newQ('written', { imgs:[r.u] })));
+    else b.questions.push(newQ('written', { imgs:recs.map(r=>r.u) }));
+  }
+  bMsg(''); paintQuestions();
+  const ack = document.getElementById('exAiAckBox'); if(ack) ack.style.display = b.questions.some(q=>q.ai) ? 'flex' : 'none';
+}
+async function onChange(ev){
+  const t = ev.target, R = EX.run, b = EX.b;
+  if(t.id==='exFileCam' || t.id==='exFileGal' || t.id==='exFileDoc'){ const files = Array.from(t.files||[]); t.value = ''; return addFiles(EX.att, files, t.id==='exFileDoc'); }
+  if(t.id==='exBCam'){ const f = Array.from(t.files||[]); t.value = ''; return builderUpload(f, 'single'); }
+  if(t.id==='exBGal'){ const f = Array.from(t.files||[]); t.value = ''; return builderUpload(f, 'many'); }
+  if(t.id==='exBQImg'){ const f = Array.from(t.files||[]); t.value = ''; return builderUpload(f, 'attach', EX.att); }
+  if(t.dataset.exChoice && R){ const a = (R.sub.answers[t.dataset.exChoice] = R.sub.answers[t.dataset.exChoice] || {}); a.choice = parseInt(t.value,10); t.closest('.ex-q').querySelectorAll('.ex-opt').forEach(l=>l.classList.toggle('on', l.contains(t))); return queueSave(); }
+  if(!b) return;
+  if(t.dataset.exForm){ b.forms[t.dataset.exForm] = t.checked; t.closest('.ex-opt').classList.toggle('on', t.checked); return; }
+  if(t.id==='exAud'){ syncBuilderFields(); b.audience.mode = t.value; return paintBuilder(); }
+  if(t.id==='exLate'){ t.closest('.ex-opt').classList.toggle('on', t.checked); return; }
+  if(t.dataset.exStu){ const s = new Set(b.audience.studentIds||[]); t.checked ? s.add(t.dataset.exStu) : s.delete(t.dataset.exStu); b.audience.studentIds = [...s]; return t.closest('.ex-opt').classList.toggle('on', t.checked); }
+  if(t.dataset.exCrd){ const s = new Set(b.audience.coordIds||[]); t.checked ? s.add(t.dataset.exCrd) : s.delete(t.dataset.exCrd); b.audience.coordIds = [...s]; return t.closest('.ex-opt').classList.toggle('on', t.checked); }
+  const qel = t.closest('[data-qid]');
+  if(qel && t.dataset.exQf==='type'){ const q = qFind(qel.dataset.qid); q.type = t.value; if(q.type==='mcq' && !q.options) q.options = ['','','','']; if(q.marks===DEFAULT_MARKS.written || q.marks===DEFAULT_MARKS.calc || q.marks===DEFAULT_MARKS.mcq) q.marks = DEFAULT_MARKS[q.type]; return paintQuestions(); }
+  if(qel && t.dataset.exCorrect!==undefined){ qFind(qel.dataset.qid).correct = parseInt(t.dataset.exCorrect,10); }
+}
+function onInput(ev){
+  const t = ev.target, R = EX.run, qel = t.closest && t.closest('[data-qid]');
+  if(t.dataset.exAns && R){ const a = (R.sub.answers[t.dataset.exAns] = R.sub.answers[t.dataset.exAns] || {}); a.text = t.value; return queueSave(); }
+  if(t.dataset.exMark || t.dataset.exCmt){ const sc = document.getElementById('exLiveScore'); if(sc && EX.rev){ readReview(); const s = score(find(EX.rev.exId), EX.rev.sub); sc.textContent = `${s.got}/${s.max}`; } return; }
+  if(!qel || !EX.b) return;
+  const q = qFind(qel.dataset.qid); if(!q) return;
+  if(t.dataset.exQf==='text') q.text = t.value; else if(t.dataset.exQf==='answer') q.answer = t.value; else if(t.dataset.exQf==='marks'){ q.marks = parseFloat(t.value)||0; const tt = document.getElementById('exTotal'); if(tt) tt.textContent = `${EX.b.questions.length} question${EX.b.questions.length===1?'':'s'} \u00b7 ${totalMarks(EX.b)} marks`; }
+  else if(t.dataset.exOpt!==undefined) q.options[parseInt(t.dataset.exOpt,10)] = t.value;
+}
+async function onClick(ev){
+  const z = ev.target.closest('[data-ex-zoom]');
+  if(z && !ev.target.closest('[data-ex-del]')) return zoom(z.dataset.exZoom);
+  const del = ev.target.closest('[data-ex-del]');
+  if(del){
+    ev.stopPropagation(); const p = del.dataset.exDel.split(':');
+    if(p[0]==='q'){ const q = qFind(p[1]); if(q){ q.imgs.splice(parseInt(p[2],10),1); paintQuestions(); } }
+    else if(EX.run){
+      const sub = EX.run.sub;
+      if(p[0]==='w'){ sub.work.splice(parseInt(p[1],10),1); const bx = document.getElementById('exA___work'); if(bx) bx.innerHTML = attachHtml(sub.work,'w'); }
+      else if(p[0]==='a'){ const a = sub.answers[p[1]]; if(a && a.files){ a.files.splice(parseInt(p[2],10),1); const bx = document.getElementById('exA_'+p[1]); if(bx) bx.innerHTML = attachHtml(a.files,'a:'+p[1]); } }
+      queueSave();
+    }
+    return;
+  }
+  const el = ev.target.closest('[data-ex]'); if(!el) return;
+  const act = el.dataset.ex, id = el.dataset.id, q = el.dataset.q;
+  const click = (sel)=>{ const i = document.getElementById(sel); if(i) i.click(); };
+  switch(act){
+    case 'home': return go('home');
+    case 'refresh': return window.exMount();
+    case 'filter': EX.filter = id; return paintHome();
+    case 'new': return startBuilder(null);
+    case 'edit': return startBuilder(find(id));
+    case 'detail': return go('detail', id);
+    case 'open': return openStudent(id);
+    case 'preview': return go('preview', id);
+    case 'review': return openReview(id, el.dataset.sid);
+    case 'csv': return exportCsv(find(id));
+    case 'dup': { const src = find(id), c = JSON.parse(JSON.stringify(src)); c.id = uid(); c.title = src.title + ' (copy)'; c.status = 'draft'; c.ownerId = ME.id; c.ownerName = ME.name; c.ownerRole = ME.role; c.createdAt = Date.now(); c.aiChecked = !!c.aiChecked; await saveItem(c); return go('home'); }
+    case 'toggle': { const it = find(id), c = JSON.parse(JSON.stringify(it)); if(it.status==='draft') return startBuilder(it); c.status = it.status==='closed' ? 'published' : 'closed'; if(c.status==='published' && c.dueAt && c.dueAt < Date.now()) c.allowLate = true; await saveItem(c); return paintDetail(); }
+    case 'delete': {
+      if(!confirm('Delete this exercise and every submission to it? This cannot be undone.')) return;
+      const it = find(id), keys = staffStudents(it).map(s=>subKey(it.id, s.id));
+      const next = (EX.list||[]).filter(x=>x.id!==id); await sSet(KEY_LIST, next, true); EX.list = next;
+      try{ for(let i=0;i<keys.length;i+=100) await sb.from('ichc_kv').delete().in('key', keys.slice(i,i+100)); }catch(e){}
+      return go('home');
+    }
+    // builder
+    case 'b-cancel': if(confirm('Leave without saving?')){ EX.b = null; return go('home'); } return;
+    case 'b-draft': return saveBuilder(false);
+    case 'b-publish': return saveBuilder(true);
+    case 'add-type': syncBuilderFields(); EX.b.questions.push(newQ('written')); paintQuestions(); { const l = root().querySelectorAll('#exQList [data-ex-qf="text"]'); if(l.length) l[l.length-1].focus(); } return;
+    case 'add-cam': return click('exBCam');
+    case 'add-gal': return click('exBGal');
+    case 'ai-toggle': EX.b._ai = !EX.b._ai; { const p = document.getElementById('exAiPanel'); if(p) p.classList.toggle('hidden', !EX.b._ai); } return;
+    case 'ai-go': return runAi();
+    case 'q-cam': EX.att = q; { const i = document.getElementById('exBQImg'); i.setAttribute('capture','environment'); i.click(); } return;
+    case 'q-gal': EX.att = q; { const i = document.getElementById('exBQImg'); i.removeAttribute('capture'); i.click(); } return;
+    case 'q-del': if(confirm('Remove this question?')){ EX.b.questions = EX.b.questions.filter(x=>x.id!==q); paintQuestions(); } return;
+    case 'q-up': case 'q-down': { const a = EX.b.questions, i = a.findIndex(x=>x.id===q), j = act==='q-up' ? i-1 : i+1; if(j<0 || j>=a.length) return; [a[i],a[j]] = [a[j],a[i]]; return paintQuestions(); }
+    case 'opt-add': { const x = qFind(q); x.options.push(''); return paintQuestions(); }
+    // student
+    case 'begin': return beginRun();
+    case 'cam': EX.att = q; { const i = document.getElementById('exFileCam'); if(i) i.click(); } return;
+    case 'gal': EX.att = q; { const i = document.getElementById('exFileGal'); if(i) i.click(); } return;
+    case 'doc': EX.att = q; { const i = document.getElementById('exFileDoc'); if(i) i.click(); } return;
+    case 'savenow': { clearTimeout(EX.save); saveState('Saving\u2026'); const ok = await saveSub(EX.run.sub); if(!ok) return alert('Could not save. Check your connection.'); return go('home'); }
+    case 'submit': return submitRun(false);
+    case 'redo': EX.run.sub = mySub(find(EX.run.exId)) || EX.run.sub; EX.run.view = 'work'; return paintRun();
+    // review
+    case 'rev-save': return persistReview('save');
+    case 'rev-release': return persistReview('release');
+    case 'rev-return': return persistReview('return');
+    case 'rev-amb': {
+      readReview(); const sub = EX.rev.sub, n = document.getElementById('exAmbNote');
+      sub.amb = { by:ME.name, byId:ME.id, at:Date.now(), note:(n ? n.value.trim() : '') };
+      const ok = await saveSub(sub); const m = document.getElementById('exRevMsg'); if(m){ m.className = 'ex-err ' + (ok?'ex-ok':''); m.textContent = ok ? 'Your review is saved.' : 'Could not save.'; }
+      return;
+    }
+  }
+}
+})();
+</script>
+
 </body>
 </html>
