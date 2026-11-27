@@ -855,6 +855,8 @@
   @keyframes rmPop{0%{opacity:0; transform:scale(.7);}70%{transform:scale(1.06);}100%{opacity:1; transform:scale(1);}}
   .rm-sched{margin:0 0 20px;} .rm-sched-row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid #EFEBFF;}
   .rm-sched-row .nm{flex:1 1 220px; font-size:14px; font-weight:600;} .rm-sched-row input[type=date]{width:auto;}
+  .rm-help{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:var(--mint); border:2px solid rgba(10,132,96,.25); border-radius:14px; padding:10px 14px; margin:0 0 16px; font-size:14px;}
+  .rm-about{display:grid; gap:14px;} .rm-about .card h3{margin:0 0 6px; font-size:16px;} .rm-about .card p{margin:0; line-height:1.65;} .rm-about .card ul{margin:6px 0 0 18px; padding:0; line-height:1.7;} .rm-about .rm-note{margin:0;}
   .rm-stats{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px;} .rm-stats .stat{min-width:150px;}
   .rm-prog{display:flex; gap:14px; align-items:center; flex-wrap:wrap;} .rm-prog-name{flex:1 1 160px;} .rm-prog-bar{flex:2 1 240px;}
   .item-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
@@ -2402,7 +2404,7 @@ function pollsStudentView(){
           <div>${p.options.map((o,i)=>`<label class="quiz-opt"><input type="radio" name="pollvote-${p.id}" value="${i}" style="width:auto;">${escapeHtml(chemify(o))}</label>`).join('')}</div>
           <button class="btn amber small" data-vote-poll="${p.id}" style="margin-top:6px;">Submit vote</button>`}
       </div>`;
-    }).join('') : `<div class="empty">No polls yet — your coordinator hasn't posted one.</div>`}
+    }).join('') : `<div class="empty">No polls for now. Check back soon.</div>`}
   </div>`;
 }
 
@@ -2471,7 +2473,7 @@ function quizzesStudentView(){
              <div class="item-actions"><button class="btn ghost small" data-retake-quiz="${qz.id}">Try again</button></div>`
           : `<div class="item-actions"><button class="btn amber small" data-submit-quiz="${qz.id}">Submit answer</button></div>`}
       </div>`;
-    }).join('') : `<div class="empty">No quiz questions yet — your coordinator hasn't posted one.</div>`}
+    }).join('') : `<div class="empty">No quizzes for now. Check back soon.</div>`}
   </div>`;
 }
 
@@ -2519,7 +2521,7 @@ function practiceQuestionSection(role){
       <div class="badge stud" style="margin-bottom:10px;">This week</div>
       <div style="font-size:16px; line-height:1.6;">${escapeHtml(chemify(latest.question))}</div>
       ${latest.answer ? `<details style="margin-top:12px;"><summary style="cursor:pointer; color:var(--amber-deep); font-weight:600;">Reveal hint</summary><p style="margin-top:8px; color:var(--muted);">${escapeHtml(chemify(latest.answer))}</p></details>` : ''}
-    </div>` : `<div class="empty">No practice question yet — your coordinator will post one soon.</div>`}
+    </div>` : `<div class="empty">No weekly question for now. Check back soon.</div>`}
   ${mine.length>1 ? `<h3 style="font-size:15px; margin:20px 0 10px;">Past questions</h3><div class="list">${mine.slice(1).map(p=>`
     <div class="item"><div class="item-meta">${fmtDate(p.date)}</div><div class="item-body">${linkify(chemify(p.question))}</div></div>`).join('')}</div>` : ''}`;
 }
@@ -9206,7 +9208,7 @@ function studentExamsBlock(){
       ${past}${resBlock}
       <div class="item-actions">${action}</div>${rtHtml}
     </div>`;
-  }).join('') : `<div class="empty">No exams posted yet. Your coordinator will post one when it's time.</div>`}
+  }).join('') : `<div class="empty">No exams for now. Check back soon.</div>`}
   </div>`;
 }
 function examListSchedule(){
@@ -11683,6 +11685,71 @@ const RM_TOPICS = [
   ['organic','Organic Reactivity and Research Prep'],['stereo','Stereochemistry and Aromaticity'],['spectro','Spectroscopy and Coordination Chemistry']
 ];
 const RM_HUES = ['#5B3DF5','#E5484D','#0A8460','#B45309','#0369A1','#C2185B','#6D28D9','#0F766E','#C2410C','#4338CA'];
+
+// ---------- Course explanations: shown in the About tab of every course (roadmap section) ----------
+// Each course has: about (what it is), covers (what you will study), student (extra requirements for students) and coord (what is expected of coordinators).
+const RM_COURSE_INFO = {
+  quant:{
+    about:'The foundation of almost every competition problem: turning chemical statements into numbers. You will work from moles, molar mass and balanced equations to limiting reagents, percentage yield, solution concentration and gas calculations, and learn to set out a calculation so that every step can be checked.',
+    covers:['Moles, molar mass and the Avogadro constant (Nₐ = 6.022 × 10²³ mol⁻¹)','Balancing equations and using stoichiometric ratios','Limiting reagent, theoretical yield and percentage yield','Concentration, dilution and titration calculations (c = n/V)','The ideal gas law (pV = nRT) and gas mixtures','Significant figures, units and sensible rounding'],
+    student:['Be comfortable with unit conversions and basic algebra before you start.','Write the unit on every line of your working. A correct number with the wrong unit loses marks in competitions.','Check each answer for a sensible size (a yield above 100 % means something went wrong).'],
+    coord:['Build the coordinator set so it climbs from single-step mole conversions to multi-step limiting reagent and titration problems.','Check that every numerical question states its units and how many significant figures are expected.','If a student keeps losing marks on units, walk them through one fully worked example by call or voice note.']
+  },
+  bonding:{
+    about:'How atoms hold together and why molecules take the shapes they do. You will move from electron configurations and periodic trends to Lewis structures, VSEPR geometry, hybridisation, simple molecular orbital ideas and intermolecular forces, and use them to explain and predict physical and chemical properties.',
+    covers:['Electron configurations and periodic trends (ionisation energy, electronegativity, atomic radius)','Lewis structures, formal charge and resonance','VSEPR shapes and bond angles','Hybridisation (sp, sp², sp³) and σ and π bonding','Molecular polarity and intermolecular forces','Simple molecular orbital diagrams and bond order'],
+    student:['Draw the structure for every question before you answer it.','Learn to justify each answer in one sentence using the right idea, for example why the H–O–H angle in H₂O is smaller than 109.5°.','Keep a one-page table of trends and refer back to it as you practise.'],
+    coord:['Include questions that ask students to explain and compare, not only to name a shape.','Encourage hand-drawn structures and ask to see some in your sessions.','Watch for common slips, such as ignoring lone pairs when predicting shape or confusing polar bonds with polar molecules.']
+  },
+  thermo:{
+    about:'The energy side of chemistry: how heat flows, why reactions go, and how far they go. You will use enthalpy, entropy and Gibbs energy to predict whether a process is spontaneous, and link thermodynamics to equilibrium.',
+    covers:['The first law: heat, work and internal energy','Enthalpy changes, Hess’s law and bond enthalpies','Calorimetry (q = mcΔT)','Entropy (ΔS) and the second law','Gibbs energy (ΔG = ΔH − TΔS) and spontaneity','The link between ΔG° and K (ΔG° = −RT ln K)'],
+    student:['Keep sign conventions straight (an exothermic reaction has ΔH < 0).','Convert between J and kJ, and between °C and K, every time.','Check whether a value is per mole of reaction or per mole of a substance before you use it.'],
+    coord:['Make sure every question states its sign convention and standard conditions.','Include some problems that combine ΔH and ΔS to find the temperature at which a reaction becomes spontaneous.','Check that data used in questions is consistent, and that units (J or kJ) are clear.']
+  },
+  equil:{
+    about:'What happens when reactions run in both directions. You will write equilibrium expressions, use ICE tables, predict shifts with Le Chatelier’s principle, and connect Kc, Kp and the reaction quotient Q to the direction and extent of a reaction.',
+    covers:['Reversible reactions and the equilibrium constant (Kc and Kp)','The reaction quotient Q compared with K','ICE tables and the small-x approximation','Le Chatelier’s principle: concentration, pressure and temperature','Converting between Kp and Kc (Kp = Kc(RT)^Δn)','Heterogeneous equilibria and solving quadratic equations'],
+    student:['Set up an ICE table for every problem, even when you think you can skip it.','Know when the approximation x ≪ initial concentration is safe, and always check it afterwards.','Remember that pure solids and liquids do not appear in an equilibrium expression.'],
+    coord:['Make sure each question says which constant is being used and at what temperature.','Include problems where the small-x approximation fails, so students learn to check it.','Check that the section label on each question and exam is Equilibrium, so students find it in the right place.']
+  },
+  acidbase:{
+    about:'Proton transfer and dissolving, treated quantitatively. You will calculate pH, work with weak acids and bases, buffers and titration curves, and use the solubility product Kₛₚ to predict whether a solid will dissolve or precipitate.',
+    covers:['pH = −log[H⁺], Kw and pOH','Strong and weak acids and bases (Ka, Kb and Ka × Kb = Kw)','Buffers and the Henderson–Hasselbalch equation','Titration curves, equivalence points and indicators','The solubility product Kₛₚ and the common-ion effect','Precipitation and selective precipitation'],
+    student:['Decide first whether the species is strong or weak, then choose your method.','Check that your pH is on the right side of 7 for the kind of solution you have.','Write the dissolution equation before every Kₛₚ problem.'],
+    coord:['Provide a balanced mix of strong, weak, buffer and Kₛₚ problems.','Check that Ka and pKa values quoted in questions are consistent with each other.','Encourage students to sketch titration curves and mark the equivalence point and buffer region.']
+  },
+  kinetics:{
+    about:'How fast reactions go, and how to read a real scientific paper. You will find rate laws and mechanisms from data, use the Arrhenius equation, and begin the research-paper preparation the competition rewards: reading, summarising and presenting findings clearly.',
+    covers:['Rate laws, rate = k[A]ᵐ[B]ⁿ, and orders from initial rates','Integrated rate laws and half-life','The Arrhenius equation (k = Ae^(−Eₐ/RT)) and activation energy','Reaction mechanisms, the rate-determining step and catalysis','Reading a research paper: abstract, methods, results, conclusion','Summarising a paper and presenting its main finding'],
+    student:['Take one short paper (or one section of a paper) and write a short summary of it in your own words, then share it with your coordinator.','Plot ln k against 1/T to find the activation energy instead of using only two points.','Use the notes and resources in this course for paper preparation.'],
+    coord:['Read at least one paper summary from each student and give written feedback.','Share a short, open-access paper students can start with.','Check that rate-law problems give enough data to be solved.']
+  },
+  electro:{
+    about:'Chemistry driven by electrons. You will balance redox reactions, build and analyse galvanic cells, use standard electrode potentials and the Nernst equation, and apply Faraday’s laws to electrolysis.',
+    covers:['Oxidation numbers and balancing redox equations in acid and base','Galvanic cells, cell notation and E°cell','Linking E°, ΔG° and K (ΔG° = −nFE°)','The Nernst equation (E = E° − (RT/nF) ln Q)','Electrolysis and Faraday’s laws (Q = It)','Batteries, corrosion and concentration cells'],
+    student:['Always identify the oxidation and reduction half-reactions first.','Keep track of the number of electrons, n, when you combine half-reactions.','Do not multiply E° by the stoichiometric coefficients; potentials are intensive.'],
+    coord:['Include questions on both galvanic and electrolytic cells so students stop mixing them up.','Check that all potentials in a question come from one consistent table.','Make sure electrolysis questions state the current, the time and any efficiency.']
+  },
+  organic:{
+    about:'How organic molecules react, and why. You will learn to read and draw curved-arrow mechanisms, rank nucleophiles, electrophiles and leaving groups, and predict the outcome of substitution, elimination and addition, while continuing your research preparation.',
+    covers:['Functional groups and nomenclature','Curved-arrow mechanisms and electron flow','Nucleophiles, electrophiles and leaving groups','SN1, SN2, E1 and E2, and what decides between them','Carbonyl chemistry: addition and substitution','Research prep: explaining a mechanism clearly in writing'],
+    student:['Draw every mechanism step by step, with each curved arrow starting from a lone pair or a bond.','Practise explaining why one pathway wins, not only what the product is.','Use the mechanism notes under Learn and keep a page of the reactions you meet.'],
+    coord:['Check that mechanism questions show intermediates, charges and arrows correctly.','Share at least one worked mechanism for each reaction type.','Ask students to send you hand-drawn mechanisms and give feedback on them.']
+  },
+  stereo:{
+    about:'The three-dimensional and electronic character of organic molecules. You will assign R/S and E/Z configurations, recognise enantiomers, diastereomers and meso compounds, analyse conformations, and use Hückel’s rule to decide what is aromatic.',
+    covers:['Chirality and R/S assignment (CIP priority rules)','Enantiomers, diastereomers and meso compounds','E/Z isomerism','Conformations: Newman projections and chair cyclohexane','Aromaticity and Hückel’s rule (4n + 2 π electrons)','Electrophilic aromatic substitution and directing effects'],
+    student:['Build or sketch models; practise rotating a structure in your head.','Write the priority order next to every stereocentre before assigning R or S.','Count the π electrons carefully before you call a ring aromatic.'],
+    coord:['Encourage the use of models (kits or household items) in sessions.','Check that the structures in questions are clear and unambiguous.','Include questions that connect stereochemistry to the outcome of a reaction.']
+  },
+  spectro:{
+    about:'Identifying molecules and understanding metal complexes. You will interpret IR, ¹H NMR, ¹³C NMR and mass spectra to deduce structures, then study ligands, coordination numbers, crystal field theory, colour and isomerism in transition metal complexes.',
+    covers:['IR: the key functional group absorptions','¹H NMR: chemical shift, integration and splitting (the n + 1 rule)','¹³C NMR and the basics of mass spectrometry','Combining data to deduce a structure','Ligands, coordination number and naming complexes','Crystal field theory, d-orbital splitting, colour and magnetism'],
+    student:['Work through data in order: molecular formula, degrees of unsaturation, IR, then NMR.','Write down every clue before you propose a structure.','Memorise a short table of typical IR bands and NMR shifts.'],
+    coord:['Give complete data sets (IR, NMR and mass spectrum) in your problems.','Check that the data in each question really fits the structure given as the answer.','Use this last course to run a revision call and to get students ready for the final mock competition.']
+  }
+};
 const rmTopicOf = (it)=> (it && it.topic && RM_TOPICS.some(t=>t[0]===it.topic)) ? it.topic : '';
 const RM_WORDS = { quant:/\bstoichiometr|\bmoles?\b|quantitative/i, bonding:/\bbonding|\bstructure\b/i, thermo:/thermo|enthalp|entropy/i, equil:/equilibri/i, acidbase:/\bacids?\b|\bbases?\b|\bph\b|solubil|buffer/i, kinetics:/kinetic|\brates?\b|research paper/i, electro:/electro|\bredox\b/i, organic:/\borganic\b|mechanism|nucleophil/i, stereo:/stereo|chiral|aromatic/i, spectro:/spectro|\bnmr\b|\bir\b|coordination/i };
 // "Section 4" means the 4th roadmap section; otherwise a topic word in the title or subject decides.
@@ -11705,6 +11772,121 @@ const rmRoot = ()=> document.getElementById('rmRoot');
 const rmSec = (id)=> RM.ov && RM.ov.sections.find(s=>s.id===id);
 const rmFirst = ()=> String((ME && ME.name) || 'there').trim().split(/\s+/)[0];
 
+// ---------- Course About tab, "stuck? reach your coordinator" help, and manual early opening ----------
+const rmIsoToday = ()=> new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const rmAddDays = (iso, n)=>{ const d = new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const rmFirstName = (n)=> String(n||'').trim().split(/\s+/)[0] || '';
+
+function rmHelpHtml(full){
+  if(rmStaff()) return '';
+  const c = (DB.coordinators||[]).find(x=>x.id===myCoordinatorId());
+  const cf = rmFirstName(c && c.name);
+  const wa = (c && c.phone) ? waBtn(c.phone, 'Message '+(cf||'coordinator'), `Hello ${cf||'there'}, this is ${(ME&&ME.name)||'a student'} from Chemistry Competition Prep. I am stuck on a course and would like some help.`) : '';
+  const askBtn = '<button class="btn secondary small" type="button" data-go-tab="ask">Ask a question</button>';
+  if(!full){
+    return `<div class="rm-help"><span><b>Stuck?</b> ${c ? 'Reach out to '+escapeHtml(c.name||'your coordinator')+'. Asking early is part of learning.' : 'You will be matched with a coordinator soon. Until then, ask a question here.'}</span>${wa || askBtn}</div>`;
+  }
+  return `<div class="card"><h3>Stuck? Reach out to your coordinator</h3>
+    <p>Every student gets stuck, and that is normal. If a question, a topic or a calculation is not making sense, do not struggle alone for days. Message your coordinator, say what you have tried, and they will help you through it.${c ? '' : ' You will be matched with a coordinator soon. Until then, use Ask a question.'}</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px;">${c ? `<span><b>${escapeHtml(c.name||'')}</b>${c.phone ? ' &middot; '+escapeHtml(c.phone) : ''}</span>` : ''}${wa}${askBtn}</div></div>`;
+}
+
+function rmAboutHtml(s){
+  const staff = rmStaff(), amb = ME.role==='ambassador', ov = RM.ov || {};
+  const fallback = s.focus ? s.focus.charAt(0).toUpperCase()+s.focus.slice(1)+'.' : '';
+  const info = RM_COURSE_INFO[s.id] || { about:fallback, covers:[], student:[], coord:[] };
+  const li = (a)=> a.map(x=>`<li>${escapeHtml(x)}</li>`).join('');
+  const goal = ov.practiceGoal || 0;
+  const goalTxt = goal ? `${goal} practice question${goal===1?'':'s'}` : 'your practice questions';
+  const setTxt = s.reqTotal ? ` (${s.reqTotal} question${s.reqTotal===1?'':'s'})` : '';
+  const studentList = [
+    `Finish the coordinator set${setTxt} and solve ${goalTxt} to complete this course and earn your completion card.`,
+    'Read the notes and resources under Learn first, then practise. Short, regular sessions beat long ones done rarely.',
+    'Do your Daily 5 to keep your streak and your skills sharp.',
+    `Take the quizzes and exams posted for this course. Aim to finish by ${rmDateY(s.end)}; the course stays open afterwards.`,
+    'If a question looks wrong, press Report so your coordinator can check it.',
+    ...info.student
+  ];
+  const coordList = [
+    'Post a coordinator set for this course (the questions that count towards completion) and enough extra practice questions that students never run dry.',
+    'Review every AI-written draft before you post it: check the answer, the notation and the wording.',
+    'Add notes, slides or links under Resources so students have something to learn from.',
+    'Open the Students tab each week, see who is behind, and reach out to anyone who has gone quiet.',
+    'Check questions students have reported and fix or remove them promptly.',
+    'Reply when a student reaches out for help. If you cannot sort it out, tell the Ambassador.',
+    ...info.coord
+  ];
+  let banner = '';
+  if(!s.open) banner = `<div class="rm-note">This course opens on ${escapeHtml(rmDateY(s.start))}. You can read what it covers now; practice, notes and tests unlock on that date.</div>`;
+  else if(staff && s.state==='locked') banner = `<div class="rm-note">Not open to students yet. It opens on ${escapeHtml(rmDateY(s.start))}. Have the coordinator set and notes ready before then.</div>`;
+  const early = (RM.early||{})[s.id];
+  let ambBox = '';
+  if(amb){
+    if(s.state==='locked') ambBox = `<div class="card"><h3>Open this course early</h3><p>Let students in before ${escapeHtml(rmDateY(s.start))}. Courses open in order, so any earlier course that is still closed opens too. You can restore the set date afterwards.</p><div style="margin-top:12px;"><button class="btn amber small" type="button" data-rm-open-now="${s.id}">Open for students now</button></div></div>`;
+    else if(early) ambBox = `<div class="card"><h3>Opened early</h3><p>You opened this course ahead of its set date (${escapeHtml(rmDateY(early.orig))}).</p><div style="margin-top:12px;"><button class="btn ghost small" type="button" data-rm-restore="${s.id}">Restore set date</button></div></div>`;
+  }
+  const actions = !s.open ? '' : `<div style="display:flex; gap:10px; flex-wrap:wrap;">${staff ? '<button class="btn teal small" type="button" data-rm-tab="questions">Manage questions</button>' : '<button class="btn amber small" type="button" data-rm-tab="practice">Start practising</button><button class="btn secondary small" type="button" data-rm-tab="learn">Open notes</button>'}</div>`;
+  return `<div class="rm-about">
+    ${banner}
+    <div class="card"><h3>About this course</h3><p>${escapeHtml(info.about)}</p></div>
+    ${info.covers.length ? `<div class="card"><h3>What you will cover</h3><ul>${li(info.covers)}</ul></div>` : ''}
+    ${staff ? `<div class="card"><h3>What is expected of ${amb ? 'coordinators' : 'you as a coordinator'}</h3><ul>${li(coordList)}</ul></div>` : ''}
+    <div class="card"><h3>${staff ? 'What students must do' : 'What is required of you'}</h3><ul>${li(studentList)}</ul></div>
+    ${staff ? '<div class="card"><h3>When students are stuck</h3><p>Every course tells students to reach out to their coordinator when they are stuck, so expect messages. A quick, kind reply keeps students moving.</p></div>' : rmHelpHtml(true)}
+    ${ambBox}
+    ${actions}
+  </div>`;
+}
+
+function rmEarlyBtns(s){
+  if(s.state==='locked') return `<button class="btn amber small" type="button" data-rm-open-now="${s.id}">Open now</button>`;
+  if((RM.early||{})[s.id]) return `<button class="btn ghost small" type="button" data-rm-restore="${s.id}">Restore set date</button>`;
+  return '';
+}
+
+async function rmOpenNow(id){
+  const ov = RM.ov; if(!ov) return;
+  const secs = ov.sections.map(x=>({ id:x.id, start:x.start, end:x.end, title:x.title }));
+  const k = secs.findIndex(x=>x.id===id); if(k<0) return;
+  const today = rmIsoToday();
+  if(secs[k].start <= today){ alert('This course is already open.'); return; }
+  const opening = secs.filter((x,j)=> j<=k && x.start>today);
+  if(!confirm(`Open ${opening.map(x=>x.title).join(', ')} for students now?${opening.length>1 ? '\n\nCourses open in order, so the earlier ones open too.' : ''}\n\nYou can restore the set date later.`)) return;
+  const orig = {}; opening.forEach(x=>{ orig[x.id] = x.start; });
+  secs[k].start = today;
+  for(let j=k-1;j>=0;j--){ if(secs[j].start >= secs[j+1].start) secs[j].start = rmAddDays(secs[j+1].start, -1); }
+  try{ await rmApi('schedule_set', { sections: secs.map(({id,start,end})=>({id,start,end})) }); }
+  catch(e){ alert(rmErr(e)); return; }
+  RM.early = RM.early || {};
+  const stamp = Date.now();
+  Object.keys(orig).forEach(i=>{ RM.early[i] = { orig:orig[i], at:stamp, by:(ME&&ME.name)||'Ambassador' }; });
+  try{ await sSet('roadmap:earlyopen', RM.early, true); }catch(e){}
+  try{ await rmLoad(true); }catch(e){}
+  rmPaint();
+  if(confirm('The course is open. Send students a notification that it is open?')){
+    try{
+      const ids = (DB.students||[]).filter(s=>!ghostedStudent(s)).map(s=>String(s.id));
+      const { error } = await sb.rpc('ambassador_push_send', { p_external_ids:ids, p_heading:'A new course is open', p_message:`${secs[k].title} is now open. Tap to start.`, p_url:`https://ichc-ghana.vercel.app/portal.html?src=push&go=practice:${id}` });
+      if(error) throw error;
+      alert('Notification sent.');
+    }catch(e){ alert('The course is open, but the notification could not be sent.'); }
+  }
+}
+
+async function rmRestoreDate(id){
+  const rec = (RM.early||{})[id]; if(!rec || !RM.ov) return;
+  if(!confirm(`Restore the set date (${rmDateY(rec.orig)}) and close this course again until then?`)) return;
+  const secs = RM.ov.sections.map(x=>({ id:x.id, start:x.start, end:x.end }));
+  const k = secs.findIndex(x=>x.id===id); if(k<0) return;
+  secs[k].start = rec.orig; if(secs[k].end < rec.orig) secs[k].end = rec.orig;
+  try{ await rmApi('schedule_set', { sections: secs }); }
+  catch(e){ alert(rmErr(e) + ((e && e.message)==='bad_order' ? ' Restore the later early-opened courses first.' : '')); return; }
+  delete RM.early[id];
+  try{ await sSet('roadmap:earlyopen', RM.early, true); }catch(e){}
+  try{ await rmLoad(true); }catch(e){}
+  rmPaint();
+}
+
 async function rmApi(action, payload){
   if(!sbReady) throw new Error('offline');
   const { data, error } = await sb.functions.invoke('roadmap', { body:{ action, ...(payload||{}) } });
@@ -11724,6 +11906,7 @@ function rmCurrentId(){
 async function rmLoad(force){
   if(!force && RM.ov && Date.now()-RM.ovAt < 20000) return RM.ov;
   RM.ov = await rmApi('overview'); RM.ovAt = Date.now();
+  if(ME && ME.role==='ambassador'){ try{ RM.early = (await sGet('roadmap:earlyopen', true)) || {}; }catch(e){ RM.early = RM.early || {}; } }
   try{ if(typeof ccCheck==='function') ccCheck(RM.ov); }catch(e){}
   return RM.ov;
 }
@@ -11848,7 +12031,7 @@ function rmMapHtml(){
       cls = locked ? 'lock' : staff ? (s.state==='locked' ? 'prev' : isCur ? 'now' : 'open') : s.complete ? 'done' : isCur ? 'now' : 'open';
       icon = locked ? rmLockIc : (!staff && s.complete) ? rmCheckIc : `<span class="num">${i+1}</span>`;
       label = s.title;
-      sub = locked ? `Opens ${rmDate(s.start)}` : `${rmDate(s.start)} &ndash; ${rmDate(s.end)}`;
+      sub = locked ? `Opens ${rmDate(s.start)} &middot; Preview` : `${rmDate(s.start)} &ndash; ${rmDate(s.end)}`;
       if(staff){
         const coh = ov.cohort && ov.cohort[s.id];
         extra = `<span class="rm-meta">${s.total} question${s.total===1?'':'s'}${coh?` &middot; ${coh.complete}/${coh.students} complete`:''}</span>`;
@@ -11875,15 +12058,15 @@ function rmHomeHtml(){
   const head = staff
     ? `<div class="rm-pagehead"><div><div class="rm-kicker">Roadmap</div><h2>Ten topics, one calendar</h2><p>You regulate the roadmap. Open any section to manage its questions, tests and resources, and to see how your students are doing.</p></div>
         <div class="rm-actions"><button class="btn secondary small" type="button" data-rm-go="library">Resource library</button><button class="btn secondary small" type="button" data-rm-go="mock">Mock results</button>${ME.role==='ambassador'?`<button class="btn secondary small" type="button" data-rm-sched-toggle>${RM.schedOpen?'Hide schedule':'Schedule'}</button>`:''}</div></div>`
-    : `<div class="rm-pagehead"><div><div class="rm-kicker">Your roadmap</div><h2>Ten topics, one calendar</h2><p>A section opens on its date and stays open. Finish each one before the next arrives.</p></div>
+    : `<div class="rm-pagehead"><div><div class="rm-kicker">Your roadmap</div><h2>Ten topics, one calendar</h2><p>A section opens on its date and stays open. Tap any course to read what it covers and what is required of you. Finish each one before the next arrives.</p></div>
         <div class="rm-actions"><button class="btn secondary small" type="button" data-rm-go="library">Resource library</button></div></div>`;
   return `${head}${RM.note ? `<div class="rm-note">${escapeHtml(RM.note)}</div>` : ''}${staff ? '' : rmDailyCard()}${ME.role==='ambassador' && RM.schedOpen ? rmScheduleHtml() : ''}${rmMapHtml()}`;
 }
 function rmScheduleHtml(){
   const ov = RM.ov, cur = ov.sections.find(s=>s.state==='current');
   return `<div class="card rm-sched">
-    <h3 style="margin:0 0 2px; font-size:16px;">Schedule and reminders</h3><p class="note" style="margin:0 0 8px;">Students see a section on its start date and keep it open afterwards.</p>
-    ${ov.sections.map(s=>`<div class="rm-sched-row"><span class="nm">${escapeHtml(s.title)}</span><input type="date" data-rm-start="${s.id}" value="${s.start}"><span>to</span><input type="date" data-rm-end="${s.id}" value="${s.end}"></div>`).join('')}
+    <h3 style="margin:0 0 2px; font-size:16px;">Schedule and reminders</h3><p class="note" style="margin:0 0 8px;">Students see a section on its start date and keep it open afterwards. Use Open now to let students into a course before its set date; you can restore the set date later.</p>
+    ${ov.sections.map(s=>`<div class="rm-sched-row"><span class="nm">${escapeHtml(s.title)}</span><input type="date" data-rm-start="${s.id}" value="${s.start}"><span>to</span><input type="date" data-rm-end="${s.id}" value="${s.end}">${rmEarlyBtns(s)}</div>`).join('')}
     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center;">
       <button class="btn teal small" type="button" data-rm-sched-save>Save dates</button>
       ${cur ? `<span class="note" style="margin:0 0 0 8px;">Cohort not ready? Extend <b>${escapeHtml(cur.title)}</b> by</span>
@@ -11898,10 +12081,11 @@ function rmScheduleHtml(){
 // ----- section page -----
 function rmSectionHtml(){
   const s = rmSec(RM.topic), staff = rmStaff(), i = RM_TOPICS.findIndex(t=>t[0]===s.id), hue = RM_HUES[i % RM_HUES.length];
-  const tabs = staff ? [['questions','Questions'],['tests','Tests & exams'],['resources','Resources'],['students','Students']] : [['practice','Practice'],['learn','Learn'],['tests','Tests & exams']];
+  const tabs = !s.open ? [['about','About']] : staff ? [['about','About'],['questions','Questions'],['tests','Tests & exams'],['resources','Resources'],['students','Students']] : [['about','About'],['practice','Practice'],['learn','Learn'],['tests','Tests & exams']];
   if(!tabs.some(t=>t[0]===RM.tab)) RM.tab = tabs[0][0];
   let body;
-  if(RM.tab==='tests') body = rmTestsHtml(s);
+  if(RM.tab==='about') body = rmAboutHtml(s);
+  else if(RM.tab==='tests') body = rmTestsHtml(s);
   else if(RM.tab==='resources') body = staff ? rmStaffResourcesHtml(s) : rmLearnHtml(s);
   else if(RM.tab==='learn') body = rmLearnHtml(s);
   else if(RM.tab==='questions') body = rmManageHtml(s);
@@ -11921,7 +12105,7 @@ function rmSectionHtml(){
     ${staff ? '' : rmRing(s.pct, 92, 'on-dark')}
   </div>
   <div class="rm-subnav">${tabs.map(([k,l])=>`<button class="pill${RM.tab===k?' on':''}" type="button" data-rm-tab="${k}">${l}</button>`).join('')}</div>
-  <div class="rm-body">${body}</div>`;
+  ${(!staff && s.open && RM.tab!=='about') ? rmHelpHtml(false) : ''}<div class="rm-body">${body}</div>`;
 }
 function rmPracticeHtml(s){
   if(RM.sess) return rmSessionHtml();
@@ -11936,12 +12120,12 @@ function rmPracticeHtml(s){
     <p class="note" style="margin:8px 0 0;">${s.attempts ? `${s.attempts} answers so far &middot; ${s.accuracy}% correct` : 'No answers yet. Your first set takes about ten minutes.'}${s.total?` &middot; ${s.total} questions in this section`:''}</p>
   </div>
   ${RM.err ? `<div class="rm-note" style="margin-top:14px;">${escapeHtml(RM.err)}</div>` : ''}
-  <div class="rm-starts">
+  <div class="rm-starts"${s.total===0 ? ' style="display:none"' : ''}>
     <button class="btn amber" type="button" data-rm-start-mode="mixed" ${RM.busy?'disabled':''}>Start a set of 10</button>
     ${s.reqTotal ? `<button class="btn secondary" type="button" data-rm-start-mode="coordinator" ${RM.busy?'disabled':''}>Coordinator set (${Math.max(0,s.reqTotal-s.reqSolved)} left)</button>` : ''}
     <button class="btn secondary" type="button" data-rm-start-mode="feed" ${RM.busy?'disabled':''}>Practice feed</button>
   </div>
-  ${s.total===0 ? '<div class="empty" style="margin-top:14px;">No practice questions have been added to this section yet. Your coordinator will add them soon.</div>' : ''}`;
+  ${s.total===0 ? '<div class="empty" style="margin-top:14px;">No questions for now. Check back soon. Your coordinator is adding them, and if you are stuck in the meantime, message your coordinator.</div>' : ''}`;
 }
 async function rmStart(mode, n, view){
   if(RM.busy) return; RM.busy = true; RM.err = '';
@@ -11949,7 +12133,7 @@ async function rmStart(mode, n, view){
   rmPaint();
   try{
     const r = await rmApi('practice', { topic:RM.topic, mode:mode==='daily'?'daily':mode, n });
-    if(!r.questions || !r.questions.length){ RM.err = r.solvedAll ? 'You have solved every question available here. New ones are added regularly.' : 'There are no questions of that kind yet.'; if(view==='daily') RM.view = 'home'; }
+    if(!r.questions || !r.questions.length){ RM.err = r.solvedAll ? 'You have solved every question available here. New ones are added regularly.' : 'No questions for now. Check back soon.'; if(view==='daily') RM.view = 'home'; }
     else RM.sess = { mode, qs:r.questions, i:0, res:null, right:0, answered:0, review:!!r.review, busy:false, reported:false, daily:view==='daily' };
   }catch(e){ RM.err = rmErr(e); if(view==='daily') RM.view = 'home'; }
   RM.busy = false; rmPaint();
@@ -12086,7 +12270,7 @@ function rmItem(title, meta, body, link){
 function rmLearnHtml(s){
   const lib = (DB.library||[]).filter(l=>rmTopicOf(l)===s.id), mats = (DB.materials||[]).filter(m=>rmEffTopic(m,'material')===s.id && rmMine(m));
   return `<div class="section-title"><div><h2>Learn</h2><p>Library items and your coordinator's materials for ${escapeHtml(s.title)}.</p></div></div>
-  <div class="list">${lib.length||mats.length ? lib.map(l=>rmItem(l.title, fmtDate(l.date), l.body, l.link)).join('') + mats.map(m=>rmItem(m.title, 'From your coordinator &middot; '+fmtDate(m.date), m.body, m.link)).join('') : '<div class="empty">Nothing is tagged to this section yet. Check the general resource library from the roadmap page.</div>'}</div>`;
+  <div class="list">${lib.length||mats.length ? lib.map(l=>rmItem(l.title, fmtDate(l.date), l.body, l.link)).join('') + mats.map(m=>rmItem(m.title, 'From your coordinator &middot; '+fmtDate(m.date), m.body, m.link)).join('') : '<div class="empty">No notes or resources for now. Check back soon, or browse the general resource library from the roadmap page.</div>'}</div>`;
 }
 
 // ----- tests & exams (existing screens, listed for this section only) -----
@@ -12367,14 +12551,15 @@ async function wireRoadmap(){
   if(!window.__rmResize){ window.__rmResize = true; window.addEventListener('resize', rmFit); }
 }
 async function rmClick(ev){
-  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-sub],[data-rm-start-mode],[data-rm-daily],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-go],[data-rm-add],[data-rm-gen],[data-rm-mqmode],[data-rm-draft-post],[data-rm-draft-discard],[data-rm-draft-del],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift]');
+  const t = ev.target.closest('[data-rm-open],[data-rm-home],[data-rm-tab],[data-rm-sub],[data-rm-start-mode],[data-rm-daily],[data-rm-pick],[data-rm-check],[data-rm-next],[data-rm-report],[data-rm-quit],[data-rm-end],[data-rm-go],[data-rm-add],[data-rm-gen],[data-rm-mqmode],[data-rm-draft-post],[data-rm-draft-discard],[data-rm-draft-del],[data-rm-filter],[data-rm-q],[data-rm-more],[data-rm-sched-toggle],[data-rm-sched-save],[data-rm-sched-shift],[data-rm-open-now],[data-rm-restore]');
   if(!t) return;
   const d = t.dataset;
+  if(d.rmOpenNow) return rmOpenNow(d.rmOpenNow);
+  if(d.rmRestore) return rmRestoreDate(d.rmRestore);
   if(d.rmOpen!==undefined){
     if(d.rmOpen==='__mock'){ RM.view = 'mock'; return rmFull(); }
     const s = rmSec(d.rmOpen); if(!s) return;
-    if(!s.open){ RM.note = `${s.title} opens on ${rmDateY(s.start)}. Finish the current section first.`; rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return; }
-    RM.note = ''; RM.view = 'section'; RM.topic = s.id; RM.tab = rmStaff() ? 'questions' : 'practice'; RM.sess = null; RM.err = '';
+    RM.note = ''; RM.view = 'section'; RM.topic = s.id; RM.tab = 'about'; RM.sess = null; RM.err = '';
     RM.mq = { list:null, filter:'all', total:0, flagged:0, msg:'', busy:false, mode:'manual', drafts:null, genMeta:null };
     rmPaint(); window.scrollTo({top:0, behavior:'smooth'}); return;
   }
@@ -12552,7 +12737,7 @@ function lvCardHtml(v){
 function lvListHtml(){
   const all = lvVisible();
   const block = (title, note, arr)=> arr.length ? `<div class="section-title" style="margin-top:22px;"><div><h2>${title}</h2><p>${note}</p></div></div><div class="list">${arr.map(lvCardHtml).join('')}</div>` : '';
-  if(!all.length) return `<div class="empty">${ME.role==='student' ? 'No lessons yet. Your coordinator will post one soon.' : 'No lesson videos yet. Upload the first one above.'}</div>`;
+  if(!all.length) return `<div class="empty">${ME.role==='student' ? 'No lessons for now. Check back soon.' : 'No lesson videos yet. Upload the first one above.'}</div>`;
   if(ME.role==='student') return block('From your coordinator', 'Only you and your group can see these.', all.filter(v=>!v.cohort)) + block('For the whole cohort', 'Everyone in the programme can watch these and see the reactions and comments.', all.filter(v=>v.cohort));
   if(ME.role==='coordinator') return block('My videos', 'Group-only videos stay with your students until the Ambassador shares them.', all.filter(v=>v.coordinatorId===ME.id)) + block('Shared with the whole cohort', 'Videos from other coordinators and the Ambassador.', all.filter(v=>v.coordinatorId!==ME.id));
   return block('Group-only videos', 'Uploaded by coordinators. Share any of them with the whole cohort.', all.filter(v=>!v.cohort)) + block('Shared with the whole cohort', 'Everyone sees the reactions and comments on these.', all.filter(v=>v.cohort));
@@ -12967,7 +13152,7 @@ const UPD_BUILTIN = [
   { id:'g-sessions', kind:'guide', tag:'Guide', ts:0, title:'Sessions (call sheets)',
     body:'*Who uses it:* coordinators publish, students read.\n\nPublish your session schedule with a title, start and end time (Accra time), a meeting link and notes. The status changes by itself: Upcoming, Active, Completed or Cancelled. Students see their coordinator\u2019s sessions, plus any class the Ambassador scheduled for them. Students are reminded automatically before each session.' },
   { id:'g-roadmap', kind:'guide', tag:'Guide', ts:0, title:'Roadmap, practice, quizzes and mock',
-    body:'*Who uses it:* students work in it, coordinators and the Ambassador build it.\n\nThe Roadmap is the learning path. A section opens for students on its start date and stays open afterwards. Inside it you will find:\n\u2022 *Daily practice:* five questions a day. Short, regular sessions beat long ones done rarely.\n\u2022 *Weekly practice question:* one sharp problem a week.\n\u2022 *Quizzes:* quick auto-graded multiple-choice checks.\n\u2022 *Polls:* quick votes with live results.\n\u2022 *Materials and Resource library:* notes, slide decks and past papers from coordinators and the Ambassador desk.\n\u2022 *Mock competition:* a timed, auto-marked practice of 15 questions in 30 minutes. Every mock is freshly written.\nCoordinators and the Ambassador can add questions, review AI-written drafts before posting, and fix questions that students report.' },
+    body:'*Who uses it:* students work in it, coordinators and the Ambassador build it.\n\nThe Roadmap is the learning path. A section (a course) opens for students on its start date, or earlier if the Ambassador opens it, and stays open afterwards. Tap any course to read what it covers and what is required of students and of coordinators. If you are ever stuck, reach out to your coordinator. Inside it you will find:\n\u2022 *About:* what the course covers and what is expected of you.\n\u2022 *Daily practice:* five questions a day. Short, regular sessions beat long ones done rarely.\n\u2022 *Weekly practice question:* one sharp problem a week.\n\u2022 *Quizzes:* quick auto-graded multiple-choice checks.\n\u2022 *Polls:* quick votes with live results.\n\u2022 *Materials and Resource library:* notes, slide decks and past papers from coordinators and the Ambassador desk.\n\u2022 *Mock competition:* a timed, auto-marked practice of 15 questions in 30 minutes. Every mock is freshly written.\nCoordinators and the Ambassador can add questions, review AI-written drafts before posting, and fix questions that students report.' },
   { id:'g-exams', kind:'guide', tag:'Guide', ts:0, title:'Exams',
     body:'*Who uses it:* coordinators and the Ambassador build, students sit.\n\nBuild a timed online exam, set when it opens and closes and how many attempts are allowed. Students answer one question per screen and every question has its own timer. The Ambassador can oversee or remove any exam and releases results and retakes. Marking should follow a written scheme so every student is judged the same way.' },
   { id:'g-community', kind:'guide', tag:'Guide', ts:0, title:'Community chat and Coordinator lounge',
